@@ -75,12 +75,6 @@ function App() {
     setShowDetailsModal(!showDetailsModal);
   };
 
-  const handleDeleteLetter = (index) => {
-    const updatedLetters = [...letters];
-    updatedLetters.splice(index, 1);
-    setLetters(updatedLetters);
-  };
-
   return (
     <div className="container-fluid d-flex justify-content-center app-container">
       <div className="app">
@@ -204,15 +198,6 @@ function App() {
                         : letter.message}
                     </p>
                   </div>
-                </div>
-                <div
-                  className="delete-button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleDeleteLetter(index);
-                  }}
-                >
-                  <BsX className="delete-icon" />
                 </div>
               </div>
             ))}
