@@ -38,17 +38,16 @@
       "last 1 safari version"
     ]
   },
-  "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
+  "description": "Leave a message to casper",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/skedaddl3/letters_to_casper.git"
+    "url": ""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/skedaddl3/letters_to_casper/issues"
-  },
-  "homepage": "https://github.com/skedaddl3/letters_to_casper#readme"
+    "url": ""
+  }
 }
