@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from 'react';
-import {BsChatSquareDotsFill} from 'react-icons/bs';
 import Header from './components/Header';
 import AddModal from './components/AddModal';
 import Letter from './components/Letter';
