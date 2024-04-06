@@ -1,6 +1,6 @@
 import {useState, useRef} from 'react';
 import {TbMessageCircleHeart} from 'react-icons/tb';
-import {BsX, BsFillSendFill, BsXLg} from 'react-icons/bs';
+import {BsFillSendFill, BsXLg} from 'react-icons/bs';
 import '../App.css';
 
 export default function LeaveMessage() {
