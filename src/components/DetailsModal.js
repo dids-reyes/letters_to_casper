@@ -1,6 +1,7 @@
 // DetailsModal.js
 import React from 'react';
 import {BsX} from 'react-icons/bs';
+import {BsMailboxFlag} from 'react-icons/bs';
 import '../App.css';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
@@ -63,7 +64,9 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 ></textarea>
               </div>
               <div className="form-group">
-                <label htmlFor="timestamp">🕒</label>
+                <label htmlFor="timestamp">
+                  <BsMailboxFlag size="25px" />
+                </label>
                 <span className="timestamp-text">
                   {formatTimestamp(selectedLetter.timestamp)}
                 </span>

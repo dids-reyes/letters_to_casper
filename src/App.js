@@ -3,7 +3,7 @@ import Header from './components/Header';
 import AddModal from './components/AddModal';
 import Letter from './components/Letter';
 import DetailsModal from './components/DetailsModal';
-import {TbMessageCircleHeart} from 'react-icons/tb';
+import {BiSolidMessageSquareEdit} from 'react-icons/bi';
 import './App.css';
 
 function App() {
@@ -104,7 +104,7 @@ function App() {
             className="btn btn-primary big-button"
             onClick={toggleAddModal}
           >
-            <TbMessageCircleHeart className="button-icon" />
+            <BiSolidMessageSquareEdit className="button-icon" size="22px" />
             Leave a Message
           </button>
         </div>
