@@ -11,7 +11,7 @@ function Header({searchTerm, handleSearchChange}) {
           className="form-control search-input"
           value={searchTerm}
           onChange={handleSearchChange}
-          placeholder="Search letters"
+          placeholder="🔍 Search Letters"
         />
       </div>
     </div>
