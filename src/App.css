@@ -292,3 +292,9 @@ body {
 .submit-icon {
   margin-left: 8px;
 }
+
+.timestamp-text {
+  font-family: 'Courier New', Courier, monospace; /* Change 'Courier New' to your desired font */
+  font-size: 14px;
+  color: #333; /* Adjust color as needed */
+}

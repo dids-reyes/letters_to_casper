@@ -1,5 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { BsChatSquareDotsFill, BsX, BsFillSendFill } from 'react-icons/bs';
+import React, {useState, useEffect} from 'react';
+import {BsChatSquareDotsFill} from 'react-icons/bs';
+import Header from './components/Header';
+import AddModal from './components/AddModal';
+import Letter from './components/Letter';
+import DetailsModal from './components/DetailsModal';
+import {TbMessageCircleHeart} from 'react-icons/tb';
 import './App.css';
 
 function App() {
@@ -13,15 +18,8 @@ function App() {
   });
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const fromInputRef = useRef(null);
 
-  useEffect(() => {
-    if (showAddModal) {
-      fromInputRef.current.focus();
-    }
-  }, [showAddModal]);
-
-  const handleSearchChange = (event) => {
+  const handleSearchChange = event => {
     setSearchTerm(event.target.value);
   };
 
@@ -29,46 +27,66 @@ function App() {
     setShowAddModal(!showAddModal);
   };
 
-  const handleAddLetter = () => {
-    const { from, to, message } = newLetter;
+  const render_url = 'https://ltc-service.onrender.com/api/messages';
 
-    // Check if any field is empty
-    if (from.trim() === '' || to.trim() === '' || message.trim() === '') {
-      // Highlight the empty fields in red
-      if (from.trim() === '') {
-        document.getElementById('from').classList.add('error');
-      } else {
-        document.getElementById('from').classList.remove('error');
+  useEffect(() => {
+    const fetchLetters = async () => {
+      try {
+        const response = await fetch(render_url);
+        if (!response.ok) {
+          throw new Error('Failed to fetch letters');
+        }
+        const data = await response.json();
+        setLetters(data); // Update the letters state with the fetched data
+      } catch (error) {
+        console.error('Error fetching letters:', error);
+      }
+    };
+
+    fetchLetters();
+  }, []); // Empty dependency array ensures the effect runs only once when the component mounts
+
+  const handleAddLetter = async () => {
+    try {
+      const {from, to, message} = newLetter;
+
+      if (from.trim() === '' || to.trim() === '' || message.trim() === '') {
+        // Handle empty fields here if needed
+        return;
       }
 
-      if (to.trim() === '') {
-        document.getElementById('to').classList.add('error');
-      } else {
-        document.getElementById('to').classList.remove('error');
+      const timestamp = new Date().toLocaleString('en-US', {
+        timeZone: 'Asia/Manila',
+      });
+
+      const messageData = {
+        from,
+        to,
+        message,
+        timestamp,
+      };
+
+      const response = await fetch(render_url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add message');
       }
 
-      if (message.trim() === '') {
-        document.getElementById('message').classList.add('error');
-      } else {
-        document.getElementById('message').classList.remove('error');
-      }
+      setLetters([...letters, messageData]);
+      // If message added successfully, reset the newLetter state
+      setNewLetter({from: '', to: '', message: ''});
 
-      return; // Don't proceed further if any field is empty
+      // Optionally, fetch updated letters from backend after successful addition
+      // fetchLetters();
+    } catch (error) {
+      console.error('Error adding message:', error);
     }
-
-    // Clear the error styling
-    document.getElementById('from').classList.remove('error');
-    document.getElementById('to').classList.remove('error');
-    document.getElementById('message').classList.remove('error');
-
-    const timestamp = new Date().toLocaleString('en-US', {
-      timeZone: 'Asia/Manila',
-    });
-    const updatedLetter = { ...newLetter, timestamp };
-    setLetters([...letters, updatedLetter]);
-    setNewLetter({ from: '', to: '', message: '' });
-    setSelectedLetter(null);
-    toggleAddModal();
   };
 
   const toggleDetailsModal = () => {
@@ -78,101 +96,30 @@ function App() {
   return (
     <div className="container-fluid d-flex justify-content-center app-container">
       <div className="app">
-        <div className="header">
-          <h1 className="app-title">Letters to Casper</h1>
-          <div className="search-bar">
-            <input
-              type="text"
-              className="form-control search-input"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              placeholder="Search letters"
-            />
-          </div>
-        </div>
+        <Header
+          searchTerm={searchTerm}
+          handleSearchChange={handleSearchChange}
+        />
         <div className="add-button">
-          <button className="btn btn-primary big-button" onClick={toggleAddModal}>
-            <BsChatSquareDotsFill className="button-icon" />
+          <button
+            className="btn btn-primary big-button"
+            onClick={toggleAddModal}
+          >
+            <TbMessageCircleHeart className="button-icon" />
             Leave a Message
           </button>
         </div>
-        {showAddModal && (
-          <div className="modal">
-            <div className="modal-dialog">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <button
-                    type="button"
-                    className="close"
-                    onClick={toggleAddModal}
-                  >
-                    <BsX className="close-icon" />
-                  </button>
-                </div>
-                <div className="modal-body">
-                  <div className="form-group">
-                    <label htmlFor="from">From:</label>
-                    <input
-                      type="text"
-                      id="from"
-                      className="form-control error"
-                      value={newLetter.from}
-                      onChange={(event) =>
-                        setNewLetter({
-                          ...newLetter,
-                          from: event.target.value,
-                        })
-                      }
-                      ref={fromInputRef}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="to">To:</label>
-                    <input
-                      type="text"
-                      id="to"
-                      className="form-control error"
-                      value={newLetter.to}
-                      onChange={(event) =>
-                        setNewLetter({ ...newLetter, to: event.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="message">Message:</label>
-                    <textarea
-                      id="message"
-                      className="form-control big-textarea error"
-                      value={newLetter.message}
-                      onChange={(event) =>
-                        setNewLetter({
-                          ...newLetter,
-                          message: event.target.value,
-                        })
-                      }
-                    ></textarea>
-                    <small className="character-count">
-                      Characters: {newLetter.message.length}
-                    </small>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    className="btn btn-primary submit-button"
-                    onClick={handleAddLetter}
-                  >
-                    Submit
-                    <BsFillSendFill className="submit-icon" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <AddModal
+          showAddModal={showAddModal}
+          toggleAddModal={toggleAddModal}
+          newLetter={newLetter}
+          handleAddLetter={handleAddLetter}
+          setNewLetter={setNewLetter}
+        />
         <div className="letters-container">
           {letters
-            .filter((letter) => {
-              const { from, to, message } = letter;
+            .filter(letter => {
+              const {from, to, message} = letter;
               const lowerCasedSearchTerm = searchTerm.toLowerCase();
               return (
                 from.toLowerCase().includes(lowerCasedSearchTerm) ||
@@ -181,86 +128,20 @@ function App() {
               );
             })
             .map((letter, index) => (
-              <div
-                className="letter-card"
+              <Letter
                 key={index}
-                onClick={() => {
-                  setSelectedLetter(letter);
-                  toggleDetailsModal();
-                }}
-              >
-                <div className="card">
-                  <div className="card-body">
-                    <h5 className="card-title">{letter.from}</h5>
-                    <p className="card-preview">
-                      {letter.message.length > 50
-                        ? `${letter.message.substring(0, 50)}...`
-                        : letter.message}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                letter={letter}
+                toggleDetailsModal={toggleDetailsModal}
+                setSelectedLetter={setSelectedLetter}
+              />
             ))}
         </div>
+        <DetailsModal
+          showDetailsModal={showDetailsModal}
+          toggleDetailsModal={toggleDetailsModal}
+          selectedLetter={selectedLetter}
+        />
       </div>
-      {showDetailsModal && selectedLetter && (
-        <div className="modal">
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <button
-                  type="button"
-                  className="close"
-                  onClick={toggleDetailsModal}
-                >
-                  <BsX className="close-icon" />
-                </button>
-              </div>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label htmlFor="from">From:</label>
-                  <input
-                    type="text"
-                    id="from"
-                    className="form-control"
-                    value={selectedLetter.from}
-                    disabled
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="to">To:</label>
-                  <input
-                    type="text"
-                    id="to"
-                    className="form-control"
-                    value={selectedLetter.to}
-                    disabled
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="message">Message:</label>
-                  <textarea
-                    id="message"
-                    className="form-control big-textarea"
-                    value={selectedLetter.message}
-                    disabled
-                  ></textarea>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="timestamp">Timestamp:</label>
-                  <input
-                    type="text"
-                    id="timestamp"
-                    className="form-control"
-                    value={selectedLetter.timestamp}
-                    disabled
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
