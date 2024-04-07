@@ -1,7 +1,5 @@
 // Letter.js
 import React from 'react';
-import Lottie from 'react-lottie';
-import animationData from '../lotties/ghost.json';
 import {PiUserRectangleDuotone} from 'react-icons/pi';
 import {PiUserRectangleLight} from 'react-icons/pi';
 
@@ -20,22 +18,6 @@ function Letter({letter, toggleDetailsModal, setSelectedLetter}) {
     setSelectedLetter(letter);
     toggleDetailsModal();
   };
-
-  if (letter == null) {
-    return (
-      <div>
-        <Lottie
-          options={{
-            animationData: animationData,
-            loop: true,
-            autoplay: true,
-          }}
-          height={200}
-          width={200}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="letter-card" onClick={handleClick}>

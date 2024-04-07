@@ -71,26 +71,28 @@ function AddModal({
               </div>
               <div className="form-group">
                 <label htmlFor="message">Message:</label>
-                <textarea
-                  id="message"
-                  placeholder={`Hi... 
+                <span>
+                  <textarea
+                    id="message"
+                    placeholder={`Hi... 
 
 Hello...
 
 Goodbye...`}
-                  className="form-control big-textarea error"
-                  value={newLetter.message}
-                  maxLength="100"
-                  onChange={event =>
-                    setNewLetter({
-                      ...newLetter,
-                      message: event.target.value,
-                    })
-                  }
-                ></textarea>
-                <small className="character-count">
-                  Characters: {newLetter.message.length}
-                </small>
+                    className="big-textarea"
+                    value={newLetter.message}
+                    maxLength="500"
+                    onChange={event =>
+                      setNewLetter({
+                        ...newLetter,
+                        message: event.target.value,
+                      })
+                    }
+                  ></textarea>
+                  <small className="character-count">
+                    Characters: {newLetter.message.length}/500
+                  </small>
+                </span>
               </div>
             </div>
             <div className="modal-footer">
