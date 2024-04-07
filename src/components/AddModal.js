@@ -1,7 +1,6 @@
 import React, {useRef} from 'react';
 import {BsX} from 'react-icons/bs';
 import {RiMailSendLine} from 'react-icons/ri';
-import {FaQuestionCircle} from 'react-icons/fa';
 
 function AddModal({
   showAddModal,

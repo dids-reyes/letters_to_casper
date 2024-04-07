@@ -5,6 +5,10 @@ import Letter from './components/Letter';
 import DetailsModal from './components/DetailsModal';
 import {BiSolidMessageSquareEdit} from 'react-icons/bi';
 import {FaRegHandPointUp} from 'react-icons/fa';
+import Lottie from 'react-lottie';
+import ghost1 from './lotties/ghost1.json';
+import under_construction from './lotties/under_construction.json';
+import {GiMailbox} from 'react-icons/gi';
 import './App.css';
 
 function FloatingActionButton() {
@@ -54,9 +58,11 @@ function App() {
   };
 
   const render_url = 'https://ltc-service.onrender.com/api/messages';
+  const [loading, setLoading] = useState(1); // State to track loading state
 
   useEffect(() => {
     const fetchLetters = async () => {
+      setLoading(1); // Set loading state to true before fetching data
       try {
         const response = await fetch(render_url);
         if (!response.ok) {
@@ -64,8 +70,10 @@ function App() {
         }
         const data = await response.json();
         setLetters(data); // Update the letters state with the fetched data
+        setLoading(0);
       } catch (error) {
         console.error('Error fetching letters:', error);
+        setLoading(2);
       }
     };
 
@@ -142,26 +150,62 @@ function App() {
           handleAddLetter={handleAddLetter}
           setNewLetter={setNewLetter}
         />
-        <div className="letters-container">
-          {letters
-            .filter(letter => {
-              const {from, to, message} = letter;
-              const lowerCasedSearchTerm = searchTerm.toLowerCase();
-              return (
-                from.toLowerCase().includes(lowerCasedSearchTerm) ||
-                to.toLowerCase().includes(lowerCasedSearchTerm) ||
-                message.toLowerCase().includes(lowerCasedSearchTerm)
-              );
-            })
-            .map((letter, index) => (
-              <Letter
-                key={index}
-                letter={letter}
-                toggleDetailsModal={toggleDetailsModal}
-                setSelectedLetter={setSelectedLetter}
-              />
-            ))}
-        </div>
+        {loading === 1 ? ( // Render loading spinner or message if data is being fetched
+          <>
+            <Lottie
+              options={{
+                animationData: ghost1,
+                loop: true,
+                autoplay: true,
+              }}
+              height={300}
+              width={300}
+            />
+            <p>Please wait while we load all Letters...</p>
+            <GiMailbox size="60px" />
+          </>
+        ) : loading === 2 ? (
+          <>
+            <Lottie
+              options={{
+                animationData: under_construction,
+                loop: true,
+                autoplay: true,
+              }}
+              height={300}
+              width={300}
+            />
+            <p>
+              Our service is temporarily unavailable as we're making
+              improvements behind the scenes.
+              <br />
+              Please bear with us while we work to enhance your experience.{' '}
+              <br />
+              Thank you for your continued support!
+            </p>
+          </>
+        ) : loading === 0 ? (
+          <div className="letters-container">
+            {letters
+              .filter(letter => {
+                const {from, to, message} = letter;
+                const lowerCasedSearchTerm = searchTerm.toLowerCase();
+                return (
+                  from.toLowerCase().includes(lowerCasedSearchTerm) ||
+                  to.toLowerCase().includes(lowerCasedSearchTerm) ||
+                  message.toLowerCase().includes(lowerCasedSearchTerm)
+                );
+              })
+              .map((letter, index) => (
+                <Letter
+                  key={index}
+                  letter={letter}
+                  toggleDetailsModal={toggleDetailsModal}
+                  setSelectedLetter={setSelectedLetter}
+                />
+              ))}
+          </div>
+        ) : null}
         <DetailsModal
           showDetailsModal={showDetailsModal}
           toggleDetailsModal={toggleDetailsModal}
