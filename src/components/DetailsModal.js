@@ -17,7 +17,6 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     return new Date(timestamp).toLocaleString('en-US', options);
   };
 
-  console.log(selectedLetter);
   return (
     showDetailsModal &&
     selectedLetter && (

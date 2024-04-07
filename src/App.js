@@ -4,7 +4,34 @@ import AddModal from './components/AddModal';
 import Letter from './components/Letter';
 import DetailsModal from './components/DetailsModal';
 import {BiSolidMessageSquareEdit} from 'react-icons/bi';
+import {FaRegHandPointUp} from 'react-icons/fa';
 import './App.css';
+
+function FloatingActionButton() {
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <button className="fab" onClick={scrollToTop}>
+      <FaRegHandPointUp />
+    </button>
+  );
+}
+
+function Footer() {
+  return (
+    <div className="footer">
+      <p>
+        If you want to request deletion of your post, contact us at{' '}
+        <strong>letters2casper@gmail.com</strong>
+      </p>
+    </div>
+  );
+}
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -141,6 +168,8 @@ function App() {
           selectedLetter={selectedLetter}
         />
       </div>
+      <Footer />
+      <FloatingActionButton />
     </div>
   );
 }
