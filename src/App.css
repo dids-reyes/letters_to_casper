@@ -265,9 +265,7 @@ body {
 }
 
 .character-count {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
+  position: bottom;
   font-size: 12px;
   color: #777;
 }
