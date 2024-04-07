@@ -312,3 +312,38 @@ body {
     margin: 5px;
   }
 }
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(
+    55,
+    114,
+    255,
+    0.8
+  ); /* Adjust the alpha value (0.8) for medium transparency */
+  color: #fff; /* Adjust text color as needed */
+  padding: 1px; /* Adjust padding as needed */
+  text-align: center;
+}
+
+.fab {
+  position: fixed;
+  bottom: 60px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.fab:hover {
+  background-color: #0056b3;
+}
