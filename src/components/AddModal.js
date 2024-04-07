@@ -13,7 +13,7 @@ function AddModal({
 
   const handleSubmit = () => {
     const confirmAction = window.confirm(
-      'This will Post your written Message Publicly, if you wish to delete your entry, you will need to request a deletion of your Post to letters2casper@gmail.com. Are you sure you want to proceed?',
+      'This will post and display your written letter Publicly. Are you sure you want to proceed?',
     );
     if (confirmAction) {
       handleAddLetter(); // Call handleAddLetter function when the user submits the message
@@ -81,7 +81,7 @@ Hello...
 Goodbye...`}
                     className="big-textarea"
                     value={newLetter.message}
-                    maxLength="500"
+                    maxLength="600"
                     onChange={event =>
                       setNewLetter({
                         ...newLetter,
@@ -90,7 +90,7 @@ Goodbye...`}
                     }
                   ></textarea>
                   <small className="character-count">
-                    Characters: {newLetter.message.length}/500
+                    Characters: {newLetter.message.length}/600
                   </small>
                 </span>
               </div>

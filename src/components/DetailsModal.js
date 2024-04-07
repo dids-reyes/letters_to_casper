@@ -7,6 +7,7 @@ import '../App.css';
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   const formatTimestamp = timestamp => {
     const options = {
+      weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -34,41 +35,27 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label htmlFor="from">From:</label>
-                <input
-                  type="text"
-                  id="from"
-                  className="form-control"
-                  value={selectedLetter.from}
-                  disabled
-                />
+                <div className="letter-info">
+                  <strong>From:</strong> {selectedLetter.from}
+                </div>
               </div>
               <div className="form-group">
-                <label htmlFor="to">To:</label>
-                <input
-                  type="text"
-                  id="to"
-                  className="form-control"
-                  value={selectedLetter.to}
-                  disabled
-                />
+                <div className="letter-info">
+                  <strong>To:</strong> {selectedLetter.to}
+                </div>
               </div>
-              <div className="form-group">
-                <label htmlFor="message">Message:</label>
-                <textarea
-                  id="message"
-                  className="form-control big-textarea"
-                  value={selectedLetter.message}
-                  disabled
-                ></textarea>
-              </div>
-              <div className="form-group">
+              <div>
                 <label htmlFor="timestamp">
                   <BsMailboxFlag size="25px" />
                 </label>
                 <span className="timestamp-text">
                   {formatTimestamp(selectedLetter.timestamp)}
                 </span>
+              </div>
+              <div className="form-group">
+                <div className="letter-text">
+                  <p>{selectedLetter.message}</p>
+                </div>
               </div>
             </div>
           </div>

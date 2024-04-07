@@ -158,23 +158,11 @@ body {
   border-radius: 20px;
   padding: 20px;
   margin: 5px;
+  background-color: #fafaed;
 }
 
-.card-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 1px;
-}
-
-.card-subtitle {
-  font-size: 14px;
-  color: #777;
-  margin-bottom: 10px;
-}
-
-.card-text {
-  font-size: 16px;
-  margin-bottom: 10px;
+.card-preview {
+  font-family: monospace;
 }
 
 .btn-primary {
@@ -301,14 +289,11 @@ body {
 @media only screen and (max-width: 768px) {
   .letters-container {
     flex-wrap: wrap;
-    justify-content: flex-start;
   }
 
   .letter-card {
-    width: calc(
-      33.33% - 10px
-    ); /* 33.33% width for each item with some margin */
-    margin: 5px;
+    width: calc(40.33% - 1px); /* 33.33% width for each item with some margin */
+    margin: 1px;
   }
 }
 
@@ -345,4 +330,23 @@ body {
 
 .fab:hover {
   background-color: #0056b3;
+}
+
+/** View Letter **/
+.letter-info {
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.letter-text {
+  font-family: monospace; /* Apply cursive font style */
+  font-size: 16px;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.timestamp-text {
+  font-family: 'Courier New', Courier, monospace; /* Retained from existing CSS */
+  font-size: 14px; /* Retained from existing CSS */
+  color: #333; /* Retained from existing CSS */
 }
