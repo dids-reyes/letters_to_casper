@@ -42,7 +42,7 @@ function AddModal({
                 <input
                   type="text"
                   id="from"
-                  placeholder="Juan Dela Cruz | jdc | tagapagbantay"
+                  placeholder="Name or Alias (e.g., JaneSmith | Jane | J)"
                   className="form-control error"
                   value={newLetter.from}
                   maxLength="15"
@@ -60,7 +60,7 @@ function AddModal({
                 <input
                   type="text"
                   id="to"
-                  placeholder="TOTGA | LOML"
+                  placeholder="Name or Alias (e.g., JohnDoe | John)"
                   className="form-control error"
                   value={newLetter.to}
                   maxLength="15"
@@ -73,7 +73,11 @@ function AddModal({
                 <label htmlFor="message">Message:</label>
                 <textarea
                   id="message"
-                  placeholder="Hi... Hello... Goodbye..."
+                  placeholder={`Hi... 
+
+Hello...
+
+Goodbye...`}
                   className="form-control big-textarea error"
                   value={newLetter.message}
                   maxLength="100"

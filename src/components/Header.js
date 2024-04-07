@@ -1,10 +1,13 @@
 // Header.js
 import React from 'react';
+import logo from '../lotties/letters-to-casper-high-resolution-logo-transparent.webp';
 
 function Header({searchTerm, handleSearchChange}) {
   return (
     <div className="header">
-      <h1 className="app-title">Letters to Casper</h1>
+      <br />
+      <img src={logo} alt="ltc logo" width="300" height="100" />
+
       <div className="search-bar">
         <input
           type="text"

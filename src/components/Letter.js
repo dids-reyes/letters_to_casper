@@ -1,9 +1,9 @@
 // Letter.js
 import React from 'react';
-import {LiaUserSecretSolid} from 'react-icons/lia';
-import {TbGhost2} from 'react-icons/tb';
 import Lottie from 'react-lottie';
 import animationData from '../lotties/ghost.json';
+import {PiUserRectangleDuotone} from 'react-icons/pi';
+import {PiUserRectangleLight} from 'react-icons/pi';
 
 const truncateMessage = (message, maxLength) => {
   const secondSpaceIndex = message.indexOf(' ', message.indexOf(' ') + 1);
@@ -42,12 +42,12 @@ function Letter({letter, toggleDetailsModal, setSelectedLetter}) {
       <div className="card">
         <div className="card-body">
           <h3>
-            <LiaUserSecretSolid />
+            <PiUserRectangleDuotone />
             &nbsp;
             {letter.from}
           </h3>
           <h4>
-            <TbGhost2 />
+            <PiUserRectangleLight />
             &nbsp;
             {letter.to}
           </h4>
