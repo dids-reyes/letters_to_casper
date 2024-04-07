@@ -3,7 +3,7 @@ import Header from './components/Header';
 import AddModal from './components/AddModal';
 import Letter from './components/Letter';
 import DetailsModal from './components/DetailsModal';
-import {BiSolidMessageSquareEdit} from 'react-icons/bi';
+import {AiFillMessage} from 'react-icons/ai';
 import {FaRegHandPointUp} from 'react-icons/fa';
 import Lottie from 'react-lottie';
 import ghost1 from './lotties/ghost1.json';
@@ -139,7 +139,7 @@ function App() {
             className="btn btn-primary big-button"
             onClick={toggleAddModal}
           >
-            <BiSolidMessageSquareEdit className="button-icon" size="22px" />
+            <AiFillMessage className="button-icon" size="20px" />
             Leave a Message
           </button>
         </div>

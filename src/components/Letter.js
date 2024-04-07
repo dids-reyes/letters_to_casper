@@ -4,16 +4,15 @@ import {PiUserRectangleDuotone} from 'react-icons/pi';
 import {PiUserRectangleLight} from 'react-icons/pi';
 
 const truncateMessage = (message, maxLength) => {
-  const secondSpaceIndex = message.indexOf(' ', message.indexOf(' ') + 1);
-  if (secondSpaceIndex !== -1 && secondSpaceIndex <= maxLength) {
-    return `${message.substring(0, secondSpaceIndex)}...`;
-  } else {
-    return message;
-  }
+  return message.length > maxLength
+    ? `${message.substring(0, maxLength - 3)}...`
+    : message;
 };
 
 function Letter({letter, toggleDetailsModal, setSelectedLetter}) {
-  const truncatedMessage = truncateMessage(letter.message, 50);
+  const truncatedMessage = truncateMessage(letter.message, 13);
+  const truncatedFrom = truncateMessage(letter.from, 9);
+  const truncatedTo = truncateMessage(letter.to, 9);
   const handleClick = () => {
     setSelectedLetter(letter);
     toggleDetailsModal();
@@ -22,16 +21,16 @@ function Letter({letter, toggleDetailsModal, setSelectedLetter}) {
   return (
     <div className="letter-card" onClick={handleClick}>
       <div className="card">
-        <div className="card-body">
+        <div>
           <h3>
             <PiUserRectangleDuotone />
             &nbsp;
-            {letter.from}
+            {truncatedFrom}
           </h3>
           <h4>
             <PiUserRectangleLight />
             &nbsp;
-            {letter.to}
+            {truncatedTo}
           </h4>
           <p className="card-preview">{truncatedMessage}</p>
         </div>
