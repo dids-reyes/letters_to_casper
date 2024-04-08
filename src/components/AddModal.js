@@ -29,7 +29,7 @@ function AddModal({
   return (
     showAddModal && (
       <div className="modal">
-        <div className="modal-dialog">
+        <div className="modal-add-dialog">
           <div className="modal-content">
             <div className="modal-header">
               <button type="button" className="close" onClick={toggleAddModal}>
@@ -40,6 +40,7 @@ function AddModal({
               <div className="form-group">
                 <label htmlFor="from">From:</label>
                 <input
+                  required
                   type="text"
                   id="from"
                   placeholder="Name or Alias (e.g., JaneSmith | Jane | J)"
@@ -53,6 +54,11 @@ function AddModal({
                     })
                   }
                   ref={fromInputRef}
+                  onInvalid={e =>
+                    e.target.setCustomValidity(
+                      'Please enter a value for this field',
+                    )
+                  }
                 />
               </div>
               <div className="form-group">
