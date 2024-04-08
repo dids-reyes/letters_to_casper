@@ -1,7 +1,5 @@
 // Letter.js
 import React from 'react';
-import {PiUserRectangleDuotone} from 'react-icons/pi';
-import {PiUserRectangleLight} from 'react-icons/pi';
 
 const truncateMessage = (message, maxLength) => {
   return message.length > maxLength
