@@ -1,21 +1,32 @@
 // Header.js
 import React from 'react';
-import logo from '../lotties/letters-to-casper-high-resolution-logo-transparent.webp';
+import logo from '../lotties/ltc_logo_1.webp';
+import {Tooltip} from 'react-tooltip';
 
 function Header({searchTerm, handleSearchChange}) {
   return (
     <div className="header">
       <br />
-      <img src={logo} alt="ltc logo" width="300" height="100" />
+      <img src={logo} alt="ltc logo" width="400" height="70" />
 
       <div className="search-bar">
-        <input
-          type="text"
-          className="form-control search-input"
-          value={searchTerm}
-          onChange={handleSearchChange}
-          placeholder="🔍 Search Letters"
-        />
+        <a
+          href
+          data-tooltip-id="my-tooltip"
+          data-tooltip-content="You can search by keywords, author or recipient"
+          data-tooltip-place="left-start"
+          data-tooltip-delay-show={3000}
+          data-tooltip-variant="info"
+        >
+          <input
+            type="text"
+            className="form-control search-input"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="🔍 Search Letters"
+          />
+        </a>
+        <Tooltip id="my-tooltip" />
       </div>
     </div>
   );
