@@ -1,9 +1,10 @@
 /* App.css */
 body {
-  background-color: #f3f8ff;
+  background-color: #fff;
 }
 
 .app-container {
+  background-color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,6 +13,7 @@ body {
 }
 
 .app {
+  background-color: #fff;
   text-align: center;
   width: 100%;
   padding: 0 20px;
@@ -30,7 +32,7 @@ body {
 }
 
 .search-bar {
-  width: 100%;
+  width: 80%;
   max-width: 600px;
   margin: 0 auto;
   margin-bottom: 20px;
@@ -38,7 +40,7 @@ body {
 
 .search-input {
   width: 100%;
-  padding: 8px;
+  padding: 5px;
   font-size: 16px;
 }
 
@@ -96,6 +98,14 @@ body {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
+.modal-add-dialog {
+  background-color: #fff;
+  width: 90%;
+  max-width: 500px;
+  padding: 20px;
+  border-radius: 8px;
+}
+
 .modal-dialog {
   background-color: #fff;
   width: 90%;
@@ -142,12 +152,11 @@ body {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
 }
 
 .letter-card {
   width: 200px; /* Adjust the width as per your preference */
-  height: 200px; /* Adjust the height as per your preference */
+  height: 150px; /* Adjust the height as per your preference */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -157,13 +166,19 @@ body {
 .card {
   border: 1px solid #ccc;
   border-radius: 20px;
-  padding: 20px;
+  padding: 5px;
   margin: 5px;
-  background-color: #fafaed;
+  background-color: #fefbf0;
+}
+
+.card-text {
+  font-size: 16px;
+  font-family: monospace;
 }
 
 .card-preview {
   font-family: monospace;
+  font-size: 14px;
 }
 
 .btn-primary {
@@ -301,7 +316,6 @@ body {
 .footer {
   position: fixed;
   bottom: 0;
-  left: 0;
   width: 100%;
   background-color: rgba(
     55,
@@ -310,7 +324,6 @@ body {
     0.8
   ); /* Adjust the alpha value (0.8) for medium transparency */
   color: #fff; /* Adjust text color as needed */
-  padding: 1px; /* Adjust padding as needed */
   text-align: center;
 }
 
@@ -337,10 +350,12 @@ body {
 .letter-info {
   white-space: pre-wrap;
   text-align: left;
+  font-family: monospace;
+  font-size: 16px;
 }
 
 .letter-text {
-  font-family: monospace; /* Apply cursive font style */
+  font-family: monospace;
   font-size: 16px;
   white-space: pre-wrap;
   text-align: left;

@@ -21,19 +21,15 @@ function Letter({letter, toggleDetailsModal, setSelectedLetter}) {
   return (
     <div className="letter-card" onClick={handleClick}>
       <div className="card">
-        <div>
-          <h3>
-            <PiUserRectangleDuotone />
-            &nbsp;
-            {truncatedFrom}
-          </h3>
-          <h4>
-            <PiUserRectangleLight />
-            &nbsp;
-            {truncatedTo}
-          </h4>
-          <p className="card-preview">{truncatedMessage}</p>
-        </div>
+        <p className="card-text">
+          {/* <PiUserRectangleDuotone /> */}
+          <strong>Fr:</strong> {truncatedFrom}
+        </p>
+        <p className="card-text">
+          {/* <PiUserRectangleLight /> */}
+          <strong>To:</strong> {truncatedTo}
+        </p>
+        <p className="card-preview">{truncatedMessage}</p>
       </div>
     </div>
   );
