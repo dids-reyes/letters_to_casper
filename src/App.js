@@ -9,6 +9,8 @@ import Lottie from 'react-lottie';
 import ghost1 from './lotties/ghost1.json';
 import under_construction from './lotties/under_construction.json';
 import {GiMailbox} from 'react-icons/gi';
+import {ToastContainer, toast} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
 function FloatingActionButton() {
@@ -45,6 +47,7 @@ function App() {
     from: '',
     to: '',
     message: '',
+    approve: false,
   });
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -52,6 +55,30 @@ function App() {
   const handleSearchChange = event => {
     setSearchTerm(event.target.value);
   };
+
+  const notify_success = () =>
+    toast.success('Successfully Sent for Approval', {
+      position: 'top-right',
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: true,
+      progress: undefined,
+      theme: 'light',
+    });
+
+  const notify_error = () =>
+    toast.error('Letter Failed to Submit', {
+      position: 'top-right',
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: true,
+      progress: undefined,
+      theme: 'light',
+    });
 
   const toggleAddModal = () => {
     setShowAddModal(!showAddModal);
@@ -62,7 +89,7 @@ function App() {
 
   useEffect(() => {
     const fetchLetters = async () => {
-      setLoading(1); // Set loading state to true before fetching data
+      setLoading(1);
       try {
         const response = await fetch(render_url);
         if (!response.ok) {
@@ -97,6 +124,7 @@ function App() {
         from,
         to,
         message,
+        approve: false,
         timestamp,
       };
 
@@ -109,16 +137,18 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add message');
+        notify_error();
       }
 
       setLetters([...letters, messageData]);
       // If message added successfully, reset the newLetter state
       setNewLetter({from: '', to: '', message: ''});
+      notify_success();
 
       // Optionally, fetch updated letters from backend after successful addition
       // fetchLetters();
     } catch (error) {
+      notify_error();
       console.error('Error adding message:', error);
     }
   };
@@ -140,9 +170,22 @@ function App() {
             onClick={toggleAddModal}
           >
             <AiFillMessage className="button-icon" size="20px" />
-            Leave a Message
+            Leave a Letter
           </button>
         </div>
+        <ToastContainer
+          containerId="notify"
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnHover={false}
+          draggable
+          theme="light"
+        />
+        <ToastContainer />
         <AddModal
           showAddModal={showAddModal}
           toggleAddModal={toggleAddModal}

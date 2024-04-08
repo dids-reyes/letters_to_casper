@@ -13,7 +13,7 @@ function AddModal({
 
   const handleSubmit = () => {
     const confirmAction = window.confirm(
-      'This will post and display your written letter Publicly. Are you sure you want to proceed?',
+      'When Approved this will post and display your letter Publicly. Are you sure you want to proceed?',
     );
     if (confirmAction) {
       handleAddLetter(); // Call handleAddLetter function when the user submits the message
@@ -106,7 +106,7 @@ Goodbye...`}
                 className="btn btn-primary submit-button"
                 onClick={handleSubmit} // Call handleSubmit function when the user clicks the "Submit" button
               >
-                <strong>POST</strong>
+                <strong>SUBMIT LETTER</strong>
                 <RiMailSendLine className="submit-icon" size="20px" />
               </button>
             </div>

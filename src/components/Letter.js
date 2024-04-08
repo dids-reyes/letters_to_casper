@@ -16,6 +16,10 @@ function Letter({letter, toggleDetailsModal, setSelectedLetter}) {
     toggleDetailsModal();
   };
 
+  if (!letter.approve) {
+    return null; // If not approved, don't render the letter
+  }
+
   return (
     <div className="letter-card" onClick={handleClick}>
       <div className="card">

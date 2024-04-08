@@ -15,6 +15,7 @@
     "react-icons": "^4.3.1",
     "react-lottie": "^1.2.4",
     "react-scripts": "5.0.1",
+    "react-toastify": "^10.0.5",
     "react-tooltip": "^5.26.3",
     "styled-components": "^6.1.8",
     "web-vitals": "^2.1.4"
@@ -26,10 +27,17 @@
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": ["react-app", "react-app/jest"]
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
