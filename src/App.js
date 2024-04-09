@@ -84,7 +84,7 @@ function App() {
     setShowAddModal(!showAddModal);
   };
 
-  const render_url = 'https://ltc-service.onrender.com/api/messages';
+  const render_url = process.env.REACT_APP_API_URL;
   const [loading, setLoading] = useState(1); // State to track loading state
 
   useEffect(() => {
@@ -105,7 +105,7 @@ function App() {
     };
 
     fetchLetters();
-  }, []); // Empty dependency array ensures the effect runs only once when the component mounts
+  }, [render_url]); // Empty dependency array ensures the effect runs only once when the component mounts
 
   const handleAddLetter = async () => {
     try {
