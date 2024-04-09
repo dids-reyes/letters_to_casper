@@ -30,7 +30,7 @@ function AddModal({
     showAddModal && (
       <div className="modal">
         <div className="modal-add-dialog">
-          <div className="modal-content">
+          <div>
             <div className="modal-header">
               <button type="button" className="close" onClick={toggleAddModal}>
                 <BsX className="close-icon" />
@@ -43,7 +43,7 @@ function AddModal({
                   required
                   type="text"
                   id="from"
-                  placeholder="Name or Alias (e.g., JaneSmith | Jane | J)"
+                  placeholder="e.g., Christopher | Chris | C"
                   className="form-control error"
                   value={newLetter.from}
                   maxLength="15"
@@ -66,7 +66,7 @@ function AddModal({
                 <input
                   type="text"
                   id="to"
-                  placeholder="Name or Alias (e.g., JohnDoe | John)"
+                  placeholder="e.g., Emily Brown | Em | E"
                   className="form-control error"
                   value={newLetter.to}
                   maxLength="15"
