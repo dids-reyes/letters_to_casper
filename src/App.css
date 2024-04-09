@@ -21,9 +21,6 @@ body {
 }
 
 .header {
-  /* display: flex; */
-  /* align-items: center; */
-  /* justify-content: space-between; */
   margin-bottom: 20px;
 }
 
@@ -302,17 +299,6 @@ body {
   color: #333; /* Adjust color as needed */
 }
 
-@media only screen and (max-width: 768px) {
-  .letters-container {
-    flex-wrap: wrap;
-  }
-
-  .letter-card {
-    width: calc(40.33% - 1px); /* 33.33% width for each item with some margin */
-    margin: 1px;
-  }
-}
-
 .footer {
   position: fixed;
   bottom: 0;
@@ -365,4 +351,58 @@ body {
   font-family: 'Courier New', Courier, monospace; /* Retained from existing CSS */
   font-size: 14px; /* Retained from existing CSS */
   color: #333; /* Retained from existing CSS */
+}
+
+@media only screen and (max-width: 768px) {
+  .letters-container {
+    flex-wrap: wrap;
+  }
+
+  .letter-card {
+    width: calc(40.33% - 1px); /* 33.33% width for each item with some margin */
+    margin: 1px;
+  }
+
+  .logo {
+    height: 50px;
+    max-width: 70%;
+  }
+
+  .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    font-size: 11px;
+  }
+
+  .app-container {
+    width: 100%;
+  }
+
+  .search-bar {
+    margin: 0 auto; /* Center the search bar horizontally */
+    width: 90%;
+    margin-left: 12px;
+    margin-bottom: 20px;
+  }
+
+  .modal {
+  }
+
+  .modal-add-dialog {
+  }
+
+  .form-group label {
+    display: flex; /* Ensure labels appear on their own line */
+    font-weight: bold; /* Optionally, make labels bold for emphasis */
+    width: 70px;
+  }
+
+  .form-group input {
+    width: 1px;
+  }
+
+  .form-group textarea {
+    box-sizing: border-box; /* Include padding and border in the width calculation */
+  }
 }
