@@ -7,7 +7,13 @@ function Header({searchTerm, handleSearchChange}) {
   return (
     <div className="header">
       <br />
-      <img className="logo" src={logo} alt="ltc logo" width="400" height="70" />
+      <img
+        className="logo"
+        src={logo}
+        alt="Letters to Casper"
+        width="400"
+        height="70"
+      />
 
       <div className="search-bar">
         <a
