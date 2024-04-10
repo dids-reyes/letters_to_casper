@@ -51,7 +51,7 @@ function App() {
 
   const notify_success = () =>
     toast.success('Successfully Sent for Approval', {
-      position: 'top-right',
+      position: 'bottom-center',
       autoClose: 5000,
       hideProgressBar: false,
       closeOnClick: true,
@@ -63,7 +63,7 @@ function App() {
 
   const notify_error = () =>
     toast.error('Letter Failed to Submit', {
-      position: 'top-right',
+      position: 'bottom-center',
       autoClose: 5000,
       hideProgressBar: false,
       closeOnClick: true,

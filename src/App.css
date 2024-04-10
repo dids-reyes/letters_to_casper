@@ -17,7 +17,7 @@ body {
   text-align: center;
   width: 100%;
   padding: 0 20px;
-  max-width: 1200px;
+  /* max-width: 1200px; */
 }
 
 .header {
@@ -44,6 +44,8 @@ body {
 .add-button {
   text-align: center;
   margin-bottom: 30px;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
 .add-button button {
@@ -361,6 +363,8 @@ body {
   .letter-card {
     width: calc(40.33% - 1px); /* 33.33% width for each item with some margin */
     margin: 1px;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   }
 
   .logo {
