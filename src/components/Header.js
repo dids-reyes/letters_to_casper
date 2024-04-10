@@ -2,39 +2,29 @@ import React, {useState, useEffect} from 'react';
 import logo from '../lotties/ltc_logo_1.webp';
 import {Tooltip} from 'react-tooltip';
 import Typewriter from 'typewriter-effect';
+import {alt_letters} from '../data/alt_letters';
 
 function Header({searchTerm, handleSearchChange}) {
   const [showLogo, setShowLogo] = useState(true);
-  const [alternateMessage, setAlternateMessage] = useState('');
+  const [randomMessage, setRandomMessage] = useState('');
 
-  // Array of alternate messages
-  const letters = [
-    'Unsent messages are the ghosts of conversations that haunt us.',
-    // 'Every unsent message holds a story left untold.',
-    // 'Behind every unsent message lies an untold emotion.',
-    // "I have so much I want to say to you but I can't. All I can do is write it down and never send it - Sylvia Plath",
-    // 'Ang Pag-iibigan natin ay muling maisusulat sa Huling pagkakataon... at ito ang Kahilingan ko. - Carmela Isabella',
-  ];
+  const letters = alt_letters;
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setShowLogo(prevShowLogo => !prevShowLogo);
-    }, 10000);
-
-    // Clear interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []); // Run effect only once on component mount
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      // Display a random alternate message
+    let logoIntervalId;
+    if (showLogo) {
+      // Generate a random message from letters array
       const randomIndex = Math.floor(Math.random() * letters.length);
-      setAlternateMessage(letters[randomIndex]);
-    }, 5000);
+      setRandomMessage(letters[randomIndex]);
 
-    // Clear interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [letters]); // Run effect when letters array changes
+      logoIntervalId = setInterval(() => {
+        setShowLogo(prevShowLogo => !prevShowLogo);
+      }, 60000);
+    }
+
+    // Clear logo interval on component unmount
+    return () => clearInterval(logoIntervalId);
+  }, [showLogo, letters]);
 
   return (
     <div className="header">
@@ -53,9 +43,12 @@ function Header({searchTerm, handleSearchChange}) {
             options={{delay: 20, loop: false}}
             onInit={typewriter => {
               typewriter
-                .typeString(alternateMessage)
+                .typeString(randomMessage)
                 .pauseFor(3000)
-                .deleteAll(1)
+                .deleteAll(30)
+                .callFunction(() => {
+                  setShowLogo(true); // Reset showLogo to true immediately
+                })
                 .start();
             }}
           />
@@ -79,6 +72,7 @@ function Header({searchTerm, handleSearchChange}) {
             placeholder="🔍 Search Letters"
           />
         </a>
+        <Tooltip id="my-tooltip" />
       </div>
     </div>
   );
