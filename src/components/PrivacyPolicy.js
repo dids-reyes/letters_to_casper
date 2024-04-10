@@ -2,44 +2,49 @@ import React from 'react';
 
 function PrivacyPolicy() {
   return (
-    <div>
+    <div style={{margin: '20px'}}>
       <h1>Privacy Policy</h1>
       <p>Last updated: April 09, 2024</p>
       <p>
-        Welcome to Letters to Casper! Your privacy is important to us. This
-        Privacy Policy outlines how we collect, use, and disclose information
-        when you use our website.
+        Welcome to Letters to Casper! Protecting your privacy is fundamental to
+        us. This Privacy Policy outlines how we collect, use, and safeguard your
+        information when you use our website.
       </p>
 
       <h2>Information Collection and Use</h2>
       <p>
-        At Letters to Casper, we prioritize user privacy. We don't require
-        sign-ups or logins, and we do not track or store any personal
-        information. All users can use the website and post a letter
-        anonymously.
+        At Letters to Casper, we respect your privacy and operate on a principle
+        of minimal data collection. We do not require sign-ups or logins, and we
+        do not track or store any personal information. You can post letters
+        anonymously without disclosing any personal details.
       </p>
       <p>
-        Our platform does not send emails to users, and we do not engage in any
-        form of user tracking. While our website may display ads if approved by
-        Google AdSense, we do not utilize retargeting for advertising purposes.
+        We do not engage in email communications with users, and we do not
+        employ user tracking mechanisms. While we may display advertisements if
+        approved by Google AdSense, we do not utilize retargeting or
+        personalized advertising.
       </p>
       <p>
-        Users can contact us through letters2casper@gmail.com for any inquiries
-        or concerns. Please note that we do not accept payments online, nor do
-        we sell any services through our website.
+        If you need to reach out to us for any reason, you can do so at
+        letters2casper@gmail.com. Please note that we do not process online
+        payments or offer any services for sale through our website.
       </p>
 
       <h2>Compliance Statements</h2>
       <p>
-        We are committed to compliance with privacy regulations, including
-        CalOPPA, GDPR, and CCPA, to ensure the protection of user data and
-        rights.
+        We are committed to adhering to privacy regulations to ensure the
+        protection of your data and rights. Letters to Casper complies with the
+        California Online Privacy Protection Act (CalOPPA), the General Data
+        Protection Regulation (GDPR) for European Union citizens, and the
+        California Consumer Privacy Act (CCPA).
       </p>
 
       <h2>Contact Us</h2>
       <p>
         If you have any questions or concerns regarding our Privacy Policy,
-        please don't hesitate to reach out to us at letters2casper@gmail.com.
+        please do not hesitate to contact us at letters2casper@gmail.com. Your
+        privacy matters to us, and we are here to address any inquiries you may
+        have.
       </p>
     </div>
   );
