@@ -2,7 +2,7 @@
 import React from 'react';
 import {BsX} from 'react-icons/bs';
 import {BsMailboxFlag} from 'react-icons/bs';
-import '../App.css';
+import Typewriter from 'typewriter-effect';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   const formatTimestamp = timestamp => {
@@ -36,12 +36,34 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
             <div className="modal-body">
               <div className="form-group">
                 <div className="letter-info">
-                  <strong>From:</strong> {selectedLetter.from}
+                  <p>
+                    <Typewriter
+                      options={{delay: 50, loop: false}}
+                      onInit={typewriter => {
+                        typewriter
+                          .typeString(
+                            `<strong>From:</strong> ${selectedLetter.from}`,
+                          )
+                          .start();
+                      }}
+                    />
+                  </p>
                 </div>
               </div>
               <div className="form-group">
                 <div className="letter-info">
-                  <strong>To:</strong> {selectedLetter.to}
+                  <p>
+                    <Typewriter
+                      options={{delay: 50, loop: false}}
+                      onInit={typewriter => {
+                        typewriter
+                          .typeString(
+                            `<strong>To:</strong> ${selectedLetter.to}`,
+                          )
+                          .start();
+                      }}
+                    />
+                  </p>
                 </div>
               </div>
               <div>
@@ -49,12 +71,36 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   <BsMailboxFlag size="25px" />
                 </label>
                 <span className="timestamp-text">
-                  {formatTimestamp(selectedLetter.timestamp)}
+                  <Typewriter
+                    options={{delay: 70, loop: false}}
+                    onInit={typewriter => {
+                      typewriter
+                        .typeString(formatTimestamp(selectedLetter.timestamp))
+                        .start();
+                    }}
+                  />
                 </span>
               </div>
               <div className="form-group">
                 <div className="letter-text">
-                  <p>{selectedLetter.message}</p>
+                  <p>
+                    <Typewriter
+                      options={{delay: 50, loop: false}}
+                      onInit={typewriter => {
+                        typewriter
+                          .typeString(selectedLetter.message)
+                          // .callFunction(() => {
+                          //   console.log('String typed out!');
+                          // })
+                          // .pauseFor(1000)
+                          // .deleteAll()
+                          // .callFunction(() => {
+                          //   console.log('All strings were deleted');
+                          // })
+                          .start();
+                      }}
+                    />
+                  </p>
                 </div>
               </div>
             </div>
