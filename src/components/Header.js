@@ -58,7 +58,7 @@ function Header({searchTerm, handleSearchChange}) {
       <div className="search-bar">
         <a
           href
-          data-tooltip-id="my-tooltip"
+          data-tooltip-id="search_tooltip"
           data-tooltip-content="You can search by keywords, author or recipient"
           data-tooltip-place="left-start"
           data-tooltip-delay-show={3000}
@@ -72,7 +72,7 @@ function Header({searchTerm, handleSearchChange}) {
             placeholder="🔍 Search Letters"
           />
         </a>
-        <Tooltip id="my-tooltip" />
+        <Tooltip id="search_tooltip" />
       </div>
     </div>
   );
