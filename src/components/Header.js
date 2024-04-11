@@ -19,7 +19,7 @@ function Header({searchTerm, handleSearchChange}) {
 
       logoIntervalId = setInterval(() => {
         setShowLogo(prevShowLogo => !prevShowLogo);
-      }, 60000);
+      }, 120000);
     }
 
     // Clear logo interval on component unmount
