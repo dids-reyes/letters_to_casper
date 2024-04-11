@@ -17,8 +17,8 @@ body {
   text-align: center;
   width: 100%;
   padding: 0 20px;
-  /* max-width: 1400px; */
-  max-width: 1200px;
+  max-width: 1400px;
+  /* max-width: 1200px; */
 }
 
 .header {
@@ -321,6 +321,22 @@ body {
   ); /* Adjust the alpha value (0.8) for medium transparency */
   color: #fff; /* Adjust text color as needed */
   text-align: center;
+  padding: 10px 20px; /* Adjust padding as needed */
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer p,
+.footer-nav {
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.footer-nav a {
+  margin: 0 5px;
 }
 
 .fab {
@@ -385,6 +401,12 @@ body {
     bottom: 0;
     width: 100%;
     font-size: 11px;
+  }
+
+  .footer p,
+  .footer-nav {
+    margin: 5px 0;
+    font-size: 8px;
   }
 
   .app-container {
