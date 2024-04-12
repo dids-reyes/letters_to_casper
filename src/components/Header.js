@@ -38,7 +38,7 @@ function Header({searchTerm, handleSearchChange}) {
           height="70"
         />
       ) : (
-        <p className="alt-logo">
+        <div className="alt-logo">
           <Typewriter
             options={{delay: 20, loop: false}}
             onInit={typewriter => {
@@ -52,7 +52,8 @@ function Header({searchTerm, handleSearchChange}) {
                 .start();
             }}
           />
-        </p>
+          <br />
+        </div>
       )}
 
       <div className="search-bar">

@@ -6,7 +6,7 @@ import Letter from './Letter';
 import DetailsModal from './DetailsModal';
 import {AiFillMessage} from 'react-icons/ai';
 import {FaRegHandPointUp} from 'react-icons/fa';
-import Lottie from 'react-lottie';
+import Lottie from 'react-lottie-player';
 import ghost1 from '../lotties/ghost1.json';
 import under_construction from '../lotties/under_construction.json';
 import {GiMailbox} from 'react-icons/gi';
@@ -173,15 +173,14 @@ function Home() {
       />
       {loading === 1 ? ( // Render loading spinner or message if data is being fetched
         <div className="load-letters">
-          <Lottie
-            options={{
-              animationData: ghost1,
-              loop: true,
-              autoplay: true,
-            }}
-            height={300}
-            width={300}
-          />
+          <center>
+            <Lottie
+              loop
+              animationData={ghost1}
+              play
+              style={{width: 300, height: 300}}
+            />
+          </center>
           <div>
             <Typewriter
               options={{delay: 20, loop: false}}
@@ -198,15 +197,14 @@ function Home() {
         </div>
       ) : loading === 2 ? (
         <>
-          <Lottie
-            options={{
-              animationData: under_construction,
-              loop: true,
-              autoplay: true,
-            }}
-            height={300}
-            width={300}
-          />
+          <center>
+            <Lottie
+              loop
+              animationData={under_construction}
+              play
+              style={{width: 300, height: 300}}
+            />
+          </center>
           <p>
             Our service is temporarily unavailable as we're making improvements
             behind the scenes.
