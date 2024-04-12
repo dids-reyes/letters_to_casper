@@ -9,6 +9,7 @@ import {FaRegHandPointUp} from 'react-icons/fa';
 import Lottie from 'react-lottie-player';
 import ghost1 from '../lotties/ghost1.json';
 import under_construction from '../lotties/under_construction.json';
+import empty from '../lotties/empty2.json';
 import {GiMailbox} from 'react-icons/gi';
 import {ToastContainer, toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -142,6 +143,16 @@ function Home() {
     setShowAddModal(!showAddModal);
   };
 
+  const filteredLetters = letters.filter(letter => {
+    const {from, to, message} = letter;
+    const lowerCasedSearchTerm = searchTerm.toLowerCase();
+    return (
+      from.toLowerCase().includes(lowerCasedSearchTerm) ||
+      to.toLowerCase().includes(lowerCasedSearchTerm) ||
+      message.toLowerCase().includes(lowerCasedSearchTerm)
+    );
+  });
+
   return (
     <div className="app">
       <Header searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
@@ -215,24 +226,28 @@ function Home() {
         </>
       ) : loading === 0 ? (
         <div className="letters-container">
-          {letters
-            .filter(letter => {
-              const {from, to, message} = letter;
-              const lowerCasedSearchTerm = searchTerm.toLowerCase();
-              return (
-                from.toLowerCase().includes(lowerCasedSearchTerm) ||
-                to.toLowerCase().includes(lowerCasedSearchTerm) ||
-                message.toLowerCase().includes(lowerCasedSearchTerm)
-              );
-            })
-            .map((letter, index) => (
+          {filteredLetters.length > 0 ? (
+            filteredLetters.map((letter, index) => (
               <Letter
                 key={index}
                 letter={letter}
                 toggleDetailsModal={toggleDetailsModal}
                 setSelectedLetter={setSelectedLetter}
               />
-            ))}
+            ))
+          ) : (
+            <div>
+              <p>No Letters Found</p>
+              <center>
+                <Lottie
+                  loop
+                  animationData={empty}
+                  play
+                  style={{width: 300, height: 300}}
+                />
+              </center>
+            </div>
+          )}
         </div>
       ) : null}
       <DetailsModal
