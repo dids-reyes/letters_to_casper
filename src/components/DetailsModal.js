@@ -36,32 +36,30 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
             </div>
             <div className="modal-body">
               <div className="letter-info">
-                <p>
-                  <Typewriter
-                    options={{delay: 50, loop: false}}
-                    onInit={typewriter => {
-                      typewriter
-                        .typeString(
-                          `<strong>From:</strong> ${selectedLetter.from}`,
-                        )
-                        .start();
-                    }}
-                  />
-                </p>
+                <Typewriter
+                  options={{delay: 50, loop: false}}
+                  onInit={typewriter => {
+                    typewriter
+                      .typeString(
+                        `<strong>From:</strong> ${selectedLetter.from}`,
+                      )
+                      .start();
+                  }}
+                />
               </div>
+              <br />
               <div className="letter-info">
-                <p>
-                  <Typewriter
-                    options={{delay: 50, loop: false}}
-                    onInit={typewriter => {
-                      typewriter
-                        .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
-                        .start();
-                    }}
-                  />
-                </p>
+                <Typewriter
+                  options={{delay: 50, loop: false}}
+                  onInit={typewriter => {
+                    typewriter
+                      .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
+                      .start();
+                  }}
+                />
               </div>
               <div>
+                <br />
                 <label htmlFor="timestamp">
                   <BsMailboxFlag size="25px" />
                 </label>
@@ -84,10 +82,11 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   </span>
                 </div>
                 <Tooltip id="timezone_tooltip" />
+                <br />
               </div>
               <div className="form-group">
                 <div className="letter-text">
-                  <p>
+                  <span>
                     <Typewriter
                       options={{delay: 50, loop: false}}
                       onInit={typewriter => {
@@ -104,7 +103,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                           .start();
                       }}
                     />
-                  </p>
+                  </span>
                 </div>
               </div>
             </div>
