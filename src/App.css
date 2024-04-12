@@ -22,7 +22,7 @@ body {
 }
 
 .header {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .app-title {
@@ -115,8 +115,8 @@ body {
 
 .modal-dialog {
   background-color: #fff;
-  width: 90%;
-  max-width: 500px;
+  width: 100%;
+  max-width: 550px;
   padding: 20px;
   border-radius: 8px;
   background-color: #fafaed;
@@ -281,6 +281,18 @@ body {
   color: #777;
 }
 
+.disabled-button {
+  cursor: not-allowed;
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 8px 16px;
+  border: none;
+  font-size: 15px;
+}
+
 .submit-button {
   display: flex;
   align-items: center;
@@ -312,17 +324,31 @@ body {
 .footer {
   position: fixed;
   bottom: 0;
+  left: 50%; /* Center the footer horizontally */
+  transform: translateX(
+    -50%
+  ); /* Adjust the position based on half of the footer's width */
   width: 100%;
-  background-color: rgba(
-    55,
-    114,
-    255,
-    0.8
-  ); /* Adjust the alpha value (0.8) for medium transparency */
-  color: #fff; /* Adjust text color as needed */
+  background-color: rgba(55, 114, 255, 0.8);
+  color: #fff;
   text-align: center;
-  padding: 10px 20px; /* Adjust padding as needed */
+  padding: 10px 20px;
 }
+
+/* .footer { */
+/*   position: fixed; */
+/*   bottom: 0; */
+/*   width: 100%; */
+/*   background-color: rgba( */
+/*     55, */
+/*     114, */
+/*     255, */
+/*     0.8 */
+/*   ); /1* Adjust the alpha value (0.8) for medium transparency *1/ */
+/*   color: #fff; /1* Adjust text color as needed *1/ */
+/*   text-align: center; */
+/*   /1* padding: 10px 20px; /2* Adjust padding as needed *2/ *1/ */
+/* } */
 
 .footer-content {
   max-width: 1200px;
@@ -382,18 +408,21 @@ body {
 @media only screen and (max-width: 768px) {
   .letters-container {
     flex-wrap: wrap;
+    max-width: 100%;
   }
 
   .letter-card {
     width: calc(40.33% - 1px); /* 33.33% width for each item with some margin */
     margin: 1px;
+    /* margin-left: 20px; */
     -webkit-tap-highlight-color: transparent;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   }
 
   .logo {
     height: 50px;
-    max-width: 70%;
+    max-width: 80%;
+    margin: 0 auto; /* Center the logo horizontally */
   }
 
   .footer {
@@ -406,30 +435,25 @@ body {
   .footer p,
   .footer-nav {
     margin: 5px 0;
-    font-size: 8px;
+    font-size: 9px;
   }
 
   .app-container {
-    width: 100%;
+    width: 100%; /* Ensure the container spans the full width of the viewport */
+    overflow-x: hidden; /* Hide horizontal overflow */
   }
 
   .search-bar {
-    margin: 0 auto; /* Center the search bar horizontally */
+    /* margin: 0 auto; /1* Center the search bar horizontally *1/ */
     width: 90%;
     margin-left: 12px;
     margin-bottom: 20px;
   }
 
-  .modal {
-  }
-
-  .modal-add-dialog {
-  }
-
   .form-group label {
     display: flex; /* Ensure labels appear on their own line */
     font-weight: bold; /* Optionally, make labels bold for emphasis */
-    width: 70px;
+    width: 65px;
   }
 
   .form-group input {
@@ -439,4 +463,40 @@ body {
   .form-group textarea {
     box-sizing: border-box; /* Include padding and border in the width calculation */
   }
+
+  .fab {
+    position: fixed;
+    bottom: 60px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 24px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .fab:hover {
+    background-color: #0056b3;
+  }
+
+  .add-button button {
+    display: inline-block;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #0056b3;
+    color: #fff;
+    transition: background-color 0.3s, transform 0.3s;
+  }
+}
+
+.load-letters {
+  margin-left: 0px;
 }

@@ -19,10 +19,14 @@ function PrivacyPolicy() {
         anonymously without disclosing any personal details.
       </p>
       <p>
-        We don't engage in email communications with users, and we don't employ
-        user tracking mechanisms. While we may display advertisements if
-        approved by Google AdSense, we don't utilize retargeting or personalized
-        advertising.
+        We do collect and store all submitted letters solely for the purpose of
+        facilitating the display and sharing of user-generated content on our
+        website. However, we don't use this information for commercial purposes
+        or to extract any personal information from users.
+      </p>
+      <p>
+        We may display pop-up advertisements from approved advertising networks.
+        However, we don't utilize retargeting or personalized advertising.
       </p>
       <p>
         If you need to reach out to us for any reason, you can do so at

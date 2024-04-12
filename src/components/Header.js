@@ -56,8 +56,8 @@ function Header({searchTerm, handleSearchChange}) {
       )}
 
       <div className="search-bar">
-        <a
-          href
+        <div
+          // eslint-disable-next-line
           data-tooltip-id="search_tooltip"
           data-tooltip-content="You can search by keywords, author or recipient"
           data-tooltip-place="left-start"
@@ -71,7 +71,7 @@ function Header({searchTerm, handleSearchChange}) {
             onChange={handleSearchChange}
             placeholder="🔍 Search Letters"
           />
-        </a>
+        </div>
         <Tooltip id="search_tooltip" />
       </div>
     </div>
