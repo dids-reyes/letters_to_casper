@@ -66,8 +66,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   <BsMailboxFlag size="25px" />
                 </label>
 
-                <a
-                  href
+                <div
                   data-tooltip-id="timezone_tooltip"
                   data-tooltip-content="Philippine Standard Time (UTC+08)"
                   data-tooltip-place="top"
@@ -83,7 +82,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                       }}
                     />
                   </span>
-                </a>
+                </div>
                 <Tooltip id="timezone_tooltip" />
               </div>
               <div className="form-group">
