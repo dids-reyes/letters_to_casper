@@ -366,6 +366,8 @@ body {
 }
 
 .fab {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   position: fixed;
   bottom: 60px;
   right: 20px;
@@ -499,4 +501,8 @@ body {
 
 .load-letters {
   margin-left: 0px;
+}
+
+a[data-scroll] {
+  color: white; /* Set the text color to white */
 }
