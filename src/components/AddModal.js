@@ -97,7 +97,9 @@ function AddModal({
 
 Hello...
 
-Goodbye...`}
+Goodbye...
+
+https://open.spotify.com/track/`}
                     className="big-textarea"
                     value={newLetter.message}
                     maxLength="600"
