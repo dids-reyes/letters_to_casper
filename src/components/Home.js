@@ -15,11 +15,17 @@ import {ToastContainer, toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Typewriter from 'typewriter-effect';
 import SmoothScroll from 'smooth-scroll';
+import {IoMailOpenOutline} from 'react-icons/io5';
+import {IoMailUnreadOutline} from 'react-icons/io5';
+import {Tooltip} from 'react-tooltip';
 import '../App.css';
 
 function Home() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [letters, setLetters] = useState([]);
+  const [letters, setLetters] = useState({
+    messages: [],
+    counts: {approved: 0, unapproved: 0},
+  });
   const [showAddModal, setShowAddModal] = useState(false);
   const [newLetter, setNewLetter] = useState({
     from: '',
@@ -92,7 +98,11 @@ function Home() {
         notify_error();
       }
 
-      setLetters([...letters, messageData]);
+      // Update the state correctly by spreading the current state and updating the messages array
+      setLetters(prevState => ({
+        ...prevState,
+        messages: [...prevState.messages, messageData],
+      }));
       setNewLetter({from: '', to: '', message: ''});
       notify_success();
 
@@ -144,7 +154,7 @@ function Home() {
     setShowAddModal(!showAddModal);
   };
 
-  const filteredLetters = letters.filter(letter => {
+  const filteredLetters = letters.messages.filter(letter => {
     const {from, to, message} = letter;
     const lowerCasedSearchTerm = searchTerm.toLowerCase();
     return (
@@ -162,6 +172,39 @@ function Home() {
           <AiFillMessage className="button-icon" size="20px" />
           Leave a Letter
         </button>
+        <div
+          className="messages-count"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            margin: '15px',
+            opacity: 0.5,
+          }}
+        >
+          <span> {letters.counts.approved}</span>
+          &nbsp;
+          <div
+            data-tooltip-id="al"
+            data-tooltip-content="Approved Letters"
+            data-tooltip-place="left"
+            data-tooltip-variant="info"
+          >
+            <IoMailOpenOutline size={19} />
+          </div>
+          <Tooltip id="al" />
+          &nbsp; &nbsp; &nbsp; &nbsp;
+          <span> {letters.counts.unapproved}</span>
+          &nbsp;
+          <div
+            data-tooltip-id="pl"
+            data-tooltip-content="Pending Letters for Approval"
+            data-tooltip-place="right"
+            data-tooltip-variant="info"
+          >
+            <IoMailUnreadOutline size={20} />
+          </div>
+          <Tooltip id="pl" />
+        </div>
       </div>
       <ToastContainer
         containerId="notify"
