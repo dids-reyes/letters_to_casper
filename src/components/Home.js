@@ -172,39 +172,41 @@ function Home() {
           <AiFillMessage className="button-icon" size="20px" />
           Leave a Letter
         </button>
-        <div
-          className="messages-count"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            margin: '15px',
-            opacity: 0.5,
-          }}
-        >
-          <span> {letters.counts.approved}</span>
-          &nbsp;
+        {loading === 0 && (
           <div
-            data-tooltip-id="al"
-            data-tooltip-content="Approved Letters"
-            data-tooltip-place="left"
-            data-tooltip-variant="info"
+            className="messages-count"
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              margin: '15px',
+              opacity: 0.5,
+            }}
           >
-            <IoMailOpenOutline size={19} />
+            <span> {letters.counts.approved}</span>
+            &nbsp;
+            <div
+              data-tooltip-id="al"
+              data-tooltip-content="Approved Letters"
+              data-tooltip-place="left"
+              data-tooltip-variant="info"
+            >
+              <IoMailOpenOutline size={19} />
+            </div>
+            <Tooltip id="al" />
+            &nbsp; &nbsp; &nbsp; &nbsp;
+            <span> {letters.counts.unapproved}</span>
+            &nbsp;
+            <div
+              data-tooltip-id="pl"
+              data-tooltip-content="Pending Letters for Approval"
+              data-tooltip-place="right"
+              data-tooltip-variant="info"
+            >
+              <IoMailUnreadOutline size={20} />
+            </div>
+            <Tooltip id="pl" />
           </div>
-          <Tooltip id="al" />
-          &nbsp; &nbsp; &nbsp; &nbsp;
-          <span> {letters.counts.unapproved}</span>
-          &nbsp;
-          <div
-            data-tooltip-id="pl"
-            data-tooltip-content="Pending Letters for Approval"
-            data-tooltip-place="right"
-            data-tooltip-variant="info"
-          >
-            <IoMailUnreadOutline size={20} />
-          </div>
-          <Tooltip id="pl" />
-        </div>
+        )}
       </div>
       <ToastContainer
         containerId="notify"
