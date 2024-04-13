@@ -151,6 +151,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
               {showSpotify && trackId && (
                 <div>
                   <iframe
+                    title="spotify-preview"
                     style={{border: '12px'}}
                     src={`https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`}
                     width="100%"
