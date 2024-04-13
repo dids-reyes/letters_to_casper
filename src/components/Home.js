@@ -14,6 +14,7 @@ import {GiMailbox} from 'react-icons/gi';
 import {ToastContainer, toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Typewriter from 'typewriter-effect';
+import SmoothScroll from 'smooth-scroll';
 import '../App.css';
 
 function Home() {
@@ -106,11 +107,13 @@ function Home() {
     setShowDetailsModal(!showDetailsModal);
   };
 
+  const scroll = new SmoothScroll('a[href*="#"]', {
+    speed: 800, // Adjust the scrolling speed as needed
+    speedAsDuration: true, // Use speed as the duration for the scroll animation
+  });
+
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    scroll.animateScroll(0); // Scroll to the top of the page
   };
 
   const notify_success = () =>
@@ -254,7 +257,9 @@ function Home() {
         selectedLetter={selectedLetter}
       />
       <button className="fab" onClick={scrollToTop}>
-        <FaRegHandPointUp />
+        <a data-scroll href="#logo-ltc">
+          <FaRegHandPointUp />
+        </a>
       </button>
 
       <Footer />

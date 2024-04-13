@@ -31,6 +31,7 @@ function Header({searchTerm, handleSearchChange}) {
       <br />
       {showLogo ? (
         <img
+          id="logo-ltc"
           className="logo"
           src={logo}
           alt="Letters to Casper"
@@ -55,7 +56,6 @@ function Header({searchTerm, handleSearchChange}) {
           <br />
         </div>
       )}
-
       <div className="search-bar">
         <div
           // eslint-disable-next-line
