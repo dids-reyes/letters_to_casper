@@ -131,7 +131,6 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
               <div className="form-group">
                 <div className="letter-text">
                   <span>
-                    {console.log(newMessage)}
                     <Typewriter
                       options={{delay: 50, loop: false}}
                       onInit={typewriter => {
