@@ -92,11 +92,9 @@ function Home() {
       }
 
       setLetters([...letters, messageData]);
-      // If message added successfully, reset the newLetter state
       setNewLetter({from: '', to: '', message: ''});
       notify_success();
 
-      // Optionally, fetch updated letters from backend after successful addition
       // fetchLetters();
     } catch (error) {
       notify_error();
