@@ -139,7 +139,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 <div className="letter-text">
                   <span>
                     <Typewriter
-                      options={{delay: 50, loop: false}}
+                      options={{delay: 40, loop: false}}
                       onInit={typewriter => {
                         typewriter
                           .typeString(newMessage)
