@@ -135,7 +135,7 @@ function Home() {
       pauseOnHover: false,
       draggable: true,
       progress: undefined,
-      theme: 'light',
+      theme: 'dark',
     });
 
   const notify_error = () =>
@@ -147,7 +147,7 @@ function Home() {
       pauseOnHover: false,
       draggable: true,
       progress: undefined,
-      theme: 'light',
+      theme: 'dark',
     });
 
   const toggleAddModal = () => {

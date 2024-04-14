@@ -37,7 +37,6 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
       // Extract the track ID from the match
       const trackId = match[1];
 
-      // Remove the entire Spotify link from the message and any preceding whitespace
       const newMessage = message
         .replace(spotifyLinkRegex, '')
         .replace(/\s*$/, '');
@@ -50,7 +49,6 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     }
   };
 
-  // Ensure selectedLetter is defined and selectedLetter.message is truthy before calling extractSpotifyLink
   const {trackId, newMessage} =
     selectedLetter && selectedLetter.message
       ? extractSpotifyLink(selectedLetter.message)
@@ -87,6 +85,9 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                       .typeString(
                         `<strong>From:</strong> ${selectedLetter.from}`,
                       )
+                      .callFunction(state => {
+                        state.elements.cursor.remove();
+                      })
                       .start();
                   }}
                 />
@@ -98,6 +99,9 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   onInit={typewriter => {
                     typewriter
                       .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
+                      .callFunction(state => {
+                        state.elements.cursor.remove();
+                      })
                       .start();
                   }}
                 />
@@ -120,6 +124,9 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                       onInit={typewriter => {
                         typewriter
                           .typeString(formatTimestamp(selectedLetter.timestamp))
+                          .callFunction(state => {
+                            state.elements.cursor.remove();
+                          })
                           .start();
                       }}
                     />
@@ -138,7 +145,9 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                           .typeString(newMessage)
                           .pauseFor(1000)
                           .callFunction(() => {
-                            setShowSpotify(true);
+                            if (trackId) {
+                              setShowSpotify(true);
+                            }
                           })
                           .start();
                       }}
@@ -146,7 +155,6 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   </span>
                 </div>
               </div>
-
               {showSpotify && trackId && (
                 <div>
                   <iframe
