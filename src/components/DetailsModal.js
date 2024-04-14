@@ -143,7 +143,6 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                       onInit={typewriter => {
                         typewriter
                           .typeString(newMessage)
-                          .pauseFor(1000)
                           .callFunction(() => {
                             if (trackId) {
                               setShowSpotify(true);
