@@ -415,6 +415,20 @@ body {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   }
 
+  .letter-info {
+    white-space: pre-wrap;
+    text-align: left;
+    font-family: monospace;
+    font-size: 14px;
+  }
+
+  .letter-text {
+    font-family: monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    text-align: left;
+  }
+
   .logo {
     height: 50px;
     max-width: 80%;

@@ -63,7 +63,7 @@ function Home() {
     };
 
     fetchLetters();
-  }, [render_url]); // Empty dependency array ensures the effect runs only once when the component mounts
+  }, [render_url]);
 
   const handleAddLetter = async () => {
     try {
@@ -193,12 +193,12 @@ function Home() {
               <IoMailOpenOutline size={19} />
             </div>
             <Tooltip id="al" />
-            &nbsp; &nbsp; &nbsp; &nbsp;
+            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
             <span> {letters.counts.unapproved}</span>
             &nbsp;
             <div
               data-tooltip-id="pl"
-              data-tooltip-content="Pending Letters for Approval"
+              data-tooltip-content="Pending Letters"
               data-tooltip-place="right"
               data-tooltip-variant="info"
             >
