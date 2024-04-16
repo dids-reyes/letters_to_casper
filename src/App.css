@@ -529,6 +529,10 @@ body {
     font-size: 12px;
     color: #333; /* Adjust color as needed */
   }
+
+  .big-textarea {
+    height: 170px;
+  }
 }
 
 .load-letters {
