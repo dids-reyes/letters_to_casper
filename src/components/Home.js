@@ -243,7 +243,9 @@ function Home() {
               options={{delay: 20, loop: false}}
               onInit={typewriter => {
                 typewriter
-                  .typeString('Please wait while we load all letters...')
+                  .typeString(
+                    'Please wait while we load all letters... This may take up to 1 minute',
+                  )
                   .pauseFor(3000)
                   .start();
               }}
