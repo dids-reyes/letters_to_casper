@@ -29,5 +29,5 @@ npm run start
 👤 **Dids Irwyn Reyes**
 
 - Website: https://dids.netlify.app/
-- Github: [@skedaddl3](https://github.com/skedaddl3)
+- Github: [@dids-reyes](https://github.com/dids-reyes)
 - LinkedIn: [@dids-irwyn-reyes-605214159](https://linkedin.com/in/dids-irwyn-reyes-605214159)
