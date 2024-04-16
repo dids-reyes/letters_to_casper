@@ -6,6 +6,8 @@
   </a>
 </p>
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/f9ac3f9c-1a10-4add-bd16-28860b83c189/deploy-status)](https://app.netlify.com/sites/letterstocasper/deploys)
+
 > Leave a letter for someone
 
 ### ✨ [Demo](https://letterstocasper.netlify.app/)
@@ -26,13 +28,6 @@ npm run start
 
 👤 **Dids Irwyn Reyes**
 
-* Website: https://dids.netlify.app/
-* Github: [@skedaddl3](https://github.com/skedaddl3)
-* LinkedIn: [@dids-irwyn-reyes-605214159](https://linkedin.com/in/dids-irwyn-reyes-605214159)
-
-## Show your support
-
-Give a ⭐️ if this project helped you!
-
-***
-_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
+- Website: https://dids.netlify.app/
+- Github: [@skedaddl3](https://github.com/skedaddl3)
+- LinkedIn: [@dids-irwyn-reyes-605214159](https://linkedin.com/in/dids-irwyn-reyes-605214159)
