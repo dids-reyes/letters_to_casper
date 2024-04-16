@@ -2,14 +2,14 @@ import React from 'react';
 
 function AboutUs() {
   return (
-    <div style={{margin: '20px'}}>
+    <div className="container" style={{margin: '20px'}}>
       <h1>About Us</h1>
       <p>
-        Welcome to Letters to Casper, where heartfelt sentiments find a voice in
-        the silence of anonymity. Our platform provides a sanctuary for
-        individuals to express their deepest emotions through open letters,
-        whether to lovers, past lovers, exes, friends, siblings, parents, or
-        even to their future selves.
+        Welcome to Letters to Casper, a sanctuary where heartfelt sentiments
+        find expression in the embrace of anonymity. While crafted with
+        Filipinos in mind, all are welcome to utilize our platform, providing a
+        safe space to bare their souls through open letters, addressing their
+        special someone, or even someone from their past.
       </p>
       <p>
         The inspiration behind our platform stems from the enigmatic character

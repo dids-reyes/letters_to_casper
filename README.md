@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to Letters to Casper 👋</h1>
+<h1 align="center">Letters to Casper</h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-2.2.10-blue.svg?cacheSeconds=2592000" />
   <a href="#" target="_blank">
@@ -8,7 +8,7 @@
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/f9ac3f9c-1a10-4add-bd16-28860b83c189/deploy-status)](https://app.netlify.com/sites/letterstocasper/deploys)
 
-> Leave a letter for someone
+> A sanctuary where heartfelt sentiments find expression in the embrace of anonymity.
 
 ### ✨ [Demo](https://letterstocasper.netlify.app/)
 
