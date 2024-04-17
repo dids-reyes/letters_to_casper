@@ -182,27 +182,26 @@ function Home() {
               opacity: 0.5,
             }}
           >
-            <span> {letters.counts.approved}</span>
-            &nbsp;
+            {/* <span> {letters.counts.approved}</span> */}
             <div
               data-tooltip-id="al"
-              data-tooltip-content="Approved Letters"
+              data-tooltip-content={`Approved Letters: ${letters.counts.approved}`}
               data-tooltip-place="left"
               data-tooltip-variant="info"
             >
-              <IoMailOpenOutline size={19} />
+              <IoMailOpenOutline size={24} />
             </div>
             <Tooltip id="al" />
             &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-            <span> {letters.counts.unapproved}</span>
+            {/* <span> {letters.counts.unapproved}</span> */}
             &nbsp;
             <div
               data-tooltip-id="pl"
-              data-tooltip-content="Pending Letters"
+              data-tooltip-content={`Pending Letters: ${letters.counts.unapproved}`}
               data-tooltip-place="right"
               data-tooltip-variant="info"
             >
-              <IoMailUnreadOutline size={20} />
+              <IoMailUnreadOutline size={25} />
             </div>
             <Tooltip id="pl" />
           </div>
