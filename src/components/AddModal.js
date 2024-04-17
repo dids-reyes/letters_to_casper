@@ -21,7 +21,7 @@ function AddModal({
 
   const handleSubmit = () => {
     const confirmAction = window.confirm(
-      'When Approved this will post and display your letter Publicly. Are you sure you want to proceed?',
+      'When approved, your letter will be posted and shown publicly. Are you sure you want to proceed?',
     );
     if (confirmAction) {
       handleAddLetter(); // Call handleAddLetter function when the user submits the message
