@@ -46,14 +46,16 @@ function AddModal({
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label htmlFor="from">From:</label>
+                <label htmlFor="from" className="label-top-left">
+                  From:
+                </label>
                 <input
                   autoComplete="off"
                   required
                   type="text"
                   id="from"
                   placeholder="e.g., Christoph | Chris | C"
-                  className="form-control error"
+                  className="form-control"
                   value={newLetter.from}
                   maxLength="30"
                   onChange={event =>
@@ -71,14 +73,16 @@ function AddModal({
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="to">To:</label>
+                <label htmlFor="to" className="label-top-left">
+                  To:
+                </label>
                 <input
                   autoComplete="off"
                   required
                   type="text"
                   id="to"
                   placeholder="e.g., Emily Brown | Em | E"
-                  className="form-control error"
+                  className="form-control error full-width"
                   value={newLetter.to}
                   maxLength="30"
                   onChange={event =>
@@ -87,7 +91,9 @@ function AddModal({
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="message">Message:</label>
+                <label htmlFor="message" className="label-top-left">
+                  Message:
+                </label>
                 <span>
                   <textarea
                     autoComplete="off"
@@ -100,7 +106,7 @@ Hello...
 Goodbye...
 
 https://open.spotify.com/track/`}
-                    className="big-textarea"
+                    className="big-textarea full-width"
                     value={newLetter.message}
                     maxLength="600"
                     onChange={event =>

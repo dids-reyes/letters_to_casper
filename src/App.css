@@ -144,7 +144,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
 }
 
 .modal-title {
@@ -478,19 +477,19 @@ body {
     margin-bottom: 20px;
   }
 
-  .form-group label {
-    display: flex; /* Ensure labels appear on their own line */
-    font-weight: bold; /* Optionally, make labels bold for emphasis */
-    width: 65px;
-  }
+  /* .form-group label { */
+  /*   display: flex; /1* Ensure labels appear on their own line *1/ */
+  /*   font-weight: bold; /1* Optionally, make labels bold for emphasis *1/ */
+  /*   width: 65px; */
+  /* } */
 
-  .form-group input {
-    width: 1px;
-  }
+  /* .form-group input { */
+  /*   width: 1px; */
+  /* } */
 
-  .form-group textarea {
-    box-sizing: border-box; /* Include padding and border in the width calculation */
-  }
+  /* .form-group textarea { */
+  /*   box-sizing: border-box; /1* Include padding and border in the width calculation *1/ */
+  /* } */
 
   .fab {
     position: fixed;
@@ -531,7 +530,43 @@ body {
   }
 
   .big-textarea {
-    height: 170px;
+    height: 130px;
+    width: 100%;
+  }
+
+  .big-textarea::placeholder {
+    font-size: 15px;
+  }
+
+  .form-group {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    width: 0px;
+    margin-right: 0px;
+  }
+
+  .label-top-left {
+    display: block;
+    float: left;
+  }
+
+  .full-width {
+    width: calc(100% - 20px); /* Adjust the padding */
+  }
+
+  .modal {
+  }
+
+  .modal-add-dialog {
+  }
+
+  .modal-body {
+  }
+
+  .modal-body .form-group {
   }
 }
 
