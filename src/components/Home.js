@@ -40,14 +40,26 @@ function Home() {
     setSearchTerm(event.target.value);
   };
 
-  const render_url = process.env.REACT_APP_API_URL;
-  const [loading, setLoading] = useState(1); // State to track loading state
+  let render_url;
+  let api_key = process.env.REACT_APP_API_KEY;
+
+  if (process.env.NODE_ENV === 'development') {
+    render_url = 'http://localhost:8000/api/messages';
+  } else {
+    render_url = process.env.REACT_APP_API_URL;
+  }
+
+  const [loading, setLoading] = useState(1);
 
   useEffect(() => {
     const fetchLetters = async () => {
       setLoading(1);
       try {
-        const response = await fetch(render_url);
+        const response = await fetch(render_url, {
+          headers: {
+            'x-api-key': api_key,
+          },
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch letters');
         }
@@ -63,7 +75,7 @@ function Home() {
     };
 
     fetchLetters();
-  }, [render_url]);
+  }, [render_url, api_key]);
 
   const handleAddLetter = async () => {
     try {
@@ -89,6 +101,7 @@ function Home() {
       const response = await fetch(render_url, {
         method: 'POST',
         headers: {
+          'x-api-key': api_key,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(messageData),
@@ -98,7 +111,6 @@ function Home() {
         notify_error();
       }
 
-      // Update the state correctly by spreading the current state and updating the messages array
       setLetters(prevState => ({
         ...prevState,
         messages: [...prevState.messages, messageData],
