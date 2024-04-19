@@ -307,7 +307,7 @@ body {
   border-radius: 8px;
   padding: 8px 16px;
   border: none;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .submit-button {
@@ -319,7 +319,7 @@ body {
   border: none;
   background-color: #007bff;
   color: #fff;
-  font-size: 15px;
+  font-size: 13px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
@@ -576,4 +576,23 @@ body {
 
 a[data-scroll] {
   color: white; /* Set the text color to white */
+}
+
+.preview-button {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 8px 16px;
+  border: none;
+  background-color: #fefbf0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.preview-button:hover {
+  background-color: #0056b3;
+  color: #fff;
 }
