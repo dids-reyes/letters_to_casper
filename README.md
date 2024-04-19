@@ -15,7 +15,7 @@
 ## Install
 
 ```sh
-npm install
+npm install --legacy-peer-deps
 ```
 
 ## Usage
@@ -24,10 +24,6 @@ npm install
 npm run start
 ```
 
-## Author
+## Prerequisites
 
-👤 **Dids Irwyn Reyes**
-
-- Website: https://dids.netlify.app/
-- Github: [@dids-reyes](https://github.com/dids-reyes)
-- LinkedIn: [@dids-irwyn-reyes-605214159](https://linkedin.com/in/dids-irwyn-reyes-605214159)
+Before running the project, make sure you have set up a .env file containing the necessary environment variables. This file should include configurations such as API URLs and API keys.

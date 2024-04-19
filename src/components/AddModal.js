@@ -15,22 +15,22 @@ function AddModal({
   useEffect(() => {
     // Enable or disable the submit button based on the form fields
     const shouldDisableSubmit =
-      !newLetter.from || !newLetter.to || !newLetter.message;
+      !newLetter.from ||
+      !newLetter.to ||
+      !newLetter.message ||
+      newLetter.message.length < 10;
     setIsSubmitDisabled(shouldDisableSubmit);
   }, [newLetter]);
 
   const handleSubmit = () => {
     const confirmAction = window.confirm(
-      'When approved, your letter will be posted and shown publicly. Are you sure you want to proceed?',
+      'When approved, your letter will be public. Proceed?',
     );
     if (confirmAction) {
-      handleAddLetter(); // Call handleAddLetter function when the user submits the message
-      // Optionally, clear the form fields
+      handleAddLetter();
       setNewLetter({from: '', to: '', message: ''});
-      // Optionally, close the modal after submitting the message
       toggleAddModal();
     } else {
-      // Handle cancel action
     }
   };
 
