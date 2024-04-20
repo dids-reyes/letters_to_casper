@@ -4,7 +4,7 @@ import {BsX} from 'react-icons/bs';
 import {BsMailboxFlag} from 'react-icons/bs';
 import Typewriter from 'typewriter-effect';
 import {Tooltip} from 'react-tooltip';
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   const formatTimestamp = timestamp => {
@@ -85,8 +85,24 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
 
   const [showSpotify, setShowSpotify] = useState(false);
   const [showYoutube, setShowYoutube] = useState(false);
+  const [iframeHeight, setIframeHeight] = useState(152);
 
-  console.log(linkId);
+  useEffect(() => {
+    function adjustIframeHeight() {
+      if (window.innerWidth < 768) {
+        setIframeHeight(152);
+      } else {
+        setIframeHeight(280);
+      }
+    }
+
+    window.addEventListener('resize', adjustIframeHeight);
+    adjustIframeHeight();
+
+    return () => {
+      window.removeEventListener('resize', adjustIframeHeight);
+    };
+  }, []);
 
   const handleCloseModal = () => {
     toggleDetailsModal();
@@ -206,10 +222,10 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 </div>
               )}
               {showYoutube && linkId && (
-                <div className="">
+                <div>
                   <iframe
                     width="100%"
-                    height="252"
+                    height={iframeHeight}
                     src={`https://www.youtube-nocookie.com/embed/${linkId}&amp;controls=0`}
                     title="YouTube video player"
                     frameborder="0"
