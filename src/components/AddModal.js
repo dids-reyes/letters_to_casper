@@ -121,7 +121,7 @@ Hello...
 
 Goodbye...
 
-https://open.spotify.com/track/`}
+Link (Spotify, YouTube)`}
                         className="big-textarea full-width"
                         value={newLetter.message}
                         maxLength="600"

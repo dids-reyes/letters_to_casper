@@ -4,7 +4,7 @@ import {BsX} from 'react-icons/bs';
 import {BsMailboxFlag} from 'react-icons/bs';
 import Typewriter from 'typewriter-effect';
 import {Tooltip} from 'react-tooltip';
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   const formatTimestamp = timestamp => {
@@ -20,7 +20,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     return new Date(timestamp).toLocaleString('en-US', options);
   };
 
-  const extractSpotifyLink = message => {
+  const extractMediaLinks = message => {
     if (!message) {
       // Return null if message is null or undefined
       return null;
@@ -30,35 +30,84 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     const spotifyLinkRegex =
       /https:\/\/open\.spotify\.com\/track\/([a-zA-Z0-9]+)\?.*/;
 
-    // Execute the regex to find the link in the message
-    const match = message.match(spotifyLinkRegex);
+    // Regular expression to find the YouTube video link
+    const youtubeLinkRegex = /https:\/\/youtu\.be\/(.*)/;
 
-    if (match && match[1]) {
-      // Extract the track ID from the match
-      const trackId = match[1];
+    // Execute the regex to find the links in the message
+    const spotifyMatch = message.match(spotifyLinkRegex);
+    const youtubeMatch = message.match(youtubeLinkRegex);
 
+    const extractedMedia = {};
+
+    if (spotifyMatch && spotifyMatch[1]) {
+      // Extract the Spotify track ID from the match
+      const trackId = spotifyMatch[1];
       const newMessage = message
         .replace(spotifyLinkRegex, '')
         .replace(/\s*$/, '');
 
-      // Return an object with the track ID and the updated message
-      return {trackId, newMessage};
-    } else {
-      // If no match found, return the original message
-      return {trackId: null, newMessage: message};
+      extractedMedia.spotifyLink = {id: trackId, newMessage};
     }
+
+    if (youtubeMatch && youtubeMatch[1]) {
+      // Extract the YouTube video ID from the match
+      const videoId = youtubeMatch[1];
+      const newMessage = message
+        .replace(youtubeLinkRegex, '')
+        .replace(/\s*$/, '');
+
+      extractedMedia.youtubeLink = {id: videoId, newMessage};
+    }
+
+    if (Object.keys(extractedMedia).length === 0) {
+      // If no match found, return the original message
+      return {
+        spotifyLink: {id: null, newMessage: message},
+        youtubeLink: {id: null, newMessage: message},
+      };
+    }
+
+    return extractedMedia;
   };
 
-  const {trackId, newMessage} =
+  const {spotifyLink, youtubeLink} =
     selectedLetter && selectedLetter.message
-      ? extractSpotifyLink(selectedLetter.message)
-      : {trackId: null, newMessage: null};
+      ? extractMediaLinks(selectedLetter.message)
+      : {
+          spotifyLink: {id: null, newMessage: null},
+          youtubeLink: {id: null, newMessage: null},
+          originalMessage: null,
+        };
+
+  const extracted_data = spotifyLink != null ? spotifyLink : youtubeLink;
+
+  const {id: linkId, newMessage: message} = extracted_data;
 
   const [showSpotify, setShowSpotify] = useState(false);
+  const [showYoutube, setShowYoutube] = useState(false);
+  const [iframeHeight, setIframeHeight] = useState(152);
+
+  useEffect(() => {
+    function adjustIframeHeight() {
+      if (window.innerWidth < 768) {
+        setIframeHeight(152);
+      } else {
+        setIframeHeight(280);
+      }
+    }
+
+    window.addEventListener('resize', adjustIframeHeight);
+    adjustIframeHeight();
+
+    return () => {
+      window.removeEventListener('resize', adjustIframeHeight);
+    };
+  }, []);
 
   const handleCloseModal = () => {
     toggleDetailsModal();
     setShowSpotify(false);
+    setShowYoutube(false);
   };
 
   return (
@@ -142,10 +191,12 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                       options={{delay: 40, loop: false}}
                       onInit={typewriter => {
                         typewriter
-                          .typeString(newMessage)
+                          .typeString(message)
                           .pauseFor(500)
                           .callFunction(() => {
-                            if (trackId) {
+                            if (spotifyLink == null) {
+                              setShowYoutube(true);
+                            } else {
                               setShowSpotify(true);
                             }
                           })
@@ -155,18 +206,32 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   </span>
                 </div>
               </div>
-              {showSpotify && trackId && (
+              {showSpotify && linkId && (
                 <div>
                   <iframe
                     title="spotify-preview"
                     style={{border: '12px'}}
-                    src={`https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`}
+                    src={`https://open.spotify.com/embed/track/${linkId}?utm_source=generator&theme=0`}
                     width="100%"
                     height="152"
                     frameBorder="0"
                     allowFullScreen=""
                     allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                     loading="lazy"
+                  ></iframe>
+                </div>
+              )}
+              {showYoutube && linkId && (
+                <div>
+                  <iframe
+                    width="100%"
+                    height={iframeHeight}
+                    src={`https://www.youtube-nocookie.com/embed/${linkId}&amp;controls=0`}
+                    title="YouTube video player"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen
                   ></iframe>
                 </div>
               )}
