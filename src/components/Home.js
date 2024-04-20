@@ -43,7 +43,7 @@ function Home() {
   let render_url;
   let api_key = process.env.REACT_APP_API_KEY;
 
-  if (process.env.NODE_ENV !== 'development') {
+  if (process.env.NODE_ENV === 'development') {
     render_url = 'http://localhost:8000/api/messages';
   } else {
     render_url = process.env.REACT_APP_API_URL;
