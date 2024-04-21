@@ -255,18 +255,19 @@ body {
 }
 
 .form-group {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
+  align-items: flex-start;
+  flex-direction: column;
+  margin-right: 15px;
 }
 
 .form-group label {
-  width: 100px;
+  width: 0px;
   margin-right: 10px;
 }
 
-.form-group input {
-  flex: 1;
+.label-top-left {
+  display: block;
+  float: left;
 }
 
 .big-textarea {
@@ -545,7 +546,10 @@ body {
 
   .form-group label {
     width: 0px;
-    margin-right: 0px;
+    margin-right: 10px;
+  }
+
+  .form-group input {
   }
 
   .label-top-left {
