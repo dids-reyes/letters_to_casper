@@ -112,6 +112,7 @@ function AddModal({
                     </label>
                     <span>
                       <textarea
+                        style={{overflow: 'auto', resize: 'none'}}
                         autoComplete="off"
                         required
                         id="message"
