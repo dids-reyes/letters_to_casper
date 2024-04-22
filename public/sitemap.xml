@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://letterstocasper.ph/</loc>
+        <lastmod>2024-04-22</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://letterstocasper.ph/about_us</loc>
+        <lastmod>2024-04-20</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://letterstocasper.ph/terms_and_conditions</loc>
+        <lastmod>2024-04-20</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://letterstocasper.ph/privacy_policy</loc>
+        <lastmod>2024-04-20</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <!-- Additional URLs for your main domain -->
+
+    <!-- URLs for the subdomain letterstocasper.netlify.app -->
+    <url>
+        <loc>https://letterstocasper.netlify.app/</loc>
+        <lastmod>2024-04-22</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <!-- Additional URLs for the subdomain letterstocasper.netlify.app -->
+</urlset>
