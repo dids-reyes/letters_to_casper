@@ -28,11 +28,5 @@
     <!-- Additional URLs for your main domain -->
 
     <!-- URLs for the subdomain letterstocasper.netlify.app -->
-    <url>
-        <loc>https://letterstocasper.netlify.app/</loc>
-        <lastmod>2024-04-22</lastmod>
-        <changefreq>yearly</changefreq>
-        <priority>1.0</priority>
-    </url>
     <!-- Additional URLs for the subdomain letterstocasper.netlify.app -->
 </urlset>
