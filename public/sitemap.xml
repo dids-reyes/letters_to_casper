@@ -4,7 +4,7 @@
     <url>
         <loc>https://letterstocasper.ph/</loc>
         <lastmod>2024-04-22</lastmod>
-        <changefreq>yearly</changefreq>
+        <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
@@ -25,8 +25,6 @@
         <changefreq>yearly</changefreq>
         <priority>0.8</priority>
     </url>
-    <!-- Additional URLs for your main domain -->
-
     <!-- URLs for the subdomain letterstocasper.netlify.app -->
     <!-- Additional URLs for the subdomain letterstocasper.netlify.app -->
 </urlset>
