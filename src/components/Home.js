@@ -209,7 +209,11 @@ function Home() {
             &nbsp;
             <div
               data-tooltip-id="pl"
-              data-tooltip-content={`Pending Letters: ${letters.counts.unapproved}`}
+              data-tooltip-content={
+                letters.counts.unapproved >= 2
+                  ? `Pending Letters: ${letters.counts.unapproved}`
+                  : `Pending Letter: ${letters.counts.unapproved}`
+              }
               data-tooltip-place="right"
               data-tooltip-variant="info"
             >
