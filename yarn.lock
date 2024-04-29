@@ -5784,6 +5784,13 @@
     "filelist" "^1.0.4"
     "minimatch" "^3.1.2"
 
+"javascript-time-ago@^2.3.7":
+  "integrity" "sha512-EUxp4BP74QH8xiYHyeSHopx1XhMMJ9qEX4rcBdFtpVWmKRdzpxbNzz2GSbuekZr5wt0rmLehuyp0PE34EAJT9g=="
+  "resolved" "https://registry.npmjs.org/javascript-time-ago/-/javascript-time-ago-2.5.10.tgz"
+  "version" "2.5.10"
+  dependencies:
+    "relative-time-format" "^1.1.6"
+
 "jest-changed-files@^27.5.1":
   "integrity" "sha512-buBLMiByfWGCoMsLLzGUUSpAmIAGnbR2KJoMN10ziLhOLvP4e0SlypHnAel8iqQXTrcbmfEY9sSqae5sgUsTvw=="
   "resolved" "https://registry.npmjs.org/jest-changed-files/-/jest-changed-files-27.5.1.tgz"
@@ -6662,6 +6669,11 @@
   "version" "3.5.3"
   dependencies:
     "fs-monkey" "^1.0.4"
+
+"memoize-one@^6.0.0":
+  "integrity" "sha512-rkpe71W0N0c0Xz6QD0eJETuWAJGnJ9afsl1srmwPrI+yBCkge5EycXXbYRyvL29zZVUWQCY7InPRCv3GDXuZNw=="
+  "resolved" "https://registry.npmjs.org/memoize-one/-/memoize-one-6.0.0.tgz"
+  "version" "6.0.0"
 
 "memory-pager@^1.0.2":
   "integrity" "sha512-ZS4Bp4r/Zoeq6+NLJpP+0Zzm0pR8whtGPf1XExKLJBAczGMnSi3It14OiNCStjQjM6NU1okjQGSxgEZN8eBYKg=="
@@ -7969,7 +7981,7 @@
     "strip-ansi" "^6.0.1"
     "text-table" "^0.2.0"
 
-"react-dom@^17.x || ^18.x", "react-dom@^18.0.0", "react-dom@^18.2.0", "react-dom@>= 16.8.0", "react-dom@>=16.14.0", "react-dom@>=16.8", "react-dom@>=18":
+"react-dom@^17.x || ^18.x", "react-dom@^18.0.0", "react-dom@^18.2.0", "react-dom@>= 16.8.0", "react-dom@>=0.16.8", "react-dom@>=16.14.0", "react-dom@>=16.8", "react-dom@>=18":
   "integrity" "sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g=="
   "resolved" "https://registry.npmjs.org/react-dom/-/react-dom-18.2.0.tgz"
   "version" "18.2.0"
@@ -8091,6 +8103,15 @@
   optionalDependencies:
     "fsevents" "^2.3.2"
 
+"react-time-ago@^7.3.1":
+  "integrity" "sha512-c6QKSRrnIhZiEbOa2PXdh1InNYpqX3wwXA0fuOFX4r/C2hdt5hNvjvKXbKbGWXAeumMi9DoS3oGPboEpgccnOQ=="
+  "resolved" "https://registry.npmjs.org/react-time-ago/-/react-time-ago-7.3.1.tgz"
+  "version" "7.3.1"
+  dependencies:
+    "memoize-one" "^6.0.0"
+    "prop-types" "^15.8.1"
+    "raf" "^3.4.1"
+
 "react-toastify@^10.0.5":
   "integrity" "sha512-mNKt2jBXJg4O7pSdbNUfDdTsK9FIdikfsIE/yUCxbAEXl4HMyJaivrVFcn3Elvt5xvCQYhUZm+hqTIu1UXM3Pw=="
   "resolved" "https://registry.npmjs.org/react-toastify/-/react-toastify-10.0.5.tgz"
@@ -8106,7 +8127,7 @@
     "@floating-ui/dom" "^1.6.1"
     "classnames" "^2.3.0"
 
-"react@*", "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^17.x || ^18.x", "react@^18.0.0", "react@^18.2.0", "react@>= 16", "react@>= 16.8.0", "react@>=16.14.0", "react@>=16.8", "react@>=16.8.0", "react@>=18":
+"react@*", "react@^16.0.0 || ^17.0.0 || ^18.0.0", "react@^17.x || ^18.x", "react@^18.0.0", "react@^18.2.0", "react@>= 16", "react@>= 16.8.0", "react@>=0.16.8", "react@>=16.14.0", "react@>=16.8", "react@>=16.8.0", "react@>=18":
   "integrity" "sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ=="
   "resolved" "https://registry.npmjs.org/react/-/react-18.2.0.tgz"
   "version" "18.2.0"
@@ -8230,6 +8251,11 @@
   "integrity" "sha512-G08Dxvm4iDN3MLM0EsP62EDV9IuhXPR6blNz6Utcp7zyV3tr4HVNINt6MpaRWbxoOHT3Q7YN2P+jaHX8vUbgog=="
   "resolved" "https://registry.npmjs.org/relateurl/-/relateurl-0.2.7.tgz"
   "version" "0.2.7"
+
+"relative-time-format@^1.1.6":
+  "integrity" "sha512-aCv3juQw4hT1/P/OrVltKWLlp15eW1GRcwP1XdxHrPdZE9MtgqFpegjnTjLhi2m2WI9MT/hQQtE+tjEWG1hgkQ=="
+  "resolved" "https://registry.npmjs.org/relative-time-format/-/relative-time-format-1.1.6.tgz"
+  "version" "1.1.6"
 
 "renderkid@^3.0.0":
   "integrity" "sha512-q/7VIQA8lmM1hF+jn+sFSPWGlMkSAeNYcPLmDQx2zzuiDfaLrOmumR8iaUKlenFgh0XRPIUeSPlH3A+AW3Z5pg=="
@@ -9174,6 +9200,11 @@
   "version" "3.3.1"
   dependencies:
     "any-promise" "^1.0.0"
+
+"thousands-counter@^2.1.1":
+  "integrity" "sha512-yUesewbf9UBHi7C7fhm3VrPD1i2S7Y4PikgKW2JblgTGAEF1hvcBLzKiahlnkMoNbyMPHzGns5Khj2Td3sT3PA=="
+  "resolved" "https://registry.npmjs.org/thousands-counter/-/thousands-counter-2.1.1.tgz"
+  "version" "2.1.1"
 
 "throat@^6.0.1":
   "integrity" "sha512-WKexMoJj3vEuK0yFEapj8y64V0A6xcuPuK9Gt1d0R+dzCSJc0lHqQytAbSB4cDAK0dWh4T0E2ETkoLE2WZ41OQ=="
