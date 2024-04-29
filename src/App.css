@@ -619,3 +619,10 @@ a[data-scroll] {
   top: 0;
   width: 100%;
 }
+
+.reads-text {
+  font-family: 'Courier New', Courier, monospace;
+  right: 10px;
+  text-align: right;
+  font-size: 12px;
+}
