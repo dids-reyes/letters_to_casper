@@ -165,7 +165,7 @@ Link (Spotify, YouTube)`}
         )}
       {showPreview && ( // Show DetailsModal only if Preview is shown
         <DetailsModal
-          selectedLetter={{...newLetter, timestamp: timestamp}}
+          selectedLetter={{...newLetter, timestamp: timestamp, preview: true}}
           toggleDetailsModal={togglePreview}
           showDetailsModal={true}
         />

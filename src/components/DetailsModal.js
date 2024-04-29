@@ -4,6 +4,8 @@ import {BsX} from 'react-icons/bs';
 import {BsMailboxFlag} from 'react-icons/bs';
 import Typewriter from 'typewriter-effect';
 import {Tooltip} from 'react-tooltip';
+import tc from 'thousands-counter';
+import ReactTimeAgo from 'react-time-ago';
 import {useState, useEffect} from 'react';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
@@ -17,19 +19,24 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   }
 
   const incrementReads = async () => {
-    try {
-      const response = await fetch(`${render_url}/${selectedLetter._id}/read`, {
-        method: 'POST',
-        headers: {
-          'x-api-key': api_key,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update reads count');
+    if (!selectedLetter.preview) {
+      try {
+        const response = await fetch(
+          `${render_url}/${selectedLetter._id}/read`,
+          {
+            method: 'POST',
+            headers: {
+              'x-api-key': api_key,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Failed to update reads count');
+        }
+      } catch (error) {
+        console.error('Error updating reads count:', error);
       }
-    } catch (error) {
-      console.error('Error updating reads count:', error);
     }
   };
 
@@ -37,7 +44,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     const parsedReadsCount = parseInt(readsCount);
     return parsedReadsCount === 1
       ? `${parsedReadsCount} read`
-      : `${parsedReadsCount} reads`;
+      : `${tc(parsedReadsCount, 2)} reads`;
   }
 
   const formatTimestamp = timestamp => {
@@ -270,11 +277,18 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
               )}
               <div className="reads-text">
                 <p>
+                  <ReactTimeAgo
+                    date={selectedLetter.timestamp}
+                    locale="en-US"
+                    timeStyle="round"
+                  />
                   <Typewriter
                     options={{delay: 70, loop: false}}
                     onInit={typewriter => {
                       typewriter
-                        .typeString(formatReadsCount(selectedLetter.reads))
+                        .typeString(
+                          `${formatReadsCount(selectedLetter.reads)} 📖`,
+                        )
                         .callFunction(state => {
                           state.elements.cursor.remove();
                         })
