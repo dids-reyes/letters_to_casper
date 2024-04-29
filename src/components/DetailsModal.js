@@ -7,6 +7,39 @@ import {Tooltip} from 'react-tooltip';
 import {useState, useEffect} from 'react';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
+  let render_url;
+  let api_key = process.env.REACT_APP_API_KEY;
+
+  if (process.env.NODE_ENV === 'development') {
+    render_url = 'http://localhost:8000/api/messages';
+  } else {
+    render_url = process.env.REACT_APP_API_URL;
+  }
+
+  const incrementReads = async () => {
+    try {
+      const response = await fetch(`${render_url}/${selectedLetter._id}/read`, {
+        method: 'POST',
+        headers: {
+          'x-api-key': api_key,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update reads count');
+      }
+    } catch (error) {
+      console.error('Error updating reads count:', error);
+    }
+  };
+
+  function formatReadsCount(readsCount) {
+    const parsedReadsCount = parseInt(readsCount);
+    return parsedReadsCount === 1
+      ? `${parsedReadsCount} read`
+      : `${parsedReadsCount} reads`;
+  }
+
   const formatTimestamp = timestamp => {
     const options = {
       weekday: 'long',
@@ -115,7 +148,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     selectedLetter && (
       <div className="modal">
         <div className="modal-dialog">
-          <div className="modal-content">
+          <div className="modal-content" onClick={incrementReads}>
             <div className="modal-header">
               <button
                 type="button"
@@ -235,6 +268,21 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   ></iframe>
                 </div>
               )}
+              <div className="reads-text">
+                <p>
+                  <Typewriter
+                    options={{delay: 70, loop: false}}
+                    onInit={typewriter => {
+                      typewriter
+                        .typeString(formatReadsCount(selectedLetter.reads))
+                        .callFunction(state => {
+                          state.elements.cursor.remove();
+                        })
+                        .start();
+                    }}
+                  />
+                </p>
+              </div>
             </div>
           </div>
         </div>
