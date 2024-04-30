@@ -70,7 +70,7 @@ function AddModal({
                       required
                       type="text"
                       id="from"
-                      placeholder="e.g., Christoph | Chris | C"
+                      placeholder="e.g. Christoph | Chris | C"
                       className="form-control"
                       value={newLetter.from}
                       maxLength="30"
@@ -97,7 +97,7 @@ function AddModal({
                       required
                       type="text"
                       id="to"
-                      placeholder="e.g., Emily Brown | Em | E"
+                      placeholder="e.g. Emily Brown | Em | E"
                       className="form-control error full-width"
                       value={newLetter.to}
                       maxLength="30"
