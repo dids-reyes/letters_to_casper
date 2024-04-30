@@ -284,7 +284,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                         .typeString(
                           `${js_ago(new Date(selectedLetter.timestamp), {
                             format: 'long',
-                          })} • ${formatReadsCount(selectedLetter.reads)} 📖`,
+                          })} ~ ${formatReadsCount(selectedLetter.reads)} 📖`,
                         )
                         .callFunction(state => {
                           state.elements.cursor.remove();
