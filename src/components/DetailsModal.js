@@ -5,7 +5,7 @@ import {BsMailboxFlag} from 'react-icons/bs';
 import Typewriter from 'typewriter-effect';
 import {Tooltip} from 'react-tooltip';
 import tc from 'thousands-counter';
-// import ReactTimeAgo from 'react-time-ago';
+import js_ago from 'js-ago';
 import {useState, useEffect} from 'react';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
@@ -277,17 +277,14 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
               )}
               <div className="reads-text">
                 <p>
-                  {/* <ReactTimeAgo */}
-                  {/*   date={selectedLetter.timestamp} */}
-                  {/*   locale="en-US" */}
-                  {/*   timeStyle="round" */}
-                  {/* /> */}
                   <Typewriter
                     options={{delay: 70, loop: false}}
                     onInit={typewriter => {
                       typewriter
                         .typeString(
-                          `${formatReadsCount(selectedLetter.reads)} 📖`,
+                          `${js_ago(new Date(selectedLetter.timestamp), {
+                            format: 'long',
+                          })} • ${formatReadsCount(selectedLetter.reads)} 📖`,
                         )
                         .callFunction(state => {
                           state.elements.cursor.remove();
