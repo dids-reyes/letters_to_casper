@@ -125,7 +125,7 @@ Goodbye...
 Link (Spotify, YouTube)`}
                         className="big-textarea full-width"
                         value={newLetter.message}
-                        maxLength="600"
+                        maxLength="500"
                         onChange={event =>
                           setNewLetter({
                             ...newLetter,
@@ -134,7 +134,7 @@ Link (Spotify, YouTube)`}
                         }
                       ></textarea>
                       <small className="character-count">
-                        Characters: {newLetter.message.length}/600
+                        Characters: {newLetter.message.length}/500
                       </small>
                     </span>
                   </div>
