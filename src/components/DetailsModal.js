@@ -276,23 +276,21 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 </div>
               )}
               <div className="reads-text">
-                <p>
-                  <Typewriter
-                    options={{delay: 70, loop: false}}
-                    onInit={typewriter => {
-                      typewriter
-                        .typeString(
-                          `${js_ago(new Date(selectedLetter.timestamp), {
-                            format: 'long',
-                          })} ~ ${formatReadsCount(selectedLetter.reads)} 📖`,
-                        )
-                        .callFunction(state => {
-                          state.elements.cursor.remove();
-                        })
-                        .start();
-                    }}
-                  />
-                </p>
+                <Typewriter
+                  options={{delay: 70, loop: false}}
+                  onInit={typewriter => {
+                    typewriter
+                      .typeString(
+                        `${js_ago(new Date(selectedLetter.timestamp), {
+                          format: 'long',
+                        })} ~ ${formatReadsCount(selectedLetter.reads)} 📖`,
+                      )
+                      .callFunction(state => {
+                        state.elements.cursor.remove();
+                      })
+                      .start();
+                  }}
+                />
               </div>
             </div>
           </div>
