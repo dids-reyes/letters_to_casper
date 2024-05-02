@@ -18,6 +18,7 @@ import SmoothScroll from 'smooth-scroll';
 import {IoMailOpenOutline} from 'react-icons/io5';
 import {IoMailUnreadOutline} from 'react-icons/io5';
 import {Tooltip} from 'react-tooltip';
+import tc from 'thousands-counter';
 import '../App.css';
 
 function Home() {
@@ -197,16 +198,16 @@ function Home() {
             {/* <span> {letters.counts.approved}</span> */}
             <div
               data-tooltip-id="al"
-              data-tooltip-content={`Approved Letters: ${letters.counts.approved}`}
+              data-tooltip-content={`Approved Letters: ${tc(
+                letters.counts.approved,
+              )}`}
               data-tooltip-place="left"
               data-tooltip-variant="info"
             >
               <IoMailOpenOutline size={24} />
             </div>
             <Tooltip id="al" />
-            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-            {/* <span> {letters.counts.unapproved}</span> */}
-            &nbsp;
+            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
             <div
               data-tooltip-id="pl"
               data-tooltip-content={
