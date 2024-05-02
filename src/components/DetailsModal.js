@@ -66,9 +66,8 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
       return null;
     }
 
-    // Regular expression to find the Spotify track link
-    const spotifyLinkRegex =
-      /https:\/\/open\.spotify\.com\/track\/([a-zA-Z0-9]+)\?.*/;
+    // Regular expression to find the Spotify link
+    const spotifyLinkRegex = /https:\/\/open\.spotify\.com\/(.*)/;
 
     // Regular expression to find the YouTube video link
     const youtubeLinkRegex = /https:\/\/youtu\.be\/(.*)/;
@@ -251,13 +250,12 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   <iframe
                     title="spotify-preview"
                     style={{border: '12px'}}
-                    src={`https://open.spotify.com/embed/track/${linkId}?utm_source=generator&theme=0`}
+                    src={`https://open.spotify.com/embed/${linkId}?utm_source=generator&theme=0`}
                     width="100%"
                     height="152"
                     frameBorder="0"
                     allowFullScreen=""
                     allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
                   ></iframe>
                 </div>
               )}
@@ -268,10 +266,10 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                     height={iframeHeight}
                     src={`https://www.youtube-nocookie.com/embed/${linkId}&amp;controls=0`}
                     title="YouTube video player"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    allowfullscreen
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
                   ></iframe>
                 </div>
               )}
