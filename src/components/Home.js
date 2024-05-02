@@ -198,7 +198,7 @@ function Home() {
             {/* <span> {letters.counts.approved}</span> */}
             <div
               data-tooltip-id="al"
-              data-tooltip-content={`Approved Letters: ${tc(
+              data-tooltip-content={`Open Letters: ${tc(
                 letters.counts.approved,
               )}`}
               data-tooltip-place="left"
