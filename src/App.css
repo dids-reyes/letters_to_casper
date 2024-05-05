@@ -1,4 +1,3 @@
-/* App.css */
 body {
   background-color: #fff;
 }
@@ -651,4 +650,20 @@ a[data-scroll] {
   right: 10px;
   text-align: right;
   font-size: 11px;
+}
+
+.pulsating-icon {
+  animation: pulsate 1s ease-in-out infinite alternate;
+}
+
+@keyframes pulsate {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }

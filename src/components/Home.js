@@ -41,7 +41,7 @@ function Home() {
 
   const handleSearchChange = event => {
     setSearchTerm(event.target.value);
-    searchLetters(); // Trigger the search function when the search term changes
+    searchLetters();
   };
 
   let render_url;
@@ -74,11 +74,11 @@ function Home() {
           ...prevState,
           messages: [...prevState.messages, ...newData.messages],
         }));
-        setLoading(0); // Reset loading state after successfully fetching more data
+        setLoading(0);
       }, 1500);
     } catch (error) {
       console.error('Error fetching more letters:', error);
-      setLoading(2); // Set loading state to indicate error
+      setLoading(2);
     }
   };
 
@@ -88,7 +88,6 @@ function Home() {
       setLoading(1);
       try {
         const response = await fetch(`${render_url}?offset=0&limit=150`, {
-          // Fetch the first batch of 20 letters
           headers: {
             'x-api-key': api_key,
           },
@@ -97,7 +96,7 @@ function Home() {
           throw new Error('Failed to fetch letters');
         }
         const data = await response.json();
-        setLetters(data); // Update the letters state with the fetched data
+        setLetters(data);
         setLoading(0);
       } catch (error) {
         console.error('Error fetching letters:', error);
@@ -113,7 +112,6 @@ function Home() {
       const {from, to, message} = newLetter;
 
       if (from.trim() === '' || to.trim() === '' || message.trim() === '') {
-        // Handle empty fields here if needed
         return;
       }
 
@@ -148,8 +146,6 @@ function Home() {
       }));
       setNewLetter({from: '', to: '', message: ''});
       notify_success();
-
-      // fetchLetters();
     } catch (error) {
       notify_error();
       console.error('Error adding message:', error);
@@ -163,14 +159,14 @@ function Home() {
   useEffect(() => {
     setScroll(
       new SmoothScroll('a[href*="#"]', {
-        speed: 800, // Adjust the scrolling speed as needed
-        speedAsDuration: true, // Use speed as the duration for the scroll animation
+        speed: 800,
+        speedAsDuration: true,
       }),
     );
   }, []);
 
   const scrollToTop = () => {
-    scroll.animateScroll(0); // Scroll to the top of the page
+    scroll.animateScroll(0);
   };
 
   const notify_success = () =>
@@ -201,14 +197,11 @@ function Home() {
     setShowAddModal(!showAddModal);
   };
 
-  // const [searchedLetters, setSearchedLetters] = useState([]);
-
   const [searchedLetters, setSearchedLetters] = useState({
     messages: [],
     counts: {approved: 0, unapproved: 0},
   });
 
-  // Update the searchLetters function to update the searchedLetters state
   const searchLetters = async () => {
     setLoading(true);
     try {
@@ -221,8 +214,7 @@ function Home() {
         throw new Error('Failed to search letters');
       }
       const data = await response.json();
-      // setLetters(data);
-      setSearchedLetters(data); // Update the searchedLetters state with the search results
+      setSearchedLetters(data);
       setLoading(0);
     } catch (error) {
       console.error('Error searching letters:', error);
@@ -240,13 +232,12 @@ function Home() {
     );
   });
 
-  const [filteredLetters, setFilteredLetters] = useState([]); // Initialize filteredLetters state as an empty array
+  const [filteredLetters, setFilteredLetters] = useState([]);
 
   useEffect(() => {
-    // Filter letters based on search term when searchTerm or letters changes
     const filteredData =
       searchTerm === ''
-        ? letters.messages // No search term, use all messages
+        ? letters.messages
         : letters.messages.filter(letter => {
             const {from, to, message} = letter;
             const lowerCasedSearchTerm = searchTerm.toLowerCase();
@@ -256,7 +247,7 @@ function Home() {
               message.toLowerCase().includes(lowerCasedSearchTerm)
             );
           });
-    setFilteredLetters(filteredData); // Update filteredLetters state
+    setFilteredLetters(filteredData);
   }, [letters.messages, searchTerm]);
 
   return (
@@ -273,10 +264,9 @@ function Home() {
             display: 'flex',
             justifyContent: 'center',
             margin: '15px',
-            opacity: 0.5,
+            // opacity: 0.5,
           }}
         >
-          {/* <span> {letters.counts.approved}</span> */}
           <div
             data-tooltip-id="al"
             data-tooltip-content={
@@ -284,10 +274,16 @@ function Home() {
                 ? `Open Letters: ${tc(letters.counts.approved)}`
                 : `Open Letter: ${letters.counts.approved}`
             }
-            data-tooltip-place="left"
+            data-tooltip-place="bottom"
             data-tooltip-variant="info"
           >
-            <IoMailOpenOutline size={24} style={{color: '#0056b3'}} />
+            <IoMailOpenOutline
+              size={24}
+              style={{
+                color: '#0056b3',
+                animation: 'pulsate 1s ease-in-out infinite alternate',
+              }}
+            />
           </div>
           <Tooltip id="al" />
           &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
@@ -298,10 +294,16 @@ function Home() {
                 ? `Pending Letters: ${letters.counts.unapproved}`
                 : `Pending Letter: ${letters.counts.unapproved}`
             }
-            data-tooltip-place="right"
+            data-tooltip-place="bottom"
             data-tooltip-variant="info"
           >
-            <IoMailUnreadOutline size={25} style={{color: '#0056b3'}} />
+            <IoMailUnreadOutline
+              size={25}
+              style={{
+                color: '#0056b3',
+                animation: 'pulsate 1s ease-in-out infinite alternate',
+              }}
+            />
           </div>
           <Tooltip id="pl" />
         </div>
@@ -326,7 +328,7 @@ function Home() {
         handleAddLetter={handleAddLetter}
         setNewLetter={setNewLetter}
       />
-      {loading === 1 ? ( // Render loading spinner or message if data is being fetched
+      {loading === 1 ? (
         <div className="load-letters">
           <center>
             <Lottie
@@ -374,7 +376,6 @@ function Home() {
         <div>
           <div className="letters-container">
             {searchedResults.length > 0 && searchTerm !== '' ? (
-              // Render searched letters if filteredLetters has results and searchTerm is not empty
               searchedResults.map((letter, index) => (
                 <Letter
                   key={index}
@@ -383,9 +384,7 @@ function Home() {
                   setSelectedLetter={setSelectedLetter}
                 />
               ))
-            ) : // Render based on the original logic (all letters if no search term)
-            searchTerm === '' ? (
-              // Render all letters if no search term
+            ) : searchTerm === '' ? (
               letters.messages.length > 0 ? (
                 letters.messages.map((letter, index) => (
                   <Letter
@@ -409,7 +408,6 @@ function Home() {
                 </div>
               )
             ) : (
-              // Render message if no search results found
               <div>
                 <p>No Search Results Found</p>
                 <center>
