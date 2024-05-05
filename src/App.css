@@ -456,7 +456,7 @@ body {
     white-space: pre-wrap;
     text-align: left;
     font-family: monospace;
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .letter-text {
@@ -552,7 +552,7 @@ body {
 
   .timestamp-text {
     font-family: 'Courier New', Courier, monospace; /* Change 'Courier New' to your desired font */
-    font-size: 12px;
+    font-size: 11px;
     color: #333; /* Adjust color as needed */
   }
 
@@ -650,5 +650,5 @@ a[data-scroll] {
   font-family: 'Courier New', Courier, monospace;
   right: 10px;
   text-align: right;
-  font-size: 12px;
+  font-size: 11px;
 }
