@@ -371,22 +371,11 @@ function Home() {
           </p>
         </>
       ) : loading === 0 ? (
-        <div className="letters-container">
-          {searchedResults.length > 0 && searchTerm !== '' ? (
-            // Render searched letters if filteredLetters has results and searchTerm is not empty
-            searchedResults.map((letter, index) => (
-              <Letter
-                key={index}
-                letter={letter}
-                toggleDetailsModal={toggleDetailsModal}
-                setSelectedLetter={setSelectedLetter}
-              />
-            ))
-          ) : // Render based on the original logic (all letters if no search term)
-          searchTerm === '' ? (
-            // Render all letters if no search term
-            letters.messages.length > 0 ? (
-              letters.messages.map((letter, index) => (
+        <div>
+          <div className="letters-container">
+            {searchedResults.length > 0 && searchTerm !== '' ? (
+              // Render searched letters if filteredLetters has results and searchTerm is not empty
+              searchedResults.map((letter, index) => (
                 <Letter
                   key={index}
                   letter={letter}
@@ -394,9 +383,35 @@ function Home() {
                   setSelectedLetter={setSelectedLetter}
                 />
               ))
+            ) : // Render based on the original logic (all letters if no search term)
+            searchTerm === '' ? (
+              // Render all letters if no search term
+              letters.messages.length > 0 ? (
+                letters.messages.map((letter, index) => (
+                  <Letter
+                    key={index}
+                    letter={letter}
+                    toggleDetailsModal={toggleDetailsModal}
+                    setSelectedLetter={setSelectedLetter}
+                  />
+                ))
+              ) : (
+                <div>
+                  <p>No Letters Found</p>
+                  <center>
+                    <Lottie
+                      loop
+                      animationData={empty}
+                      play
+                      style={{width: 300, height: 300}}
+                    />
+                  </center>
+                </div>
+              )
             ) : (
+              // Render message if no search results found
               <div>
-                <p>No Letters Found</p>
+                <p>No Search Results Found</p>
                 <center>
                   <Lottie
                     loop
@@ -406,45 +421,33 @@ function Home() {
                   />
                 </center>
               </div>
-            )
-          ) : (
-            // Render message if no search results found
-            <div>
-              <p>No Search Results Found</p>
-              <center>
-                <Lottie
-                  loop
-                  animationData={empty}
-                  play
-                  style={{width: 300, height: 300}}
-                />
-              </center>
-            </div>
-          )}
-          <InfiniteScroll
-            style={{overflow: 'hidden'}}
-            dataLength={filteredLetters.length}
-            next={fetchMoreData}
-            hasMore={
-              filteredLetters.length === letters.counts.approved - 1
-                ? false
-                : true
-            }
-            loader={
-              searchTerm === '' && (
-                <center>
-                  <Lottie
-                    loop
-                    animationData={ghost1}
-                    play
-                    style={{width: 150, height: 150}}
-                  />
-                </center>
-              )
-            }
-            endMessage={<p style={{textAlign: 'center'}}>‎ </p>}
-            scrollThreshold={1}
-          />
+            )}
+            <InfiniteScroll
+              style={{overflow: 'hidden'}}
+              dataLength={filteredLetters.length}
+              next={fetchMoreData}
+              hasMore={
+                filteredLetters.length === letters.counts.approved - 1
+                  ? false
+                  : true
+              }
+              loader={
+                searchTerm === '' && (
+                  <center>
+                    <Lottie
+                      loop
+                      animationData={ghost1}
+                      play
+                      style={{width: 150, height: 150}}
+                    />
+                  </center>
+                )
+              }
+              endMessage={<p style={{textAlign: 'center'}}>‎ </p>}
+              scrollThreshold={1}
+            />
+          </div>
+          <h4>‎ </h4>
         </div>
       ) : null}
       <DetailsModal
