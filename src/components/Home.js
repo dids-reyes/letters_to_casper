@@ -182,7 +182,7 @@ function Home() {
       pauseOnHover: false,
       draggable: true,
       progress: undefined,
-      theme: 'dark',
+      theme: 'light',
     });
 
   const notify_error = () =>
