@@ -6,6 +6,8 @@ import Typewriter from 'typewriter-effect';
 import {Tooltip} from 'react-tooltip';
 import tc from 'thousands-counter';
 import js_ago from 'js-ago';
+import {FaEarlybirds} from 'react-icons/fa';
+import {BsBookmarkHeartFill} from 'react-icons/bs';
 import {useState, useEffect} from 'react';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
@@ -16,6 +18,11 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     render_url = 'http://localhost:8000/api/messages';
   } else {
     render_url = process.env.REACT_APP_API_URL;
+  }
+  const targetDate = new Date(2024, 4, 31);
+  let letterDate;
+  if (selectedLetter) {
+    letterDate = new Date(selectedLetter.timestamp);
   }
 
   const incrementReads = async () => {
@@ -202,7 +209,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
 
                 <div
                   data-tooltip-id="timezone_tooltip"
-                  data-tooltip-content="Philippine Standard Time (UTC+08)"
+                  data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
                   data-tooltip-place="top"
                   data-tooltip-variant="info"
                 >
@@ -274,6 +281,23 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 </div>
               )}
               <div className="reads-text">
+                <br />
+                {letterDate < targetDate && (
+                  <>
+                    <div
+                      data-tooltip-id="early_bird"
+                      data-tooltip-html="This open letter is an Early Bird! <br/>
+It was among the first letters to be shared."
+                      data-tooltip-place="bottom"
+                      data-tooltip-variant="dark"
+                    >
+                      <FaEarlybirds size="15px" />
+                      &nbsp;
+                      <BsBookmarkHeartFill size="15px" />
+                    </div>
+                    <Tooltip id="early_bird" arrowColor="transparent" />
+                  </>
+                )}
                 <Typewriter
                   options={{delay: 70, loop: false}}
                   onInit={typewriter => {

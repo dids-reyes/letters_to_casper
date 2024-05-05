@@ -462,13 +462,14 @@ body {
 
   .footer p,
   .footer-nav {
-    margin: 5px 0;
+    margin: 3px 0;
     font-size: 9px;
   }
 
   .app-container {
-    width: 100%; /* Ensure the container spans the full width of the viewport */
-    overflow-x: hidden; /* Hide horizontal overflow */
+    max-width: 90%; /*  */
+    margin: 0 auto;
+    /* overflow-x: hidden; /1* I SPENT 24 Hours in this SHIT *1/ */
   }
 
   .search-bar {

@@ -19,6 +19,7 @@ import {IoMailOpenOutline} from 'react-icons/io5';
 import {IoMailUnreadOutline} from 'react-icons/io5';
 import {Tooltip} from 'react-tooltip';
 import tc from 'thousands-counter';
+import InfiniteScroll from 'react-infinite-scroll-component';
 import '../App.css';
 
 function Home() {
@@ -36,9 +37,11 @@ function Home() {
   });
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [loading, setLoading] = useState(1);
 
   const handleSearchChange = event => {
     setSearchTerm(event.target.value);
+    searchLetters(); // Trigger the search function when the search term changes
   };
 
   let render_url;
@@ -50,13 +53,42 @@ function Home() {
     render_url = process.env.REACT_APP_API_URL;
   }
 
-  const [loading, setLoading] = useState(1);
+  const [scroll, setScroll] = useState(null);
+
+  const fetchMoreData = async () => {
+    try {
+      const response = await fetch(
+        `${render_url}?offset=${letters.messages.length}&limit=50`,
+        {
+          headers: {
+            'x-api-key': api_key,
+          },
+        },
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch more letters');
+      }
+      const newData = await response.json();
+      setTimeout(() => {
+        setLetters(prevState => ({
+          ...prevState,
+          messages: [...prevState.messages, ...newData.messages],
+        }));
+        setLoading(0); // Reset loading state after successfully fetching more data
+      }, 1500);
+    } catch (error) {
+      console.error('Error fetching more letters:', error);
+      setLoading(2); // Set loading state to indicate error
+    }
+  };
 
   useEffect(() => {
     const fetchLetters = async () => {
+      await new Promise(resolve => setTimeout(resolve, 3000));
       setLoading(1);
       try {
-        const response = await fetch(render_url, {
+        const response = await fetch(`${render_url}?offset=0&limit=200`, {
+          // Fetch the first batch of 20 letters
           headers: {
             'x-api-key': api_key,
           },
@@ -66,9 +98,7 @@ function Home() {
         }
         const data = await response.json();
         setLetters(data); // Update the letters state with the fetched data
-        setTimeout(() => {
-          setLoading(0); // Delay setting loading to 0 by 1.5 seconds
-        }, 3000);
+        setLoading(0);
       } catch (error) {
         console.error('Error fetching letters:', error);
         setLoading(2);
@@ -130,10 +160,14 @@ function Home() {
     setShowDetailsModal(!showDetailsModal);
   };
 
-  const scroll = new SmoothScroll('a[href*="#"]', {
-    speed: 800, // Adjust the scrolling speed as needed
-    speedAsDuration: true, // Use speed as the duration for the scroll animation
-  });
+  useEffect(() => {
+    setScroll(
+      new SmoothScroll('a[href*="#"]', {
+        speed: 800, // Adjust the scrolling speed as needed
+        speedAsDuration: true, // Use speed as the duration for the scroll animation
+      }),
+    );
+  }, []);
 
   const scrollToTop = () => {
     scroll.animateScroll(0); // Scroll to the top of the page
@@ -167,7 +201,36 @@ function Home() {
     setShowAddModal(!showAddModal);
   };
 
-  const filteredLetters = letters.messages.filter(letter => {
+  // const [searchedLetters, setSearchedLetters] = useState([]);
+
+  const [searchedLetters, setSearchedLetters] = useState({
+    messages: [],
+    counts: {approved: 0, unapproved: 0},
+  });
+
+  // Update the searchLetters function to update the searchedLetters state
+  const searchLetters = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${render_url}?search=${searchTerm}`, {
+        headers: {
+          'x-api-key': api_key,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to search letters');
+      }
+      const data = await response.json();
+      // setLetters(data);
+      setSearchedLetters(data); // Update the searchedLetters state with the search results
+      setLoading(0);
+    } catch (error) {
+      console.error('Error searching letters:', error);
+      setLoading(0);
+    }
+  };
+
+  const searchedResults = searchedLetters.messages.filter(letter => {
     const {from, to, message} = letter;
     const lowerCasedSearchTerm = searchTerm.toLowerCase();
     return (
@@ -177,6 +240,25 @@ function Home() {
     );
   });
 
+  const [filteredLetters, setFilteredLetters] = useState([]); // Initialize filteredLetters state as an empty array
+
+  useEffect(() => {
+    // Filter letters based on search term when searchTerm or letters changes
+    const filteredData =
+      searchTerm === ''
+        ? letters.messages // No search term, use all messages
+        : letters.messages.filter(letter => {
+            const {from, to, message} = letter;
+            const lowerCasedSearchTerm = searchTerm.toLowerCase();
+            return (
+              from.toLowerCase().includes(lowerCasedSearchTerm) ||
+              to.toLowerCase().includes(lowerCasedSearchTerm) ||
+              message.toLowerCase().includes(lowerCasedSearchTerm)
+            );
+          });
+    setFilteredLetters(filteredData); // Update filteredLetters state
+  }, [letters.messages, searchTerm]);
+
   return (
     <div className="app">
       <Header searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
@@ -185,44 +267,44 @@ function Home() {
           <AiFillMessage className="button-icon" size="20px" />
           Leave a Letter
         </button>
-        {loading === 0 && (
+        <div
+          className="messages-count"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            margin: '15px',
+            opacity: 0.5,
+          }}
+        >
+          {/* <span> {letters.counts.approved}</span> */}
           <div
-            className="messages-count"
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              margin: '15px',
-              opacity: 0.5,
-            }}
+            data-tooltip-id="al"
+            data-tooltip-content={
+              letters.counts.approved >= 2
+                ? `Open Letters: ${tc(letters.counts.approved)}`
+                : `Open Letter: ${letters.counts.approved}`
+            }
+            data-tooltip-place="left"
+            data-tooltip-variant="info"
           >
-            {/* <span> {letters.counts.approved}</span> */}
-            <div
-              data-tooltip-id="al"
-              data-tooltip-content={`Open Letters: ${tc(
-                letters.counts.approved,
-              )}`}
-              data-tooltip-place="left"
-              data-tooltip-variant="info"
-            >
-              <IoMailOpenOutline size={24} />
-            </div>
-            <Tooltip id="al" />
-            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
-            <div
-              data-tooltip-id="pl"
-              data-tooltip-content={
-                letters.counts.unapproved >= 2
-                  ? `Pending Letters: ${letters.counts.unapproved}`
-                  : `Pending Letter: ${letters.counts.unapproved}`
-              }
-              data-tooltip-place="right"
-              data-tooltip-variant="info"
-            >
-              <IoMailUnreadOutline size={25} />
-            </div>
-            <Tooltip id="pl" />
+            <IoMailOpenOutline size={24} style={{color: '#0056b3'}} />
           </div>
-        )}
+          <Tooltip id="al" />
+          &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          <div
+            data-tooltip-id="pl"
+            data-tooltip-content={
+              letters.counts.unapproved >= 2
+                ? `Pending Letters: ${letters.counts.unapproved}`
+                : `Pending Letter: ${letters.counts.unapproved}`
+            }
+            data-tooltip-place="right"
+            data-tooltip-variant="info"
+          >
+            <IoMailUnreadOutline size={25} style={{color: '#0056b3'}} />
+          </div>
+          <Tooltip id="pl" />
+        </div>
       </div>
       <ToastContainer
         containerId="notify"
@@ -290,8 +372,9 @@ function Home() {
         </>
       ) : loading === 0 ? (
         <div className="letters-container">
-          {filteredLetters.length > 0 ? (
-            filteredLetters.map((letter, index) => (
+          {searchedResults.length > 0 && searchTerm !== '' ? (
+            // Render searched letters if filteredLetters has results and searchTerm is not empty
+            searchedResults.map((letter, index) => (
               <Letter
                 key={index}
                 letter={letter}
@@ -299,9 +382,35 @@ function Home() {
                 setSelectedLetter={setSelectedLetter}
               />
             ))
+          ) : // Render based on the original logic (all letters if no search term)
+          searchTerm === '' ? (
+            // Render all letters if no search term
+            letters.messages.length > 0 ? (
+              letters.messages.map((letter, index) => (
+                <Letter
+                  key={index}
+                  letter={letter}
+                  toggleDetailsModal={toggleDetailsModal}
+                  setSelectedLetter={setSelectedLetter}
+                />
+              ))
+            ) : (
+              <div>
+                <p>No Letters Found</p>
+                <center>
+                  <Lottie
+                    loop
+                    animationData={empty}
+                    play
+                    style={{width: 300, height: 300}}
+                  />
+                </center>
+              </div>
+            )
           ) : (
+            // Render message if no search results found
             <div>
-              <p>No Letters Found</p>
+              <p>No Search Results Found</p>
               <center>
                 <Lottie
                   loop
@@ -312,6 +421,30 @@ function Home() {
               </center>
             </div>
           )}
+          <InfiniteScroll
+            style={{overflow: 'hidden'}}
+            dataLength={filteredLetters.length}
+            next={fetchMoreData}
+            hasMore={
+              filteredLetters.length === letters.counts.approved - 1
+                ? false
+                : true
+            }
+            loader={
+              searchTerm === '' && (
+                <center>
+                  <Lottie
+                    loop
+                    animationData={ghost1}
+                    play
+                    style={{width: 150, height: 150}}
+                  />
+                </center>
+              )
+            }
+            endMessage={<p style={{textAlign: 'center'}}>‎ </p>}
+            scrollThreshold={1}
+          />
         </div>
       ) : null}
       <DetailsModal
