@@ -87,7 +87,7 @@ function Home() {
       await new Promise(resolve => setTimeout(resolve, 3000));
       setLoading(1);
       try {
-        const response = await fetch(`${render_url}?offset=0&limit=200`, {
+        const response = await fetch(`${render_url}?offset=0&limit=150`, {
           // Fetch the first batch of 20 letters
           headers: {
             'x-api-key': api_key,
