@@ -467,7 +467,7 @@ body {
   }
 
   .app-container {
-    max-width: 90%; /*  */
+    max-width: 100%; /*  */
     margin: 0 auto;
     /* overflow-x: hidden; /1* I SPENT 24 Hours in this SHIT *1/ */
   }
