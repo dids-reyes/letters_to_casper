@@ -60,8 +60,8 @@ function Header({searchTerm, handleSearchChange}) {
         <div
           // eslint-disable-next-line
           data-tooltip-id="search_tooltip"
-          data-tooltip-content="You can search by keywords, author or recipient"
-          data-tooltip-place="left-start"
+          data-tooltip-content="Search by keywords, author or recipient"
+          data-tooltip-place="left-center"
           data-tooltip-delay-show={3000}
           data-tooltip-variant="info"
         >

@@ -443,13 +443,13 @@ body {
   }
 
   .card-text {
-    font-size: 12px;
+    font-size: 13px;
     font-family: monospace;
   }
 
   .card-preview {
     font-family: monospace;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .letter-info {
@@ -494,7 +494,7 @@ body {
   .search-bar {
     /* margin: 0 auto; /1* Center the search bar horizontally *1/ */
     width: 90%;
-    margin: 0 auto; /* Centers the element horizontally */
+    margin-left: 13px; /* Centers the element horizontally */
     margin-bottom: 15px;
   }
 
