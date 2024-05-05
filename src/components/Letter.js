@@ -1,4 +1,3 @@
-// Letter.js
 import React from 'react';
 
 const truncateMessage = (message, maxLength) => {
@@ -24,11 +23,9 @@ function Letter({letter, toggleDetailsModal, setSelectedLetter}) {
     <div className="letter-card" onClick={handleClick}>
       <div className="card">
         <p className="card-text">
-          {/* <PiUserRectangleDuotone /> */}
           <strong>Fr:</strong> {truncatedFrom}
         </p>
         <p className="card-text">
-          {/* <PiUserRectangleLight /> */}
           <strong>To:</strong> {truncatedTo}
         </p>
         <p className="card-preview">{truncatedMessage}</p>
