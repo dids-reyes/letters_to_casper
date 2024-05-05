@@ -426,7 +426,7 @@ body {
   }
 
   .letter-card {
-    width: 40%; /* 33.33% width for each item with some margin */
+    width: 45%; /* 33.33% width for each item with some margin */
     margin: 1px;
     /* margin-left: 20px; */
     -webkit-tap-highlight-color: transparent;
@@ -494,8 +494,8 @@ body {
   .search-bar {
     /* margin: 0 auto; /1* Center the search bar horizontally *1/ */
     width: 90%;
-    margin-left: 12px;
-    margin-bottom: 20px;
+    margin: 0 auto; /* Centers the element horizontally */
+    margin-bottom: 15px;
   }
 
   /* .form-group label { */
