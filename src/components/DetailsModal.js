@@ -10,6 +10,7 @@ import {FaEarlybirds} from 'react-icons/fa';
 import {BsBookmarkHeartFill} from 'react-icons/bs';
 import {FaUserTie} from 'react-icons/fa';
 import {useState, useEffect} from 'react';
+import {adminId, targetDate} from '../data/target_letters';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   let render_url;
@@ -21,8 +22,6 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     render_url = process.env.REACT_APP_API_URL;
   }
 
-  const adminId = '66139a0e59ef92852a5d9ebd';
-  const targetDate = new Date(2024, 4, 15);
   let letterId;
   let letterDate;
   if (selectedLetter) {
@@ -177,7 +176,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
               </button>
             </div>
             <div className="modal-body">
-              <div className="letter-info">
+              <div className="letter-info" style={{marginBottom: '5px'}}>
                 <Typewriter
                   options={{delay: 50, loop: false}}
                   onInit={typewriter => {
@@ -192,7 +191,6 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   }}
                 />
               </div>
-              <br />
               <div className="letter-info">
                 <Typewriter
                   options={{delay: 50, loop: false}}

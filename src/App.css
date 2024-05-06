@@ -464,9 +464,10 @@ body {
   .letter-text {
     font-family: monospace;
     font-size: 13px;
-    white-space: pre-wrap;
     text-align: left;
     margin-left: 5px;
+    margin-right: -15px;
+    /* hyphens: auto; /1* Enable automatic hyphenation *1/ */
   }
 
   .logo {
