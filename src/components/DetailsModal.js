@@ -8,6 +8,7 @@ import tc from 'thousands-counter';
 import js_ago from 'js-ago';
 import {FaEarlybirds} from 'react-icons/fa';
 import {BsBookmarkHeartFill} from 'react-icons/bs';
+import {FaUserTie} from 'react-icons/fa';
 import {useState, useEffect} from 'react';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
@@ -19,10 +20,14 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   } else {
     render_url = process.env.REACT_APP_API_URL;
   }
+
+  const adminId = '66139a0e59ef92852a5d9ebd';
   const targetDate = new Date(2024, 4, 31);
+  let letterId;
   let letterDate;
   if (selectedLetter) {
     letterDate = new Date(selectedLetter.timestamp);
+    letterId = selectedLetter._id;
   }
 
   const incrementReads = async () => {
@@ -286,14 +291,18 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   <>
                     <div
                       data-tooltip-id="early_bird"
-                      data-tooltip-html="This open letter is an Early Bird! <br/>
-It was among the first letters to be shared."
+                      data-tooltip-html={`<strong>This open letter is an Early Bird! <br/>
+                      It was among the first letters to be shared.</strong> ${
+                        letterId === adminId ? 'Admin' : ''
+                      }`}
                       data-tooltip-place="bottom"
                       data-tooltip-variant="dark"
                     >
                       <FaEarlybirds size="15px" />
                       &nbsp;
                       <BsBookmarkHeartFill size="15px" />
+                      {letterId === adminId && ` `}
+                      {letterId === adminId ? <FaUserTie size="15px" /> : null}
                     </div>
                     <Tooltip id="early_bird" arrowColor="transparent" />
                   </>
