@@ -22,7 +22,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   }
 
   const adminId = '66139a0e59ef92852a5d9ebd';
-  const targetDate = new Date(2024, 4, 31);
+  const targetDate = new Date(2024, 4, 15);
   let letterId;
   let letterDate;
   if (selectedLetter) {
