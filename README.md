@@ -1,4 +1,6 @@
-<h1 align="center">Letters to Casper</h1>
+<div style="text-align: center;">
+  <img alt="ltc" src="https://letterstocasper.ph/static/media/ltc_logo_1.cbb025df3b8a2f362432.webp" height="80" width="400" />
+</div>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-2.2.10-blue.svg?cacheSeconds=2592000" />
   <a href="#" target="_blank">
