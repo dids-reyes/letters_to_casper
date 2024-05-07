@@ -122,7 +122,7 @@ Hello...
 
 Goodbye...
 
-Link (Spotify, YouTube)`}
+link/url (Spotify, YouTube)`}
                         className="big-textarea full-width"
                         value={newLetter.message}
                         maxLength="500"
