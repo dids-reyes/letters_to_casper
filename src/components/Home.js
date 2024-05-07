@@ -264,7 +264,6 @@ function Home() {
             display: 'flex',
             justifyContent: 'center',
             margin: '15px',
-            // opacity: 0.5,
           }}
         >
           <div
