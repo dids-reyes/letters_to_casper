@@ -314,7 +314,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                       early_bird
                         ? '<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>'
                         : ''
-                    } ${letterId == adminId ? 'Admin' : ''} ${
+                    } ${letterId === adminId ? 'Admin' : ''} ${
                       eleven_eleven ? '<strong>11:11 PM</strong>' : ''
                     } ${twelve_fifty_one ? '<strong>12:51 AM</strong>' : ''}
                     `}
