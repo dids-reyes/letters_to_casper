@@ -9,6 +9,8 @@ import js_ago from 'js-ago';
 import {FaEarlybirds} from 'react-icons/fa';
 import {BsBookmarkHeartFill} from 'react-icons/bs';
 import {FaUserTie} from 'react-icons/fa';
+import {PiShootingStarFill} from 'react-icons/pi';
+import {PiHeartBreakFill} from 'react-icons/pi';
 import {useState, useEffect} from 'react';
 import {adminId, targetDate} from '../data/target_letters';
 
@@ -24,9 +26,29 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
 
   let letterId;
   let letterDate;
+  let letterTime;
+
+  let early_bird;
+  let eleven_eleven;
+  let twelve_fifty_one;
+
   if (selectedLetter) {
     letterDate = new Date(selectedLetter.timestamp);
+    letterTime = new Date(selectedLetter.timestamp);
     letterId = selectedLetter._id;
+    if (letterDate < targetDate) {
+      early_bird = true;
+    }
+  }
+
+  if (letterTime != null) {
+    let hours = letterTime.getHours();
+    let minutes = letterTime.getMinutes();
+    if (hours === 23 && minutes === 11) {
+      eleven_eleven = true;
+    } else if (hours === 0 && minutes === 51) {
+      twelve_fifty_one = true;
+    }
   }
 
   const incrementReads = async () => {
@@ -285,26 +307,50 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
               )}
               <div className="reads-text">
                 <br />
-                {letterDate < targetDate && (
-                  <>
-                    <div
-                      data-tooltip-id="early_bird"
-                      data-tooltip-html={`<strong>This open letter is an Early Bird! <br/>
-                      It was among the first letters to be shared.</strong> ${
-                        letterId === adminId ? 'Admin' : ''
-                      }`}
-                      data-tooltip-place="bottom"
-                      data-tooltip-variant="dark"
-                    >
-                      <FaEarlybirds size="15px" />
-                      &nbsp;
-                      <BsBookmarkHeartFill size="15px" />
-                      {letterId === adminId && ` `}
-                      {letterId === adminId ? <FaUserTie size="15px" /> : null}
-                    </div>
-                    <Tooltip id="early_bird" arrowColor="transparent" />
-                  </>
-                )}
+                <>
+                  <div
+                    data-tooltip-id="badges"
+                    data-tooltip-html={`${
+                      early_bird
+                        ? '<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>'
+                        : ''
+                    } ${letterId === adminId ? 'Admin' : ''} ${
+                      eleven_eleven ? '<strong>11:11 PM</strong>' : ''
+                    } ${twelve_fifty_one ? '<strong>12:51 AM</strong>' : ''}
+                    `}
+                    data-tooltip-place="bottom"
+                  >
+                    {early_bird && (
+                      <>
+                        <FaEarlybirds size="15px" />
+                        &nbsp;
+                        <BsBookmarkHeartFill size="15px" />
+                      </>
+                    )}
+
+                    {letterId === adminId && (
+                      <>
+                        &nbsp;
+                        <FaUserTie size="15px" />
+                      </>
+                    )}
+
+                    {eleven_eleven && (
+                      <>
+                        &nbsp;
+                        <PiShootingStarFill size="15px" />
+                      </>
+                    )}
+
+                    {twelve_fifty_one && (
+                      <>
+                        &nbsp;
+                        <PiHeartBreakFill size="15px" />
+                      </>
+                    )}
+                  </div>
+                  <Tooltip id="badges" arrowColor="transparent" />
+                </>
                 <Typewriter
                   options={{delay: 70, loop: false}}
                   onInit={typewriter => {
