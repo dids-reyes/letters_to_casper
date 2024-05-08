@@ -36,7 +36,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     letterDate = new Date(selectedLetter.timestamp);
     letterTime = new Date(selectedLetter.timestamp);
     letterId = selectedLetter._id;
-    if (letterDate < targetDate) {
+    if (letterDate < targetDate && letterId !== adminId) {
       early_bird = true;
     }
   }
@@ -164,7 +164,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
       if (window.innerWidth < 768) {
         setIframeHeight(152);
       } else {
-        setIframeHeight(280);
+        setIframeHeight(250);
       }
     }
 

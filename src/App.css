@@ -120,6 +120,7 @@ body {
   align-items: center;
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.5);
+  overflow-y: scroll;
 }
 
 .modal-add-dialog {
@@ -334,7 +335,7 @@ body {
 
 .timestamp-text {
   font-family: 'Courier New', Courier, monospace; /* Change 'Courier New' to your desired font */
-  font-size: 14px;
+  font-size: 13px;
   color: #333; /* Adjust color as needed */
 }
 
@@ -408,13 +409,13 @@ body {
   white-space: pre-wrap;
   text-align: left;
   font-family: monospace;
-  font-size: 16px;
+  font-size: 14px;
   margin-left: 10px;
 }
 
 .letter-text {
   font-family: monospace;
-  font-size: 16px;
+  font-size: 14px;
   white-space: pre-wrap;
   text-align: left;
   margin-left: 10px;
@@ -601,6 +602,13 @@ body {
   }
 
   .modal-body .form-group {
+  }
+
+  .reads-text {
+    font-family: 'Courier New', Courier, monospace;
+    right: 10px;
+    text-align: right;
+    font-size: 11px;
   }
 }
 
