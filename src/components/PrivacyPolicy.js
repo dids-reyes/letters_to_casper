@@ -4,7 +4,7 @@ function PrivacyPolicy() {
   return (
     <div style={{margin: '20px'}}>
       <h1>Privacy Policy</h1>
-      <p>Last updated: April 09, 2024</p>
+      <p>Last updated: May 09, 2024</p>
       <p>
         Welcome to Letters to Casper! Protecting your privacy is fundamental to
         us. This Privacy Policy outlines how we collect, use, and safeguard your
@@ -21,8 +21,11 @@ function PrivacyPolicy() {
       <p>
         We do collect and store all submitted letters solely for the purpose of
         facilitating the display and sharing of user-generated content on our
-        website. However, we don't use this information for commercial purposes
-        or to extract any personal information from users.
+        website. Additionally, we collect the location or city and region of the
+        sender for confirmation purposes if they wish to delete their letter
+        entry to avoid deletion from unknown users. However, we don't use this
+        information for commercial purposes or to extract any personal
+        information from users.
       </p>
       <p>
         We may display pop-up advertisements from approved advertising networks.
