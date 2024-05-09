@@ -120,7 +120,6 @@ body {
   align-items: center;
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.5);
-  overflow-y: scroll;
 }
 
 .modal-add-dialog {

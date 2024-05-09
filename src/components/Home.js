@@ -20,6 +20,7 @@ import {IoMailUnreadOutline} from 'react-icons/io5';
 import {Tooltip} from 'react-tooltip';
 import tc from 'thousands-counter';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import axios from 'axios';
 import '../App.css';
 
 function Home() {
@@ -107,8 +108,22 @@ function Home() {
     fetchLetters();
   }, [render_url, api_key]);
 
+  const getData = async () => {
+    try {
+      const res = await axios.get('https://api.ipify.org/?format=json');
+      return res.data.ip;
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      return 'blocked';
+    }
+  };
+
+  let public_ip;
+
   const handleAddLetter = async () => {
     try {
+      public_ip = await getData();
+
       const {from, to, message} = newLetter;
 
       if (from.trim() === '' || to.trim() === '' || message.trim() === '') {
@@ -125,6 +140,7 @@ function Home() {
         message,
         approve: false,
         timestamp,
+        ip: public_ip,
       };
 
       const response = await fetch(render_url, {
