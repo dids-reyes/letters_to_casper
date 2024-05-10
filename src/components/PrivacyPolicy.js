@@ -4,7 +4,7 @@ function PrivacyPolicy() {
   return (
     <div style={{margin: '20px'}}>
       <h1>Privacy Policy</h1>
-      <p>Last updated: May 09, 2024</p>
+      <i style={{fontSize: 'smaller'}}>Last updated: May 09, 2024</i>
       <p>
         Welcome to Letters to Casper! Protecting your privacy is fundamental to
         us. This Privacy Policy outlines how we collect, use, and safeguard your
