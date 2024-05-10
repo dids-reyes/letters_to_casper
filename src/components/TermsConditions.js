@@ -4,7 +4,7 @@ function TermsAndConditions() {
   return (
     <div style={{margin: '20px'}}>
       <h1>Terms and Conditions</h1>
-      <p>Last updated: April 09, 2024</p>
+      <i style={{fontSize: 'smaller'}}>Last updated: May 09, 2024</i>
       <p>
         Welcome to Letters to Casper! These Terms and Conditions govern your use
         of our website. By accessing or using our website, you agree to comply

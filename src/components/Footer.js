@@ -12,6 +12,7 @@ function Footer() {
         <p>
           <Link to="/privacy_policy">Privacy Policy</Link> |&nbsp;
           <Link to="/terms_and_conditions">Terms and Conditions</Link> |&nbsp;
+          <Link to="/developer_portal">Developers</Link> |&nbsp;
           <Link to="/about_us">About Us</Link>
         </p>
       </div>
