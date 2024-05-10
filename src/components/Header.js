@@ -13,7 +13,6 @@ function Header({searchTerm, handleSearchChange}) {
   useEffect(() => {
     let logoIntervalId;
     if (showLogo) {
-      // Generate a random message from letters array
       const randomIndex = Math.floor(Math.random() * letters.length);
       setRandomMessage(letters[randomIndex]);
 
@@ -41,7 +40,7 @@ function Header({searchTerm, handleSearchChange}) {
       ) : (
         <div className="alt-logo">
           <Typewriter
-            options={{delay: 20, loop: false}}
+            options={{delay: 50, loop: false}}
             onInit={typewriter => {
               typewriter
                 .typeString(randomMessage)
