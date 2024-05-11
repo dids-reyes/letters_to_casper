@@ -1,0 +1,8 @@
+.approve-button.enabled {
+  background-color: #0056b3;
+}
+
+.approve-button.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}

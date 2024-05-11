@@ -1,6 +1,6 @@
 {
   "name": "letters-to-casper",
-  "version": "3.2.12",
+  "version": "4.2.12",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.4",
