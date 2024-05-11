@@ -5,6 +5,13 @@
   height: 100vh;
 }
 
+@media (max-width: 768px) {
+  /* Target screens less than 768px wide */
+  .login-box {
+    margin-bottom: 90px; /* Add margin-top for mobile screens */
+  }
+}
+
 .login-box {
   width: 300px;
   padding: 20px;
