@@ -67,6 +67,7 @@ function DeveloperPortal() {
         <FaEnvelope style={{marginRight: '10px'}} />
         <a href="mailto:letters2casper@gmail.com">letters2casper@gmail.com</a>
       </div>
+      <br />
     </div>
   );
 }
