@@ -115,7 +115,7 @@ function AdminPortal() {
   if (!isLoggedIn) {
     return (
       <>
-        <h3>This page is only for LTC's Admin Portal.</h3>
+        <h3>This page is for LTC's Admin Portal.</h3>
         <center>
           <p>
             Hi there! <b>{ip}</b> if you're lost please redirect to&nbsp;
@@ -178,7 +178,6 @@ function AdminPortal() {
                 onChange={handleSelectChange}
               />
               <label htmlFor={`letter-${letter._id}`}>
-                {/* Apply background color here */}
                 <div style={{backgroundColor: '#f5f5f5', padding: '1rem'}}>
                   <p>From: {letter.from}</p>
                   <p>To: {letter.to}</p>
