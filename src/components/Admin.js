@@ -1,5 +1,5 @@
 import React, {useState, useContext} from 'react';
-import {useNavigate} from 'react-router-dom'; // Import useNavigate hook
+import {useNavigate} from 'react-router-dom';
 import logo from '../lotties/ltc_logo_1.webp';
 import {AuthContext} from '../AuthContext';
 import '../admin.css';
@@ -95,7 +95,10 @@ function Admin() {
               autoComplete="current-password"
               required
             />
-            {error && <div style={{color: 'red'}}>{error}</div>}
+            &nbsp;
+            {error && (
+              <div style={{color: 'red', fontSize: 'smaller'}}>{error}</div>
+            )}
           </div>
           <button className="login-button" type="submit">
             Login
