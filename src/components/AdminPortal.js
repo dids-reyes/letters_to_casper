@@ -1,5 +1,9 @@
 import React, {useState, useEffect, useContext} from 'react';
 import {AuthContext} from '../AuthContext';
+import Lottie from 'react-lottie-player';
+import locked from '../lotties/locked.json';
+import axios from 'axios';
+import {Link} from 'react-router-dom';
 import '../AdminPortal.css';
 
 function AdminPortal() {
@@ -92,8 +96,54 @@ function AdminPortal() {
     }
   };
 
+  const [ip, setIP] = useState('');
+
+  const getData = async () => {
+    try {
+      const res = await axios.get('https://api.ipify.org/?format=json');
+      setIP(res.data.ip);
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      return 'blocked';
+    }
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
+
   if (!isLoggedIn) {
-    return <p>You need to be logged in to access this page.</p>;
+    return (
+      <>
+        <h3>This page is only for LTC's Admin Portal.</h3>
+        <center>
+          <p>
+            Hi there! <b>{ip}</b> if you're lost please redirect to&nbsp;
+            <Link to="/">Home</Link>, this page requires login from
+            Administrator, your location will be traced if you try to enter
+            unauthorized routes.
+          </p>
+        </center>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+            marginBottom: '80px',
+          }}
+        >
+          <div>
+            <Lottie
+              loop
+              animationData={locked} // Replace with your Lottie animation data
+              play
+              style={{width: 300, height: 300}}
+            />
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
