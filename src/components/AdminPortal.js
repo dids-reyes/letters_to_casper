@@ -178,7 +178,7 @@ function AdminPortal() {
                 onChange={handleSelectChange}
               />
               <label htmlFor={`letter-${letter._id}`}>
-                <div style={{backgroundColor: '#f5f5f5', padding: '1rem'}}>
+                <div className="letter-review-box">
                   <p>From: {letter.from}</p>
                   <p>To: {letter.to}</p>
                   <p>Message: {letter.message}</p>
