@@ -10,15 +10,15 @@
 .letter-review-box {
   background-color: #f5f5f5;
   padding: #1rem;
-  max-width: 90%;
   margin: 0 auto;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
   .letter-review-box {
     background-color: #f5f5f5;
-    width: 400px;
-    text-align: left;
+    padding: #1rem;
+    width: 300px;
     overflow: hidden;
   }
 }
