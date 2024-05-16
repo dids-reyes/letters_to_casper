@@ -7,6 +7,7 @@ import DeveloperPortal from './components/DeveloperPortal';
 import AboutUs from './components/AboutUs';
 import Admin from './components/Admin';
 import AdminPortal from './components/AdminPortal';
+import SeekHelp from './components/SeekHelp';
 import {AuthProvider} from './AuthContext';
 import './App.css';
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="/about_us" element={<AboutUs />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin_portal" element={<AdminPortal />} />
+          <Route path="/seek_help" element={<SeekHelp />} />
         </Routes>
       </AuthProvider>
     </div>

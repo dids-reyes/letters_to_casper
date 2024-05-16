@@ -51,7 +51,6 @@ function DeveloperPortal() {
       <h2>Contact Us</h2>
       <p>
         If you have any questions or suggestions, feel free to reach out at
-        letters2casper@gmail.com.
       </p>
       <div style={{display: 'flex', alignItems: 'center'}}>
         <FaGithub style={{marginRight: '10px'}} />
