@@ -35,9 +35,9 @@ function SeekHelp() {
         <p>A community of mental health advocates that aims to promote and protect mental health in the Philippines through online and offline initiatives.</p>
 
         <p><strong>MentalHealthPH Crisis Hotlines:</strong></p>
-          <li>(02) 1553  <FaPhone size='10px'/></li>
-          <li>(02) 7-989-8727 <FaPhone size='10px'/></li>
-          <li>0917-899-8727 <FaPhone size='10px'/></li>
+          <p>(02) 1553  <FaPhone size='10px'/></p>
+          <p>(02) 7-989-8727 <FaPhone size='10px'/></p>
+          <p>0917-899-8727 <FaPhone size='10px'/></p>
       </div>
 
       <hr/>
@@ -50,9 +50,9 @@ function SeekHelp() {
         <p>The NCMH provides comprehensive mental health services for Filipinos, including crisis intervention and outpatient consultations.</p>
 
         <p><strong>NCMH Crisis Hotlines:</strong></p>
-          <li>1553 (toll-free) <FaPhone size='10px'/></li>
-          <li>Globe: 0917-8001123 <FaPhone size='10px'/></li>
-          <li>Sun: 0922-893-8944 <FaPhone size='10px'/></li>
+          <p>1553 (toll-free) <FaPhone size='10px'/></p>
+          <p>Globe: 0917-8001123 <FaPhone size='10px'/></p>
+          <p>Sun: 0922-893-8944 <FaPhone size='10px'/></p>
       </div>
 
       <hr/>
@@ -65,9 +65,9 @@ function SeekHelp() {
         <p>The NGF provides support through crisis intervention and counseling services.</p>
 
         <p><strong>NGF Hotlines:</strong></p>
-          <li>(02) 804-HOPE (4673) <FaPhone size='10px'/></li>
-          <li>0917 5584673 <FaPhone size='10px'/></li>
-          <li>2919 (toll-free for Globe and TM subscribers) <FaPhone size='10px'/></li>
+          <p>(02) 804-HOPE (4673) <FaPhone size='10px'/></p>
+          <p>0917 5584673 <FaPhone size='10px'/></p>
+          <p>2919 (toll-free for Globe and TM subscribers) <FaPhone size='10px'/></p>
       </div>
 
       <hr/>
@@ -80,7 +80,7 @@ function SeekHelp() {
         <p>In Touch provides mental health services including crisis intervention and counseling.</p>
 
         <p><strong>In Touch Hotlines:</strong></p>
-          <li>0922-893-8944 <FaPhone size='10px'/></li>
+          <p>0922-893-8944 <FaPhone size='10px'/></p>
       </div>
       <br/>
     </div>
