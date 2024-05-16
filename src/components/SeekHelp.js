@@ -15,7 +15,7 @@ function SeekHelp() {
           style={{width: 300, height: 300}}
         />
       </center>
-      <p>We believe in valuing mental health and well-being. If you or someone you know is struggling with mental health issues, there are resources available to help. <br/>Please reach out to the organizations below for support and assistance:</p>
+      <p>We believe in valuing mental health and well-being. If you or someone you know is struggling with mental health issues, there are resources available to help. <br/><br/>Please reach out to the organizations below for support and assistance:</p>
 
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <a href="https://pmha.org.ph/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
