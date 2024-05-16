@@ -7,7 +7,7 @@ function Footer() {
       <div className="footer-content">
         <p>
           If you want to request deletion of your post, contact us at{' '}
-          <strong>letters2casper@gmail.com</strong>{' '}
+          letters2casper@gmail.com{' '}
         </p>
         <p>
           <Link to="/seek_help" style={{ color: 'white', fontWeight: 'bold', textDecoration: 'none' }}>Seek Help</Link> |&nbsp;
