@@ -10,6 +10,7 @@ function Footer() {
           <strong>letters2casper@gmail.com</strong>{' '}
         </p>
         <p>
+          <Link to="/seek_help">Seek Help</Link> |&nbsp;
           <Link to="/privacy_policy">Privacy Policy</Link> |&nbsp;
           <Link to="/terms_and_conditions">Terms and Conditions</Link> |&nbsp;
           <Link to="/developer_portal">Developers</Link> |&nbsp;
