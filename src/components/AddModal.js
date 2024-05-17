@@ -89,7 +89,7 @@ function AddModal({
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="to" className="label-top-left">
+                    <label htmlFor="to" className="label-to">
                       To:
                     </label>
                     <input
@@ -107,7 +107,7 @@ function AddModal({
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="message" className="label-top-left">
+                    <label htmlFor="message" className="label-message">
                       Message:
                     </label>
                     <span>
@@ -121,6 +121,8 @@ function AddModal({
 Hello...
 
 Goodbye...
+
+
 
 link/url (Spotify, YouTube)`}
                         className="big-textarea full-width"

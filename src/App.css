@@ -270,7 +270,7 @@ body {
 }
 
 .big-textarea {
-  height: 150px;
+  height: 170px;
 }
 
 .modal-header {
@@ -560,11 +560,6 @@ body {
     color: #333; /* Adjust color as needed */
   }
 
-  .big-textarea {
-    height: 130px;
-    width: 100%;
-  }
-
   .big-textarea::placeholder {
     font-size: 15px;
   }
@@ -597,10 +592,31 @@ body {
   .modal-add-dialog {
   }
 
-  .modal-body {
+  .modal-body textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    height: 160px;
+    font-size: 16px;
   }
 
   .modal-body .form-group {
+    margin-bottom: 0px;
+  }
+
+  .label-to {
+    margin-top: 20px;
+  }
+
+  .label-message {
+    margin-top: 20px;
+  }
+
+  .character-count {
+    position: bottom;
+    font-size: 10px;
+    color: #777;
   }
 
   .reads-text {
