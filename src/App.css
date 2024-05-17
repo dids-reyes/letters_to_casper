@@ -592,15 +592,6 @@ body {
   .modal-add-dialog {
   }
 
-  .modal-body textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    height: 160px;
-    font-size: 16px;
-  }
-
   .modal-body .form-group {
     margin-bottom: 0px;
   }
