@@ -605,6 +605,10 @@ body {
     margin-bottom: 0px;
   }
 
+  .message-content {
+    margin-bottom: 20px;
+  }
+
   .label-to {
     margin-top: 20px;
   }

@@ -255,7 +255,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 <Tooltip id="timezone_tooltip" />
                 <br />
               </div>
-              <div className="form-group">
+              <div className="message-content">
                 <div className="letter-text">
                   <span>
                     <Typewriter
