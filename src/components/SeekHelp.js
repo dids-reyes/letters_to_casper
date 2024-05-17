@@ -1,9 +1,21 @@
-import React from 'react';
+import {React, useEffect} from 'react';
 import Lottie from 'react-lottie-player';
 import balance from '../lotties/balance.json';
 import { FaPhone } from 'react-icons/fa';
 
 function SeekHelp() {
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://embed.reddit.com/widgets.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    // Cleanup the script when the component unmounts
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   return (
     <div style={{ margin: '20px', textAlign: 'center' }}>
       <h2>Mental Health Resources</h2>
@@ -82,9 +94,27 @@ function SeekHelp() {
         <p><strong>In Touch Hotlines:</strong></p>
           <p>0922-893-8944 <FaPhone size='10px'/></p>
       </div>
+
+      <hr/>
+          <span style={{ fontSize: '1.2em', fontWeight: 'bold', display: 'block', marginBottom: '20px', marginTop: '40px' }}>Social Media Communities</span>
+
+        <blockquote className="reddit-embed-bq" data-embed-height="502">Posts from the <a href="https://www.reddit.com/r/MentalHealthPH/">mentalhealthph</a><br/> community on Reddit</blockquote><script async="" src="https://embed.reddit.com/widgets.js" charSet="UTF-8"></script>
+
       <br/>
+
+      <div style={{ textAlign: 'center', margin: '20px 0' }}>
+        <img src="https://play-lh.googleusercontent.com/g6Jk6tFSGmWJ7rLRIk6j_5Cdsn3OrOgOvcvJa8Bch8wARYOIGup1H9cvQQkjFxH1Lg" alt="Vent Logo" style={{ width: '120px', height: 'auto', marginBottom: '10px' }} />
+        <span style={{ fontSize: '1.2em', fontWeight: 'bold', display: 'block', marginBottom: '20px' }}>Vent - Express yourself freely</span>
+        <span style={{ fontSize: '0.9em', display: 'block', marginBottom: '20px' }}>Vent helps you connect to a supportive, positive, and understanding community, making it easy to share your feelings with people around the world.</span>
+        <div style={{ display: 'flex', justifyContent: 'center'}}>
+            <a href='https://play.google.com/store/apps/details?id=com.vent&hl=en&gl=US&pli=1&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='130px' height='auto'/></a>
+            <a href="https://apps.apple.com/us/app/vent-express-your-feelings/id780298346?itsct=apps_box_badge&itscg=30200" style={{ display: 'inline-block', overflow: 'hidden' }} target="_blank" rel="noopener noreferrer">
+              <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1388361600" alt="Download on the App Store" style={{margin: '6%', width: '88%', height: 'auto' }} />
+            </a>
+        </div>
+      </div>
     </div>
-  );
+);
 }
 
 export default SeekHelp;
