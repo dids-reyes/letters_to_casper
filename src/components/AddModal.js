@@ -106,7 +106,7 @@ function AddModal({
                       }
                     />
                   </div>
-                  <div>
+                  <div style={{ marginRight: '15px' }}>
                     <label htmlFor="message" className="label-top-left">
                       Message:
                     </label>
