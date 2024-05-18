@@ -106,7 +106,7 @@ function AddModal({
                       }
                     />
                   </div>
-                  <div className="form-group">
+                  <div>
                     <label htmlFor="message" className="label-top-left">
                       Message:
                     </label>

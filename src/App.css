@@ -600,8 +600,9 @@ body {
   .modal-body {
   }
 
-  .modal-body .form-group {
-  }
+.modal-body .form-group {
+  margin-bottom: 20px;
+}
 
   .reads-text {
     font-family: 'Courier New', Courier, monospace;
