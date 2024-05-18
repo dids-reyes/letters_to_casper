@@ -55,7 +55,7 @@ body {
 
 .search-bar {
   width: 80%;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
   margin-bottom: 20px;
 }
@@ -600,9 +600,9 @@ body {
   .modal-body {
   }
 
-.modal-body .form-group {
-  margin-bottom: 20px;
-}
+  .modal-body .form-group {
+    margin-bottom: 20px;
+  }
 
   .reads-text {
     font-family: 'Courier New', Courier, monospace;
