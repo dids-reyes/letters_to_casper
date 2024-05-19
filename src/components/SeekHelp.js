@@ -5,6 +5,7 @@ import { FaPhone } from 'react-icons/fa';
 
 function SeekHelp() {
   useEffect(() => {
+    window.scrollTo(0, 0);
     const script = document.createElement("script");
     script.src = "https://embed.reddit.com/widgets.js";
     script.async = true;
