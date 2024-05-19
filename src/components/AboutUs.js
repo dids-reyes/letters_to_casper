@@ -1,6 +1,10 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 
 function AboutUs() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="container" style={{margin: '20px'}}>
       <h1>About Us</h1>

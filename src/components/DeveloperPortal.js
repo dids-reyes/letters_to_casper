@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {FaGithub, FaEnvelope} from 'react-icons/fa';
 import {FaReact} from 'react-icons/fa';
 import {SiAxios} from 'react-icons/si';
@@ -10,6 +10,10 @@ import {SiMongoose} from 'react-icons/si';
 import {SiSentry} from 'react-icons/si';
 
 function DeveloperPortal() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div style={{margin: '20px'}}>
       <h1>Developers</h1>

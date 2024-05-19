@@ -1,16 +1,16 @@
 import {React, useEffect} from 'react';
 import Lottie from 'react-lottie-player';
 import balance from '../lotties/balance.json';
-import { FaPhone } from 'react-icons/fa';
+import { FaPhone, FaEnvelope } from 'react-icons/fa';
 
 function SeekHelp() {
   useEffect(() => {
+    window.scrollTo(0, 0);
     const script = document.createElement("script");
     script.src = "https://embed.reddit.com/widgets.js";
     script.async = true;
     document.body.appendChild(script);
 
-    // Cleanup the script when the component unmounts
     return () => {
       document.body.removeChild(script);
     };
@@ -91,8 +91,12 @@ function SeekHelp() {
         </a>
         <p>In Touch provides mental health services including crisis intervention and counseling.</p>
 
-        <p><strong>In Touch Hotlines:</strong></p>
-          <p>0922-893-8944 <FaPhone size='10px'/></p>
+        <p><strong>In Touch Crisis Hotlines:</strong></p>
+          <p>+63288937303 <FaPhone size='10px'/></p>
+          <p>+639190560709 <FaPhone size='10px'/></p>
+          <p>+639178001123 <FaPhone size='10px'/></p>
+          <p>+639228938944 <FaPhone size='10px'/></p>
+          <p>helpline@in-touch.org <FaEnvelope size='10px'/></p>
       </div>
 
       <hr/>
