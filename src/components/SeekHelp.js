@@ -4,6 +4,7 @@ import balance from '../lotties/balance.json';
 import { FaPhone, FaEnvelope } from 'react-icons/fa';
 
 function SeekHelp() {
+  let calendarific_api_key = process.env.REACT_APP_CLNDR_API_KEY;
   useEffect(() => {
     window.scrollTo(0, 0);
     const script = document.createElement("script");
@@ -11,10 +12,18 @@ function SeekHelp() {
     script.async = true;
     document.body.appendChild(script);
 
-    return () => {
-      document.body.removeChild(script);
-    };
+  // fetch(`https://calendarific.com/api/v2/holidays?&api_key=${calendarific_api_key}&country=PH&year=2024&month=04`, options)
+  //   .then(response => response.json())
+  //   .then(response => console.log(response))
+  //   .catch(err => console.error(err));
+
+  //   return () => {
+  //     document.body.removeChild(script);
+  //   };
   }, []);
+
+  const options = {method: 'GET'};
+
 
   return (
     <div style={{ margin: '20px', textAlign: 'center' }}>
@@ -45,11 +54,6 @@ function SeekHelp() {
           <span style={{ fontSize: '1.2em', fontWeight: 'bold', display: 'block' }}>Mental Health PH</span>
         </a>
         <p>A community of mental health advocates that aims to promote and protect mental health in the Philippines through online and offline initiatives.</p>
-
-        <p><strong>MentalHealthPH Crisis Hotlines:</strong></p>
-          <p>(02) 1553  <FaPhone size='10px'/></p>
-          <p>(02) 7-989-8727 <FaPhone size='10px'/></p>
-          <p>0917-899-8727 <FaPhone size='10px'/></p>
       </div>
 
       <hr/>
@@ -62,9 +66,10 @@ function SeekHelp() {
         <p>The NCMH provides comprehensive mental health services for Filipinos, including crisis intervention and outpatient consultations.</p>
 
         <p><strong>NCMH Crisis Hotlines:</strong></p>
-          <p>1553 (toll-free) <FaPhone size='10px'/></p>
-          <p>Globe: 0917-8001123 <FaPhone size='10px'/></p>
-          <p>Sun: 0922-893-8944 <FaPhone size='10px'/></p>
+        <p>Luzon Landline (toll-free): 1553 <FaPhone size='10px'/></p>
+          <p>+639086392672 <FaPhone size='10px'/></p>
+          <p>+639663514518 <FaPhone size='10px'/></p>
+          <p>+639178998727 <FaPhone size='10px'/></p>
       </div>
 
       <hr/>
@@ -76,10 +81,10 @@ function SeekHelp() {
         </a>
         <p>The NGF provides support through crisis intervention and counseling services.</p>
 
-        <p><strong>NGF Hotlines:</strong></p>
-          <p>(02) 804-HOPE (4673) <FaPhone size='10px'/></p>
+        <p><strong>NGF Hopeline:</strong></p>
           <p>0917 5584673 <FaPhone size='10px'/></p>
-          <p>2919 (toll-free for Globe and TM subscribers) <FaPhone size='10px'/></p>
+          <p>02-8804-4673 <FaPhone size='10px'/></p>
+          <p>0918-873-4673 <FaPhone size='10px'/></p>
       </div>
 
       <hr/>
