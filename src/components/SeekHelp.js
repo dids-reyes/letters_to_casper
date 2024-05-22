@@ -4,7 +4,7 @@ import balance from '../lotties/balance.json';
 import { FaPhone, FaEnvelope } from 'react-icons/fa';
 
 function SeekHelp() {
-  let calendarific_api_key = process.env.REACT_APP_CLNDR_API_KEY;
+  // let calendarific_api_key = process.env.REACT_APP_CLNDR_API_KEY;
   useEffect(() => {
     window.scrollTo(0, 0);
     const script = document.createElement("script");
@@ -22,7 +22,7 @@ function SeekHelp() {
   //   };
   }, []);
 
-  const options = {method: 'GET'};
+  // const options = {method: 'GET'};
 
 
   return (
