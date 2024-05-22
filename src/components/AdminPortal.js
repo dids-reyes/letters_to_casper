@@ -98,6 +98,7 @@ function AdminPortal() {
 
   const [ip, setIP] = useState('');
 
+  // TODO: Grab IP and apply rate limiting to prevent brute-force / submit IP to project Honeypot
   const getData = async () => {
     try {
       const res = await axios.get('https://api.ipify.org/?format=json');
