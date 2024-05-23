@@ -12,18 +12,10 @@ import {FaUserTie} from 'react-icons/fa';
 import {PiShootingStarFill} from 'react-icons/pi';
 import {PiHeartBreakFill} from 'react-icons/pi';
 import {useState, useEffect} from 'react';
+import { render_url, api_key } from '../data/keys';
 import {adminId, targetDate} from '../data/target_letters';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
-  let render_url;
-  let api_key = process.env.REACT_APP_API_KEY;
-
-  if (process.env.NODE_ENV === 'development') {
-    render_url = 'http://localhost:8000/api/messages';
-  } else {
-    render_url = process.env.REACT_APP_API_URL;
-  }
-
   let letterId;
   let letterDate;
   let letterTime;

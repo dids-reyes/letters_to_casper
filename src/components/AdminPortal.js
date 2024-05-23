@@ -4,6 +4,7 @@ import Lottie from 'react-lottie-player';
 import locked from '../lotties/locked.json';
 import axios from 'axios';
 import {Link} from 'react-router-dom';
+import { render_base_url as render_url, api_key } from '../data/keys';
 import '../AdminPortal.css';
 
 function AdminPortal() {
@@ -14,15 +15,6 @@ function AdminPortal() {
     counts: {approved: 0, unapproved: 0},
   });
   const [loading, setLoading] = useState(0);
-
-  let render_url;
-  let api_key = process.env.REACT_APP_API_KEY;
-
-  if (process.env.NODE_ENV === 'development') {
-    render_url = 'http://localhost:8000';
-  } else {
-    render_url = process.env.REACT_APP_BASE_URL;
-  }
 
   useEffect(() => {
     const fetchLetters = async () => {
@@ -46,7 +38,7 @@ function AdminPortal() {
     };
 
     fetchLetters();
-  }, [render_url, api_key]);
+  }, []);
 
   const [selectedLetters, setSelectedLetters] = useState([]);
 
@@ -76,7 +68,7 @@ function AdminPortal() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY,
+          'x-api-key': api_key,
         },
         body: JSON.stringify({letterIds: selectedLetters}),
       });
@@ -121,8 +113,7 @@ function AdminPortal() {
           <p>
             Hi there! <b>{ip}</b> if you're lost please redirect to&nbsp;
             <Link to="/">Home</Link>, this page requires login from
-            Administrator, your location will be traced if you try to enter
-            unauthorized routes.
+            Administrator, your location will be traced and your Public IP address will be reported as spam if you try to enter unauthorized routes.
           </p>
         </center>
         <div

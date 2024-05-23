@@ -18,6 +18,7 @@ import SmoothScroll from 'smooth-scroll';
 import {IoMailOpenOutline} from 'react-icons/io5';
 import {IoMailUnreadOutline} from 'react-icons/io5';
 import {Tooltip} from 'react-tooltip';
+import { render_url, api_key } from '../data/keys';
 import tc from 'thousands-counter';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import axios from 'axios';
@@ -44,15 +45,6 @@ function Home() {
     setSearchTerm(event.target.value);
     searchLetters();
   };
-
-  let render_url;
-  let api_key = process.env.REACT_APP_API_KEY;
-
-  if (process.env.NODE_ENV === 'development') {
-    render_url = 'http://localhost:8000/api/messages';
-  } else {
-    render_url = process.env.REACT_APP_API_URL;
-  }
 
   const [scroll, setScroll] = useState(null);
 
@@ -106,7 +98,7 @@ function Home() {
     };
 
     fetchLetters();
-  }, [render_url, api_key]);
+  }, []);
 
   const getData = async () => {
     try {

@@ -2,15 +2,17 @@ import React, {useState, useContext} from 'react';
 import {useNavigate} from 'react-router-dom';
 import logo from '../lotties/ltc_logo_1.webp';
 import {AuthContext} from '../AuthContext';
-import '../admin.css';
+import { render_base_url as render_url, api_key } from '../data/keys';
+import '../Admin.css';
 
 function Admin() {
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const {setIsLoggedIn} = useContext(AuthContext);
 
-  const navigate = useNavigate(); // Utilize useNavigate hook
+  const navigate = useNavigate();
 
   const handleUsernameChange = event => {
     setUsername(event.target.value);
@@ -19,15 +21,6 @@ function Admin() {
   const handlePasswordChange = event => {
     setPassword(event.target.value);
   };
-
-  let render_url;
-  let api_key = process.env.REACT_APP_API_KEY;
-
-  if (process.env.NODE_ENV === 'development') {
-    render_url = 'http://localhost:8000';
-  } else {
-    render_url = process.env.REACT_APP_BASE_URL;
-  }
 
   const handleSubmit = async event => {
     event.preventDefault();
