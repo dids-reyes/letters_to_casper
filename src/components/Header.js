@@ -3,7 +3,7 @@ import logo from '../lotties/ltc_logo_1.webp';
 import {Tooltip} from 'react-tooltip';
 import Typewriter from 'typewriter-effect';
 import {alt_letters} from '../data/alt_letters';
-import '../App.css';
+import '../styles/App.css';
 
 function Header({searchTerm, handleSearchChange}) {
   const [showLogo, setShowLogo] = useState(true);

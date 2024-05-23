@@ -12,5 +12,4 @@ export const alt_letters = [
   "And now you're just a stranger with all my secrets",
   'Unsent letters i wrote to you, now lying in drawer smells like you. - Rikki',
   'All the unsent letters were addressed to your heart, the one you chose to break from the start - vail@writes',
-  // 'Ang pag-iibigan natin ay muling maisusulat sa huling pagkakataon... at ito ang kahilingan ko. - Carmela Isabella',
 ];
