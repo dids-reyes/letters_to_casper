@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import logo from '../lotties/ltc_logo_1.webp';
 import {AuthContext} from '../AuthContext';
 import { render_base_url as render_url, api_key } from '../data/keys';
-import '../Admin.css';
+import '../styles/Admin.css';
 
 function Admin() {
 

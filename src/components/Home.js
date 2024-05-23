@@ -22,7 +22,7 @@ import { render_url, api_key } from '../data/keys';
 import tc from 'thousands-counter';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import axios from 'axios';
-import '../App.css';
+import '../styles/App.css';
 
 function Home() {
   const [searchTerm, setSearchTerm] = useState('');

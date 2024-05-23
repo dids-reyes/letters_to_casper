@@ -5,7 +5,7 @@ import locked from '../lotties/locked.json';
 import axios from 'axios';
 import {Link} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
-import '../AdminPortal.css';
+import '../styles/AdminPortal.css';
 
 function AdminPortal() {
   const {isLoggedIn} = useContext(AuthContext);

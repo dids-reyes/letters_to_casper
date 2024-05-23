@@ -9,7 +9,7 @@ import Admin from './components/Admin';
 import AdminPortal from './components/AdminPortal';
 import SeekHelp from './components/SeekHelp';
 import {AuthProvider} from './AuthContext';
-import './App.css';
+import './styles/App.css';
 
 function App() {
   return (
