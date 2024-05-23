@@ -4,7 +4,7 @@
     <url>
         <loc>https://letterstocasper.ph/</loc>
         <lastmod>2024-04-22</lastmod>
-        <changefreq>weekly</changefreq>
+        <changefreq>yearly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
@@ -21,6 +21,18 @@
     </url>
     <url>
         <loc>https://letterstocasper.ph/privacy_policy</loc>
+        <lastmod>2024-04-20</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://letterstocasper.ph/seek_help</loc>
+        <lastmod>2024-04-20</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://letterstocasper.ph/developer_portal</loc>
         <lastmod>2024-04-20</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.8</priority>
