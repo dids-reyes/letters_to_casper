@@ -101,15 +101,21 @@ function Home() {
     fetchLetters();
   }, []);
 
+  const [public_ip, setIP] = useState('');
+
   const getData = async () => {
     try {
       const res = await axios.get('https://api.ipify.org/?format=json');
-      return res.data.ip;
+      setIP(res.data.ip);
     } catch (error) {
       console.error('Error fetching address:', error);
       return 'blocked';
     }
   };
+
+  useEffect(() => {
+    getData();
+  }, []);
 
   const [locations, setLocations] = useState([]);
 
@@ -137,12 +143,8 @@ function Home() {
 
   const locationsHtml = locations.join('<br />');
 
-  let public_ip;
-
   const handleAddLetter = async () => {
     try {
-      public_ip = await getData();
-
       const {from, to, message} = newLetter;
 
       if (from.trim() === '' || to.trim() === '' || message.trim() === '') {
