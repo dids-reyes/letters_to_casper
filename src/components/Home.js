@@ -17,6 +17,7 @@ import Typewriter from 'typewriter-effect';
 import SmoothScroll from 'smooth-scroll';
 import {IoMailOpenOutline} from 'react-icons/io5';
 import {IoMailUnreadOutline} from 'react-icons/io5';
+import { CiLocationOn } from "react-icons/ci";
 import {Tooltip} from 'react-tooltip';
 import { render_url, api_key } from '../data/keys';
 import tc from 'thousands-counter';
@@ -109,6 +110,32 @@ function Home() {
       return 'blocked';
     }
   };
+
+  const [locations, setLocations] = useState([]);
+
+  useEffect(() => {
+    const fetchTopSenderLocations = async () => {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      try {
+        const response = await fetch(`${render_url}/top-sender-locations`, {
+          headers: {
+            'x-api-key': api_key,
+          },
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch top sender locations');
+        }
+        const data = await response.json();
+        setLocations(data);
+      } catch (error) {
+        console.error('Error fetching top sender locations:', error);
+      }
+    };
+
+    fetchTopSenderLocations();
+  }, []);
+
+  const locationsHtml = locations.join('<br />');
 
   let public_ip;
 
@@ -293,7 +320,26 @@ function Home() {
             />
           </div>
           <Tooltip id="al" />
-          &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+
+          &nbsp; &nbsp; &nbsp;
+
+          <div
+            data-tooltip-id="loc"
+            data-tooltip-html={`<b>Top 20 Letter Origins </b> <p>${locationsHtml}</p>`}
+            data-tooltip-place="bottom"
+            data-tooltip-variant="info"
+          >
+            <CiLocationOn
+              size={24}
+              style={{
+                color: '#0056b3',
+                animation: 'pulsate 1s ease-in-out infinite alternate',
+              }}
+            />
+          </div>
+          <Tooltip id="loc" />
+
+          &nbsp; &nbsp; &nbsp;
           <div
             data-tooltip-id="pl"
             data-tooltip-content={
