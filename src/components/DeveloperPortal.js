@@ -38,11 +38,9 @@ function DeveloperPortal() {
       <center>
         <img
           id="logo-ltc"
-          className="logo"
+          className="blck_logo"
           src={blck_logo}
           alt="Letters to Casper"
-          width="200"
-          height="35"
         />
       </center>
       <br />

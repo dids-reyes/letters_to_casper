@@ -29,13 +29,23 @@
 .technology {
   margin: 10px;
   text-align: center;
-  flex: 1 1 45%; /* Adjust for responsiveness */
+  flex: 1 1 45%; 
   box-sizing: border-box;
+}
+
+.blck_logo{
+  width: 200px;
+  height: 35px;
 }
 
 @media (max-width: 600px) {
   .team-member, .technology {
-    flex: 1 1 45%; /* Two per row on mobile */
-    margin: 5px; /* Adjust margin for smaller screens */
+    flex: 1 1 45%; 
+    margin: 5px; 
+  }
+
+  .blck_logo{
+    width: 200px;
+    height: 35px;
   }
 }
