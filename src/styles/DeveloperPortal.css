@@ -1,0 +1,41 @@
+.team-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.team-member {
+  margin: 10px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.team-member-image {
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  border: 1px solid #ccc;
+}
+
+.team-member-role {
+  font-size: smaller;
+}
+
+.technologies-container {
+  display: flex;
+  justify-content: center;
+}
+
+.technology {
+  margin: 10px;
+  text-align: center;
+  flex: 1 1 45%; /* Adjust for responsiveness */
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .team-member, .technology {
+    flex: 1 1 45%; /* Two per row on mobile */
+    margin: 5px; /* Adjust margin for smaller screens */
+  }
+}
