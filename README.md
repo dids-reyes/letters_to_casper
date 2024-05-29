@@ -12,8 +12,6 @@
 
 > A sanctuary where heartfelt sentiments find expression in the embrace of anonymity.
 
-### ✨ [Demo](https://letterstocasper.netlify.app/)
-
 ## Install
 
 ```sh
@@ -28,4 +26,12 @@ npm run start
 
 ## Prerequisites
 
-Before running the project, make sure you have set up a .env file containing the necessary environment variables. This file should include configurations such as API URLs and API keys.
+Before running the project, make sure you have set up a `.env` file containing the necessary environment variables. This file should include configurations such as API URLs and API keys.
+
+See: https://github.com/dids-reyes/letters_to_casper/discussions/117
+
+#### Pending / Incoming / For Approval Letters
+
+New Letters are sent from the NodeJS Server to Discord channel `#letters` since this data contains sensitive info. (e.g, Loc) only selected members can view this channel.
+
+![](https://dcbadge.limes.pink/api/server/pQf2mAHe4u)
