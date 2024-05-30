@@ -1,11 +1,4 @@
-import React from "react";
-
-export interface Letter {
-    id: string;
-    from: string;
-    to: string;
-    content: string;
-}
+import { Letter } from "./useLetters";
 
 interface Props {
     letter: Letter;
@@ -18,7 +11,7 @@ function LetterCard({ letter }: Props) {
                 <h1 className="font-bold leading-tight">From: {letter.from}</h1>
                 <h1 className="font-bold leading-tight">To: {letter.to}</h1>
             </div>
-            <div className="line-clamp-6 text-sm">{letter.content}</div>
+            <div className="line-clamp-6 text-sm">{letter.message}</div>
         </article>
     );
 }
