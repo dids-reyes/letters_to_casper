@@ -2,11 +2,15 @@ import { Letter } from "./useLetters";
 
 interface Props {
     letter: Letter;
+    onClick: () => void;
 }
 
-function LetterCard({ letter }: Props) {
+function LetterCard({ letter, onClick }: Props) {
     return (
-        <article className="m-1 space-y-2 rounded-lg border bg-white p-4">
+        <article
+            onClick={onClick}
+            className="m-1 cursor-pointer space-y-2 rounded-lg border bg-white p-4"
+        >
             <div>
                 <h1 className="font-bold leading-tight">From: {letter.from}</h1>
                 <h1 className="font-bold leading-tight">To: {letter.to}</h1>
