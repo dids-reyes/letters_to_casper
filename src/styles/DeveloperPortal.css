@@ -21,6 +21,10 @@
   font-size: smaller;
 }
 
+.team-member-name {
+  font-size: 10px;
+}
+
 .technologies-container {
   display: flex;
   justify-content: center;

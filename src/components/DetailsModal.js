@@ -1,4 +1,3 @@
-// DetailsModal.js
 import React from 'react';
 import {BsX} from 'react-icons/bs';
 import {BsMailboxFlag} from 'react-icons/bs';
