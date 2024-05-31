@@ -7,6 +7,7 @@ import dids_img from '../devs_data/dids_img.jpg';
 import jayar_img from '../devs_data/jayar_img.jpg';
 import arexon_img from '../devs_data/arexon_img_1.jpg';
 import joshua_img from '../devs_data/joshua_img.jpg';
+import christian_img from '../devs_data/christian_img.jpg';
 import '../styles/DeveloperPortal.css';
 
 function DeveloperPortal() {
@@ -15,10 +16,11 @@ function DeveloperPortal() {
   }, []);
 
   const teamMembers = [
-    { name: 'Dids Irwyn T. Reyes', position: 'Founder', role: 'Lead Developer', image: dids_img },
+    { name: 'Dids Irwyn T. Reyes', position: 'Founder', role: 'Lead Dev', image: dids_img },
     { name: 'Jay-ar Dagooc', position: 'Contributor', role: 'UI/UX/Frontend Dev', image: jayar_img },
-    { name: 'Arexon Mortel', position: 'Contributor', role: 'Frontend Developer', image: arexon_img },
-    { name: 'Joshua Dela Cruz', position: 'Contributor', role: 'Frontend Developer', image: joshua_img },
+    { name: 'Joshua Dela Cruz', position: 'Contributor', role: 'Frontend Dev', image: joshua_img },
+    { name: 'Arexon Mortel', position: 'Contributor', role: 'Frontend Dev', image: arexon_img },
+    { name: 'Christian De Los Santos', position: 'Contributor', role: 'Data Analyst (ML/AI)', image: christian_img },
   ];
 
   const technologies = [
@@ -50,7 +52,7 @@ function DeveloperPortal() {
             <img src={member.image} alt={member.name} className="team-member-image" />
             <p><b>{member.position}</b></p>
             <p className="team-member-role"><b>{member.role}</b></p>
-            <p>{member.name}</p>
+            <p className="team-member-name">{member.name}</p>
           </div>
         ))}
       </div>
