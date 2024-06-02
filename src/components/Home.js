@@ -173,16 +173,17 @@ function Home() {
         body: JSON.stringify(messageData),
       });
 
-      if (!response.ok) {
-        notify_error();
-      }
-
       setLetters(prevState => ({
         ...prevState,
         messages: [...prevState.messages, messageData],
       }));
       setNewLetter({from: '', to: '', message: ''});
-      notify_success();
+
+      if (!response.ok) {
+        notify_error();
+      } else {
+        notify_success();
+      }
     } catch (error) {
       notify_error();
       console.error('Error adding message:', error);
