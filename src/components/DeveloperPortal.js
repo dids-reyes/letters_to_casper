@@ -50,7 +50,7 @@ function DeveloperPortal() {
         {teamMembers.map((member, index) => (
           <div key={index} className="team-member" style={{ fontFamily: 'monospace' }}>
             <img src={member.image} alt={member.name} className="team-member-image" />
-            <p><b>{member.position}</b></p>
+            {/* <p><b>{member.position}</b></p> */}
             <p className="team-member-role"><b>{member.role}</b></p>
             <p className="team-member-name">{member.name}</p>
           </div>
@@ -66,8 +66,9 @@ function DeveloperPortal() {
       </div>
       <hr/>
       <h2>How to Contribute</h2>
+      <p>Feel Free to Contribute to the project</p>
       <p>Frontend is hosted in GitHub as a Private Repository, to gain access contact us below</p>
-      <p>We encourage contributions to our project! <br/><br/> You can contribute by:</p>
+      <p>You can contribute by:</p>
       <ol>
         <li>Cloning/Forking Repo</li>
         <li>Create a PR with your changes.</li>
