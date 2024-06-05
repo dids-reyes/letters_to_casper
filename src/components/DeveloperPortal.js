@@ -8,6 +8,7 @@ import jayar_img from '../devs_data/jayar_img.jpg';
 import arexon_img from '../devs_data/arexon_img_1.jpg';
 import joshua_img from '../devs_data/joshua_img.jpg';
 import christian_img from '../devs_data/christian_img.jpg';
+import joseph_img from '../devs_data/joseph_img.png';
 import '../styles/DeveloperPortal.css';
 
 function DeveloperPortal() {
@@ -21,6 +22,7 @@ function DeveloperPortal() {
     { name: 'Joshua Dela Cruz', position: 'Contributor', role: 'Frontend Dev', image: joshua_img },
     { name: 'Arexon Mortel', position: 'Contributor', role: 'Frontend Dev', image: arexon_img },
     { name: 'Christian De Los Santos', position: 'Contributor', role: 'Data Analyst (ML/AI)', image: christian_img },
+    { name: 'Joseph Canilao', position: 'Contributor', role: 'DevOps Engineer', image: joseph_img },
   ];
 
   const technologies = [
