@@ -18,6 +18,7 @@ import SmoothScroll from 'smooth-scroll';
 import {IoMailOpenOutline} from 'react-icons/io5';
 import {IoMailUnreadOutline} from 'react-icons/io5';
 import { CiLocationOn } from "react-icons/ci";
+import { RiAdvertisementLine } from "react-icons/ri";
 import {Tooltip} from 'react-tooltip';
 import { render_url, api_key } from '../data/keys';
 import tc from 'thousands-counter';
@@ -324,7 +325,7 @@ function Home() {
           </div>
           <Tooltip id="al" />
 
-          &nbsp; &nbsp; &nbsp;
+          &nbsp; &nbsp; 
 
           <div
             data-tooltip-id="loc"
@@ -342,7 +343,25 @@ function Home() {
           </div>
           <Tooltip id="loc" />
 
-          &nbsp; &nbsp; &nbsp;
+          &nbsp; &nbsp; 
+
+          <div
+            data-tooltip-id="loc"
+            data-tooltip-html={`<small>We're sorry to introduce ads 🥺<br/> but they're necesarry to maintain this service.<br/> We hope you understand.</small>`}
+            data-tooltip-place="bottom"
+            data-tooltip-variant="info"
+          >
+            <RiAdvertisementLine
+              size={24}
+              style={{
+                color: '#0056b3',
+                animation: 'pulsate 1s ease-in-out infinite alternate',
+              }}
+            />
+          </div>
+          <Tooltip id="loc" />
+
+          &nbsp; &nbsp; 
           <div
             data-tooltip-id="pl"
             data-tooltip-content={
