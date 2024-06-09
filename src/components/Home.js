@@ -346,8 +346,9 @@ function Home() {
           &nbsp; &nbsp; 
 
           <div
-            data-tooltip-id="loc"
-            data-tooltip-html={`<small>We're sorry to introduce ads 🥺<br/> but they're necesarry to maintain this service.<br/> We hope you understand.</small>`}
+            data-tooltip-id="ads"
+            data-tooltip-html={`<small>We're sorry to introduce ads 🥺<br/> but they're necesarry to maintain this service.<br/> We hope you understand.<br/><br/> However, displaying them alone won't be much help. <br/>
+Show us your support by clicking on those ads<br/> they're not that annoying, we promise! 🥹</small>`}
             data-tooltip-place="bottom"
             data-tooltip-variant="info"
           >
@@ -359,7 +360,7 @@ function Home() {
               }}
             />
           </div>
-          <Tooltip id="loc" />
+          <Tooltip id="ads" />
 
           &nbsp; &nbsp; 
           <div
