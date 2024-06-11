@@ -22,6 +22,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   let early_bird;
   let eleven_eleven;
   let twelve_fifty_one;
+  const hasOpenedUrl = localStorage.getItem('hasOpenedUrl');
 
   if (selectedLetter) {
     letterDate = new Date(selectedLetter.timestamp);
@@ -30,6 +31,10 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     if (letterDate < targetDate && letterId !== adminId) {
       early_bird = true;
     }
+    if (letterId === adminId && !hasOpenedUrl) {
+      window.open('https://www.highrevenuenetwork.com/h65p1hjab?key=0f5e28f15ad6525e5be830e529cabd5e', '_blank');
+      localStorage.setItem('hasOpenedUrl', 'true');
+    } 
   }
 
   if (letterTime != null) {
