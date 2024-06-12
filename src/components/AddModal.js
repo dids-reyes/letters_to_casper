@@ -33,9 +33,7 @@ function AddModal({
       handleAddLetter();
       setNewLetter({from: '', to: '', message: ''});
       toggleAddModal();
-      setTimeout(() => {
-        displayDirectLinkAds();
-      }, 1000);
+      displayDirectLinkAds();
     } else {
     }
   };
