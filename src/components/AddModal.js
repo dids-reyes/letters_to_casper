@@ -3,6 +3,7 @@ import {BsX} from 'react-icons/bs';
 import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
 import DetailsModal from './DetailsModal';
+import { displayDirectLinkAds } from '../data/direct_link';
 
 function AddModal({
   showAddModal,
@@ -32,6 +33,9 @@ function AddModal({
       handleAddLetter();
       setNewLetter({from: '', to: '', message: ''});
       toggleAddModal();
+      setTimeout(() => {
+        displayDirectLinkAds();
+      }, 3000);
     } else {
     }
   };
