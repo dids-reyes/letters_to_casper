@@ -23,6 +23,7 @@ import {Tooltip} from 'react-tooltip';
 import { render_url, api_key } from '../data/keys';
 import tc from 'thousands-counter';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import SideAd from './AdComponent';
 import axios from 'axios';
 import '../styles/App.css';
 
@@ -451,6 +452,7 @@ Show us your support by clicking on those ads<br/> they're not that annoying, we
       ) : loading === 0 ? (
         <div>
           <div className="letters-container">
+      <SideAd />
             {searchedResults.length > 0 && searchTerm !== '' ? (
               searchedResults.map((letter, index) => (
                 <Letter

@@ -1,6 +1,7 @@
 import {React, useEffect} from 'react';
 import Lottie from 'react-lottie-player';
 import balance from '../lotties/balance.json';
+import SideAd from './AdComponent';
 import { FaPhone, FaEnvelope } from 'react-icons/fa';
 
 function SeekHelp() {
@@ -121,6 +122,7 @@ function SeekHelp() {
               <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1388361600" alt="Download on the App Store" style={{margin: '6%', width: '88%', height: 'auto' }} />
             </a>
         </div>
+          <SideAd />
       </div>
     </div>
 );
