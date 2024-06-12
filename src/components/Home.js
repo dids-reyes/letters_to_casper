@@ -165,21 +165,14 @@ function Home() {
         ip: public_ip,
       };
 
-      const response = await toast.promise(
-        fetch(render_url, {
-          method: 'POST',
-          headers: {
-            'x-api-key': api_key,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(messageData),
-        }),
-        {
-          pending: 'Please wait while we submit your letter...',
-          success: 'Successfully Sent for Approval',
-          error: (error) => `Error submitting data: ${error.message}`,
-        }
-      );
+      const response = await fetch(render_url, {
+        method: 'POST',
+        headers: {
+          'x-api-key': api_key,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData),
+      });
 
       setLetters(prevState => ({
         ...prevState,
@@ -190,9 +183,7 @@ function Home() {
       if (!response.ok) {
         notify_error();
       } else {
-        // await new Promise(resolve => setTimeout(resolve, 5000));
-        // notify_display_ads();
-        // window.open('https://www.highrevenuenetwork.com/h65p1hjab?key=0f5e28f15ad6525e5be830e529cabd5e', '_blank');
+        notify_success();
       }
     } catch (error) {
       notify_error();
@@ -219,6 +210,18 @@ function Home() {
 
   const notify_error = () =>
     toast.error('Failed to Submit Letter', {
+      position: 'top-center',
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: true,
+      progress: undefined,
+      theme: 'light',
+    });
+
+  const notify_success = () =>
+    toast.success('Successfully Sent for Approval', {
       position: 'top-center',
       autoClose: 5000,
       hideProgressBar: false,
