@@ -1,7 +1,7 @@
 export let render_url;
 export let render_base_url;
 export let api_key = process.env.REACT_APP_API_KEY;
-const localIP = '192.168.1.2'; // Change this to your local IP addresR
+const localIP = '192.168.1.2'; // Change this to your local IP address
 
 if (process.env.NODE_ENV === 'development') {
   render_url = `http://${localIP}:8000/api/messages`;

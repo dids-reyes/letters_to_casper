@@ -23,7 +23,6 @@ import {Tooltip} from 'react-tooltip';
 import { render_url, api_key } from '../data/keys';
 import tc from 'thousands-counter';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import SideAd from './AdComponent';
 import axios from 'axios';
 import '../styles/App.css';
 
@@ -166,14 +165,21 @@ function Home() {
         ip: public_ip,
       };
 
-      const response = await fetch(render_url, {
-        method: 'POST',
-        headers: {
-          'x-api-key': api_key,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messageData),
-      });
+      const response = await toast.promise(
+        fetch(render_url, {
+          method: 'POST',
+          headers: {
+            'x-api-key': api_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData),
+        }),
+        {
+          pending: 'Please wait while we submit your letter...',
+          success: 'Successfully Sent for Approval',
+          error: (error) => `Error submitting data: ${error.message}`,
+        }
+      );
 
       setLetters(prevState => ({
         ...prevState,
@@ -184,7 +190,9 @@ function Home() {
       if (!response.ok) {
         notify_error();
       } else {
-        notify_success();
+        // await new Promise(resolve => setTimeout(resolve, 5000));
+        // notify_display_ads();
+        // window.open('https://www.highrevenuenetwork.com/h65p1hjab?key=0f5e28f15ad6525e5be830e529cabd5e', '_blank');
       }
     } catch (error) {
       notify_error();
@@ -209,9 +217,9 @@ function Home() {
     scroll.animateScroll(0);
   };
 
-  const notify_success = () =>
-    toast.success('Successfully Sent for Approval', {
-      position: 'bottom-center',
+  const notify_error = () =>
+    toast.error('Failed to Submit Letter', {
+      position: 'top-center',
       autoClose: 5000,
       hideProgressBar: false,
       closeOnClick: true,
@@ -219,18 +227,6 @@ function Home() {
       draggable: true,
       progress: undefined,
       theme: 'light',
-    });
-
-  const notify_error = () =>
-    toast.error('Letter Failed to Submit', {
-      position: 'bottom-center',
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: true,
-      progress: undefined,
-      theme: 'dark',
     });
 
   const toggleAddModal = () => {
@@ -394,6 +390,7 @@ Show us your support by clicking on those ads<br/> they're not that annoying, we
         closeOnClick
         rtl={false}
         pauseOnHover={false}
+        transition="bounce"
         draggable
         theme="light"
       />
@@ -452,7 +449,6 @@ Show us your support by clicking on those ads<br/> they're not that annoying, we
       ) : loading === 0 ? (
         <div>
           <div className="letters-container">
-      <SideAd />
             {searchedResults.length > 0 && searchTerm !== '' ? (
               searchedResults.map((letter, index) => (
                 <Letter
