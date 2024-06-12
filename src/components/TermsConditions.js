@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import SideAd from './AdComponent';
 
 function TermsAndConditions() {
   useEffect(() => {
@@ -58,6 +59,7 @@ function TermsAndConditions() {
         If you have any questions or concerns regarding these Terms and
         Conditions, please contact us at letters2casper@gmail.com.
       </p>
+      <SideAd />
     </div>
   );
 }

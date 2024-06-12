@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import SideAd from './AdComponent';
 
 function AboutUs() {
   useEffect(() => {
@@ -6,6 +7,7 @@ function AboutUs() {
   }, []);
 
   return (
+    <>
     <div className="container" style={{margin: '20px'}}>
       <h1>About Us</h1>
       <p>
@@ -47,6 +49,8 @@ function AboutUs() {
         ethereal halls of Letters to Casper.
       </p>
     </div>
+      <SideAd />
+    </>
   );
 }
 

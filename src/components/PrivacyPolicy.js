@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import SideAd from './AdComponent';
 
 function PrivacyPolicy() {
   useEffect(() => {
@@ -61,6 +62,7 @@ function PrivacyPolicy() {
         privacy matters to us, and we are here to address any inquiries you may
         have.
       </p>
+      <SideAd />
     </div>
   );
 }

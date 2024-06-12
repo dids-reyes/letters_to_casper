@@ -9,6 +9,7 @@ import arexon_img from '../devs_data/arexon_img_1.jpg';
 import joshua_img from '../devs_data/joshua_img.jpg';
 import christian_img from '../devs_data/christian_img.jpg';
 import joseph_img from '../devs_data/joseph_img.png';
+import SideAd from './AdComponent';
 import '../styles/DeveloperPortal.css';
 
 function DeveloperPortal() {
@@ -86,6 +87,7 @@ function DeveloperPortal() {
         <a href="mailto:letters2casper@gmail.com">letters2casper@gmail.com</a>
       </div>
       <br />
+      <SideAd />
     </div>
   );
 }
