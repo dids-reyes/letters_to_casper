@@ -35,7 +35,7 @@ function AddModal({
       toggleAddModal();
       setTimeout(() => {
         displayDirectLinkAds();
-      }, 3000);
+      }, 2000);
     } else {
     }
   };
