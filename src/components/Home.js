@@ -49,6 +49,39 @@ function Home() {
   };
 
   const [scroll, setScroll] = useState(null);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [goBackToNotFeatured, setGoBackToNotFeatured] = useState(false);
+
+  const fetchFeatured = async () => {
+    if (isFeatured) {
+      // Re-fetch the initial letters
+      fetchLetters();
+      setIsFeatured(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${render_url}/featured`,
+        {
+          headers: {
+            'x-api-key': api_key,
+          },
+        },
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch featured letters');
+      }
+      const data = await response.json();
+      setLoading(0);
+      setLetters(data);
+      setIsFeatured(true);
+      setGoBackToNotFeatured(true);
+    } catch (error) {
+      console.error('Error fetching featured letters:', error);
+      setLoading(2);
+    }
+  };
 
   const fetchMoreData = async () => {
     try {
@@ -77,29 +110,34 @@ function Home() {
     }
   };
 
-  useEffect(() => {
-    const fetchLetters = async () => {
+  const fetchLetters = async () => {
+    if(goBackToNotFeatured) {
+      setGoBackToNotFeatured(false);
+    } else {
       await new Promise(resolve => setTimeout(resolve, 3000));
-      setLoading(1);
-      try {
-        const response = await fetch(`${render_url}?offset=0&limit=150`, {
-          headers: {
-            'x-api-key': api_key,
-          },
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch letters');
-        }
-        const data = await response.json();
-        setLetters(data);
-        setLoading(0);
-      } catch (error) {
-        console.error('Error fetching letters:', error);
-        setLoading(2);
+    setLoading(1);
+    }
+    try {
+      const response = await fetch(`${render_url}?offset=0&limit=150`, {
+        headers: {
+          'x-api-key': api_key,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch letters');
       }
-    };
-
+      const data = await response.json();
+      setLetters(data);
+      setLoading(0);
+    } catch (error) {
+      console.error('Error fetching letters:', error);
+      setLoading(2);
+    }
+  };
+  
+  useEffect(() => {
     fetchLetters();
+  // eslint-disable-next-line
   }, []);
 
   const [public_ip, setIP] = useState('');
@@ -451,6 +489,17 @@ function Home() {
       ) : loading === 0 ? (
         <div>
           <div className="letters-container">
+            <div className="featured-card" onClick={fetchFeatured}>
+              <div style={{ border: '1px solid #ccc', borderRadius: 20, padding: 5, margin: 5, backgroundColor: isFeatured ? 'rgba(55, 114, 255, 0.8)' : '#fefbf0' }}>
+                <p className="card-text">
+                  <strong>‎ </strong>
+                </p>
+                <p style={{ fontSize: 13, fontFamily: 'monospace', color: isFeatured ? '#fff' : '#000000' }}>
+                  <strong>Featured</strong> 
+                </p>
+                <p className='card-text'>‎ </p>
+              </div>
+            </div>
             {searchedResults.length > 0 && searchTerm !== '' ? (
               searchedResults.map((letter, index) => (
                 <Letter
@@ -499,14 +548,14 @@ function Home() {
             <InfiniteScroll
               style={{overflow: 'hidden'}}
               dataLength={filteredLetters.length}
-              next={fetchMoreData}
+              next={isFeatured ? null : fetchMoreData}
               hasMore={
                 filteredLetters.length === letters.counts.approved - 1
                   ? false
                   : true
               }
               loader={
-                searchTerm === '' && (
+                searchTerm === '' && !isFeatured && (
                   <center>
                     <Lottie
                       loop

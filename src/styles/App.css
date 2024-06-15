@@ -186,6 +186,15 @@ body {
   cursor: pointer;
 }
 
+.featured-card {
+  width: 200px; 
+  height: 150px; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
 .card {
   border: 1px solid #ccc;
   border-radius: 20px;
@@ -427,6 +436,15 @@ body {
   }
 
   .letter-card {
+    width: 45%; /* 33.33% width for each item with some margin */
+    margin: 1px;
+    /* margin-left: 20px; */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    height: 50%;
+  }
+
+  .featured-card {
     width: 45%; /* 33.33% width for each item with some margin */
     margin: 1px;
     /* margin-left: 20px; */
