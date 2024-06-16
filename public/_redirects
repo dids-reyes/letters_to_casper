@@ -1,2 +1,3 @@
 https://letterstocasper.netlify.app/* https://letterstocasper.ph/ 301!
+/:splat  https://letterstocasper.ph  301!
 /* /index.html 200
