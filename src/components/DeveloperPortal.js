@@ -39,7 +39,7 @@ function DeveloperPortal() {
 
   return (
     <div style={{ margin: '10px' }}>
-      <h2 style={{ textAlign: 'center' }}>Meet the developers behind</h2>
+      <h2 style={{ textAlign: 'center' }}>Meet the Developers Behind</h2>
       <center>
         <img
           id="logo-ltc"
@@ -68,20 +68,31 @@ function DeveloperPortal() {
         ))}
       </div>
       <hr/>
+      <h2>Who We Are</h2>
+      <p>We are a passionate team of developers dedicated to providing Filipinos a platform to express their emotions.</p> 
+      <p>While our project is closed-source, we welcome new contributors who share our commitment to creativity.</p> 
+      <p>This initiative also supports new graduates and aspiring web developers, offering valuable experience for their portfolios.</p>
+      <hr/>
       <h2>How to Contribute</h2>
-      <p>Feel Free to Contribute to the project</p>
+      <p>Feel Free to Contribute to the Project</p>
       <p>Frontend is hosted in GitHub as a Private Repository, to gain access contact us below</p>
-      <p>You can contribute by:</p>
+      <p>You can contribute in any of the following:</p>
       <ol>
-        <li>Cloning/Forking Repo</li>
-        <li>Create a PR with your changes.</li>
+        <li>User Interface (UI)</li>
+        <li>User Experience (UX)</li>
+        <li>Search Engine Optimization (SEO)</li>
+        <li>Frontend Development</li>
+        <li>Backend Development</li>
+        <li>Security Operations (SecOps)</li>
+        <li>Neural Network Development</li>
+        <li>Moderation</li>
       </ol>
       <h2>Contact Us</h2>
       <p>If you have any questions or suggestions, feel free to reach out at:</p>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <FaGithub style={{ marginRight: '10px' }} />
-        <a href="https://github.com/dids-reyes" target="_blank" rel="noopener noreferrer">GitHub</a>
-      </div>
+      {/* <div style={{ display: 'flex', alignItems: 'center' }}> */}
+      {/*   <FaGithub style={{ marginRight: '10px' }} /> */}
+      {/*   <a href="https://github.com/dids-reyes" target="_blank" rel="noopener noreferrer">GitHub</a> */}
+      {/* </div> */}
       <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
         <FaEnvelope style={{ marginRight: '10px' }} />
         <a href="mailto:letters2casper@gmail.com">letters2casper@gmail.com</a>
