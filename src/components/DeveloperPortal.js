@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { FaGithub, FaEnvelope, FaReact } from 'react-icons/fa';
+import { FaEnvelope, FaReact } from 'react-icons/fa';
 import { SiAxios, SiExpress, SiMongodb, SiJest, SiMongoose, SiSentry } from 'react-icons/si';
 import { IoLogoJavascript } from 'react-icons/io5';
 import blck_logo from '../lotties/black_ltc_logo.webp';
