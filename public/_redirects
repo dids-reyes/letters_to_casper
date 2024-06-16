@@ -1,6 +1,6 @@
 https://letterstocasper.netlify.app/* https://letterstocasper.ph/ 301!
 
-/*:splat  https://letterstocasper.ph  301!
+/:splat  https://letterstocasper.ph  301!
 
 /seek_help https://letterstocasper.ph/seek_help 200!
 /privacy_policy https://letterstocasper.ph/privacy_policy 200!
