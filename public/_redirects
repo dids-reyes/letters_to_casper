@@ -2,12 +2,4 @@ https://letterstocasper.netlify.app/* https://letterstocasper.ph/ 301!
 
 /:splat  https://letterstocasper.ph  301!
 
-/seek_help https://letterstocasper.ph/seek_help 200!
-/privacy_policy https://letterstocasper.ph/privacy_policy 200!
-/terms_and_conditions https://letterstocasper.ph/terms_and_conditions 200!
-/developer_portal https://letterstocasper.ph/developer_portal 200!
-/about_us https://letterstocasper.ph/about_us 200!
-/admin https://letterstocasper.ph/admin 200!
-/admin_portal https://letterstocasper.ph/admin_portal 200!
-
 /* /index.html 200
