@@ -7,6 +7,7 @@ const config = {
         "./components/**/*.{ts,tsx}",
         "./app/**/*.{ts,tsx}",
         "./src/**/*.{ts,tsx}",
+        "./features/**/*.{ts,tsx}",
     ],
     prefix: "",
     theme: {
@@ -71,6 +72,10 @@ const config = {
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
+            },
+            fontFamily: {
+                monospace: ["monospace"],
+                courier: ["Courier New"],
             },
         },
     },
