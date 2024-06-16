@@ -6,6 +6,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Letter } from "./useLetters";
+import { formatDate, formatDistanceToNow } from "date-fns";
 
 interface Props {
     letter: Letter | undefined;
@@ -59,24 +60,38 @@ function ViewLetterModal({ letter, open, onClose }: Props) {
     const { ytID, spotifyID, sanitizedMessage } =
         extractMediaLinks(letter?.message) || {};
 
+    if (!letter) return null;
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent>
-                <DialogHeader className="text-left">
-                    <DialogTitle>From: {letter?.from}</DialogTitle>
-                    <DialogTitle>To: {letter?.to}</DialogTitle>
-                </DialogHeader>
-                <div>
-                    <BsMailboxFlag />
-                    <p className="text-sm leading-relaxed">
-                        {sanitizedMessage}
-                    </p>
+            <DialogContent className="font-monospace bg-[#fafaed]">
+                <div className="text-left">
+                    <h2>
+                        <strong>From:</strong> {letter.from}
+                    </h2>
+                    <h2>
+                        <strong>To:</strong> {letter.to}
+                    </h2>
                 </div>
-                <div>
+                <div className="space-y-6">
+                    <div className="grid place-items-center gap-y-2 text-center">
+                        <BsMailboxFlag size={30} />
+                        <p className="font-courier text-xs font-light text-gray-600">
+                            {formatDate(
+                                new Date(letter.timestamp),
+                                "EEEE, MMMM d, yyyy h:mm a",
+                            )}
+                        </p>
+                    </div>
+                    <blockquote className="text-sm leading-tight">
+                        {sanitizedMessage}
+                    </blockquote>
+                </div>
+                <div className="overflow-hidden rounded-lg">
                     {ytID && (
                         <iframe
                             width="100%"
-                            height={300}
+                            height={200}
                             src={`https://www.youtube-nocookie.com/embed/${ytID}&amp;controls=0&autoplay=1`}
                             title="YouTube video player"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
@@ -95,6 +110,14 @@ function ViewLetterModal({ letter, open, onClose }: Props) {
                             allowFullScreen
                         ></iframe>
                     )}
+                </div>
+                <div className="grid justify-end">
+                    <p className="font-courier text-xs">
+                        {formatDistanceToNow(letter.timestamp, {
+                            addSuffix: true,
+                        }).replace("about", "")}{" "}
+                        - {letter.reads} reads 📖
+                    </p>
                 </div>
             </DialogContent>
         </Dialog>
