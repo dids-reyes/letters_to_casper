@@ -38,15 +38,17 @@ function DeveloperPortal() {
   ];
 
   return (
-    <div style={{ margin: '10px' }}>
+    <div style={{ margin: '10px', fontFamily: 'monospace' }}>
       <h2 style={{ textAlign: 'center' }}>Meet the Developers Behind</h2>
       <center>
-        <img
-          id="logo-ltc"
-          className="blck_logo"
-          src={blck_logo}
-          alt="Letters to Casper"
-        />
+        <a href="https://letterstocasper.ph">
+          <img
+            id="logo-ltc"
+            className="blck_logo"
+            src={blck_logo}
+            alt="Letters to Casper"
+          />
+        </a>
       </center>
       <br />
       <div className="team-container">
