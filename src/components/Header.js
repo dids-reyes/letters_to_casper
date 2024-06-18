@@ -60,9 +60,9 @@ function Header({searchTerm, handleSearchChange}) {
         <div
           // eslint-disable-next-line
           data-tooltip-id="search_tooltip"
-          data-tooltip-content="Search by keywords, author or recipient"
+          data-tooltip-html="Try searching your name; <br/>you might find an open letter written for you."
           data-tooltip-place="left-center"
-          data-tooltip-delay-show={3000}
+          data-tooltip-delay-show={2000}
           data-tooltip-variant="info"
         >
           <input
@@ -70,7 +70,7 @@ function Header({searchTerm, handleSearchChange}) {
             className="form-control search-input"
             value={searchTerm}
             onChange={handleSearchChange}
-            placeholder="🔍 Search Letters"
+            placeholder="🔍 Is There a Letter Written for You?"
           />
         </div>
         <Tooltip id="search_tooltip" />

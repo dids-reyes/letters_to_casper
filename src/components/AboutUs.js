@@ -38,10 +38,10 @@ function AboutUs() {
         Letters to Casper.
       </p>
       <p>
-        In our realm, the term "Casper" takes on a deeper meaning. It represents
+        In our realm, the term "Casper" takes on a deeper meaning. <b>It represents
         the intended recipient of these letters: individuals who may have
         unintentionally faded away from someone's life, leaving behind
-        unresolved emotions and unspoken words. Just as the ghostly apparition
+          unresolved emotions and unspoken words</b>. Just as the ghostly apparition
         of Casper navigates between the worlds of the living and the departed,
         our users traverse the realms of past and present, seeking closure and
         reconciliation through the written word.
