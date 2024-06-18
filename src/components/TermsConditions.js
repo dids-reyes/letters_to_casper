@@ -19,7 +19,7 @@ function TermsAndConditions() {
           />
         </a>
       </center>
-      <h1>Terms and Conditions</h1>
+      <h1>Terms & Conditions</h1>
       <i style={{fontSize: 'smaller'}}>Last updated: June 18, 2024</i>
       <p>
         These Terms and Conditions govern your use
