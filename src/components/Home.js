@@ -489,6 +489,7 @@ function Home() {
       ) : loading === 0 ? (
         <div>
           <div className="letters-container">
+            {searchedResults.length > 0 && searchTerm !== '' ? null :
             <div className="featured-card" onClick={fetchFeatured}>
               <div style={{ border: '1px solid #ccc', borderRadius: 20, padding: 5, margin: 5, backgroundColor: isFeatured ? 'rgba(55, 114, 255, 0.8)' : '#fefbf0' }}>
                 <p className="card-text">
@@ -500,6 +501,7 @@ function Home() {
                 <p className='card-text'>‎ </p>
               </div>
             </div>
+            }
             {searchedResults.length > 0 && searchTerm !== '' ? (
               searchedResults.map((letter, index) => (
                 <Letter
