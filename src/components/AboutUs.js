@@ -20,7 +20,7 @@ function AboutUs() {
           />
         </a>
       </center>
-      <h1>About Us</h1>
+      {/* <h1>About Us</h1> */}
       <p>
         Welcome to Letters to Casper, a sanctuary where heartfelt sentiments
         find expression in the embrace of anonymity. While crafted with
