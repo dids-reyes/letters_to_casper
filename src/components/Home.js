@@ -348,7 +348,7 @@ function Home() {
             data-tooltip-html={
               letters.counts.approved >= 2
                 ? `<b>Open Letters</b>: ${tc(letters.counts.approved)}`
-                : `<b>Open Letters</b>: ${letters.counts.approved}`
+                : `<b>Open Letter</b>: ${letters.counts.approved}`
             }
             data-tooltip-place="bottom"
             data-tooltip-variant="info"
