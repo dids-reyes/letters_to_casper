@@ -1,7 +1,12 @@
 "use client";
 
 import * as lettersService from "@/services/letters";
-import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
+import {
+    InfiniteData,
+    skipToken,
+    useInfiniteQuery,
+    useQuery,
+} from "@tanstack/react-query";
 import { AxiosError } from "axios";
 
 export interface Letter {
@@ -35,4 +40,12 @@ export const useGetLetters = () =>
             );
             return nextPage;
         },
+    });
+
+export const useSearchLetters = (searchTerm?: string) =>
+    useQuery<successResponse, AxiosError<string>>({
+        queryKey: ["letters", searchTerm],
+        queryFn: searchTerm
+            ? () => lettersService.searchLetters(searchTerm)
+            : skipToken,
     });

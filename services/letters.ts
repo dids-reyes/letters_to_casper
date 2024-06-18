@@ -12,3 +12,10 @@ export const getLetters = async ({
     });
     return res.data;
 };
+
+export const searchLetters = async (searchTerm: string) => {
+    const res = await client.get(`/messages`, {
+        params: { search: searchTerm },
+    });
+    return res.data;
+};

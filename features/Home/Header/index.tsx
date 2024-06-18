@@ -1,25 +1,11 @@
-import { Input } from "@/components/ui/input";
 import Image from "next/image";
-import { FaSearch } from "react-icons/fa";
 import { FaFileCirclePlus, FaPlus } from "react-icons/fa6";
+import SearchBar from "./SearchBar";
 
 function AppLogo() {
     return (
         <div className="relative h-[70px] min-w-[400px] object-contain">
             <Image src="/logo/ltc_logo.webp" alt="app logo" fill />
-        </div>
-    );
-}
-
-function SearchBar() {
-    return (
-        <div className="relative flex min-w-[400px] items-center">
-            <FaSearch className="absolute left-4 text-lg text-neutral-500" />
-            <Input
-                type="search"
-                placeholder="Search Letters"
-                className="h-12 w-full rounded-full bg-white p-4 pl-10 text-lg font-semibold"
-            />
         </div>
     );
 }
