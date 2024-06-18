@@ -345,10 +345,10 @@ function Home() {
         >
           <div
             data-tooltip-id="al"
-            data-tooltip-content={
+            data-tooltip-html={
               letters.counts.approved >= 2
-                ? `Open Letters: ${tc(letters.counts.approved)}`
-                : `Open Letter: ${letters.counts.approved}`
+                ? `<b>Open Letters</b>: ${tc(letters.counts.approved)}`
+                : `<b>Open Letters</b>: ${letters.counts.approved}`
             }
             data-tooltip-place="bottom"
             data-tooltip-variant="info"
@@ -402,10 +402,10 @@ function Home() {
           &nbsp; &nbsp; 
           <div
             data-tooltip-id="pl"
-            data-tooltip-content={
+            data-tooltip-html={
               letters.counts.unapproved >= 2
-                ? `Pending Letters: ${letters.counts.unapproved}`
-                : `Pending Letter: ${letters.counts.unapproved}`
+                ? `<b>Pending Letters</b>: ${letters.counts.unapproved}`
+                : `<b>Pending Letter</b>: ${letters.counts.unapproved}`
             }
             data-tooltip-place="bottom"
             data-tooltip-variant="info"
