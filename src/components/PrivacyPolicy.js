@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import SideAd from './AdComponent';
+import blck_logo from '../lotties/black_ltc_logo.webp';
 
 function PrivacyPolicy() {
   useEffect(() => {
@@ -7,11 +8,21 @@ function PrivacyPolicy() {
   }, []);
 
   return (
-    <div style={{margin: '20px'}}>
+    <div style={{margin: '20px', fontFamily: 'monospace'}}>
+      <center>
+        <a href="https://letterstocasper.ph">
+          <img
+            id="logo-ltc"
+            className="blck_logo"
+            src={blck_logo}
+            alt="Letters to Casper"
+          />
+        </a>
+      </center>
       <h1>Privacy Policy</h1>
-      <i style={{fontSize: 'smaller'}}>Last updated: May 09, 2024</i>
+      <i style={{fontSize: 'smaller'}}>Last updated: June 18, 2024</i>
       <p>
-        Welcome to Letters to Casper! Protecting your privacy is fundamental to
+        Protecting your privacy is fundamental to
         us. This Privacy Policy outlines how we collect, use, and safeguard your
         information when you use our website.
       </p>

@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import SideAd from './AdComponent';
+import blck_logo from '../lotties/black_ltc_logo.webp';
 
 function AboutUs() {
   useEffect(() => {
@@ -8,7 +9,17 @@ function AboutUs() {
 
   return (
     <>
-    <div className="container" style={{margin: '20px'}}>
+    <div className="container" style={{margin: '20px', fontFamily: 'monospace'}}>
+      <center>
+        <a href="https://letterstocasper.ph">
+          <img
+            id="logo-ltc"
+            className="blck_logo"
+            src={blck_logo}
+            alt="Letters to Casper"
+          />
+        </a>
+      </center>
       <h1>About Us</h1>
       <p>
         Welcome to Letters to Casper, a sanctuary where heartfelt sentiments
@@ -48,8 +59,8 @@ function AboutUs() {
         across the divide of time and distance, let your words echo in the
         ethereal halls of Letters to Casper.
       </p>
-    </div>
       <SideAd />
+    </div>
     </>
   );
 }

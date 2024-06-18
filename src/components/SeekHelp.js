@@ -3,6 +3,7 @@ import Lottie from 'react-lottie-player';
 import balance from '../lotties/balance.json';
 import SideAd from './AdComponent';
 import { FaPhone, FaEnvelope } from 'react-icons/fa';
+import blck_logo from '../lotties/black_ltc_logo.webp';
 
 function SeekHelp() {
   // let calendarific_api_key = process.env.REACT_APP_CLNDR_API_KEY;
@@ -27,7 +28,7 @@ function SeekHelp() {
 
 
   return (
-    <div style={{ margin: '20px', textAlign: 'center' }}>
+    <div style={{ margin: '20px', textAlign: 'center', fontFamily: 'monospace' }}>
       <h2>Mental Health Resources</h2>
       <center>
         <Lottie
@@ -37,8 +38,18 @@ function SeekHelp() {
           style={{width: 300, height: 300}}
         />
       </center>
+      <br/>
+      <center>
+        <a href="https://letterstocasper.ph">
+          <img
+            id="logo-ltc"
+            className="blck_logo"
+            src={blck_logo}
+            alt="Letters to Casper"
+          />
+        </a>
+      </center>
       <p>We believe in valuing mental health and well-being. If you or someone you know is struggling with mental health issues, there are resources available to help. <br/><br/>Please reach out to the organizations below for support and assistance:</p>
-
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <a href="https://pmha.org.ph/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
           <img src="https://pmha.org.ph/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fapp-logo.a36624cf.png&w=1080&q=75" alt="PMHA Logo" style={{ width: '100px', height: 'auto', marginBottom: '10px' }} />
@@ -122,7 +133,7 @@ function SeekHelp() {
               <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1388361600" alt="Download on the App Store" style={{margin: '6%', width: '88%', height: 'auto' }} />
             </a>
         </div>
-          <SideAd />
+        <SideAd />
       </div>
     </div>
 );
