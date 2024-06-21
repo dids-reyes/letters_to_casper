@@ -25,7 +25,7 @@ function DeveloperPortal() {
     { name: 'Jay-ar Dagooc', position: 'Contributor', role: 'UI/UX/Frontend', image: jayar_img },
     { name: 'Joshua Dela Cruz', position: 'Contributor', role: 'Frontend Dev', image: joshua_img },
     { name: 'Arexon Mortel', position: 'Contributor', role: 'Frontend Dev', image: arexon_img },
-    { name: 'Christian De Los Santos', position: 'Contributor', role: 'Data Analyst', image: christian_img },
+    { name: 'Christian Santos', position: 'Contributor', role: 'Data Analyst', image: christian_img },
     { name: 'Joseph Canilao', position: 'Contributor', role: 'DevOps', image: joseph_img },
     { name: 'Karizza B. Hipolito', position: 'Contributor', role: 'SEO Specialist', image: karizza_img },
     { name: 'Angelica Paez', position: 'Contributor', role: 'SEO Specialist', image: angelica_img },
