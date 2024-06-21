@@ -43,12 +43,26 @@
 }
 
 @media (max-width: 600px) {
-  .team-member, .technology {
+  .team-member {
+    flex: 1 1 calc(30% - 10px); /* Make elements smaller for mobile view */
+    margin: 5px; 
+  }
+
+  .team-member-image {
+    width: 85px; /* Smaller image for mobile */
+    height: 85px; /* Smaller image for mobile */
+  }
+
+  .team-member-name {
+    font-size: 8px; /* Smaller font for mobile */
+  }
+
+  .technology {
     flex: 1 1 45%; 
     margin: 5px; 
   }
 
-  .blck_logo{
+  .blck_logo {
     width: 200px;
     height: 35px;
   }
