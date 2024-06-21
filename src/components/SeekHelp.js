@@ -4,6 +4,9 @@ import balance from '../lotties/balance.json';
 import SideAd from './AdComponent';
 import { FaPhone, FaEnvelope } from 'react-icons/fa';
 import blck_logo from '../lotties/black_ltc_logo.webp';
+import { FaTiktok, FaInstagram } from "react-icons/fa";
+import thea_leonen from '../data/advocates/thea_leonen.jpg';
+import '../styles/SeekHelp.css';
 
 function SeekHelp() {
   // let calendarific_api_key = process.env.REACT_APP_CLNDR_API_KEY;
@@ -25,6 +28,10 @@ function SeekHelp() {
   }, []);
 
   // const options = {method: 'GET'};
+  
+  const advocates = [
+    { name: 'Thea Leonen', tiktok: '@thealeonen', instagram: 'iamthealeonen', image: thea_leonen },
+  ];
 
 
   return (
@@ -49,7 +56,40 @@ function SeekHelp() {
           />
         </a>
       </center>
-      <p>We believe in valuing mental health and well-being. If you or someone you know is struggling with mental health issues, there are resources available to help. <br/><br/>Please reach out to the organizations below for support and assistance:</p>
+      <p>We believe in valuing mental health and well-being. If you or someone you know is struggling with mental health issues, there are resources available to help. <br/><br/> Please reach out to the organizations/individuals below for support and assistance.</p>
+      <p><h3><b>Breaking Barriers, Ending Stigma</b></h3> Follow Passionate Advocates igniting positive conversations about Mental Health</p>
+      <div className="advocates-container">
+        {advocates.map((member, index) => (
+          <div key={index} className="advocates-member" style={{ fontFamily: 'monospace' }}>
+            <a href={`https://www.tiktok.com/${member.tiktok}`} target="_blank" rel="noopener noreferrer"><img src={member.image} alt={member.name} className="advocates-member-image" /></a>
+            <br/>
+            <br/>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              { member.tiktok &&
+              <p style={{ margin: '0 5px' }}>
+                <b>
+                  <a href={`https://www.tiktok.com/${member.tiktok}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <FaTiktok size='18px' />
+                  </a>
+                </b>
+              </p>
+              }
+              { member.instagram &&
+              <p style={{ margin: '0 5px' }}>
+                <b>
+                  <a href={`https://www.instagram.com/${member.instagram}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <FaInstagram size='20px' />
+                  </a>
+                </b>
+              </p>
+              }
+            </div>
+            <p style={{ fontSize: '14px' }}><b>{member.name}</b></p>
+          </div>
+        ))}
+      </div>
+      <p><small><b>DISCLAIMER:<br/></b> Featured advocates are not affiliated with or sponsored by this website.<br/> They have permitted us to showcase their accounts to promote mental health awareness.<br/> Their views are their own; inclusion here does not imply endorsement. <br/> We appreciate their contributions in inspiring and educating others about mental health.</small></p>
+      <hr/>
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <a href="https://pmha.org.ph/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
           <img src="https://pmha.org.ph/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fapp-logo.a36624cf.png&w=1080&q=75" alt="PMHA Logo" style={{ width: '100px', height: 'auto', marginBottom: '10px' }} />
