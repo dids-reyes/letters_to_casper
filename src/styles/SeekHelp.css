@@ -1,0 +1,30 @@
+.advocates-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.advocates-member {
+  margin: 10px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.advocates-member-image {
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  border: 1px solid #ccc;
+}
+
+@media (max-width: 600px) {
+  .advocates-member {
+    flex: 1 1 calc(30% - 10px); /* Make elements smaller for mobile view */
+    margin: 5px; 
+  }
+
+  .advocates-member-image {
+    width: 85px; /* Smaller image for mobile */
+    height: 85px; /* Smaller image for mobile */
+  }
+}
