@@ -63,7 +63,7 @@ function SeekHelp() {
       <div className="advocates-container">
         {advocates.map((member, index) => (
           <div key={index} className="advocates-member" style={{ fontFamily: 'monospace' }}>
-            <a href={`https://www.tiktok.com/${member.tiktok}`} target="_blank" rel="noopener noreferrer"><img src={member.image} alt={member.name} className="advocates-member-image" /></a>
+            <a href={`https://www.tiktok.com/@${member.tiktok}`} target="_blank" rel="noopener noreferrer"><img src={member.image} alt={member.name} className="advocates-member-image" /></a>
             <br/>
             <br/>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
