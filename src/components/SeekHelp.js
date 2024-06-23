@@ -4,8 +4,9 @@ import balance from '../lotties/balance.json';
 import SideAd from './AdComponent';
 import { FaPhone, FaEnvelope } from 'react-icons/fa';
 import blck_logo from '../lotties/black_ltc_logo.webp';
-import { FaTiktok, FaInstagram } from "react-icons/fa";
+import { FaTiktok, FaInstagram, FaYoutube } from "react-icons/fa";
 import thea_leonen from '../data/advocates/thea_leonen.jpg';
+import kookie_reyes from '../data/advocates/kookie_reyes.jpg';
 import '../styles/SeekHelp.css';
 
 function SeekHelp() {
@@ -30,7 +31,8 @@ function SeekHelp() {
   // const options = {method: 'GET'};
   
   const advocates = [
-    { name: 'Thea Leonen', tiktok: '@thealeonen', instagram: 'iamthealeonen', image: thea_leonen },
+    { name: 'Thea Leonen', tiktok: 'thealeonen', instagram: 'iamthealeonen', image: thea_leonen },
+    { name: 'Kookie Reyes', tiktok: 'mkookier', instagram: 'kookie_reyes', youtube: 'KookieReyes', image: kookie_reyes },
   ];
 
 
@@ -68,7 +70,7 @@ function SeekHelp() {
               { member.tiktok &&
               <p style={{ margin: '0 5px' }}>
                 <b>
-                  <a href={`https://www.tiktok.com/${member.tiktok}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <a href={`https://www.tiktok.com/@${member.tiktok}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <FaTiktok size='18px' />
                   </a>
                 </b>
@@ -83,12 +85,21 @@ function SeekHelp() {
                 </b>
               </p>
               }
+              { member.youtube &&
+              <p style={{ margin: '0 5px' }}>
+                <b>
+                  <a href={`https://www.youtube.com/@${member.youtube}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <FaYoutube size='20px' />
+                  </a>
+                </b>
+              </p>
+              }
             </div>
             <p style={{ fontSize: '14px' }}><b>{member.name}</b></p>
           </div>
         ))}
       </div>
-      <p><small><b>DISCLAIMER:<br/></b> Featured advocates are not affiliated with or sponsored by this website.<br/> They have permitted us to showcase their accounts to promote mental health awareness.<br/> Their views are their own; inclusion here does not imply endorsement. <br/> We appreciate their contributions in inspiring and educating others about mental health.</small></p>
+      <p><small><b>DISCLAIMER:<br/></b> They have permitted us to showcase their accounts to promote mental health awareness.<br/> Featured advocates are not affiliated with or sponsored by this website.<br/> Their views are their own; inclusion here does not imply endorsement. <br/> We appreciate their contributions in inspiring and educating others about mental health.</small></p>
       <hr/>
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <a href="https://pmha.org.ph/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
