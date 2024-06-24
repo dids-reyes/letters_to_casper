@@ -7,6 +7,7 @@ import blck_logo from '../lotties/black_ltc_logo.webp';
 import { FaTiktok, FaInstagram, FaYoutube } from "react-icons/fa";
 import thea_leonen from '../data/advocates/thea_leonen.jpg';
 import kookie_reyes from '../data/advocates/kookie_reyes.jpg';
+import neil_raagas from '../data/advocates/neil_regner.jpg';
 import '../styles/SeekHelp.css';
 
 function SeekHelp() {
@@ -33,6 +34,7 @@ function SeekHelp() {
   const advocates = [
     { name: 'Thea Leonen', tiktok: 'thealeonen', instagram: 'iamthealeonen', image: thea_leonen },
     { name: 'Kookie Reyes', tiktok: 'mkookier', instagram: 'kookie_reyes', youtube: 'KookieReyes', image: kookie_reyes },
+    { name: 'Neil Raagas', tiktok: 'theneilcutter', instagram: 'theneilcutter', youtube: 'neilraagas8747', image: neil_raagas },
   ];
 
 
@@ -99,7 +101,7 @@ function SeekHelp() {
           </div>
         ))}
       </div>
-      <p><small><b>DISCLAIMER:<br/></b> They have permitted us to showcase their accounts to promote mental health awareness.<br/> Featured advocates are not affiliated with or sponsored by this website.<br/> Their views are their own; inclusion here does not imply endorsement. <br/> We appreciate their contributions in inspiring and educating others about mental health.</small></p>
+      <p><small><b>DISCLAIMER:<br/></b> They have given us permission to feature their accounts in order to raise awareness about mental health. Featured advocates are not affiliated with or sponsored by this website.<br/> We appreciate their contributions in inspiring and educating others about Mental Health.</small></p>
       <hr/>
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <a href="https://pmha.org.ph/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
