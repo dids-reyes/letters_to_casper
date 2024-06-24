@@ -19,7 +19,7 @@
 
 @media (max-width: 600px) {
   .advocates-member {
-    flex: 1 1 calc(30% - 10px); /* Make elements smaller for mobile view */
+    flex: 1 1 calc(40% - 10px); /* Make elements smaller for mobile view */
     margin: 5px; 
   }
 
