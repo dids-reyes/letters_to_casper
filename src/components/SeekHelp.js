@@ -101,7 +101,7 @@ function SeekHelp() {
           </div>
         ))}
       </div>
-      <p><small><b>DISCLAIMER:<br/></b> They have given us permission to feature their accounts in order to raise awareness about mental health. Featured advocates are not affiliated with or sponsored by this website.<br/> We appreciate their contributions in inspiring and educating others about Mental Health.</small></p>
+      <p className='disclaimer'><small><b>DISCLAIMER:<br/></b> They have given us permission to feature their accounts in order to raise awareness about mental health. Featured advocates are not affiliated with or sponsored by this website.<br/> We appreciate their contributions in inspiring and educating others about Mental Health.</small></p>
       <hr/>
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <a href="https://pmha.org.ph/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
