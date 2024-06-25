@@ -17,6 +17,10 @@
   border: 1px solid #ccc;
 }
 
+.disclaimer {
+  font-size: 10px;
+}
+
 @media (max-width: 600px) {
   .advocates-member {
     flex: 1 1 calc(40% - 10px); /* Make elements smaller for mobile view */
@@ -26,5 +30,9 @@
   .advocates-member-image {
     width: 85px; /* Smaller image for mobile */
     height: 85px; /* Smaller image for mobile */
+  }
+
+  .disclaimer {
+    font-size: 9px;
   }
 }
