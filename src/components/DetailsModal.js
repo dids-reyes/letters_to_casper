@@ -13,6 +13,7 @@ import {PiHeartBreakFill} from 'react-icons/pi';
 import {useState, useEffect} from 'react';
 import { render_url, api_key } from '../data/keys';
 import {adminId, targetDate} from '../data/target_letters';
+import axios from 'axios';
 
 function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   let letterId;
@@ -51,27 +52,93 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     }
   }
 
+  const [ip, setIP] = useState('');
+
+  const getData = async () => {
+    try {
+      const res = await axios.get('https://api.ipify.org/?format=json');
+      setIP(res.data.ip);
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      return 'blocked';
+    }
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  const MAX_STORAGE_SIZE = 1000;
+
+  const clearStorageIfNeeded = () => {
+    const storedData = localStorage.getItem('readLetters');
+    if (storedData) {
+      const readLetters = JSON.parse(storedData);
+      // console.log('Read letters:', readLetters.length);
+      if (readLetters.length >= MAX_STORAGE_SIZE) {
+        // console.log('Reached max storage size, clearing localStorage');
+        localStorage.removeItem('readLetters');
+      }
+    } else {
+      // console.log('No readLetters found in localStorage');
+    }
+  };
+
+  useEffect(() => {
+    clearStorageIfNeeded();
+  }, []);
+
   const incrementReads = async () => {
-    if (!selectedLetter.preview) {
+    if (selectedLetter && !selectedLetter.preview) {
+      // Check if the letter ID is already in localStorage
+      const readLetters = JSON.parse(localStorage.getItem('readLetters')) || [];
+
+      if (readLetters.includes(selectedLetter._id)) {
+        // console.log('Letter already read in this session');
+        return;
+      }
+
+      const storedData = localStorage.getItem('readLetters');
+      if (storedData) {
+        const readLetters = JSON.parse(storedData);
+        // console.log('Read letters:', readLetters.length);
+        if (readLetters.length >= MAX_STORAGE_SIZE) {
+          // console.log('Reached max storage size, clearing localStorage');
+          localStorage.removeItem('readLetters');
+        }
+      } else {
+        // console.log('No readLetters found in localStorage');
+      }
+      
       try {
-        const response = await fetch(
-          `${render_url}/${selectedLetter._id}/read`,
-          {
-            method: 'POST',
-            headers: {
-              'x-api-key': api_key,
-              'Content-Type': 'application/json',
-            },
+        const response = await fetch(`${render_url}/${selectedLetter._id}/read`, {
+          method: 'POST',
+          headers: {
+            'x-api-key': api_key,
+            'Content-Type': 'application/json',
           },
-        );
+        });
         if (!response.ok) {
           throw new Error('Failed to update reads count');
         }
+
+        // Update localStorage to mark the letter as read
+        readLetters.push(selectedLetter._id);
+        localStorage.setItem('readLetters', JSON.stringify(readLetters));
+
+        // console.log('Read count incremented');
       } catch (error) {
-        console.error('Error updating reads count:', error);
+        // console.error('Error updating reads count:', error);
       }
     }
   };
+
+  useEffect(() => {
+    if (ip) {
+      incrementReads();
+    }
+    // eslint-disable-next-line
+  }, [ip]);
 
   function formatReadsCount(readsCount) {
     const parsedReadsCount = parseInt(readsCount);
