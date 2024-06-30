@@ -33,10 +33,10 @@ function LettersGrid() {
         <>
             <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold leading-none text-primary">
-                    All Letters
+                    Open Letters
                 </h1>
-                <p className="text-md font-semibold leading-none text-slate-400">
-                    {totalLettersCount} Letters
+                <p className="text-xl font-semibold leading-none text-slate-400">
+                    {letters?.pages[0].counts.approved.toLocaleString()}
                 </p>
             </div>
             <ResponsiveMasonry
