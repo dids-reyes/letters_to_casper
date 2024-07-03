@@ -6,6 +6,8 @@ import { Letter, useGetLetters } from "./useLetters";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
 import ViewLetterModal from "./ViewLetterModal";
+import Lottie from "react-lottie-player";
+import ghost1 from "../../src/lotties/ghost1.json";
 
 function LettersGrid() {
     const [letter, setLetter] = useState<Letter | undefined>(undefined);
@@ -27,7 +29,17 @@ function LettersGrid() {
         }
     }, [fetchNextPage, inView]);
 
-    if (isLoading) return <p>Loading...</p>;
+    if (isLoading)
+        return (
+            <center>
+                <Lottie
+                    loop
+                    animationData={ghost1}
+                    play
+                    style={{ width: 300, height: 300 }}
+                />
+            </center>
+        );
 
     return (
         <>
