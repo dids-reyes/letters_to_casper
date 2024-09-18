@@ -1,49 +1,51 @@
-import React, {useState, useEffect} from 'react';
-import Header from './Header';
-import Footer from './Footer';
-import AddModal from './AddModal';
-import Letter from './Letter';
-import DetailsModal from './DetailsModal';
-import {AiFillMessage} from 'react-icons/ai';
-import {FaRegHandPointUp} from 'react-icons/fa';
-import Lottie from 'react-lottie-player';
-import ghost1 from '../lotties/ghost1.json';
-import under_construction from '../lotties/under_construction.json';
-import empty from '../lotties/empty2.json';
-import {GiMailbox} from 'react-icons/gi';
-import {ToastContainer, toast} from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Typewriter from 'typewriter-effect';
-import SmoothScroll from 'smooth-scroll';
-import {IoMailOpenOutline} from 'react-icons/io5';
-import {IoMailUnreadOutline} from 'react-icons/io5';
+import React, { useState, useEffect } from "react";
+import Header from "./Header";
+import Footer from "./Footer";
+import AddModal from "./AddModal";
+import Letter from "./Letter";
+import DetailsModal from "./DetailsModal";
+import { AiFillMessage } from "react-icons/ai";
+import { FaRegHandPointUp } from "react-icons/fa";
+import Lottie from "react-lottie-player";
+import ghost1 from "../lotties/ghost1.json";
+import under_construction from "../lotties/under_construction.json";
+import empty from "../lotties/empty2.json";
+import { GiMailbox } from "react-icons/gi";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Typewriter from "typewriter-effect";
+import SmoothScroll from "smooth-scroll";
+import { IoMailOpenOutline } from "react-icons/io5";
+import { IoMailUnreadOutline } from "react-icons/io5";
 import { CiLocationOn } from "react-icons/ci";
+import { TbChristmasTree } from "react-icons/tb";
 import { RiAdvertisementLine } from "react-icons/ri";
-import {Tooltip} from 'react-tooltip';
-import { render_url, api_key } from '../data/keys';
-import tc from 'thousands-counter';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import axios from 'axios';
-import '../styles/App.css';
+import { Tooltip } from "react-tooltip";
+import { render_url, api_key } from "../data/keys";
+import tc from "thousands-counter";
+import InfiniteScroll from "react-infinite-scroll-component";
+import axios from "axios";
+import "../styles/App.css";
+import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 function Home() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [letters, setLetters] = useState({
     messages: [],
-    counts: {approved: 0, unapproved: 0},
+    counts: { approved: 0, unapproved: 0 },
   });
   const [showAddModal, setShowAddModal] = useState(false);
   const [newLetter, setNewLetter] = useState({
-    from: '',
-    to: '',
-    message: '',
+    from: "",
+    to: "",
+    message: "",
     approve: false,
   });
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(1);
 
-  const handleSearchChange = event => {
+  const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
     searchLetters();
   };
@@ -51,6 +53,16 @@ function Home() {
   const [scroll, setScroll] = useState(null);
   const [isFeatured, setIsFeatured] = useState(false);
   const [goBackToNotFeatured, setGoBackToNotFeatured] = useState(false);
+  const [daysLeftXmas, setDaysLeftXmas] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const newDaysLeft = daysUntilChristmasPH();
+      setDaysLeftXmas(newDaysLeft);
+    }, 1000); // Update every second
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const fetchFeatured = async () => {
     if (isFeatured) {
@@ -61,16 +73,13 @@ function Home() {
     }
 
     try {
-      const response = await fetch(
-        `${render_url}/featured`,
-        {
-          headers: {
-            'x-api-key': api_key,
-          },
+      const response = await fetch(`${render_url}/featured`, {
+        headers: {
+          "x-api-key": api_key,
         },
-      );
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch featured letters');
+        throw new Error("Failed to fetch featured letters");
       }
       const data = await response.json();
       setLoading(0);
@@ -78,7 +87,7 @@ function Home() {
       setIsFeatured(true);
       setGoBackToNotFeatured(true);
     } catch (error) {
-      console.error('Error fetching featured letters:', error);
+      console.error("Error fetching featured letters:", error);
       setLoading(2);
     }
   };
@@ -89,66 +98,66 @@ function Home() {
         `${render_url}?offset=${letters.messages.length}&limit=50`,
         {
           headers: {
-            'x-api-key': api_key,
+            "x-api-key": api_key,
           },
-        },
+        }
       );
       if (!response.ok) {
-        throw new Error('Failed to fetch more letters');
+        throw new Error("Failed to fetch more letters");
       }
       const newData = await response.json();
       setTimeout(() => {
-        setLetters(prevState => ({
+        setLetters((prevState) => ({
           ...prevState,
           messages: [...prevState.messages, ...newData.messages],
         }));
         setLoading(0);
       }, 1500);
     } catch (error) {
-      console.error('Error fetching more letters:', error);
+      console.error("Error fetching more letters:", error);
       setLoading(2);
     }
   };
 
   const fetchLetters = async () => {
-    if(goBackToNotFeatured) {
+    if (goBackToNotFeatured) {
       setGoBackToNotFeatured(false);
     } else {
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    setLoading(1);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      setLoading(1);
     }
     try {
       const response = await fetch(`${render_url}?offset=0&limit=150`, {
         headers: {
-          'x-api-key': api_key,
+          "x-api-key": api_key,
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch letters');
+        throw new Error("Failed to fetch letters");
       }
       const data = await response.json();
       setLetters(data);
       setLoading(0);
     } catch (error) {
-      console.error('Error fetching letters:', error);
+      console.error("Error fetching letters:", error);
       setLoading(2);
     }
   };
-  
+
   useEffect(() => {
     fetchLetters();
-  // eslint-disable-next-line
+    // eslint-disable-next-line
   }, []);
 
-  const [public_ip, setIP] = useState('');
+  const [public_ip, setIP] = useState("");
 
   const getData = async () => {
     try {
-      const res = await axios.get('https://api.ipify.org/?format=json');
+      const res = await axios.get("https://api.ipify.org/?format=json");
       setIP(res.data.ip);
     } catch (error) {
-      console.error('Error fetching address:', error);
-      return 'blocked';
+      console.error("Error fetching address:", error);
+      return "blocked";
     }
   };
 
@@ -160,38 +169,38 @@ function Home() {
 
   useEffect(() => {
     const fetchTopSenderLocations = async () => {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       try {
         const response = await fetch(`${render_url}/top-sender-locations`, {
           headers: {
-            'x-api-key': api_key,
+            "x-api-key": api_key,
           },
         });
         if (!response.ok) {
-          throw new Error('Failed to fetch top sender locations');
+          throw new Error("Failed to fetch top sender locations");
         }
         const data = await response.json();
         setLocations(data);
       } catch (error) {
-        console.error('Error fetching top sender locations:', error);
+        console.error("Error fetching top sender locations:", error);
       }
     };
 
     fetchTopSenderLocations();
   }, []);
 
-  const locationsHtml = locations.join('<br />');
+  const locationsHtml = locations.join("<br />");
 
   const handleAddLetter = async () => {
     try {
-      const {from, to, message} = newLetter;
+      const { from, to, message } = newLetter;
 
-      if (from.trim() === '' || to.trim() === '' || message.trim() === '') {
+      if (from.trim() === "" || to.trim() === "" || message.trim() === "") {
         return;
       }
 
-      const timestamp = new Date().toLocaleString('en-US', {
-        timeZone: 'Asia/Manila',
+      const timestamp = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Manila",
       });
 
       const messageData = {
@@ -204,19 +213,19 @@ function Home() {
       };
 
       const response = await fetch(render_url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'x-api-key': api_key,
-          'Content-Type': 'application/json',
+          "x-api-key": api_key,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(messageData),
       });
 
-      setLetters(prevState => ({
+      setLetters((prevState) => ({
         ...prevState,
         messages: [...prevState.messages, messageData],
       }));
-      setNewLetter({from: '', to: '', message: ''});
+      setNewLetter({ from: "", to: "", message: "" });
 
       if (!response.ok) {
         notify_error();
@@ -225,7 +234,7 @@ function Home() {
       }
     } catch (error) {
       notify_error();
-      console.error('Error adding message:', error);
+      console.error("Error adding message:", error);
     }
   };
 
@@ -238,7 +247,7 @@ function Home() {
       new SmoothScroll('a[href*="#"]', {
         speed: 800,
         speedAsDuration: true,
-      }),
+      })
     );
   }, []);
 
@@ -247,27 +256,27 @@ function Home() {
   };
 
   const notify_error = () =>
-    toast.error('Failed to Submit Letter', {
-      position: 'top-center',
+    toast.error("Failed to Submit Letter", {
+      position: "top-center",
       autoClose: 5000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: false,
       draggable: true,
       progress: undefined,
-      theme: 'light',
+      theme: "light",
     });
 
   const notify_success = () =>
-    toast.success('Successfully Sent for Approval', {
-      position: 'top-center',
+    toast.success("Successfully Sent for Approval", {
+      position: "top-center",
       autoClose: 5000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: false,
       draggable: true,
       progress: undefined,
-      theme: 'light',
+      theme: "light",
     });
 
   const toggleAddModal = () => {
@@ -276,7 +285,7 @@ function Home() {
 
   const [searchedLetters, setSearchedLetters] = useState({
     messages: [],
-    counts: {approved: 0, unapproved: 0},
+    counts: { approved: 0, unapproved: 0 },
   });
 
   const searchLetters = async () => {
@@ -284,23 +293,23 @@ function Home() {
     try {
       const response = await fetch(`${render_url}?search=${searchTerm}`, {
         headers: {
-          'x-api-key': api_key,
+          "x-api-key": api_key,
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to search letters');
+        throw new Error("Failed to search letters");
       }
       const data = await response.json();
       setSearchedLetters(data);
       setLoading(0);
     } catch (error) {
-      console.error('Error searching letters:', error);
+      console.error("Error searching letters:", error);
       setLoading(0);
     }
   };
 
-  const searchedResults = searchedLetters.messages.filter(letter => {
-    const {from, to, message} = letter;
+  const searchedResults = searchedLetters.messages.filter((letter) => {
+    const { from, to, message } = letter;
     const lowerCasedSearchTerm = searchTerm.toLowerCase();
     return (
       from.toLowerCase().includes(lowerCasedSearchTerm) ||
@@ -313,10 +322,10 @@ function Home() {
 
   useEffect(() => {
     const filteredData =
-      searchTerm === ''
+      searchTerm === ""
         ? letters.messages
-        : letters.messages.filter(letter => {
-            const {from, to, message} = letter;
+        : letters.messages.filter((letter) => {
+            const { from, to, message } = letter;
             const lowerCasedSearchTerm = searchTerm.toLowerCase();
             return (
               from.toLowerCase().includes(lowerCasedSearchTerm) ||
@@ -338,9 +347,9 @@ function Home() {
         <div
           className="messages-count"
           style={{
-            display: 'flex',
-            justifyContent: 'center',
-            margin: '15px',
+            display: "flex",
+            justifyContent: "center",
+            margin: "15px",
           }}
         >
           <div
@@ -356,15 +365,13 @@ function Home() {
             <IoMailOpenOutline
               size={24}
               style={{
-                color: '#0056b3',
-                animation: 'pulsate 1s ease-in-out infinite alternate',
+                color: "#0056b3",
+                animation: "pulsate 1s ease-in-out infinite alternate",
               }}
             />
           </div>
           <Tooltip id="al" />
-
-          &nbsp; &nbsp; 
-
+          &nbsp; &nbsp;
           <div
             data-tooltip-id="loc"
             data-tooltip-html={`<b>Top 20 Letter Origins </b> <p>${locationsHtml}</p>`}
@@ -374,15 +381,13 @@ function Home() {
             <CiLocationOn
               size={24}
               style={{
-                color: '#0056b3',
-                animation: 'pulsate 1s ease-in-out infinite alternate',
+                color: "#0056b3",
+                animation: "pulsate 1s ease-in-out infinite alternate",
               }}
             />
           </div>
           <Tooltip id="loc" />
-
-          &nbsp; &nbsp; 
-
+          &nbsp; &nbsp;
           <div
             data-tooltip-id="ads"
             data-tooltip-html={`<small>We're sorry to introduce ads 🥺<br/> but they're necesarry to maintain this service.<br/> We hope you understand.<br/><br/> However, displaying them alone won't be <br/>much help. So we decided to include <br/> them each time you submit a letter 🥹</small>`}
@@ -392,14 +397,35 @@ function Home() {
             <RiAdvertisementLine
               size={24}
               style={{
-                color: '#0056b3',
-                animation: 'pulsate 1s ease-in-out infinite alternate',
+                color: "#0056b3",
+                animation: "pulsate 1s ease-in-out infinite alternate",
               }}
             />
           </div>
-          <Tooltip id="ads" />
-
-          &nbsp; &nbsp; 
+          {daysLeftXmas !== 0 && (
+            <>
+              &nbsp; &nbsp;
+              <div>
+                <Tooltip id="ads" />
+                <div
+                  data-tooltip-id="ads"
+                  data-tooltip-html={`${daysLeftXmas}`}
+                  data-tooltip-place="bottom"
+                  data-tooltip-variant="info"
+                >
+                  <TbChristmasTree
+                    size={24}
+                    style={{
+                      color: "#0056b3",
+                      animation: "pulsate 1s ease-in-out infinite alternate",
+                    }}
+                  />
+                </div>
+                <Tooltip id="event" />
+              </div>
+            </>
+          )}
+          &nbsp; &nbsp;
           <div
             data-tooltip-id="pl"
             data-tooltip-html={
@@ -413,8 +439,8 @@ function Home() {
             <IoMailUnreadOutline
               size={25}
               style={{
-                color: '#0056b3',
-                animation: 'pulsate 1s ease-in-out infinite alternate',
+                color: "#0056b3",
+                animation: "pulsate 1s ease-in-out infinite alternate",
               }}
             />
           </div>
@@ -449,16 +475,16 @@ function Home() {
               loop
               animationData={ghost1}
               play
-              style={{width: 300, height: 300}}
+              style={{ width: 300, height: 300 }}
             />
           </center>
           <div>
             <Typewriter
-              options={{delay: 20, loop: false}}
-              onInit={typewriter => {
+              options={{ delay: 20, loop: false }}
+              onInit={(typewriter) => {
                 typewriter
                   .typeString(
-                    'Please wait while we load all letters... This may take up to 1 minute',
+                    "Please wait while we load all letters... This may take up to 1 minute"
                   )
                   .pauseFor(3000)
                   .start();
@@ -475,7 +501,7 @@ function Home() {
               loop
               animationData={under_construction}
               play
-              style={{width: 300, height: 300}}
+              style={{ width: 300, height: 300 }}
             />
           </center>
           <p>
@@ -489,20 +515,36 @@ function Home() {
       ) : loading === 0 ? (
         <div>
           <div className="letters-container">
-            {searchedResults.length > 0 && searchTerm !== '' ? null :
-            <div className="featured-card" onClick={fetchFeatured}>
-              <div style={{ border: '1px solid #ccc', borderRadius: 20, padding: 5, margin: 5, backgroundColor: isFeatured ? 'rgba(55, 114, 255, 0.8)' : '#fefbf0' }}>
-                <p className="card-text">
-                  <strong>‎ </strong>
-                </p>
-                <p style={{ fontSize: 13, fontFamily: 'monospace', color: isFeatured ? '#fff' : '#000000' }}>
-                  <strong>Featured</strong> 
-                </p>
-                <p className='card-text'>‎ </p>
+            {searchedResults.length > 0 && searchTerm !== "" ? null : (
+              <div className="featured-card" onClick={fetchFeatured}>
+                <div
+                  style={{
+                    border: "1px solid #ccc",
+                    borderRadius: 20,
+                    padding: 5,
+                    margin: 5,
+                    backgroundColor: isFeatured
+                      ? "rgba(55, 114, 255, 0.8)"
+                      : "#fefbf0",
+                  }}
+                >
+                  <p className="card-text">
+                    <strong>‎ </strong>
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      fontFamily: "monospace",
+                      color: isFeatured ? "#fff" : "#000000",
+                    }}
+                  >
+                    <strong>Featured</strong>
+                  </p>
+                  <p className="card-text">‎ </p>
+                </div>
               </div>
-            </div>
-            }
-            {searchedResults.length > 0 && searchTerm !== '' ? (
+            )}
+            {searchedResults.length > 0 && searchTerm !== "" ? (
               searchedResults.map((letter, index) => (
                 <Letter
                   key={index}
@@ -511,7 +553,7 @@ function Home() {
                   setSelectedLetter={setSelectedLetter}
                 />
               ))
-            ) : searchTerm === '' ? (
+            ) : searchTerm === "" ? (
               letters.messages.length > 0 ? (
                 letters.messages.map((letter, index) => (
                   <Letter
@@ -529,7 +571,7 @@ function Home() {
                       loop
                       animationData={empty}
                       play
-                      style={{width: 300, height: 300}}
+                      style={{ width: 300, height: 300 }}
                     />
                   </center>
                 </div>
@@ -542,13 +584,13 @@ function Home() {
                     loop
                     animationData={empty}
                     play
-                    style={{width: 300, height: 300}}
+                    style={{ width: 300, height: 300 }}
                   />
                 </center>
               </div>
             )}
             <InfiniteScroll
-              style={{overflow: 'hidden'}}
+              style={{ overflow: "hidden" }}
               dataLength={filteredLetters.length}
               next={isFeatured ? null : fetchMoreData}
               hasMore={
@@ -557,18 +599,19 @@ function Home() {
                   : true
               }
               loader={
-                searchTerm === '' && !isFeatured && (
+                searchTerm === "" &&
+                !isFeatured && (
                   <center>
                     <Lottie
                       loop
                       animationData={ghost1}
                       play
-                      style={{width: 150, height: 150}}
+                      style={{ width: 150, height: 150 }}
                     />
                   </center>
                 )
               }
-              endMessage={<p style={{textAlign: 'center'}}>‎ </p>}
+              endMessage={<p style={{ textAlign: "center" }}>‎ </p>}
               scrollThreshold={1}
             />
           </div>
