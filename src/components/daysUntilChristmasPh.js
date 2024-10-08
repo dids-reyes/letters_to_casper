@@ -55,7 +55,11 @@ function daysUntilChristmasPH() {
     (remainingMillisecondsAfterHours % minutesInMilliseconds) / 1000
   );
 
-  return `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds 🎅`;
+  return `${days} ${days <= 1 ? "day" : "days"}, ${hours} ${
+    hours <= 1 ? "hour" : "hours"
+  }, ${minutes} ${minutes <= 1 ? "minute" : "minutes"}, ${seconds} ${
+    seconds <= 1 ? "second" : "seconds"
+  } 🎅`;
 }
 
 export default daysUntilChristmasPH;
