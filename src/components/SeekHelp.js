@@ -251,7 +251,7 @@ function SeekHelp() {
           style={{ textDecoration: "none", color: "inherit", display: "block" }}
         >
           <img
-            src="https://ncmh.gov.ph/images/content/90years.jpg"
+            src="https://upload.wikimedia.org/wikipedia/commons/f/f7/National_Center_for_Mental_Health_%28NCMH%29.svg"
             alt="NCMH Logo"
             style={{ width: "100px", height: "auto", marginBottom: "10px" }}
           />
