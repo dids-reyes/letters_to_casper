@@ -1,21 +1,25 @@
-import React from 'react';
-import {BsX} from 'react-icons/bs';
-import {BsMailboxFlag} from 'react-icons/bs';
-import Typewriter from 'typewriter-effect';
-import {Tooltip} from 'react-tooltip';
-import tc from 'thousands-counter';
-import js_ago from 'js-ago';
-import {FaEarlybirds} from 'react-icons/fa';
-import {BsBookmarkHeartFill} from 'react-icons/bs';
-import {FaUserTie} from 'react-icons/fa';
-import {PiShootingStarFill} from 'react-icons/pi';
-import {PiHeartBreakFill} from 'react-icons/pi';
-import {useState, useEffect} from 'react';
-import { render_url, api_key } from '../data/keys';
-import {adminId, targetDate} from '../data/target_letters';
-import axios from 'axios';
+import React from "react";
+import { BsX } from "react-icons/bs";
+import { BsMailboxFlag } from "react-icons/bs";
+import Typewriter from "typewriter-effect";
+import { Tooltip } from "react-tooltip";
+import tc from "thousands-counter";
+import js_ago from "js-ago";
+import { FaEarlybirds } from "react-icons/fa";
+import { BsBookmarkHeartFill } from "react-icons/bs";
+import { FaUserTie } from "react-icons/fa";
+import { PiShootingStarFill } from "react-icons/pi";
+import { PiHeartBreakFill } from "react-icons/pi";
+import { useState, useEffect } from "react";
+import { render_url, api_key } from "../data/keys";
+import { adminId, targetDate } from "../data/target_letters";
+import axios from "axios";
 
-function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
+function DetailsModal({
+  showDetailsModal,
+  toggleDetailsModal,
+  selectedLetter,
+}) {
   let letterId;
   let letterDate;
   let letterTime;
@@ -23,7 +27,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   let early_bird;
   let eleven_eleven;
   let twelve_fifty_one;
-  const hasOpenedUrl = localStorage.getItem('hasOpenedUrl');
+  const hasOpenedUrl = localStorage.getItem("hasOpenedUrl");
 
   if (selectedLetter) {
     letterDate = new Date(selectedLetter.timestamp);
@@ -52,15 +56,15 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     }
   }
 
-  const [ip, setIP] = useState('');
+  const [ip, setIP] = useState("");
 
   const getData = async () => {
     try {
-      const res = await axios.get('https://api.ipify.org/?format=json');
+      const res = await axios.get("https://api.ipify.org/?format=json");
       setIP(res.data.ip);
     } catch (error) {
-      console.error('Error fetching address:', error);
-      return 'blocked';
+      console.error("Error fetching address:", error);
+      return "blocked";
     }
   };
 
@@ -71,13 +75,13 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   const MAX_STORAGE_SIZE = 1000;
 
   const clearStorageIfNeeded = () => {
-    const storedData = localStorage.getItem('readLetters');
+    const storedData = localStorage.getItem("readLetters");
     if (storedData) {
       const readLetters = JSON.parse(storedData);
       // console.log('Read letters:', readLetters.length);
       if (readLetters.length >= MAX_STORAGE_SIZE) {
         // console.log('Reached max storage size, clearing localStorage');
-        localStorage.removeItem('readLetters');
+        localStorage.removeItem("readLetters");
       }
     } else {
       // console.log('No readLetters found in localStorage');
@@ -91,40 +95,43 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
   const incrementReads = async () => {
     if (selectedLetter && !selectedLetter.preview) {
       // Check if the letter ID is already in localStorage
-      const readLetters = JSON.parse(localStorage.getItem('readLetters')) || [];
+      const readLetters = JSON.parse(localStorage.getItem("readLetters")) || [];
 
       if (readLetters.includes(selectedLetter._id)) {
         // console.log('Letter already read in this session');
         return;
       }
 
-      const storedData = localStorage.getItem('readLetters');
+      const storedData = localStorage.getItem("readLetters");
       if (storedData) {
         const readLetters = JSON.parse(storedData);
         // console.log('Read letters:', readLetters.length);
         if (readLetters.length >= MAX_STORAGE_SIZE) {
           // console.log('Reached max storage size, clearing localStorage');
-          localStorage.removeItem('readLetters');
+          localStorage.removeItem("readLetters");
         }
       } else {
         // console.log('No readLetters found in localStorage');
       }
 
       try {
-        const response = await fetch(`${render_url}/${selectedLetter._id}/read`, {
-          method: 'POST',
-          headers: {
-            'x-api-key': api_key,
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await fetch(
+          `${render_url}/${selectedLetter._id}/read`,
+          {
+            method: "POST",
+            headers: {
+              "x-api-key": api_key,
+              "Content-Type": "application/json",
+            },
+          }
+        );
         if (!response.ok) {
-          throw new Error('Failed to update reads count');
+          throw new Error("Failed to update reads count");
         }
 
         // Update localStorage to mark the letter as read
         readLetters.push(selectedLetter._id);
-        localStorage.setItem('readLetters', JSON.stringify(readLetters));
+        localStorage.setItem("readLetters", JSON.stringify(readLetters));
 
         // console.log('Read count incremented');
       } catch (error) {
@@ -147,20 +154,20 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
       : `${tc(parsedReadsCount, 2)} reads`;
   }
 
-  const formatTimestamp = timestamp => {
+  const formatTimestamp = (timestamp) => {
     const options = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
       hour12: true,
     };
-    return new Date(timestamp).toLocaleString('en-US', options);
+    return new Date(timestamp).toLocaleString("en-US", options);
   };
 
-  const extractMediaLinks = message => {
+  const extractMediaLinks = (message) => {
     if (!message) {
       // Return null if message is null or undefined
       return null;
@@ -182,45 +189,45 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
       // Extract the Spotify track ID from the match
       const trackId = spotifyMatch[1];
       const newMessage = message
-        .replace(spotifyLinkRegex, '')
-        .replace(/\s*$/, '');
+        .replace(spotifyLinkRegex, "")
+        .replace(/\s*$/, "");
 
-      extractedMedia.spotifyLink = {id: trackId, newMessage};
+      extractedMedia.spotifyLink = { id: trackId, newMessage };
     }
 
     if (youtubeMatch && youtubeMatch[1]) {
       // Extract the YouTube video ID from the match
       const videoId = youtubeMatch[1];
       const newMessage = message
-        .replace(youtubeLinkRegex, '')
-        .replace(/\s*$/, '');
+        .replace(youtubeLinkRegex, "")
+        .replace(/\s*$/, "");
 
-      extractedMedia.youtubeLink = {id: videoId, newMessage};
+      extractedMedia.youtubeLink = { id: videoId, newMessage };
     }
 
     if (Object.keys(extractedMedia).length === 0) {
       // If no match found, return the original message
       return {
-        spotifyLink: {id: null, newMessage: message},
-        youtubeLink: {id: null, newMessage: message},
+        spotifyLink: { id: null, newMessage: message },
+        youtubeLink: { id: null, newMessage: message },
       };
     }
 
     return extractedMedia;
   };
 
-  const {spotifyLink, youtubeLink} =
+  const { spotifyLink, youtubeLink } =
     selectedLetter && selectedLetter.message
       ? extractMediaLinks(selectedLetter.message)
       : {
-          spotifyLink: {id: null, newMessage: null},
-          youtubeLink: {id: null, newMessage: null},
+          spotifyLink: { id: null, newMessage: null },
+          youtubeLink: { id: null, newMessage: null },
           originalMessage: null,
         };
 
   const extracted_data = spotifyLink != null ? spotifyLink : youtubeLink;
 
-  const {id: linkId, newMessage: message} = extracted_data;
+  const { id: linkId, newMessage: message } = extracted_data;
 
   const [showSpotify, setShowSpotify] = useState(false);
   const [showYoutube, setShowYoutube] = useState(false);
@@ -235,11 +242,11 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
       }
     }
 
-    window.addEventListener('resize', adjustIframeHeight);
+    window.addEventListener("resize", adjustIframeHeight);
     adjustIframeHeight();
 
     return () => {
-      window.removeEventListener('resize', adjustIframeHeight);
+      window.removeEventListener("resize", adjustIframeHeight);
     };
   }, []);
 
@@ -265,15 +272,15 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
               </button>
             </div>
             <div className="modal-body">
-              <div className="letter-info" style={{marginBottom: '5px'}}>
+              <div className="letter-info" style={{ marginBottom: "5px" }}>
                 <Typewriter
-                  options={{delay: 50, loop: false}}
-                  onInit={typewriter => {
+                  options={{ delay: 50, loop: false }}
+                  onInit={(typewriter) => {
                     typewriter
                       .typeString(
-                        `<strong>From:</strong> ${selectedLetter.from}`,
+                        `<strong>From:</strong> ${selectedLetter.from}`
                       )
-                      .callFunction(state => {
+                      .callFunction((state) => {
                         state.elements.cursor.remove();
                       })
                       .start();
@@ -282,11 +289,11 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
               </div>
               <div className="letter-info">
                 <Typewriter
-                  options={{delay: 50, loop: false}}
-                  onInit={typewriter => {
+                  options={{ delay: 50, loop: false }}
+                  onInit={(typewriter) => {
                     typewriter
                       .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
-                      .callFunction(state => {
+                      .callFunction((state) => {
                         state.elements.cursor.remove();
                       })
                       .start();
@@ -307,11 +314,11 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 >
                   <span className="timestamp-text">
                     <Typewriter
-                      options={{delay: 70, loop: false}}
-                      onInit={typewriter => {
+                      options={{ delay: 70, loop: false }}
+                      onInit={(typewriter) => {
                         typewriter
                           .typeString(formatTimestamp(selectedLetter.timestamp))
-                          .callFunction(state => {
+                          .callFunction((state) => {
                             state.elements.cursor.remove();
                           })
                           .start();
@@ -326,8 +333,8 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 <div className="letter-text">
                   <span>
                     <Typewriter
-                      options={{delay: 40, loop: false}}
-                      onInit={typewriter => {
+                      options={{ delay: 40, loop: false }}
+                      onInit={(typewriter) => {
                         typewriter
                           .typeString(message)
                           .pauseFor(500)
@@ -348,7 +355,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                 <div>
                   <iframe
                     title="spotify-preview"
-                    style={{border: '12px'}}
+                    style={{ border: "12px" }}
                     src={`https://open.spotify.com/embed/${linkId}?utm_source=generator&theme=1`}
                     width="100%"
                     height="152"
@@ -363,12 +370,10 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   <iframe
                     width="100%"
                     height={iframeHeight}
-                    src={`https://www.youtube-nocookie.com/embed/${linkId}&amp;controls=0`}
+                    src={`https://www.youtube-nocookie.com/embed/${linkId}&autoplay=1;&controls=0`}
                     title="YouTube video player"
                     frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
+                    allow="autoplay; encrypted-media"
                   ></iframe>
                 </div>
               )}
@@ -379,11 +384,11 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                     data-tooltip-id="badges"
                     data-tooltip-html={`${
                       early_bird
-                        ? '<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>'
-                        : ''
-                    } ${letterId === adminId ? 'Admin' : ''} ${
-                      eleven_eleven ? '<strong>11:11 PM</strong>' : ''
-                    } ${twelve_fifty_one ? '<strong>12:51 AM</strong>' : ''}
+                        ? "<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>"
+                        : ""
+                    } ${letterId === adminId ? "Admin" : ""} ${
+                      eleven_eleven ? "<strong>11:11 PM</strong>" : ""
+                    } ${twelve_fifty_one ? "<strong>12:51 AM</strong>" : ""}
                     `}
                     data-tooltip-place="bottom"
                   >
@@ -419,9 +424,14 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   <Tooltip id="badges" arrowColor="transparent" />
                 </>
                 <span>
-                  {js_ago(new Date(selectedLetter.timestamp), { format: "long" })} ~ {formatReadsCount(selectedLetter.reads)}
+                  {js_ago(new Date(selectedLetter.timestamp), {
+                    format: "long",
+                  })}{" "}
+                  ~ {formatReadsCount(selectedLetter.reads)}
                 </span>
-                {letterId !== adminId && <div className="las la-eye fade-icon custom-eye-size"></div>}
+                {letterId !== adminId && (
+                  <div className="las la-eye fade-icon custom-eye-size"></div>
+                )}
               </div>
             </div>
           </div>
