@@ -35,11 +35,11 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
     if (letterId === adminId && !hasOpenedUrl) {
       // window.open('https://twoepidemic.com/h65p1hjab?key=0f5e28f15ad6525e5be830e529cabd5e', '_blank');
       // localStorage.setItem('hasOpenedUrl', 'true');
-    } 
+    }
     if (!hasOpenedUrl) {
       // window.open('https://twoepidemic.com/h65p1hjab?key=0f5e28f15ad6525e5be830e529cabd5e', '_blank');
       // localStorage.setItem('hasOpenedUrl', 'true');
-    } 
+    }
   }
 
   if (letterTime != null) {
@@ -109,7 +109,7 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
       } else {
         // console.log('No readLetters found in localStorage');
       }
-      
+
       try {
         const response = await fetch(`${render_url}/${selectedLetter._id}/read`, {
           method: 'POST',
@@ -418,21 +418,10 @@ function DetailsModal({showDetailsModal, toggleDetailsModal, selectedLetter}) {
                   </div>
                   <Tooltip id="badges" arrowColor="transparent" />
                 </>
-                <Typewriter
-                  options={{delay: 70, loop: false}}
-                  onInit={typewriter => {
-                    typewriter
-                      .typeString(
-                        `${js_ago(new Date(selectedLetter.timestamp), {
-                          format: 'long',
-                        })} ~ ${formatReadsCount(selectedLetter.reads)} 📖`,
-                      )
-                      .callFunction(state => {
-                        state.elements.cursor.remove();
-                      })
-                      .start();
-                  }}
-                />
+                <span>
+                  {js_ago(new Date(selectedLetter.timestamp), { format: "long" })} ~ {formatReadsCount(selectedLetter.reads)}
+                </span>
+                {letterId !== adminId && <div className="las la-eye fade-icon custom-eye-size"></div>}
               </div>
             </div>
           </div>
