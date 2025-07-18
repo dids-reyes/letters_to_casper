@@ -18,7 +18,7 @@ function AboutUs() {
             src={blck_logo}
             alt="Letters to Casper"
           />
-              <h3>Powered By</h3>
+              <p>Powered By</p>
             <img
             id="logo-culionxchange"
             className="blck_logo"
