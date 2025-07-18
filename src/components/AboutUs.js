@@ -19,7 +19,7 @@ function AboutUs() {
             alt="Letters to Casper"
           />
         </a>
-<p>Powered By</p>
+<b><p>Powered By</p></b>
             <img
             id="logo-culionxchange"
             className="blck_logo"
