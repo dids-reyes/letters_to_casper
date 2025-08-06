@@ -11,7 +11,7 @@ function AboutUs() {
     <>
     <div className="container" style={{margin: '20px', fontFamily: 'monospace'}}>
       <center>
-        <a href="https://letterstocasper.ph">
+        <a href="https://letterstocasper.com">
           <img
             id="logo-ltc"
             className="blck_logo"

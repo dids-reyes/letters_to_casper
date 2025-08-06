@@ -47,7 +47,7 @@ function DeveloperPortal() {
     <div style={{ margin: '10px', fontFamily: 'monospace' }}>
       <h2 style={{ textAlign: 'center' }}>Meet the Developers Behind</h2>
       <center>
-        <a href="https://letterstocasper.ph">
+        <a href="https://letterstocasper.com">
           <img
             id="logo-ltc"
             className="blck_logo"
