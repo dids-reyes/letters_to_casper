@@ -1,18 +1,34 @@
-import { React, useEffect } from "react";
+import React, { useEffect } from "react";
 import Lottie from "react-lottie-player";
 import balance from "../lotties/balance.json";
-import SideAd from "./AdComponent";
-import { FaPhone, FaEnvelope } from "react-icons/fa";
 import blck_logo from "../lotties/black_ltc_logo.webp";
-import { FaTiktok, FaInstagram, FaYoutube } from "react-icons/fa";
+import {
+  FaPhone,
+  FaEnvelope,
+  FaExternalLinkAlt,
+  FaTiktok,
+  FaInstagram,
+  FaYoutube,
+} from "react-icons/fa";
+import "../styles/SeekHelp.css";
+
+// Import your images here
 import thea_leonen from "../data/advocates/thea_leonen.jpg";
 import kookie_reyes from "../data/advocates/kookie_reyes.jpg";
 import neil_raagas from "../data/advocates/neil_regner.jpg";
-import keith from "../data/advocates/keith.jpg";
-import "../styles/SeekHelp.css";
+import keith_1 from "../data/advocates/keith.jpg";
+// import featuredPlaceholder from "../assets/featured-site-placeholder.jpg";
+
+// Placeholder images - replace with your actual imports
+const theaLeonen = thea_leonen;
+const kookieReyes = kookie_reyes;
+const neilRaagas = neil_raagas;
+const keith = keith_1;
+
+const featuredPlaceholder =
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFlJGfUNyQcRFgpLtNq0WMUp7wGltGnHxXXQ&s";
 
 function SeekHelp() {
-  // let calendarific_api_key = process.env.REACT_APP_CLNDR_API_KEY;
   useEffect(() => {
     window.scrollTo(0, 0);
     const script = document.createElement("script");
@@ -20,38 +36,33 @@ function SeekHelp() {
     script.async = true;
     document.body.appendChild(script);
 
-    // fetch(`https://calendarific.com/api/v2/holidays?&api_key=${calendarific_api_key}&country=PH&year=2024&month=04`, options)
-    //   .then(response => response.json())
-    //   .then(response => console.log(response))
-    //   .catch(err => console.error(err));
-
-    //   return () => {
-    //     document.body.removeChild(script);
-    //   };
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, []);
-
-  // const options = {method: 'GET'};
 
   const advocates = [
     {
       name: "Thea Leonen",
       tiktok: "thealeonen",
       instagram: "iamthealeonen",
-      image: thea_leonen,
+      image: theaLeonen,
     },
     {
       name: "Kookie Reyes",
       tiktok: "mkookier",
       instagram: "kookie_reyes",
       youtube: "KookieReyes",
-      image: kookie_reyes,
+      image: kookieReyes,
     },
     {
       name: "Neil Raagas",
       tiktok: "theneilcutter",
       instagram: "theneilcutter",
       youtube: "neilraagas8747",
-      image: neil_raagas,
+      image: neilRaagas,
     },
     {
       name: "Keith",
@@ -61,384 +72,289 @@ function SeekHelp() {
     },
   ];
 
+  const organizations = [
+    {
+      name: "Philippine Mental Health Association (PMHA)",
+      description:
+        "PMHA offers mental health education, preventive services, and therapeutic services to individuals and communities in the Philippines.",
+      logo: "https://pmha.org.ph/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fapp-logo.a36624cf.png&w=1080&q=75",
+      website: "https://pmha.org.ph/",
+      contacts: [{ type: "email", value: "hello@pmha.org.ph" }],
+    },
+    {
+      name: "National Center for Mental Health (NCMH)",
+      description:
+        "The NCMH provides comprehensive mental health services for Filipinos, including crisis intervention and outpatient consultations.",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/f/f7/National_Center_for_Mental_Health_%28NCMH%29.svg",
+      website: "https://ncmh.gov.ph/",
+      contacts: [
+        { type: "phone", value: "Luzon Landline: 1553" },
+        { type: "phone", value: "+639086392672" },
+        { type: "phone", value: "+639663514518" },
+        { type: "phone", value: "+639178998727" },
+      ],
+    },
+    {
+      name: "Mental Health PH",
+      description:
+        "A community of mental health advocates that aims to promote and protect mental health in the Philippines through online and offline initiatives.",
+      logo: "https://mentalhealthph.org/wp-content/uploads/2021/10/logo-new.png",
+      website: "https://mentalhealthph.org/",
+      contacts: [{ type: "email", value: "hello@mentalhealthph.org" }],
+    },
+    {
+      name: "Natasha Goulbourn Foundation (NGF)",
+      description:
+        "The NGF provides support through crisis intervention and counseling services.",
+      logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRe87UUlf1hA8fBvoWA-w5okoolZXlsnczea3Mbkr2vLw&s",
+      website: "https://ngf-mindstrong.com/",
+      contacts: [
+        { type: "phone", value: "0917 5584673" },
+        { type: "phone", value: "02-8804-4673" },
+        { type: "phone", value: "0918-873-4673" },
+      ],
+    },
+    {
+      name: "In Touch Community Services",
+      description:
+        "In Touch provides mental health services including crisis intervention and counseling.",
+      logo: "https://in-touch.org/wp-content/uploads/2023/02/cropped-intouchlogo1-2.png",
+      website: "https://www.in-touch.org/",
+      contacts: [
+        { type: "phone", value: "+63288937303" },
+        { type: "phone", value: "+639190560709" },
+        { type: "phone", value: "+639178001123" },
+        { type: "phone", value: "+639228938944" },
+        { type: "email", value: "helpline@in-touch.org" },
+      ],
+    },
+    {
+      name: "Empath",
+      description:
+        "Empath provides community-curated mental healthcare services and solutions to workplaces, schools, and non-profits in order to improve the well-being of their communities.",
+      logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6Xxt_wbudjUSLClDNpn2-4OASfjBADt1dcauA7IH3wsO5rmNwNyOiOONFgHOC1KtVsTw&usqp=CAU",
+      website: "https://www.in-touch.org/",
+      contacts: [
+        { type: "phone", value: "+639175416789" },
+        { type: "email", value: "hello@empath.ph" },
+        { type: "email", value: "consultations@empath.ph" },
+      ],
+    },
+  ];
+
   return (
-    <div
-      style={{ margin: "20px", textAlign: "center", fontFamily: "monospace" }}
-    >
-      <h2>Mental Health Resources</h2>
-      <center>
-        <Lottie
-          loop
-          animationData={balance}
-          play
-          style={{ width: 300, height: 300 }}
-        />
-      </center>
-      <br />
-      <center>
-        <a href="https://letterstocasper.com">
-          <img
-            id="logo-ltc"
-            className="blck_logo"
-            src={blck_logo}
-            alt="Letters to Casper"
-          />
-        </a>
-      </center>
-      <p>
-        We believe in valuing mental health and well-being. If you or someone
-        you know is struggling with mental health issues, there are resources
-        available to help. <br />
-        <br /> Please reach out to the organizations/individuals below for
-        support and assistance.
-      </p>
-      <p>
-        <h3>
-          <b>Breaking Barriers, Ending Stigma</b>
-        </h3>{" "}
-        Follow Passionate Advocates igniting positive conversations about Mental
-        Health
-      </p>
-      <div className="advocates-container">
-        {advocates.map((member, index) => (
-          <div
-            key={index}
-            className="advocates-member"
-            style={{ fontFamily: "monospace" }}
-          >
+    <div className="seek-help-container">
+      <div className="container">
+        {/* Hero Section */}
+        <div className="hero-section">
+          <h1 className="hero-title">Mental Health Resources</h1>
+          <center>
+            <Lottie
+              loop
+              animationData={balance}
+              play
+              style={{ width: 300, height: 300 }}
+            />
+          </center>
+          <p className="hero-description">
+            We believe in valuing mental health and well-being. If you or
+            someone you know is struggling with mental health issues, there are
+            resources available to help.
+          </p>
+        </div>
+
+        {/* Featured Website Section */}
+        <div className="featured-website">
+          <div className="featured-content">
+            <center>
+              <h1 className="featured-title">
+                Our Trusted Choice for Online Therapy
+              </h1>
+            </center>
+            <div className="featured-logo">
+              <img src={featuredPlaceholder} alt="Featured Website Logo" />
+            </div>
+            {/* <h3 className="featured-subtitle">Saya: Therapy for Filipinos</h3> */}
+            <p className="featured-description">
+              Saya bridges the gap to mental wellness in the Philippines,
+              offering affordable therapy in the Philippines through their
+              platform where you connect with licensed Filipino psychologist and
+              counselors who genuinely care about your wellbeing.
+            </p>
             <a
-              href={`https://www.tiktok.com/@${member.tiktok}`}
+              href="https://www.talksaya.com/"
               target="_blank"
               rel="noopener noreferrer"
+              className="featured-button"
             >
-              <img
-                src={member.image}
-                alt={member.name}
-                className="advocates-member-image"
-              />
+              Visit Website / Book a Session
+              <FaExternalLinkAlt size={14} />
             </a>
-            <br />
-            <br />
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {member.tiktok && (
-                <p style={{ margin: "0 5px" }}>
-                  <b>
+          </div>
+        </div>
+
+        {/* Advocates Section */}
+        <div className="advocates-section">
+          <h2 className="section-title">Breaking Barriers, Ending Stigma</h2>
+          <p className="section-subtitle">
+            Follow passionate advocates igniting positive conversations about
+            mental health
+          </p>
+
+          <div className="advocates-grid">
+            {advocates.map((advocate, index) => (
+              <div key={index} className="advocate-card">
+                <div className="advocate-image-container">
+                  <img
+                    src={advocate.image}
+                    alt={advocate.name}
+                    className="advocate-image"
+                  />
+                </div>
+
+                <h3 className="advocate-name">{advocate.name}</h3>
+
+                <div className="advocate-social">
+                  {advocate.tiktok && (
                     <a
-                      href={`https://www.tiktok.com/@${member.tiktok}`}
+                      href={`https://www.tiktok.com/@${advocate.tiktok}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ textDecoration: "none", color: "inherit" }}
+                      className="social-link"
                     >
-                      <FaTiktok size="18px" />
+                      <FaTiktok size={18} />
                     </a>
-                  </b>
-                </p>
-              )}
-              {member.instagram && (
-                <p style={{ margin: "0 5px" }}>
-                  <b>
+                  )}
+                  {advocate.instagram && (
                     <a
-                      href={`https://www.instagram.com/${member.instagram}`}
+                      href={`https://www.instagram.com/${advocate.instagram}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ textDecoration: "none", color: "inherit" }}
+                      className="social-link"
                     >
-                      <FaInstagram size="20px" />
+                      <FaInstagram size={18} />
                     </a>
-                  </b>
-                </p>
-              )}
-              {member.youtube && (
-                <p style={{ margin: "0 5px" }}>
-                  <b>
+                  )}
+                  {advocate.youtube && (
                     <a
-                      href={`https://www.youtube.com/@${member.youtube}`}
+                      href={`https://www.youtube.com/@${advocate.youtube}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ textDecoration: "none", color: "inherit" }}
+                      className="social-link"
                     >
-                      <FaYoutube size="20px" />
+                      <FaYoutube size={18} />
                     </a>
-                  </b>
-                </p>
-              )}
-            </div>
-            <p style={{ fontSize: "14px" }}>
-              <b>{member.name}</b>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="disclaimer">
+            <p className="disclaimer-text">
+              <strong>DISCLAIMER:</strong> They have given us permission to
+              feature their accounts to raise awareness about mental health.
+              Featured advocates are not affiliated with or sponsored by this
+              website. We appreciate their contributions in inspiring and
+              educating others about mental health.
             </p>
           </div>
-        ))}
-      </div>
-      <p className="disclaimer">
-        <small>
-          <b>
-            DISCLAIMER:
-            <br />
-          </b>{" "}
-          They have given us permission to feature their accounts in order to
-          raise awareness about mental health. Featured advocates are not
-          affiliated with or sponsored by this website.
-          <br /> We appreciate their contributions in inspiring and educating
-          others about Mental Health.
-        </small>
-      </p>
-      <hr />
-      <div style={{ textAlign: "center", marginBottom: "20px" }}>
-        <a
-          href="https://pmha.org.ph/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: "none", color: "inherit", display: "block" }}
-        >
-          <img
-            src="https://pmha.org.ph/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fapp-logo.a36624cf.png&w=1080&q=75"
-            alt="PMHA Logo"
-            style={{ width: "100px", height: "auto", marginBottom: "10px" }}
-          />
-          <span
-            style={{ fontSize: "1.2em", fontWeight: "bold", display: "block" }}
-          >
-            Philippine Mental Health Association (PMHA)
-          </span>
-        </a>
-        <p>
-          PMHA offers mental health education, preventive services, and
-          therapeutic services to individuals and communities in the
-          Philippines.
-        </p>
-      </div>
-
-      <hr />
-
-      <div style={{ textAlign: "center", marginBottom: "20px" }}>
-        <a
-          href="https://mentalhealthph.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: "none", color: "inherit", display: "block" }}
-        >
-          <img
-            src="https://mentalhealthph.org/wp-content/uploads/2021/10/logo-new.png"
-            alt="MentalHealthPH Logo"
-            style={{ width: "150px", height: "auto", marginBottom: "10px" }}
-          />
-          <span
-            style={{ fontSize: "1.2em", fontWeight: "bold", display: "block" }}
-          >
-            Mental Health PH
-          </span>
-        </a>
-        <p>
-          A community of mental health advocates that aims to promote and
-          protect mental health in the Philippines through online and offline
-          initiatives.
-        </p>
-      </div>
-
-      <hr />
-
-      <div style={{ textAlign: "center", marginBottom: "20px" }}>
-        <a
-          href="https://ncmh.gov.ph/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: "none", color: "inherit", display: "block" }}
-        >
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/f/f7/National_Center_for_Mental_Health_%28NCMH%29.svg"
-            alt="NCMH Logo"
-            style={{ width: "100px", height: "auto", marginBottom: "10px" }}
-          />
-          <span
-            style={{ fontSize: "1.2em", fontWeight: "bold", display: "block" }}
-          >
-            National Center for Mental Health (NCMH)
-          </span>
-        </a>
-        <p>
-          The NCMH provides comprehensive mental health services for Filipinos,
-          including crisis intervention and outpatient consultations.
-        </p>
-
-        <p>
-          <strong>NCMH Crisis Hotlines:</strong>
-        </p>
-        <p>
-          Luzon Landline (toll-free): 1553 <FaPhone size="10px" />
-        </p>
-        <p>
-          +639086392672 <FaPhone size="10px" />
-        </p>
-        <p>
-          +639663514518 <FaPhone size="10px" />
-        </p>
-        <p>
-          +639178998727 <FaPhone size="10px" />
-        </p>
-      </div>
-
-      <hr />
-
-      <div style={{ textAlign: "center", marginBottom: "20px" }}>
-        <a
-          href="https://ngf-mindstrong.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: "none", color: "inherit", display: "block" }}
-        >
-          <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRe87UUlf1hA8fBvoWA-w5okoolZXlsnczea3Mbkr2vLw&s"
-            alt="NGF Logo"
-            style={{ width: "120px", height: "auto", marginBottom: "10px" }}
-          />
-          <span
-            style={{ fontSize: "1.2em", fontWeight: "bold", display: "block" }}
-          >
-            Natasha Goulbourn Foundation (NGF)
-          </span>
-        </a>
-        <p>
-          The NGF provides support through crisis intervention and counseling
-          services.
-        </p>
-
-        <p>
-          <strong>NGF Hopeline:</strong>
-        </p>
-        <p>
-          0917 5584673 <FaPhone size="10px" />
-        </p>
-        <p>
-          02-8804-4673 <FaPhone size="10px" />
-        </p>
-        <p>
-          0918-873-4673 <FaPhone size="10px" />
-        </p>
-      </div>
-
-      <hr />
-
-      <div style={{ textAlign: "center", marginBottom: "20px" }}>
-        <a
-          href="https://www.in-touch.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: "none", color: "inherit", display: "block" }}
-        >
-          <img
-            src="https://in-touch.org/wp-content/uploads/2023/02/cropped-intouchlogo1-2.png"
-            alt="NGF Logo"
-            style={{ width: "120px", height: "auto", marginBottom: "10px" }}
-          />
-          <span
-            style={{ fontSize: "1.2em", fontWeight: "bold", display: "block" }}
-          >
-            In Touch Community Services
-          </span>
-        </a>
-        <p>
-          In Touch provides mental health services including crisis intervention
-          and counseling.
-        </p>
-
-        <p>
-          <strong>In Touch Crisis Hotlines:</strong>
-        </p>
-        <p>
-          +63288937303 <FaPhone size="10px" />
-        </p>
-        <p>
-          +639190560709 <FaPhone size="10px" />
-        </p>
-        <p>
-          +639178001123 <FaPhone size="10px" />
-        </p>
-        <p>
-          +639228938944 <FaPhone size="10px" />
-        </p>
-        <p>
-          helpline@in-touch.org <FaEnvelope size="10px" />
-        </p>
-      </div>
-
-      <hr />
-      <span
-        style={{
-          fontSize: "1.2em",
-          fontWeight: "bold",
-          display: "block",
-          marginBottom: "20px",
-          marginTop: "40px",
-        }}
-      >
-        Social Media Communities
-      </span>
-
-      <blockquote className="reddit-embed-bq" data-embed-height="502">
-        Posts from the{" "}
-        <a href="https://www.reddit.com/r/MentalHealthPH/">mentalhealthph</a>
-        <br /> community on Reddit
-      </blockquote>
-      <script
-        async=""
-        src="https://embed.reddit.com/widgets.js"
-        charSet="UTF-8"
-      ></script>
-
-      <br />
-
-      <div style={{ textAlign: "center", margin: "20px 0" }}>
-        <img
-          src="https://play-lh.googleusercontent.com/g6Jk6tFSGmWJ7rLRIk6j_5Cdsn3OrOgOvcvJa8Bch8wARYOIGup1H9cvQQkjFxH1Lg"
-          alt="Vent Logo"
-          style={{ width: "120px", height: "auto", marginBottom: "10px" }}
-        />
-        <span
-          style={{
-            fontSize: "1.2em",
-            fontWeight: "bold",
-            display: "block",
-            marginBottom: "20px",
-          }}
-        >
-          Vent - Express yourself freely
-        </span>
-        <span
-          style={{ fontSize: "0.9em", display: "block", marginBottom: "20px" }}
-        >
-          Vent helps you connect to a supportive, positive, and understanding
-          community, making it easy to share your feelings with people around
-          the world.
-        </span>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <a href="https://play.google.com/store/apps/details?id=com.vent&hl=en&gl=US&pli=1&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1">
-            <img
-              alt="Get it on Google Play"
-              src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-              width="130px"
-              height="auto"
-            />
-          </a>
-          <a
-            href="https://apps.apple.com/us/app/vent-express-your-feelings/id780298346?itsct=apps_box_badge&itscg=30200"
-            style={{ display: "inline-block", overflow: "hidden" }}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1388361600"
-              alt="Download on the App Store"
-              style={{ margin: "6%", width: "88%", height: "auto" }}
-            />
-          </a>
         </div>
-        <SideAd />
+
+        <hr className="separator" />
+
+        {/* Organizations Section */}
+        <div className="organizations-section">
+          <h2 className="section-title">
+            Government & Private Support Resources
+          </h2>
+
+          <div className="organization-grid">
+            {organizations.map((org, index) => (
+              <div key={index} className="organization-card">
+                <a
+                  href={org.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="organization-link"
+                >
+                  <div className="organization-header">
+                    <img
+                      src={org.logo}
+                      alt={`${org.name} Logo`}
+                      className="organization-logo"
+                    />
+                    <div className="organization-title-container">
+                      <h3 className="organization-title">{org.name}</h3>
+                      <FaExternalLinkAlt
+                        size={14}
+                        className="external-link-icon"
+                      />
+                    </div>
+                  </div>
+                </a>
+
+                <p className="organization-description">{org.description}</p>
+
+                {org.contacts.length > 0 && (
+                  <div className="contacts-section">
+                    <h4 className="contacts-title">Contact Information</h4>
+                    <div className="contacts-list">
+                      {org.contacts.map((contact, contactIndex) => (
+                        <div key={contactIndex} className="contact-item">
+                          {contact.type === "phone" ? (
+                            <FaPhone size={12} className="contact-icon" />
+                          ) : (
+                            <FaEnvelope size={12} className="contact-icon" />
+                          )}
+                          <span className="contact-value">{contact.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <hr className="separator" />
+
+        {/* Community Section */}
+        <div className="community-section">
+          <h2 className="section-title">Social Media Communities</h2>
+
+          <div className="reddit-container">
+            <blockquote className="reddit-embed-bq" data-embed-height="502">
+              Posts from the{" "}
+              <a
+                href="https://www.reddit.com/r/MentalHealthPH/"
+                className="reddit-link"
+              >
+                mentalhealthph
+              </a>{" "}
+              community on Reddit
+            </blockquote>
+          </div>
+        </div>
+
+        {/* Footer Message */}
+        <div className="footer-message">
+          <p className="footer-text">
+            Remember, seeking help is a sign of strength, not weakness. You
+            don't have to face mental health challenges alone.
+          </p>
+          <center>
+            <a href="https://letterstocasper.com">
+              <img
+                id="logo-ltc"
+                className="blck_logo"
+                src={blck_logo}
+                alt="Letters to Casper"
+              />
+            </a>
+          </center>
+        </div>
       </div>
     </div>
   );
