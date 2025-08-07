@@ -175,7 +175,6 @@ function SeekHelp() {
               <img src={featuredPlaceholder} alt="Featured Website Logo" />
             </div>
             {/* <h3 className="featured-subtitle">Saya: Therapy for Filipinos</h3> */}
-            <h2 className="featured-title"></h2>
             <p className="featured-description">
               Saya bridges the gap to mental wellness in the Philippines,
               offering affordable therapy in the Philippines through their
