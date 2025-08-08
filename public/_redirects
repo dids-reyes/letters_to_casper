@@ -1,3 +1,6 @@
 https://letterstocasperph.netlify.app/* https://letterstocasper.com/ 301!
+https://www.letterstocasper.com/* https://letterstocasper.com/:splat 301!
+https://www.letterstocasper.ph/* https://letterstocasper.com/:splat 301!
+https://letterstocasper.ph/* https://letterstocasper.com/:splat 301!
 
 /* /index.html 200
