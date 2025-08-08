@@ -133,7 +133,7 @@ function SeekHelp() {
       description:
         "Empath provides community-curated mental healthcare services and solutions to workplaces, schools, and non-profits in order to improve the well-being of their communities.",
       logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6Xxt_wbudjUSLClDNpn2-4OASfjBADt1dcauA7IH3wsO5rmNwNyOiOONFgHOC1KtVsTw&usqp=CAU",
-      website: "https://www.in-touch.org/",
+      website: "https://www.empath.ph/",
       contacts: [
         { type: "phone", value: "+639175416789" },
         { type: "email", value: "hello@empath.ph" },
