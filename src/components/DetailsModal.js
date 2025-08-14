@@ -13,7 +13,13 @@ import { PiHeartBreakFill } from "react-icons/pi";
 import { useState, useEffect } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
+import GraphemeSplitter from "grapheme-splitter";
 import axios from "axios";
+
+const stringSplitter = (string) => {
+  const splitter = new GraphemeSplitter();
+  return splitter.splitGraphemes(string);
+};
 
 function DetailsModal({
   showDetailsModal,
@@ -274,7 +280,7 @@ function DetailsModal({
             <div className="modal-body">
               <div className="letter-info" style={{ marginBottom: "5px" }}>
                 <Typewriter
-                  options={{ delay: 50, loop: false }}
+                  options={{ delay: 50, loop: false, stringSplitter }}
                   onInit={(typewriter) => {
                     typewriter
                       .typeString(
@@ -289,7 +295,7 @@ function DetailsModal({
               </div>
               <div className="letter-info">
                 <Typewriter
-                  options={{ delay: 50, loop: false }}
+                  options={{ delay: 50, loop: false, stringSplitter }}
                   onInit={(typewriter) => {
                     typewriter
                       .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
@@ -333,7 +339,7 @@ function DetailsModal({
                 <div className="letter-text">
                   <span>
                     <Typewriter
-                      options={{ delay: 40, loop: false }}
+                      options={{ delay: 40, loop: false, stringSplitter }}
                       onInit={(typewriter) => {
                         typewriter
                           .typeString(message)

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const truncateMessage = (message, maxLength) => {
   return message.length > maxLength
@@ -6,7 +6,7 @@ const truncateMessage = (message, maxLength) => {
     : message;
 };
 
-function Letter({letter, toggleDetailsModal, setSelectedLetter}) {
+function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
   const truncatedMessage = truncateMessage(letter.message, 13);
   const truncatedFrom = truncateMessage(letter.from, 9);
   const truncatedTo = truncateMessage(letter.to, 9);
