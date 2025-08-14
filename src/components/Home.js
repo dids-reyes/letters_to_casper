@@ -515,7 +515,7 @@ function Home() {
       ) : loading === 0 ? (
         <div>
           <div className="letters-container">
-            {searchedResults.length > 0 && searchTerm !== "" ? null : (
+            {searchTerm !== "" ? null : (
               <div className="featured-card" onClick={fetchFeatured}>
                 <div
                   style={{
@@ -578,7 +578,14 @@ function Home() {
               )
             ) : (
               <div>
-                <p>No Search Results Found</p>
+                <p>
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <strong>No results found</strong>
+                </p>
                 <center>
                   <Lottie
                     loop
