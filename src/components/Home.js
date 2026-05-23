@@ -390,7 +390,7 @@ function Home() {
           &nbsp; &nbsp;
           <div
             data-tooltip-id="ads"
-            data-tooltip-html={`<small>We're sorry to introduce ads 🥺<br/> but they're necesarry to maintain this service.<br/> We hope you understand.<br/><br/> However, displaying them alone won't be <br/>much help. So we decided to include <br/> them each time you submit a letter 🥹 <br/><br/>We do NOT promote gambling.<br/> The ads you see here help keep our site running,<br/> and we don't control their specific content.</small>`}
+            data-tooltip-html={`<small>Sorry for the ads 🥺 they're needed to keep<br/>this service running.<br/><br/>We also include them when you submit a letter<br/> to help support the site.<br/><br/>We do NOT promote gambling<br/>and don't control the specific ads shown.</small>`}
             data-tooltip-place="bottom"
             data-tooltip-variant="info"
           >

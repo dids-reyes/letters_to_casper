@@ -27,7 +27,7 @@ function AddModal({
 
   const handleSubmit = () => {
     const confirmAction = window.confirm(
-      'When approved, your letter will be public. Proceed?',
+      'When approved, your letter will be publicly visible, including the city location it was sent from. Proceed?',
     );
     if (confirmAction) {
       handleAddLetter();
