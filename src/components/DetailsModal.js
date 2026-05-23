@@ -10,6 +10,7 @@ import { BsBookmarkHeartFill } from "react-icons/bs";
 import { FaUserTie } from "react-icons/fa";
 import { PiShootingStarFill } from "react-icons/pi";
 import { PiHeartBreakFill } from "react-icons/pi";
+import { CiLocationOn } from "react-icons/ci";
 import { useState, useEffect } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
@@ -131,6 +132,7 @@ function DetailsModal({
             },
           }
         );
+
         if (!response.ok) {
           throw new Error("Failed to update reads count");
         }
@@ -256,10 +258,54 @@ function DetailsModal({
     };
   }, []);
 
+  // Reveal Location
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [hasClickedAd, setHasClickedAd] = useState(false);
+
+
+  const adLink = "https://storyunicornupper.com/rxyce75in3?key=945fab619a2a948227fecaaf9d93f787";
+  const actualLocation = selectedLetter?.loc?.city || 'Unknown';
+  const locRegion = selectedLetter?.loc?.region || 'Unknown';
+  const actualLocationMap = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(actualLocation) + "&query_place_id=" + encodeURIComponent(locRegion);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // 1. If they just came back from opening the ACTUAL MAP, reset everything back to the beginning
+        if (isRevealed) {
+          setIsRevealed(false);
+          setHasClickedAd(false);
+        }
+        // 2. If they just came back from opening the AD, reveal the actual map link
+        else if (hasClickedAd) {
+          setIsRevealed(true);
+        }
+      }
+    };
+
+    // Listen for the user coming back to your site
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [hasClickedAd, isRevealed]); // Added isRevealed to dependencies so the effect can read its updated value
+
+  const handleLinkClick = () => {
+    // If the location isn't revealed yet, they are clicking the ad link
+    if (!isRevealed) {
+      setHasClickedAd(true);
+    }
+    // If it IS revealed, they are clicking the map link right now.
+    // The useEffect above will handle resetting the state when they tab back.
+  };
+
   const handleCloseModal = () => {
     toggleDetailsModal();
     setShowSpotify(false);
     setShowYoutube(false);
+    setIsRevealed(false);
+    setHasClickedAd(false);
   };
 
   return (
@@ -438,6 +484,36 @@ function DetailsModal({
                 {letterId !== adminId && (
                   <div className="las la-eye fade-icon custom-eye-size"></div>
                 )}
+                <span style={{ marginLeft: '6px' }}>~</span>
+                
+                <a 
+                  href={isRevealed ? actualLocationMap : adLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={handleLinkClick}
+                  style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '5px', 
+                    textDecoration: 'none', 
+                    color: isRevealed && actualLocation !== 'Unknown'
+                      ? '#3b82f6'
+                      : 'inherit',
+                    fontWeight: isRevealed && actualLocation !== 'Unknown'
+                      ? '640'
+                      : 'normal'
+                  }}
+                >
+                  <span>
+                    &nbsp;
+                    {isRevealed
+                      ? actualLocation === 'Unknown'
+                        ? 'Unknown'
+                        : '[View on Map]'
+                        : 'Locate'}
+                  </span>
+                  <CiLocationOn size="10px" />
+                </a>
               </div>
             </div>
           </div>

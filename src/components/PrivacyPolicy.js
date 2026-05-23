@@ -37,7 +37,7 @@ function PrivacyPolicy() {
         We may display pop-up advertisements from approved advertising networks. However, we don't utilize retargeting or personalized advertising.
       </p>
       <p>
-        We partner with ad networks like Adcash, Epom Market, Clickadu, Airpush, and Leadbolt, which support video ads. These networks enable us to show ads that users can watch to support our site. We do not engage in tracking or storing personal data through these ads.
+        We partner with ad networks like adsense. These networks enable us to show ads that users can watch to support our site. We do not engage in tracking or storing personal data through these ads.
       </p>
       <p>
         If you need to reach out to us for any reason, you can do so at letters2casper@gmail.com. Please note that we don't process online payments or offer any services for sale through our website.

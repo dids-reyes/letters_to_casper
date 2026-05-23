@@ -726,3 +726,8 @@ a[data-scroll] {
   height: 16px;
   width: 16px;
 }
+
+.las.la-eye {
+  position: relative;
+  top: 1px;
+}
