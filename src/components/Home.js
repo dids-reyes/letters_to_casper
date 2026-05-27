@@ -191,9 +191,9 @@ function Home() {
 
   const locationsHtml = locations.join("<br />");
 
-  const handleAddLetter = async () => {
+  const handleAddLetter = async (letterData) => {
     try {
-      const { from, to, message } = newLetter;
+      const { from, to, message } = letterData;
 
       if (from.trim() === "" || to.trim() === "" || message.trim() === "") {
         return;
