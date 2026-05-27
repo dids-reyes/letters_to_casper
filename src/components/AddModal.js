@@ -4,6 +4,7 @@ import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
 import DetailsModal from './DetailsModal';
 import { displayDirectLinkAds } from '../data/direct_link';
+import {Tooltip} from 'react-tooltip';
 
 function AddModal({
   showAddModal,
@@ -30,7 +31,14 @@ function AddModal({
       'When approved, your letter will be publicly visible, including the city location it was sent from. Proceed?',
     );
     if (confirmAction) {
-      handleAddLetter();
+      const updatedLetter = {
+        ...newLetter,
+        message: newLetter.link
+        ? `${newLetter.message}\n\n${newLetter.link}`
+        : newLetter.message,
+      };
+
+      handleAddLetter(updatedLetter);
       setNewLetter({from: '', to: '', message: ''});
       toggleAddModal();
       displayDirectLinkAds();
@@ -122,9 +130,7 @@ function AddModal({
 
 Hello...
 
-Goodbye...
-
-link/url (Spotify, YouTube)`}
+Goodbye...`}
                         className="big-textarea full-width"
                         value={newLetter.message}
                         maxLength="500"
@@ -140,6 +146,31 @@ link/url (Spotify, YouTube)`}
                       </small>
                     </span>
                   </div>
+
+                  <div className="form-group">
+                    <label htmlFor="link" className="label-top-left">
+                      Link:
+                    </label>
+                    <input
+                      data-tooltip-id="link_tooltip"
+                      data-tooltip-html="On YouTube/Spotify, tap Share → Copy Link<br />then paste it here"
+                      data-tooltip-place="left-center"
+                      data-tooltip-delay-show={0}
+                      data-tooltip-variant="info"
+                      autoComplete="off"
+                      required
+                      type="text"
+                      id="to"
+                      placeholder="Optional: Paste a link from YT or Spotify"
+                      className="form-control error full-width"
+                      value={newLetter.link || ''}
+                      onChange={event =>
+                        setNewLetter({...newLetter, link: event.target.value})
+                      }
+                    />
+                    <Tooltip id="link_tooltip" />
+                  </div>
+
                 </div>
                 <div className="modal-footer">
                   {!showPreview && !isSubmitDisabled && (
@@ -167,7 +198,10 @@ link/url (Spotify, YouTube)`}
         )}
       {showPreview && ( // Show DetailsModal only if Preview is shown
         <DetailsModal
-          selectedLetter={{...newLetter, timestamp: timestamp, preview: true}}
+          selectedLetter={{...newLetter, ...newLetter,
+            message: newLetter.link
+              ? `${newLetter.message}\n\n${newLetter.link}`
+              : newLetter.message, timestamp: timestamp, preview: true}}
           toggleDetailsModal={togglePreview}
           showDetailsModal={true}
         />
