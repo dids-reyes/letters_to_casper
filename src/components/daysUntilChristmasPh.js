@@ -59,7 +59,7 @@ function daysUntilChristmasPH() {
     hours <= 1 ? "hour" : "hours"
   }, ${minutes} ${minutes <= 1 ? "minute" : "minutes"}, ${seconds} ${
     seconds <= 1 ? "second" : "seconds"
-  } 🎅`;
+  } 🎄`;
 }
 
 export default daysUntilChristmasPH;
