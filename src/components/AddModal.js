@@ -158,7 +158,6 @@ Goodbye...`}
                       data-tooltip-delay-show={0}
                       data-tooltip-variant="info"
                       autoComplete="off"
-                      required
                       type="text"
                       id="to"
                       placeholder="Optional: Paste a link from YT or Spotify"
