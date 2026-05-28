@@ -10,7 +10,6 @@ import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
 import under_construction from "../lotties/under_construction.json";
 import empty from "../lotties/empty2.json";
-import { GiMailbox } from "react-icons/gi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Typewriter from "typewriter-effect";
@@ -480,11 +479,25 @@ function Home() {
           </center>
           <div>
             <Typewriter
-              options={{ delay: 20, loop: false }}
+              options={{ delay: 20, loop: false, cursor: ""}}
               onInit={(typewriter) => {
                 typewriter
                   .typeString(
-                    "Please wait while we load all letters... This may take up to 1 minute"
+                    `Opening up the mailbox... <br/>things take just a bit longer to load up at first.`
+                  )
+                  .pauseFor(3000)
+                  .start();
+              }}
+            />
+          </div>
+          <div>
+            <Typewriter
+              options={{ delay: 20, loop: false, cursor: ""}}
+              onInit={(typewriter) => {
+                typewriter
+                  .pauseFor(7000)
+                  .typeString(
+                    `<br/><br/>Please wait about a minute while we get the site ready.`
                   )
                   .pauseFor(3000)
                   .start();
@@ -492,7 +505,6 @@ function Home() {
             />
           </div>
           <br />
-          <GiMailbox size="60px" />
         </div>
       ) : loading === 2 ? (
         <>
