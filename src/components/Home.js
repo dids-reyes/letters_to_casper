@@ -10,7 +10,6 @@ import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
 import under_construction from "../lotties/under_construction.json";
 import empty from "../lotties/empty2.json";
-import { GiMailbox } from "react-icons/gi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Typewriter from "typewriter-effect";
@@ -506,7 +505,6 @@ function Home() {
             />
           </div>
           <br />
-          {/* <GiMailbox size="60px" /> */}
         </div>
       ) : loading === 2 ? (
         <>
