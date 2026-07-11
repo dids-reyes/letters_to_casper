@@ -5,13 +5,13 @@ import { IoLogoJavascript } from 'react-icons/io5';
 import blck_logo from '../lotties/black_ltc_logo.webp';
 import dids_img from '../devs_data/dids_img.jpg';
 import jayar_img from '../devs_data/jayar_img.jpg';
-import arexon_img from '../devs_data/arexon_img_1.jpg';
 import joshua_img from '../devs_data/joshua_img.jpg';
 import christian_img from '../devs_data/christian_img.jpg';
-import joseph_img from '../devs_data/joseph_img.png';
-import karizza_img from '../devs_data/karriza_img.png';
-import daniel_img from '../devs_data/daniel_img.png';
-import angelica_img from '../devs_data/angelica_img.jpg';
+import joseph_img from '../devs_data/joseph_img.jpg';
+import daniel_img from '../devs_data/daniel_img.jpg';
+import arexon_img from '../devs_data/arexon_img_1.jpg';
+// import angelica_img from '../devs_data/angelica_img.jpg';
+// import karizza_img from '../devs_data/karriza_img.png';
 import SideAd from './AdComponent';
 import '../styles/DeveloperPortal.css';
 
@@ -24,12 +24,12 @@ function DeveloperPortal() {
     { name: 'Dids Irwyn T. Reyes', position: 'Founder', role: 'Lead Dev', image: dids_img },
     { name: 'Jay-ar Dagooc', position: 'Contributor', role: 'UI/UX/Frontend', image: jayar_img },
     { name: 'Joshua Dela Cruz', position: 'Contributor', role: 'Frontend Dev', image: joshua_img },
-    { name: 'Arexon Mortel', position: 'Contributor', role: 'Frontend Dev', image: arexon_img },
     { name: 'Christian Santos', position: 'Contributor', role: 'Data Analyst', image: christian_img },
     { name: 'Joseph Canilao', position: 'Contributor', role: 'DevOps', image: joseph_img },
-    { name: 'Karizza B. Hipolito', position: 'Contributor', role: 'SEO Specialist', image: karizza_img },
-    { name: 'Angelica Paez', position: 'Contributor', role: 'SEO Specialist', image: angelica_img },
     { name: 'Daniel Andrei Tubu', position: 'Contributor', role: 'DevOps', image: daniel_img },
+    { name: 'Arexon Mortel', position: 'Contributor', role: 'Frontend Dev', image: arexon_img },
+    // { name: 'Karizza B. Hipolito', position: 'Contributor', role: 'SEO Specialist', image: karizza_img },
+    // { name: 'Angelica Paez', position: 'Contributor', role: 'SEO Specialist', image: angelica_img },
   ];
 
   const technologies = [
