@@ -10,6 +10,7 @@ import christian_img from '../devs_data/christian_img.jpg';
 import joseph_img from '../devs_data/joseph_img.jpg';
 import daniel_img from '../devs_data/daniel_img.jpg';
 import arexon_img from '../devs_data/arexon_img_1.jpg';
+import blen_img from '../devs_data/blen_img.jpg';
 // import angelica_img from '../devs_data/angelica_img.jpg';
 // import karizza_img from '../devs_data/karriza_img.png';
 import SideAd from './AdComponent';
@@ -28,6 +29,7 @@ function DeveloperPortal() {
     { name: 'Joseph Canilao', position: 'Contributor', role: 'DevOps', image: joseph_img },
     { name: 'Daniel Andrei Tubu', position: 'Contributor', role: 'DevOps', image: daniel_img },
     { name: 'Arexon Mortel', position: 'Contributor', role: 'Frontend Dev', image: arexon_img },
+    { name: 'Blen Alis', position: 'Contributor', role: 'Frontend/Moderator', image: blen_img },
     // { name: 'Karizza B. Hipolito', position: 'Contributor', role: 'SEO Specialist', image: karizza_img },
     // { name: 'Angelica Paez', position: 'Contributor', role: 'SEO Specialist', image: angelica_img },
   ];
