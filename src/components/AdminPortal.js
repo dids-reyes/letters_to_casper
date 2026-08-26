@@ -190,6 +190,8 @@ function AdminPortal() {
           Approve Selected Letters
         </button>
 
+        <br />
+
         <button
           className="approve-button"
           disabled={!selectedLetters.length}
