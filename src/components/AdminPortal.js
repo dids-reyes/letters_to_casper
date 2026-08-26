@@ -88,6 +88,41 @@ function AdminPortal() {
     }
   };
 
+  const handleDeleteLetters = async () => {
+    if (!selectedLetters.length) {
+      alert('Please select at least one letter to delete.');
+      return;
+    }
+
+    if (!window.confirm(`Delete ${selectedLetters.length} letter(s)? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${render_url}/api/messages/delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': api_key,
+        },
+        body: JSON.stringify({letterIds: selectedLetters}),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete letters');
+      }
+
+      const updatedLetters = letters.filter(
+        letter => !selectedLetters.includes(letter._id),
+      );
+      setLetters(updatedLetters);
+      setSelectedLetters([]);
+    } catch (error) {
+      console.error('Error deleting letters:', error);
+      alert('An error occurred while deleting letters.');
+    }
+  };
+
   const [ip, setIP] = useState('');
 
   // TODO: Grab IP and apply rate limiting to prevent brute-force / submit IP to project Honeypot
@@ -153,6 +188,16 @@ function AdminPortal() {
           onClick={handleApproveLetters}
         >
           Approve Selected Letters
+        </button>
+
+        <br />
+
+        <button
+          className="approve-button"
+          disabled={!selectedLetters.length}
+          onClick={handleDeleteLetters}
+        >
+          Delete Selected Letters
         </button>
       </center>
       {letters.length > 0 && (
