@@ -1619,22 +1619,6 @@ a[data-scroll] {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
-.letter-modal__heart {
-  position: absolute;
-  top: 86px;
-  right: 18px;
-  z-index: 5;
-  width: 30px;
-  transform: rotate(9deg);
-  pointer-events: none;
-}
-
-.letter-modal__heart svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
 /* ---- Envelope intro ---- */
 .letter-envelope {
   position: relative;
@@ -1841,18 +1825,6 @@ a[data-scroll] {
   margin-top: 18px;
 }
 
-.letter-paper__ghost {
-  display: flex;
-  justify-content: center;
-  margin: 24px 0 8px;
-}
-
-.letter-paper__ghost svg {
-  width: 48px;
-  height: auto;
-  overflow: visible;
-}
-
 .letter-paper__meta {
   position: relative;
   z-index: 1;
@@ -1916,12 +1888,6 @@ a[data-scroll] {
     font-size: 24px;
   }
 
-  .letter-modal__heart {
-    top: 74px;
-    right: 14px;
-    width: 24px;
-  }
-
   .letter-paper {
     max-height: calc(100vh - 110px);
     padding: 34px 22px 20px;
@@ -1935,10 +1901,6 @@ a[data-scroll] {
 
   .letter-paper__body {
     line-height: 1.8;
-  }
-
-  .letter-paper__ghost svg {
-    width: 42px;
   }
 }
 

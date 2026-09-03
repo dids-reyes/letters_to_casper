@@ -271,11 +271,42 @@ function DetailsModal({
       encodeURIComponent(letterCity)
     : null;
 
+  // Location is gated behind an ad view: first click opens the ad, and on
+  // returning to the tab the link becomes the actual map.
+  const adLink =
+    "https://storyunicornupper.com/rxyce75in3?key=945fab619a2a948227fecaaf9d93f787";
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [hasClickedAd, setHasClickedAd] = useState(false);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        if (isRevealed) {
+          setIsRevealed(false);
+          setHasClickedAd(false);
+        } else if (hasClickedAd) {
+          setIsRevealed(true);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [hasClickedAd, isRevealed]);
+
+  const handleLocateClick = () => {
+    if (!isRevealed) {
+      setHasClickedAd(true);
+    }
+  };
+
   const handleCloseModal = () => {
     toggleDetailsModal();
     setShowSpotify(false);
     setShowYoutube(false);
     setOpened(false);
+    setIsRevealed(false);
+    setHasClickedAd(false);
   };
 
   useEffect(() => {
@@ -313,20 +344,6 @@ function DetailsModal({
             >
               <BsX className="close-icon" />
             </button>
-          )}
-
-          {opened && (
-            <span className="letter-modal__heart" aria-hidden="true">
-              <svg viewBox="0 0 32 30" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M16 27C16 27 3 19.5 3 10.5C3 5.8 6.7 3 10.3 3C13 3 15.2 4.6 16 6.6C16.8 4.6 19 3 21.7 3C25.3 3 29 5.8 29 10.5C29 19.5 16 27 16 27Z"
-                  fill="none"
-                  stroke="#c8a86a"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
           )}
 
           {!opened ? (
@@ -443,31 +460,6 @@ function DetailsModal({
                 </div>
               )}
 
-              <div className="letter-paper__ghost" aria-hidden="true">
-                <svg viewBox="0 0 64 58" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M9 55 V27 a20 20 0 0 1 40 0 V55 l-6.5 -6 -6.5 6 -7 -6 -6.5 6 -7 -6 Z"
-                    fill="#f4efe1"
-                    stroke="#b7b6a8"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="22" cy="29" r="2.6" fill="#7c7b70" />
-                  <circle cx="38" cy="29" r="2.6" fill="#7c7b70" />
-                  <path
-                    d="M26 36 q4 3.4 8 0"
-                    stroke="#7c7b70"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                  <path
-                    d="M53 10 c1.5 -1.8 4.4 -1.7 4.4 1 c0 2.4 -4.4 5 -4.4 5 s-4.4 -2.6 -4.4 -5 c0 -2.7 2.9 -2.8 4.4 -1 Z"
-                    fill="#e7a9b3"
-                  />
-                </svg>
-              </div>
-
               <div className="letter-paper__meta">
                 {hasBadge && (
                   <>
@@ -531,12 +523,17 @@ function DetailsModal({
                     <span className="letter-meta-sep">·</span>
                     <a
                       className="letter-paper__locate"
-                      href={letterLocationMap}
+                      href={isRevealed ? letterLocationMap : adLink}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={handleLocateClick}
                     >
                       <CiLocationOn size="12px" />
-                      <span>Written in {letterCity}</span>
+                      <span>
+                        {isRevealed
+                          ? `View ${letterCity} on map`
+                          : `Written in ${letterCity}`}
+                      </span>
                     </a>
                   </>
                 )}
