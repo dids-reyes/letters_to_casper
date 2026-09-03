@@ -22,7 +22,6 @@ import {
 import { CiLocationOn } from "react-icons/ci";
 import { TbChristmasTree } from "react-icons/tb";
 import { RiAdvertisementLine } from "react-icons/ri";
-import { Tooltip } from "react-tooltip";
 import { render_url, api_key } from "../data/keys";
 import tc from "thousands-counter";
 import InfiniteScroll from "react-infinite-scroll-component";
