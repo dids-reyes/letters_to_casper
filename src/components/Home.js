@@ -15,6 +15,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Typewriter from "typewriter-effect";
 import {
   IoArrowUpOutline,
+  IoHelpCircleOutline,
   IoInformationCircleOutline,
   IoMailOpenOutline,
   IoMailUnreadOutline,
@@ -29,7 +30,7 @@ import { render_url, api_key } from "../data/keys";
 import tc from "thousands-counter";
 import InfiniteScroll from "react-infinite-scroll-component";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
@@ -530,7 +531,6 @@ function Home() {
           key={`letter-ad-${letterNumber}`}
           aria-label="Advertisement"
         >
-          <span className="letter-card__ad-label">Advertisement</span>
           <AdComponent />
         </div>,
       ];
@@ -673,6 +673,34 @@ function Home() {
               >
                 &times;
               </button>
+              <div className="announcement-item">
+                <IoInformationCircleOutline size={21} />
+                <div>
+                  <strong>A fresh look is on the way</strong>
+                  <p>
+                    We’re thoughtfully refreshing the Letters to Casper
+                    experience. You may notice a few changes while the work is
+                    still ongoing.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/seek_help"
+                className="announcement-item announcement-item--link"
+                onClick={() => setShowAnnouncements(false)}
+              >
+                <IoHelpCircleOutline size={21} />
+                <div>
+                  <strong>It’s okay to seek help</strong>
+                  <p>
+                    If you’re not feeling okay or need mental health support,
+                    visit our Seek Help page for services and resources.
+                  </p>
+                  <span className="announcement-item__action">
+                    View support resources →
+                  </span>
+                </div>
+              </Link>
               <div className="announcement-item">
                 <RiAdvertisementLine size={21} />
                 <div>

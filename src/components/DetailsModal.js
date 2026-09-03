@@ -11,11 +11,13 @@ import { FaUserTie } from "react-icons/fa";
 import { PiShootingStarFill } from "react-icons/pi";
 import { PiHeartBreakFill } from "react-icons/pi";
 import { CiLocationOn } from "react-icons/ci";
+import { IoShareSocialOutline } from "react-icons/io5";
 import { useState, useEffect } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
 import GraphemeSplitter from "grapheme-splitter";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const stringSplitter = (string) => {
   const splitter = new GraphemeSplitter();
@@ -303,6 +305,39 @@ function DetailsModal({
     }
   };
 
+  const handleCopyLetterLink = async () => {
+    if (!selectedLetter?._id || selectedLetter.preview) return;
+
+    const letterUrl = `${window.location.origin}/letters/${selectedLetter._id}`;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(letterUrl);
+      } else {
+        const temporaryInput = document.createElement("textarea");
+        temporaryInput.value = letterUrl;
+        temporaryInput.setAttribute("readonly", "");
+        temporaryInput.style.position = "fixed";
+        temporaryInput.style.opacity = "0";
+        document.body.appendChild(temporaryInput);
+        temporaryInput.select();
+        const copied = document.execCommand("copy");
+        temporaryInput.remove();
+        if (!copied) throw new Error("Unable to copy link");
+      }
+
+      toast.info("Link copied — ready to share.", {
+        position: "top-center",
+        autoClose: 2500,
+      });
+    } catch (error) {
+      toast.error("Couldn’t copy the link. Please try again.", {
+        position: "top-center",
+        autoClose: 2500,
+      });
+    }
+  };
+
   const handleCloseModal = () => {
     toggleDetailsModal();
     setShowSpotify(false);
@@ -521,25 +556,38 @@ function DetailsModal({
                   {formatReadsCount(selectedLetter.reads)}
                 </span>
 
-                {hasLocation && (
+                {(hasLocation ||
+                  (!selectedLetter.preview && selectedLetter._id)) && (
                   <>
                     <span className="letter-meta-sep">·</span>
-                    <a
-                      className={`letter-paper__locate${
-                        isRevealed ? " is-revealed" : ""
-                      }`}
-                      href={isRevealed ? letterLocationMap : adLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={handleLocateClick}
-                    >
-                      <CiLocationOn size="12px" />
-                      <span>
-                        {isRevealed
-                          ? "View on Map"
-                          : "Locate"}
-                      </span>
-                    </a>
+                    <span className="letter-paper__actions">
+                      {hasLocation && (
+                        <a
+                          className={`letter-paper__locate${
+                            isRevealed ? " is-revealed" : ""
+                          }`}
+                          href={isRevealed ? letterLocationMap : adLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={handleLocateClick}
+                        >
+                          <CiLocationOn size="12px" />
+                          <span>{isRevealed ? "View on Map" : "Locate"}</span>
+                        </a>
+                      )}
+                      {!selectedLetter.preview && selectedLetter._id && (
+                        <button
+                          type="button"
+                          className="letter-paper__share"
+                          onClick={handleCopyLetterLink}
+                          aria-label="Copy letter link to share"
+                          title="Share letter"
+                        >
+                          <IoShareSocialOutline size="12px" />
+                          <span>Share</span>
+                        </button>
+                      )}
+                    </span>
                   </>
                 )}
               </div>
