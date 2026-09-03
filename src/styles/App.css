@@ -1555,3 +1555,400 @@ a[data-scroll] {
   position: relative;
   top: 1px;
 }
+
+/* =====================================================================
+   Letter reading experience (opening a letter)
+   ===================================================================== */
+.letter-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 28px 16px;
+  overflow-y: auto;
+  background: rgba(28, 25, 23, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: letter-overlay-in 0.25s ease;
+}
+
+@keyframes letter-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.letter-modal {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  margin: auto;
+}
+
+.letter-modal__close {
+  position: absolute;
+  top: -16px;
+  right: -14px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #2f2b20;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.letter-modal__close:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.letter-modal__heart {
+  position: absolute;
+  top: 86px;
+  right: 18px;
+  z-index: 5;
+  width: 30px;
+  transform: rotate(9deg);
+  pointer-events: none;
+}
+
+.letter-modal__heart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---- Envelope intro ---- */
+.letter-envelope {
+  position: relative;
+  width: 230px;
+  height: 156px;
+  margin: 46px auto;
+  perspective: 900px;
+  animation: letter-env-out 0.4s ease 1.05s forwards;
+}
+
+.letter-envelope__back {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: #e9dfc0;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+
+.letter-envelope__note {
+  position: absolute;
+  left: 9%;
+  top: 12%;
+  width: 82%;
+  height: 76%;
+  border-radius: 5px;
+  background: #fffdf5;
+  border: 1px solid #e6ddc4;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  transform: translateY(24px);
+  opacity: 0;
+  animation: letter-env-note 0.75s cubic-bezier(0.2, 0.7, 0.3, 1) 0.5s forwards;
+}
+
+.letter-envelope__note::before,
+.letter-envelope__note::after {
+  content: "";
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  height: 2px;
+  background: #ece2c6;
+}
+
+.letter-envelope__note::before {
+  top: 34%;
+}
+
+.letter-envelope__note::after {
+  top: 52%;
+  box-shadow: 0 12px 0 #ece2c6, 0 24px 0 #ece2c6;
+}
+
+.letter-envelope__front {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 12px;
+  background: #f0e7ca;
+  clip-path: polygon(0 0, 50% 42%, 100% 0, 100% 100%, 0 100%);
+}
+
+.letter-envelope__flap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 3;
+  height: 52%;
+  transform-origin: top center;
+  background: #e6dcbc;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  animation: letter-env-flap 0.6s ease 0.15s forwards;
+}
+
+.letter-envelope__seal {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  color: #c9788a;
+  font-size: 20px;
+  animation: letter-env-seal 0.3s ease forwards;
+}
+
+.letter-envelope__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -34px;
+  text-align: center;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@keyframes letter-env-flap {
+  to {
+    transform: rotateX(178deg);
+    background: #ded3b0;
+  }
+}
+
+@keyframes letter-env-seal {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+}
+
+@keyframes letter-env-note {
+  to {
+    transform: translateY(-38px);
+    opacity: 1;
+  }
+}
+
+@keyframes letter-env-out {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
+/* ---- Letter paper ---- */
+.letter-paper {
+  position: relative;
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+  padding: 44px 46px 26px;
+  border-radius: 10px;
+  border: 1px solid #ece2c9;
+  background-color: #faf7ec;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(120, 100, 60, 0.035) 0 1px,
+    transparent 1px 5px
+  );
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  animation: letter-paper-in 0.4s ease;
+}
+
+@keyframes letter-paper-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.letter-paper__head {
+  margin-bottom: 14px;
+}
+
+.letter-paper .letter-info {
+  margin-left: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #2f2b20;
+}
+
+.letter-paper__rule {
+  border: none;
+  border-top: 1px solid #e4dcc4;
+  margin: 2px 8px 18px 2px;
+}
+
+.letter-paper__date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.letter-paper__date-icon {
+  flex-shrink: 0;
+  color: #b3a67e;
+}
+
+.letter-paper__date .timestamp-text {
+  font-size: 13px;
+  color: #6b6550;
+}
+
+.letter-paper__body {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  min-height: 40px;
+  font-size: 15px;
+  line-height: 1.85;
+  color: #2f2b20;
+}
+
+.letter-paper__media {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
+}
+
+.letter-paper__ghost {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0 8px;
+}
+
+.letter-paper__ghost svg {
+  width: 48px;
+  height: auto;
+  overflow: visible;
+}
+
+.letter-paper__meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid #ece4cd;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  text-align: center;
+  color: #8a8367;
+}
+
+.letter-paper__meta .letter-meta-sep {
+  opacity: 0.55;
+}
+
+.letter-paper__badges {
+  display: inline-flex;
+  align-items: center;
+  color: #6b6550;
+}
+
+.letter-paper__reads {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.letter-paper__reads-eye {
+  font-size: 14px;
+  color: #8a8367;
+}
+
+.letter-paper__locate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.letter-paper__locate:hover {
+  text-decoration: underline;
+}
+
+@media only screen and (max-width: 600px) {
+  .letter-modal-overlay {
+    padding: 20px 12px;
+  }
+
+  .letter-modal__close {
+    top: -14px;
+    right: -6px;
+    width: 38px;
+    height: 38px;
+    font-size: 24px;
+  }
+
+  .letter-modal__heart {
+    top: 74px;
+    right: 14px;
+    width: 24px;
+  }
+
+  .letter-paper {
+    max-height: calc(100vh - 110px);
+    padding: 34px 22px 20px;
+    border-radius: 10px;
+  }
+
+  .letter-paper .letter-info,
+  .letter-paper__body {
+    font-size: 14px;
+  }
+
+  .letter-paper__body {
+    line-height: 1.8;
+  }
+
+  .letter-paper__ghost svg {
+    width: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter-overlay-in,
+  .letter-envelope,
+  .letter-envelope__flap,
+  .letter-envelope__note,
+  .letter-envelope__seal,
+  .letter-paper {
+    animation: none !important;
+  }
+}

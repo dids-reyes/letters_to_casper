@@ -34,7 +34,6 @@ function DetailsModal({
   let early_bird;
   let eleven_eleven;
   let twelve_fifty_one;
-  const hasOpenedUrl = localStorage.getItem("hasOpenedUrl");
 
   if (selectedLetter) {
     letterDate = new Date(selectedLetter.timestamp);
@@ -42,14 +41,6 @@ function DetailsModal({
     letterId = selectedLetter._id;
     if (letterDate < targetDate && letterId !== adminId) {
       early_bird = true;
-    }
-    if (letterId === adminId && !hasOpenedUrl) {
-      // window.open('https://twoepidemic.com/h65p1hjab?key=0f5e28f15ad6525e5be830e529cabd5e', '_blank');
-      // localStorage.setItem('hasOpenedUrl', 'true');
-    }
-    if (!hasOpenedUrl) {
-      // window.open('https://twoepidemic.com/h65p1hjab?key=0f5e28f15ad6525e5be830e529cabd5e', '_blank');
-      // localStorage.setItem('hasOpenedUrl', 'true');
     }
   }
 
@@ -155,13 +146,6 @@ function DetailsModal({
     // eslint-disable-next-line
   }, [ip]);
 
-  function formatReadsCount(readsCount) {
-    const parsedReadsCount = parseInt(readsCount);
-    return parsedReadsCount === 1
-      ? `${parsedReadsCount} read`
-      : `${tc(parsedReadsCount, 2)} reads`;
-  }
-
   const formatTimestamp = (timestamp) => {
     const options = {
       weekday: "long",
@@ -258,153 +242,182 @@ function DetailsModal({
     };
   }, []);
 
-  // Reveal Location
-  const [isRevealed, setIsRevealed] = useState(false);
-  const [hasClickedAd, setHasClickedAd] = useState(false);
-
-
-  const adLink = "https://storyunicornupper.com/rxyce75in3?key=945fab619a2a948227fecaaf9d93f787";
-  const actualLocation = selectedLetter?.loc?.city || 'Unknown';
-  const locRegion = selectedLetter?.loc?.region || 'Unknown';
-  const actualLocationMap = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(actualLocation) + "&query_place_id=" + encodeURIComponent(locRegion);
+  // Envelope-opening intro animation
+  const [opened, setOpened] = useState(false);
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // 1. If they just came back from opening the ACTUAL MAP, reset everything back to the beginning
-        if (isRevealed) {
-          setIsRevealed(false);
-          setHasClickedAd(false);
-        }
-        // 2. If they just came back from opening the AD, reveal the actual map link
-        else if (hasClickedAd) {
-          setIsRevealed(true);
-        }
-      }
-    };
-
-    // Listen for the user coming back to your site
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [hasClickedAd, isRevealed]); // Added isRevealed to dependencies so the effect can read its updated value
-
-  const handleLinkClick = () => {
-    // If the location isn't revealed yet, they are clicking the ad link
-    if (!isRevealed) {
-      setHasClickedAd(true);
+    if (!showDetailsModal || !selectedLetter) {
+      setOpened(false);
+      return;
     }
-    // If it IS revealed, they are clicking the map link right now.
-    // The useEffect above will handle resetting the state when they tab back.
-  };
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      setOpened(true);
+      return;
+    }
+    setOpened(false);
+    const timer = setTimeout(() => setOpened(true), 1450);
+    return () => clearTimeout(timer);
+  }, [showDetailsModal, selectedLetter]);
+
+
+  const letterCity = selectedLetter?.loc?.city || "";
+  const hasLocation = Boolean(letterCity) && letterCity !== "Unknown";
+  const letterLocationMap = hasLocation
+    ? "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent(letterCity)
+    : null;
 
   const handleCloseModal = () => {
     toggleDetailsModal();
     setShowSpotify(false);
     setShowYoutube(false);
-    setIsRevealed(false);
-    setHasClickedAd(false);
+    setOpened(false);
   };
+
+  useEffect(() => {
+    if (!showDetailsModal) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") handleCloseModal();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDetailsModal]);
+
+  const formatReadsCount = (readsCount) => {
+    const parsed = parseInt(readsCount) || 0;
+    return parsed === 1 ? "1 read" : `${tc(parsed, 2)} reads`;
+  };
+
+  const hasBadge =
+    early_bird ||
+    letterId === adminId ||
+    eleven_eleven ||
+    twelve_fifty_one;
 
   return (
     showDetailsModal &&
     selectedLetter && (
-      <div className="modal">
-        <div className="modal-dialog">
-          <div className="modal-content" onClick={incrementReads}>
-            <div className="modal-header">
-              <button
-                type="button"
-                className="close"
-                onClick={handleCloseModal}
-              >
-                <BsX className="close-icon" />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="letter-info" style={{ marginBottom: "5px" }}>
-                <Typewriter
-                  options={{ delay: 50, loop: false, stringSplitter }}
-                  onInit={(typewriter) => {
-                    typewriter
-                      .typeString(
-                        `<strong>From:</strong> ${selectedLetter.from}`
-                      )
-                      .callFunction((state) => {
-                        state.elements.cursor.remove();
-                      })
-                      .start();
-                  }}
-                />
-              </div>
-              <div className="letter-info">
-                <Typewriter
-                  options={{ delay: 50, loop: false, stringSplitter }}
-                  onInit={(typewriter) => {
-                    typewriter
-                      .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
-                      .callFunction((state) => {
-                        state.elements.cursor.remove();
-                      })
-                      .start();
-                  }}
-                />
-              </div>
-              <div>
-                <br />
-                <label htmlFor="timestamp">
-                  <BsMailboxFlag size="25px" />
-                </label>
+      <div className="letter-modal-overlay" onClick={handleCloseModal}>
+        <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
+          {opened && (
+            <button
+              type="button"
+              className="letter-modal__close"
+              onClick={handleCloseModal}
+              aria-label="Close letter"
+            >
+              <BsX className="close-icon" />
+            </button>
+          )}
 
-                <div
-                  data-tooltip-id="timezone_tooltip"
-                  data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
-                  data-tooltip-place="top"
-                  data-tooltip-variant="info"
-                >
-                  <span className="timestamp-text">
-                    <Typewriter
-                      options={{ delay: 70, loop: false }}
-                      onInit={(typewriter) => {
-                        typewriter
-                          .typeString(formatTimestamp(selectedLetter.timestamp))
-                          .callFunction((state) => {
-                            state.elements.cursor.remove();
-                          })
-                          .start();
-                      }}
-                    />
-                  </span>
+          {opened && (
+            <span className="letter-modal__heart" aria-hidden="true">
+              <svg viewBox="0 0 32 30" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M16 27C16 27 3 19.5 3 10.5C3 5.8 6.7 3 10.3 3C13 3 15.2 4.6 16 6.6C16.8 4.6 19 3 21.7 3C25.3 3 29 5.8 29 10.5C29 19.5 16 27 16 27Z"
+                  fill="none"
+                  stroke="#c8a86a"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          )}
+
+          {!opened ? (
+            <div className="letter-envelope" aria-hidden="true">
+              <div className="letter-envelope__back" />
+              <div className="letter-envelope__note" />
+              <div className="letter-envelope__front" />
+              <div className="letter-envelope__flap" />
+              <span className="letter-envelope__seal">♥</span>
+              <span className="letter-envelope__hint">opening a letter…</span>
+            </div>
+          ) : (
+            <div className="letter-paper" onClick={incrementReads}>
+              <div className="letter-paper__head">
+                <div className="letter-info" style={{ marginBottom: "4px" }}>
+                  <Typewriter
+                    options={{ delay: 50, loop: false, stringSplitter }}
+                    onInit={(typewriter) => {
+                      typewriter
+                        .typeString(
+                          `<strong>From:</strong> ${selectedLetter.from}`
+                        )
+                        .callFunction((state) => {
+                          state.elements.cursor.remove();
+                        })
+                        .start();
+                    }}
+                  />
                 </div>
-                <Tooltip id="timezone_tooltip" />
-                <br />
-              </div>
-              <div className="form-group">
-                <div className="letter-text">
-                  <span>
-                    <Typewriter
-                      options={{ delay: 40, loop: false, stringSplitter }}
-                      onInit={(typewriter) => {
-                        typewriter
-                          .typeString(message)
-                          .pauseFor(500)
-                          .callFunction(() => {
-                            if (spotifyLink == null) {
-                              setShowYoutube(true);
-                            } else {
-                              setShowSpotify(true);
-                            }
-                          })
-                          .start();
-                      }}
-                    />
-                  </span>
+                <div className="letter-info">
+                  <Typewriter
+                    options={{ delay: 50, loop: false, stringSplitter }}
+                    onInit={(typewriter) => {
+                      typewriter
+                        .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
+                        .callFunction((state) => {
+                          state.elements.cursor.remove();
+                        })
+                        .start();
+                    }}
+                  />
                 </div>
               </div>
+
+              <hr className="letter-paper__rule" />
+
+              <div
+                className="letter-paper__date"
+                data-tooltip-id="timezone_tooltip"
+                data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
+                data-tooltip-place="top"
+                data-tooltip-variant="info"
+              >
+                <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
+                <span className="timestamp-text">
+                  <Typewriter
+                    options={{ delay: 70, loop: false }}
+                    onInit={(typewriter) => {
+                      typewriter
+                        .typeString(formatTimestamp(selectedLetter.timestamp))
+                        .callFunction((state) => {
+                          state.elements.cursor.remove();
+                        })
+                        .start();
+                    }}
+                  />
+                </span>
+              </div>
+              <Tooltip id="timezone_tooltip" />
+
+              <div className="letter-paper__body letter-text">
+                <Typewriter
+                  options={{ delay: 40, loop: false, stringSplitter }}
+                  onInit={(typewriter) => {
+                    typewriter
+                      .typeString(message)
+                      .pauseFor(500)
+                      .callFunction(() => {
+                        if (spotifyLink == null) {
+                          setShowYoutube(true);
+                        } else {
+                          setShowSpotify(true);
+                        }
+                      })
+                      .start();
+                  }}
+                />
+              </div>
+
               {showSpotify && linkId && (
-                <div>
+                <div className="letter-paper__media">
                   <iframe
                     title="spotify-preview"
                     style={{ border: "12px" }}
@@ -418,7 +431,7 @@ function DetailsModal({
                 </div>
               )}
               {showYoutube && linkId && (
-                <div>
+                <div className="letter-paper__media">
                   <iframe
                     width="100%"
                     height={iframeHeight}
@@ -429,94 +442,108 @@ function DetailsModal({
                   ></iframe>
                 </div>
               )}
-              <div className="reads-text">
-                <br />
-                <>
-                  <div
-                    data-tooltip-id="badges"
-                    data-tooltip-html={`${
-                      early_bird
-                        ? "<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>"
-                        : ""
-                    } ${letterId === adminId ? "Admin" : ""} ${
-                      eleven_eleven ? "<strong>11:11 PM</strong>" : ""
-                    } ${twelve_fifty_one ? "<strong>12:51 AM</strong>" : ""}
-                    `}
-                    data-tooltip-place="bottom"
-                  >
-                    {early_bird && (
-                      <>
-                        <FaEarlybirds size="15px" />
-                        &nbsp;
-                        <BsBookmarkHeartFill size="15px" />
-                      </>
-                    )}
 
-                    {letterId === adminId && (
-                      <>
-                        &nbsp;
-                        <FaUserTie size="15px" />
-                      </>
-                    )}
+              <div className="letter-paper__ghost" aria-hidden="true">
+                <svg viewBox="0 0 64 58" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M9 55 V27 a20 20 0 0 1 40 0 V55 l-6.5 -6 -6.5 6 -7 -6 -6.5 6 -7 -6 Z"
+                    fill="#f4efe1"
+                    stroke="#b7b6a8"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="22" cy="29" r="2.6" fill="#7c7b70" />
+                  <circle cx="38" cy="29" r="2.6" fill="#7c7b70" />
+                  <path
+                    d="M26 36 q4 3.4 8 0"
+                    stroke="#7c7b70"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                  <path
+                    d="M53 10 c1.5 -1.8 4.4 -1.7 4.4 1 c0 2.4 -4.4 5 -4.4 5 s-4.4 -2.6 -4.4 -5 c0 -2.7 2.9 -2.8 4.4 -1 Z"
+                    fill="#e7a9b3"
+                  />
+                </svg>
+              </div>
 
-                    {eleven_eleven && (
-                      <>
-                        &nbsp;
-                        <PiShootingStarFill size="15px" />
-                      </>
-                    )}
+              <div className="letter-paper__meta">
+                {hasBadge && (
+                  <>
+                    <span
+                      className="letter-paper__badges"
+                      data-tooltip-id="badges"
+                      data-tooltip-html={`${
+                        early_bird
+                          ? "<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>"
+                          : ""
+                      } ${letterId === adminId ? "Admin" : ""} ${
+                        eleven_eleven ? "<strong>11:11 PM</strong>" : ""
+                      } ${twelve_fifty_one ? "<strong>12:51 AM</strong>" : ""}
+                      `}
+                      data-tooltip-place="bottom"
+                    >
+                      {early_bird && (
+                        <>
+                          <FaEarlybirds size="15px" />
+                          &nbsp;
+                          <BsBookmarkHeartFill size="15px" />
+                        </>
+                      )}
+                      {letterId === adminId && (
+                        <>
+                          &nbsp;
+                          <FaUserTie size="15px" />
+                        </>
+                      )}
+                      {eleven_eleven && (
+                        <>
+                          &nbsp;
+                          <PiShootingStarFill size="15px" />
+                        </>
+                      )}
+                      {twelve_fifty_one && (
+                        <>
+                          &nbsp;
+                          <PiHeartBreakFill size="15px" />
+                        </>
+                      )}
+                    </span>
+                    <Tooltip id="badges" arrowColor="transparent" />
+                    <span className="letter-meta-sep">·</span>
+                  </>
+                )}
 
-                    {twelve_fifty_one && (
-                      <>
-                        &nbsp;
-                        <PiHeartBreakFill size="15px" />
-                      </>
-                    )}
-                  </div>
-                  <Tooltip id="badges" arrowColor="transparent" />
-                </>
                 <span>
                   {js_ago(new Date(selectedLetter.timestamp), {
                     format: "long",
-                  })}{" "}
-                  ~ {formatReadsCount(selectedLetter.reads)}
+                  })}
                 </span>
-                {letterId !== adminId && (
-                  <div className="las la-eye fade-icon custom-eye-size"></div>
+                <span className="letter-meta-sep">·</span>
+                <span className="letter-paper__reads">
+                  <i className="las la-eye fade-icon letter-paper__reads-eye" />
+                  {formatReadsCount(selectedLetter.reads)}
+                </span>
+
+                {hasLocation && (
+                  <>
+                    <span className="letter-meta-sep">·</span>
+                    <a
+                      className="letter-paper__locate"
+                      href={letterLocationMap}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <CiLocationOn size="12px" />
+                      <span>Written in {letterCity}</span>
+                    </a>
+                  </>
                 )}
-                <span style={{ marginLeft: '6px' }}>~</span>
-                
-                <a 
-                  href={isRevealed ? actualLocationMap : adLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  onClick={handleLinkClick}
-                  style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: '5px', 
-                    textDecoration: 'none', 
-                    color: isRevealed && actualLocation !== 'Unknown'
-                      ? '#3b82f6'
-                      : 'inherit',
-                    fontWeight: isRevealed && actualLocation !== 'Unknown'
-                      ? '640'
-                      : 'normal'
-                  }}
-                >
-                  <span>
-                    &nbsp;
-                    {isRevealed
-                      ? actualLocation === 'Unknown'
-                        ? 'Unknown'
-                        : '[View on Map]'
-                        : 'Locate'}
-                  </span>
-                  <CiLocationOn size="10px" />
-                </a>
               </div>
+
             </div>
-          </div>
+          )}
         </div>
       </div>
     )
