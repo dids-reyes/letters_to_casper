@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import logo from '../lotties/ltc_logo_1.webp';
 import {Tooltip} from 'react-tooltip';
 import Typewriter from 'typewriter-effect';
+import {FiSearch} from 'react-icons/fi';
 import {alt_letters} from '../data/alt_letters';
 import '../styles/App.css';
 
@@ -58,6 +59,7 @@ function Header({searchTerm, handleSearchChange}) {
       )}
       <div className="search-bar">
         <div
+          className="search-field"
           // eslint-disable-next-line
           data-tooltip-id="search_tooltip"
           data-tooltip-html="Try searching your name; <br/>you might find an open letter written for you."
@@ -65,12 +67,14 @@ function Header({searchTerm, handleSearchChange}) {
           data-tooltip-delay-show={2000}
           data-tooltip-variant="info"
         >
+          <FiSearch className="search-icon" aria-hidden="true" />
           <input
             type="text"
             className="form-control search-input"
             value={searchTerm}
             onChange={handleSearchChange}
-            placeholder="🔍 Is There a Letter Written for You?"
+            placeholder="Search for your name or a letter"
+            aria-label="Search letters"
           />
         </div>
         <Tooltip id="search_tooltip" />

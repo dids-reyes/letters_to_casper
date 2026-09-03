@@ -58,14 +58,29 @@ function AddModal({
     <>
       {showAddModal &&
         !showPreview && ( // Show AddModal only if it's not hidden and Preview is not shown
-          <div className="modal">
-            <div className="modal-add-dialog">
-              <div>
+          <div className="modal compose-modal">
+            <div
+              className="modal-add-dialog compose-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="compose-title"
+            >
+              <div className="compose-content">
                 <div className="modal-header">
+                  <div className="compose-heading">
+                    <span className="compose-heading-icon">
+                      <RiMailSendLine size="22px" />
+                    </span>
+                    <div>
+                      <h2 id="compose-title">Write your letter</h2>
+                      <p>Share what your heart has been holding.</p>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     className="close"
                     onClick={toggleAddModal}
+                    aria-label="Close letter form"
                   >
                     <BsX className="close-icon" />
                   </button>
@@ -116,11 +131,11 @@ function AddModal({
                       }
                     />
                   </div>
-                  <div style={{ marginRight: '15px' }}>
+                  <div className="form-group message-form-group">
                     <label htmlFor="message" className="label-top-left">
                       Message:
                     </label>
-                    <span>
+                    <span className="compose-message-field">
                       <textarea
                         style={{overflow: 'auto', resize: 'none'}}
                         autoComplete="off"
@@ -142,7 +157,7 @@ Goodbye...`}
                         }
                       ></textarea>
                       <small className="character-count">
-                        Characters: {newLetter.message.length}/500
+                        {newLetter.message.length}/500
                       </small>
                     </span>
                   </div>
@@ -159,7 +174,7 @@ Goodbye...`}
                       data-tooltip-variant="info"
                       autoComplete="off"
                       type="text"
-                      id="to"
+                      id="link"
                       placeholder="Optional: Paste a link from YT or Spotify"
                       className="form-control error full-width"
                       value={newLetter.link || ''}
@@ -173,21 +188,24 @@ Goodbye...`}
                 </div>
                 <div className="modal-footer">
                   {!showPreview && !isSubmitDisabled && (
-                    <button className="preview-button" onClick={togglePreview}>
-                      <strong>PREVIEW</strong>
-                      &nbsp;
+                    <button
+                      type="button"
+                      className="preview-button"
+                      onClick={togglePreview}
+                    >
+                      <strong>Preview</strong>
                       <VscPreview className="preview-icon" size="18px" />
                     </button>
                   )}
-                  &nbsp;
                   <button
+                    type="button"
                     className={`${
                       isSubmitDisabled ? 'disabled-button' : 'submit-button'
                     }`}
                     onClick={handleSubmit}
                     disabled={isSubmitDisabled}
                   >
-                    <strong>SUBMIT LETTER</strong>
+                    <strong>Submit Letter</strong>
                     <RiMailSendLine className="submit-icon" size="18px" />
                   </button>
                 </div>
