@@ -48,12 +48,11 @@ export default async (request, context) => {
     const canonicalUrl = `${pageUrl.origin}/letters/${encodeURIComponent(
       messageId,
     )}`;
-    const previewSource = `/letter-preview/${encodeURIComponent(messageId)}.svg`;
-    const imageUrl = `${pageUrl.origin}/.netlify/images?url=${encodeURIComponent(
-      previewSource,
-    )}&fm=png&w=1200&h=630&fit=fill`;
+    const imageUrl = "https://i.ibb.co/BKKQhky/ltc-preview.png";
     const title = `Letter from: ${letter.from} to: ${letter.to}`;
-    const normalizedMessage = String(letter.message || "").replace(/\s+/g, " ").trim();
+    const normalizedMessage = String(letter.message || "")
+      .replace(/\s+/g, " ")
+      .trim();
     const description =
       normalizedMessage.length > 180
         ? `${normalizedMessage.slice(0, 177)}...`
