@@ -6,7 +6,9 @@ import {FiSearch} from 'react-icons/fi';
 import {alt_letters} from '../data/alt_letters';
 import '../styles/App.css';
 
-function Header({searchTerm, handleSearchChange}) {
+const compactLogo = `${process.env.PUBLIC_URL}/android-chrome-512x512.png`;
+
+function Header({searchTerm, handleSearchChange, isCompact = false}) {
   const [showLogo, setShowLogo] = useState(true);
   const [randomMessage, setRandomMessage] = useState('');
 
@@ -30,7 +32,16 @@ function Header({searchTerm, handleSearchChange}) {
   return (
     <div className="header">
       <br />
-      {showLogo ? (
+      {isCompact ? (
+        <img
+          id="logo-ltc"
+          className="logo logo--compact-mark"
+          src={compactLogo}
+          alt="Letters to Casper"
+          width="48"
+          height="48"
+        />
+      ) : showLogo ? (
         <img
           id="logo-ltc"
           className="logo"

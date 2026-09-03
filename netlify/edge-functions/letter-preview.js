@@ -52,7 +52,7 @@ export default async (request, context) => {
     const imageUrl = `${pageUrl.origin}/.netlify/images?url=${encodeURIComponent(
       previewSource,
     )}&fm=png&w=1200&h=630&fit=fill`;
-    const title = `An open letter from ${letter.from} to ${letter.to}`;
+    const title = `Letter from: ${letter.from} to: ${letter.to}`;
     const normalizedMessage = String(letter.message || "").replace(/\s+/g, " ").trim();
     const description =
       normalizedMessage.length > 180

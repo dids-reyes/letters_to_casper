@@ -49,13 +49,18 @@ body {
 
 .home-toolbar.is-compact {
   display: grid;
-  grid-template-columns: 150px minmax(220px, 700px) 48px;
+  grid-template-columns: 52px minmax(220px, 700px) 48px;
   align-items: center;
   justify-content: center;
   gap: 8px 12px;
   padding: 9px 14px 8px;
   border-radius: 0 0 18px 18px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-top: 0;
   box-shadow: 0 5px 18px rgba(32, 33, 36, 0.13);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
   animation: toolbarMorph 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -103,6 +108,12 @@ body {
   animation: compactLogo 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.home-toolbar.is-compact .header .logo--compact-mark {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
 .home-toolbar.is-compact .alt-logo {
   grid-column: 1;
   width: 145px;
@@ -122,6 +133,7 @@ body {
 
 .home-toolbar.is-compact .search-field {
   min-height: 42px;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .home-toolbar.is-compact .big-button {
@@ -130,6 +142,7 @@ body {
   min-height: 44px;
   padding: 0;
   border-radius: 50%;
+  background: rgba(55, 114, 255, 0.9);
   animation: compactAction 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -150,6 +163,8 @@ body {
 .home-toolbar.is-compact .messages-count {
   padding: 4px;
   border-radius: 14px;
+  background: rgba(247, 249, 252, 0.7);
+  border-color: rgba(223, 229, 236, 0.72);
 }
 
 .home-toolbar.is-compact .message-stat {
@@ -1089,16 +1104,16 @@ body {
 
 @media only screen and (max-width: 768px) {
   .home-toolbar.is-compact {
-    grid-template-columns: 78px minmax(0, 1fr) 42px;
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
     gap: 7px 8px;
     margin: 0 -10px;
     padding: 8px 10px 7px;
     border-radius: 0 0 14px 14px;
   }
 
-  .home-toolbar.is-compact .header .logo,
-  .home-toolbar.is-compact .alt-logo {
-    width: 76px;
+  .home-toolbar.is-compact .header .logo--compact-mark {
+    width: 40px;
+    height: 40px;
   }
 
   .home-toolbar.is-compact .search-field {
@@ -1589,6 +1604,109 @@ a[data-scroll] {
   margin: 0;
 }
 
+.submit-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  box-sizing: border-box;
+  background: rgba(20, 27, 45, 0.5);
+  backdrop-filter: blur(6px);
+  animation: composeBackdropIn 0.2s ease both;
+}
+
+.submit-confirm-dialog {
+  width: min(100%, 410px);
+  box-sizing: border-box;
+  padding: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(18, 25, 38, 0.3);
+  text-align: left;
+  animation: composeDialogIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.submit-confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: #eef3ff;
+  color: #3772ff;
+}
+
+.submit-confirm-dialog h2 {
+  margin: 0;
+  color: #202124;
+  font-size: 20px;
+}
+
+.submit-confirm-dialog > p {
+  margin: 7px 0 0;
+  color: #69717d;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.submit-confirm-notes {
+  margin: 17px 0 0;
+  padding: 12px 14px 12px 30px;
+  border-radius: 12px;
+  background: #f7f9fc;
+  color: #7b828d;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.submit-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 21px;
+}
+
+.submit-confirm-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  margin: 0;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submit-confirm-cancel {
+  background: #f0f2f5;
+  color: #555d68;
+}
+
+.submit-confirm-send {
+  background: linear-gradient(135deg, #3772ff, #2352e6);
+  box-shadow: 0 4px 12px rgba(55, 114, 255, 0.22);
+  color: #fff;
+}
+
+.submit-confirm-cancel:hover {
+  background: #e5e8ec;
+}
+
+.submit-confirm-send:hover {
+  box-shadow: 0 6px 16px rgba(55, 114, 255, 0.3);
+  transform: translateY(-1px);
+}
+
 @keyframes composeBackdropIn {
   from {
     opacity: 0;
@@ -1653,6 +1771,20 @@ a[data-scroll] {
   .compose-dialog .disabled-button {
     flex: 1;
     padding: 10px 8px;
+  }
+
+  .submit-confirm-dialog {
+    padding: 21px;
+    border-radius: 18px;
+  }
+
+  .submit-confirm-actions {
+    align-items: stretch;
+  }
+
+  .submit-confirm-actions button {
+    flex: 1;
+    padding: 9px 10px;
   }
 }
 
@@ -2143,7 +2275,17 @@ html.night-shift .home-toolbar {
 }
 
 html.night-shift .home-toolbar.is-compact {
+  background: rgba(20, 22, 26, 0.76);
+  border-color: rgba(65, 70, 78, 0.52);
   box-shadow: 0 5px 18px rgba(0, 0, 0, 0.55);
+}
+
+html.night-shift .home-toolbar.is-compact .search-field {
+  background: rgba(30, 33, 39, 0.74);
+}
+
+html.night-shift .home-toolbar.is-compact .messages-count {
+  background: rgba(28, 31, 37, 0.72);
 }
 
 /* Search */
@@ -2304,6 +2446,29 @@ html.night-shift .letter-paper__meta {
 html.night-shift .letter-modal__close {
   background: #2a2c22;
   color: #efe9d7;
+}
+
+html.night-shift .submit-confirm-dialog {
+  border-color: #3d4139;
+  background: #20231d;
+}
+
+html.night-shift .submit-confirm-dialog h2 {
+  color: #f0ecdf;
+}
+
+html.night-shift .submit-confirm-dialog > p {
+  color: #b8b4a8;
+}
+
+html.night-shift .submit-confirm-notes {
+  background: #292c25;
+  color: #aaa69a;
+}
+
+html.night-shift .submit-confirm-cancel {
+  background: #30342c;
+  color: #ddd8c9;
 }
 
 /* Footer */
