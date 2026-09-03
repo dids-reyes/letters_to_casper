@@ -274,24 +274,27 @@ function DetailsModal({
   // Location is gated behind an ad view: first click opens the ad, and on
   // returning to the tab the link becomes the actual map.
   const adLink =
-    "https://storyunicornupper.com/rxyce75in3?key=945fab619a2a948227fecaaf9d93f787";
+    "https://www.profitableratecpmnetwork.com/rxyce75in3?key=945fab619a2a948227fecaaf9d93f787";
   const [isRevealed, setIsRevealed] = useState(false);
   const [hasClickedAd, setHasClickedAd] = useState(false);
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        if (isRevealed) {
-          setIsRevealed(false);
-          setHasClickedAd(false);
-        } else if (hasClickedAd) {
-          setIsRevealed(true);
-        }
+    const revealLocationAfterAd = () => {
+      if (
+        document.visibilityState === "visible" &&
+        hasClickedAd &&
+        !isRevealed
+      ) {
+        setIsRevealed(true);
       }
     };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+
+    document.addEventListener("visibilitychange", revealLocationAfterAd);
+    window.addEventListener("focus", revealLocationAfterAd);
+    return () => {
+      document.removeEventListener("visibilitychange", revealLocationAfterAd);
+      window.removeEventListener("focus", revealLocationAfterAd);
+    };
   }, [hasClickedAd, isRevealed]);
 
   const handleLocateClick = () => {
@@ -531,8 +534,8 @@ function DetailsModal({
                       <CiLocationOn size="12px" />
                       <span>
                         {isRevealed
-                          ? `View ${letterCity} on map`
-                          : `Written in ${letterCity}`}
+                          ? "View on Map"
+                          : "Locate"}
                       </span>
                     </a>
                   </>
