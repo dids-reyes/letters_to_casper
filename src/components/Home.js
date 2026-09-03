@@ -6,7 +6,6 @@ import Letter from "./Letter";
 import AdComponent from "./AdComponent";
 import DetailsModal from "./DetailsModal";
 import { AiFillMessage } from "react-icons/ai";
-import { FaRegHandPointUp } from "react-icons/fa";
 import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
 import under_construction from "../lotties/under_construction.json";
@@ -14,8 +13,9 @@ import empty from "../lotties/empty2.json";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Typewriter from "typewriter-effect";
-import SmoothScroll from "smooth-scroll";
 import {
+  IoArrowUpOutline,
+  IoInformationCircleOutline,
   IoMailOpenOutline,
   IoMailUnreadOutline,
   IoNewspaperOutline,
@@ -32,6 +32,8 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
+
+const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
 
 const formatCountry = (country) => {
   try {
@@ -62,6 +64,18 @@ function Home() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(1);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+  const [letterGridColumns, setLetterGridColumns] = useState(() => {
+    if (window.innerWidth > 1200) return 6;
+    if (window.innerWidth > 900) return 4;
+    return 3;
+  });
+  const [showUiAnnouncement, setShowUiAnnouncement] = useState(() => {
+    try {
+      return localStorage.getItem(UI_ANNOUNCEMENT_KEY) !== "seen";
+    } catch (error) {
+      return true;
+    }
+  });
   const [nightShift, setNightShift] = useState(() => {
     try {
       const saved = localStorage.getItem("nightShift");
@@ -110,12 +124,24 @@ function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    const updateLetterGridColumns = () => {
+      const nextColumns =
+        window.innerWidth > 1200 ? 6 : window.innerWidth > 900 ? 4 : 3;
+      setLetterGridColumns(nextColumns);
+    };
+
+    window.addEventListener("resize", updateLetterGridColumns, {
+      passive: true,
+    });
+    return () => window.removeEventListener("resize", updateLetterGridColumns);
+  }, []);
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
     searchLetters();
   };
 
-  const [scroll, setScroll] = useState(null);
   const [isFeatured, setIsFeatured] = useState(false);
   const [goBackToNotFeatured, setGoBackToNotFeatured] = useState(false);
   const [daysLeftXmas, setDaysLeftXmas] = useState(0);
@@ -367,17 +393,24 @@ function Home() {
     fetchLinkedLetter();
   }, [messageId]);
 
-  useEffect(() => {
-    setScroll(
-      new SmoothScroll('a[href*="#"]', {
-        speed: 800,
-        speedAsDuration: true,
-      })
-    );
-  }, []);
-
   const scrollToTop = () => {
-    scroll.animateScroll(0);
+    const prefersReducedMotion =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    window.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  };
+
+  const dismissUiAnnouncement = () => {
+    try {
+      localStorage.setItem(UI_ANNOUNCEMENT_KEY, "seen");
+    } catch (error) {
+      /* Storage may be unavailable; the announcement can still be dismissed. */
+    }
+    setShowUiAnnouncement(false);
   };
 
   const notify_error = () =>
@@ -463,8 +496,16 @@ function Home() {
 
   const renderLettersWithAds = (items) => {
     const approvedLetters = items.filter((letter) => letter.approve);
+    const leadingCards = searchTerm === "" ? 1 : 0;
+    const firstAdAfter =
+      Math.round((60 + leadingCards) / letterGridColumns) *
+        letterGridColumns -
+      leadingCards;
+    const followingAdInterval =
+      Math.round(60 / letterGridColumns) * letterGridColumns;
 
     return approvedLetters.flatMap((letter, index) => {
+      const letterNumber = index + 1;
       const letterCard = (
         <Letter
           key={letter._id || `letter-${index}`}
@@ -474,15 +515,19 @@ function Home() {
         />
       );
 
-      if ((index + 1) % 30 !== 0) {
+      const shouldInsertAd =
+        letterNumber >= firstAdAfter &&
+        (letterNumber - firstAdAfter) % followingAdInterval === 0;
+
+      if (!shouldInsertAd) {
         return [letterCard];
       }
 
       return [
         letterCard,
         <div
-          className="letter-card letter-card--ad"
-          key={`letter-ad-${index + 1}`}
+          className="letter-ad-slot"
+          key={`letter-ad-${letterNumber}`}
           aria-label="Advertisement"
         >
           <span className="letter-card__ad-label">Advertisement</span>
@@ -820,10 +865,57 @@ function Home() {
         toggleDetailsModal={toggleDetailsModal}
         selectedLetter={selectedLetter}
       />
-      <button className="fab" onClick={scrollToTop}>
-        <a data-scroll href="#logo-ltc">
-          <FaRegHandPointUp />
-        </a>
+      {showUiAnnouncement && (
+        <div
+          className="ui-announcement-overlay"
+          onClick={dismissUiAnnouncement}
+        >
+          <section
+            className="ui-announcement-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ui-announcement-title"
+            aria-describedby="ui-announcement-message"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="ui-announcement-close"
+              onClick={dismissUiAnnouncement}
+              aria-label="Close announcement"
+            >
+              &times;
+            </button>
+            <span className="ui-announcement-icon" aria-hidden="true">
+              <IoInformationCircleOutline size={26} />
+            </span>
+            <span className="ui-announcement-eyebrow">A little update</span>
+            <h2 id="ui-announcement-title">
+              Letters to Casper is getting a fresh look
+            </h2>
+            <p id="ui-announcement-message">
+              We’re thoughtfully refreshing the site’s design and experience.
+              You may notice a few things changing while the work is still
+              ongoing, but everything you love is still here.
+            </p>
+            <button
+              type="button"
+              className="ui-announcement-action"
+              onClick={dismissUiAnnouncement}
+            >
+              Got it
+            </button>
+          </section>
+        </div>
+      )}
+      <button
+        type="button"
+        className={`fab${isHeaderCompact ? " is-visible" : ""}`}
+        onClick={scrollToTop}
+        aria-label="Back to top"
+        title="Back to top"
+      >
+        <IoArrowUpOutline aria-hidden="true" />
       </button>
 
       <Footer />
