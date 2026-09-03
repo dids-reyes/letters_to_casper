@@ -662,32 +662,18 @@ function Home() {
         <div>
           <div className="letters-container">
             {searchTerm !== "" ? null : (
-              <div className="featured-card" onClick={fetchFeatured}>
-                <div
-                  style={{
-                    border: "1px solid #ccc",
-                    borderRadius: 20,
-                    padding: 5,
-                    margin: 5,
-                    backgroundColor: isFeatured
-                      ? "rgba(55, 114, 255, 0.8)"
-                      : "#fefbf0",
-                  }}
-                >
-                  <p className="card-text">
-                    <strong>‎ </strong>
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      fontFamily: "monospace",
-                      color: isFeatured ? "#fff" : "#000000",
-                    }}
-                  >
-                    <strong>Featured</strong>
-                  </p>
-                  <p className="card-text">‎ </p>
-                </div>
+              <div
+                className={`letter-card letter-card--featured${
+                  isFeatured ? " is-active" : ""
+                }`}
+                onClick={fetchFeatured}
+              >
+                <span className="letter-card__featured-badge">★ Featured</span>
+                <p className="letter-card__featured-text">
+                  {isFeatured
+                    ? "Showing featured letters — tap to go back"
+                    : "Tap to read the featured letters"}
+                </p>
               </div>
             )}
             {searchedResults.length > 0 && searchTerm !== "" ? (
