@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
 import AddModal from "./AddModal";
@@ -14,8 +14,11 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Typewriter from "typewriter-effect";
 import SmoothScroll from "smooth-scroll";
-import { IoMailOpenOutline } from "react-icons/io5";
-import { IoMailUnreadOutline } from "react-icons/io5";
+import {
+  IoMailOpenOutline,
+  IoMailUnreadOutline,
+  IoNewspaperOutline,
+} from "react-icons/io5";
 import { CiLocationOn } from "react-icons/ci";
 import { TbChristmasTree } from "react-icons/tb";
 import { RiAdvertisementLine } from "react-icons/ri";
@@ -28,6 +31,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
+const formatCountry = (country) => {
+  try {
+    return new Intl.DisplayNames(["en"], { type: "region" }).of(country);
+  } catch (error) {
+    return country;
+  }
+};
+
 function Home() {
   const navigate = useNavigate();
   const { messageId } = useParams();
@@ -37,6 +48,8 @@ function Home() {
     counts: { approved: 0, unapproved: 0 },
   });
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [showOrigins, setShowOrigins] = useState(false);
   const [newLetter, setNewLetter] = useState({
     from: "",
     to: "",
@@ -46,6 +59,33 @@ function Home() {
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(1);
+  const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+  const scrollFrame = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollFrame.current !== null) {
+        return;
+      }
+
+      scrollFrame.current = window.requestAnimationFrame(() => {
+        setIsHeaderCompact((isCompact) =>
+          isCompact ? window.scrollY > 60 : window.scrollY > 160
+        );
+        scrollFrame.current = null;
+      });
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollFrame.current !== null) {
+        window.cancelAnimationFrame(scrollFrame.current);
+        scrollFrame.current = null;
+      }
+    };
+  }, []);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -168,6 +208,7 @@ function Home() {
   }, []);
 
   const [locations, setLocations] = useState([]);
+  const [internationalOrigins, setInternationalOrigins] = useState([]);
 
   useEffect(() => {
     const fetchTopSenderLocations = async () => {
@@ -191,7 +232,28 @@ function Home() {
     fetchTopSenderLocations();
   }, []);
 
-  const locationsHtml = locations.join("<br />");
+  useEffect(() => {
+    const fetchInternationalOrigins = async () => {
+      try {
+        const response = await fetch(`${render_url}/international-origins`, {
+          headers: {
+            "x-api-key": api_key,
+          },
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        setInternationalOrigins(data);
+      } catch (error) {
+        console.error("Error fetching international origins:", error);
+      }
+    };
+
+    fetchInternationalOrigins();
+  }, []);
 
   const handleAddLetter = async (letterData) => {
     try {
@@ -378,114 +440,146 @@ function Home() {
 
   return (
     <div className="app">
-      <Header searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
-      <div className="add-button">
+      <div
+        className={`home-toolbar${isHeaderCompact ? " is-compact" : ""}`}
+      >
+        <Header searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
+        <div className="add-button">
         <button className="btn btn-primary big-button" onClick={toggleAddModal}>
           <AiFillMessage className="button-icon" size="20px" />
-          Leave a Letter
+          <span className="leave-letter-label">Leave a Letter</span>
         </button>
-        <div
-          className="messages-count"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            margin: "15px",
-          }}
-        >
+        <div className="information-panel">
+          <div className="messages-count" aria-label="Letter information">
           <div
-            data-tooltip-id="al"
-            data-tooltip-html={
-              letters.counts.approved >= 2
-                ? `<b>Open Letters</b>: ${tc(letters.counts.approved)}`
-                : `<b>Open Letter</b>: ${letters.counts.approved}`
-            }
-            data-tooltip-place="bottom"
-            data-tooltip-variant="info"
+            className="message-stat"
           >
-            <IoMailOpenOutline
-              size={24}
-              style={{
-                color: "#0056b3",
-                animation: "pulsate 1s ease-in-out infinite alternate",
-              }}
-            />
+            <IoMailOpenOutline size={21} />
+            <span>{tc(letters.counts.approved)} Open</span>
           </div>
-          <Tooltip id="al" />
-          &nbsp; &nbsp;
+          <button
+            type="button"
+            className="message-stat toolbar-trigger"
+            aria-expanded={showOrigins}
+            aria-controls="origins-panel"
+            onClick={() => {
+              setShowOrigins(!showOrigins);
+              setShowAnnouncements(false);
+            }}
+          >
+            <CiLocationOn size={21} />
+            <span>Origins</span>
+          </button>
+          <button
+            type="button"
+            className="message-stat toolbar-trigger"
+            aria-expanded={showAnnouncements}
+            aria-controls="announcements-panel"
+            onClick={() => {
+              setShowAnnouncements(!showAnnouncements);
+              setShowOrigins(false);
+            }}
+          >
+            <IoNewspaperOutline size={21} />
+            <span>Feed</span>
+          </button>
           <div
-            data-tooltip-id="loc"
-            data-tooltip-html={`<b>Top 20 Letter Origins </b> <p>${locationsHtml}</p>`}
-            data-tooltip-place="bottom"
-            data-tooltip-variant="info"
+            className="message-stat"
+            aria-label={`${letters.counts.unapproved} pending letters`}
           >
-            <CiLocationOn
-              size={24}
-              style={{
-                color: "#0056b3",
-                animation: "pulsate 1s ease-in-out infinite alternate",
-              }}
-            />
+            <IoMailUnreadOutline size={21} />
+            <span>{letters.counts.unapproved}</span>
           </div>
-          <Tooltip id="loc" />
-          &nbsp; &nbsp;
-          <div
-            data-tooltip-id="ads"
-            data-tooltip-html={`<small>Sorry for the ads 🥺 they're needed to keep<br/>this service running.<br/><br/>We also include them when you submit a letter<br/> to help support the site.<br/><br/>We do NOT promote gambling<br/>and don't control the specific ads shown.</small>`}
-            data-tooltip-place="bottom"
-            data-tooltip-variant="info"
-          >
-            <RiAdvertisementLine
-              size={24}
-              style={{
-                color: "#0056b3",
-                animation: "pulsate 1s ease-in-out infinite alternate",
-              }}
-            />
           </div>
-          {daysLeftXmas !== 0 && (
-            <>
-              &nbsp; &nbsp;
-              <div>
-                <Tooltip id="ads" />
-                <div
-                  data-tooltip-id="ads"
-                  data-tooltip-html={`${daysLeftXmas}`}
-                  data-tooltip-place="bottom"
-                  data-tooltip-variant="info"
+          {showOrigins && (
+            <div
+              id="origins-panel"
+              className="announcements-panel origins-panel"
+              role="region"
+              aria-label="Top letter origins"
+            >
+              <div className="announcements-header">
+                <strong>Top Letter Origins</strong>
+                <button
+                  type="button"
+                  aria-label="Close letter origins"
+                  onClick={() => setShowOrigins(false)}
                 >
-                  <TbChristmasTree
-                    size={24}
-                    style={{
-                      color: "#0056b3",
-                      animation: "pulsate 1s ease-in-out infinite alternate",
-                    }}
-                  />
-                </div>
-                <Tooltip id="event" />
+                  &times;
+                </button>
               </div>
-            </>
+              <p className="origins-caption">
+                Ranked from the most letters to the least
+              </p>
+              {locations.length > 0 ? (
+                <ol className="origins-list">
+                  {locations.map((location, index) => (
+                    <li key={`${location}-${index}`}>
+                      <span className="origin-rank">#{index + 1}</span>
+                      <span>{location}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="announcements-empty">Origins are loading...</p>
+              )}
+              {internationalOrigins.length > 0 && (
+                <div className="international-origins">
+                  <strong>Letters from around the world</strong>
+                  <ul>
+                    {internationalOrigins.map((origin, index) => (
+                      <li key={`${origin.country}-${origin.city}-${index}`}>
+                        <span>
+                          {origin.city
+                            ? `${origin.city}, ${formatCountry(origin.country)}`
+                            : formatCountry(origin.country)}
+                        </span>
+                        <span>{origin.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           )}
-          &nbsp; &nbsp;
-          <div
-            data-tooltip-id="pl"
-            data-tooltip-html={
-              letters.counts.unapproved >= 2
-                ? `<b>Pending Letters</b>: ${letters.counts.unapproved}`
-                : `<b>Pending Letter</b>: ${letters.counts.unapproved}`
-            }
-            data-tooltip-place="bottom"
-            data-tooltip-variant="info"
-          >
-            <IoMailUnreadOutline
-              size={25}
-              style={{
-                color: "#0056b3",
-                animation: "pulsate 1s ease-in-out infinite alternate",
-              }}
-            />
-          </div>
-          <Tooltip id="pl" />
+          {showAnnouncements && (
+            <div
+              id="announcements-panel"
+              className="announcements-panel feed-panel"
+              role="region"
+              aria-label="Announcements"
+            >
+              <button
+                type="button"
+                className="announcement-close"
+                aria-label="Close feed"
+                onClick={() => setShowAnnouncements(false)}
+              >
+                &times;
+              </button>
+              <div className="announcement-item">
+                <RiAdvertisementLine size={21} />
+                <div>
+                  <strong>About our ads</strong>
+                  <p>
+                    Ads help keep Letters to Casper running. We don't promote
+                    gambling and don't control the specific ads shown.
+                  </p>
+                </div>
+              </div>
+              {daysLeftXmas !== 0 && (
+                <div className="announcement-item">
+                  <TbChristmasTree size={21} />
+                  <div>
+                    <strong>Christmas countdown</strong>
+                    <p>{daysLeftXmas} days until Christmas.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+      </div>
       </div>
       <ToastContainer
         containerId="notify"
