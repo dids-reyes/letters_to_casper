@@ -40,10 +40,12 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
   return (
     <div className="letter-card" onClick={handleClick}>
       <div className="letter-card__top">
-        <span className="letter-card__label">From</span>
+        <div className="letter-card__from">
+          <span className="letter-card__label">From</span>
+          <span className="letter-card__name">{clip(letter.from, 22)}</span>
+        </div>
         <span className="letter-card__time">{timeAgo(letter.timestamp)}</span>
       </div>
-      <p className="letter-card__name">{clip(letter.from, 22)}</p>
       <div className="letter-card__to">
         <span className="letter-card__label">To</span>
         <span className="letter-card__to-name">{clip(letter.to, 24)}</span>

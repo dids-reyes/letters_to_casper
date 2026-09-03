@@ -525,7 +525,9 @@ function DetailsModal({
                   <>
                     <span className="letter-meta-sep">·</span>
                     <a
-                      className="letter-paper__locate"
+                      className={`letter-paper__locate${
+                        isRevealed ? " is-revealed" : ""
+                      }`}
                       href={isRevealed ? letterLocationMap : adLink}
                       target="_blank"
                       rel="noopener noreferrer"
