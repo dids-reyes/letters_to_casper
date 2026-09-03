@@ -24,10 +24,13 @@ import { render_url, api_key } from "../data/keys";
 import tc from "thousands-counter";
 import InfiniteScroll from "react-infinite-scroll-component";
 import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 function Home() {
+  const navigate = useNavigate();
+  const { messageId } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [letters, setLetters] = useState({
     messages: [],
@@ -238,8 +241,46 @@ function Home() {
   };
 
   const toggleDetailsModal = () => {
+    if (showDetailsModal && messageId) {
+      navigate("/");
+    }
     setShowDetailsModal(!showDetailsModal);
   };
+
+  useEffect(() => {
+    if (!messageId) {
+      setShowDetailsModal(false);
+      return;
+    }
+
+    const fetchLinkedLetter = async () => {
+      try {
+        const response = await fetch(
+          `${render_url}/public/${encodeURIComponent(messageId)}`,
+          {
+            headers: {
+              "x-api-key": api_key,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Letter not found");
+        }
+
+        const data = await response.json();
+        setSelectedLetter(data.message);
+        setShowDetailsModal(true);
+      } catch (error) {
+        console.error("Error fetching linked letter:", error);
+        setSelectedLetter(null);
+        setShowDetailsModal(false);
+        toast.error("This letter could not be found or is not available.");
+      }
+    };
+
+    fetchLinkedLetter();
+  }, [messageId]);
 
   useEffect(() => {
     setScroll(

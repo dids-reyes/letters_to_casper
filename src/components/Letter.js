@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const truncateMessage = (message, maxLength) => {
   return message.length > maxLength
@@ -7,12 +8,14 @@ const truncateMessage = (message, maxLength) => {
 };
 
 function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
+  const navigate = useNavigate();
   const truncatedMessage = truncateMessage(letter.message, 13);
   const truncatedFrom = truncateMessage(letter.from, 9);
   const truncatedTo = truncateMessage(letter.to, 9);
   const handleClick = () => {
     setSelectedLetter(letter);
     toggleDetailsModal();
+    navigate(`/letters/${letter._id}`);
   };
 
   if (!letter.approve) {

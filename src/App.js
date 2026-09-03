@@ -17,6 +17,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/letters/:messageId" element={<Home />} />
           <Route path="/privacy_policy" element={<PrivacyPolicy />} />
           <Route
             path="/terms_and_conditions"
