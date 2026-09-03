@@ -972,39 +972,106 @@ body {
   }
 
   .letter-card {
-    width: 45%; /* 33.33% width for each item with some margin */
+    width: calc(33.333% - 2px);
     margin: 1px;
     /* margin-left: 20px; */
     -webkit-tap-highlight-color: transparent;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-    height: 50%;
+    height: 152px;
   }
 
   .featured-card {
-    width: 45%; /* 33.33% width for each item with some margin */
+    width: calc(33.333% - 2px);
     margin: 1px;
     /* margin-left: 20px; */
     -webkit-tap-highlight-color: transparent;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-    height: 50%;
+    height: 152px;
+  }
+
+  .featured-card > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: calc(100% - 6px);
+    box-sizing: border-box;
+    margin: 3px !important;
   }
 
   .card {
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 5px;
-    margin: 5px;
-    background-color: #fefbf0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 6px);
+    box-sizing: border-box;
+    margin: 3px;
+    padding: 12px 8px 9px;
+    overflow: hidden;
+    background-color: #faf7ec;
+    background-image: repeating-linear-gradient(
+      90deg,
+      rgba(120, 100, 60, 0.035) 0 1px,
+      transparent 1px 5px
+    );
+    border: 1px solid #ece2c9;
+    border-radius: 10px;
+    box-shadow: 0 5px 14px rgba(73, 63, 39, 0.13);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .letter-card:active .card {
+    box-shadow: 0 2px 6px rgba(73, 63, 39, 0.1);
+    transform: scale(0.97);
   }
 
   .card-text {
-    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 3px 2px;
+    overflow: hidden;
+    font-size: 10px;
     font-family: monospace;
+    text-overflow: ellipsis;
+    text-align: left;
+  }
+
+  .letter-field-label {
+    color: #8a8367;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .letter-field-value {
+    overflow: hidden;
+    color: #2f2b20;
+    font-size: 10px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .card-preview {
+    display: -webkit-box;
+    min-height: 0;
+    box-sizing: border-box;
+    margin: 6px 2px 0;
+    padding: 7px 1px 0;
+    overflow: hidden;
+    background: transparent;
+    border-top: 1px solid #e4dcc4;
+    color: #2f2b20;
     font-family: monospace;
-    font-size: 13px;
+    font-size: 10px;
+    line-height: 1.35;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
   }
 
   .letter-info {

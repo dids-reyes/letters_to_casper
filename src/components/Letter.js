@@ -9,9 +9,9 @@ const truncateMessage = (message, maxLength) => {
 
 function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
   const navigate = useNavigate();
-  const truncatedMessage = truncateMessage(letter.message, 13);
-  const truncatedFrom = truncateMessage(letter.from, 9);
-  const truncatedTo = truncateMessage(letter.to, 9);
+  const truncatedMessage = truncateMessage(letter.message, 28);
+  const truncatedFrom = truncateMessage(letter.from, 14);
+  const truncatedTo = truncateMessage(letter.to, 14);
   const handleClick = () => {
     setSelectedLetter(letter);
     toggleDetailsModal();
@@ -23,15 +23,31 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
   }
 
   return (
-    <div className="letter-card" onClick={handleClick}>
+    <div
+      className="letter-card"
+      onClick={handleClick}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleClick();
+        }
+      }}
+      role="button"
+      tabIndex="0"
+      aria-label={`Open letter from ${letter.from} to ${letter.to}`}
+    >
       <div className="card">
         <p className="card-text">
-          <strong>Fr:</strong> {truncatedFrom}
+          <span className="letter-field-label">From: </span>
+          <span className="letter-field-value">{truncatedFrom}</span>
         </p>
         <p className="card-text">
-          <strong>To:</strong> {truncatedTo}
+          <span className="letter-field-label">To: </span>
+          <span className="letter-field-value">{truncatedTo}</span>
         </p>
-        <p className="card-preview">{truncatedMessage}</p>
+        <p className="card-preview">
+          <span>{truncatedMessage}</span>
+        </p>
       </div>
     </div>
   );
