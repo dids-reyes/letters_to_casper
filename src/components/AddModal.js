@@ -1,4 +1,4 @@
-import React, {useRef, useState, useEffect} from 'react';
+import React, {useMemo, useRef, useState, useEffect} from 'react';
 import {BsX} from 'react-icons/bs';
 import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
@@ -16,6 +16,7 @@ function AddModal({
   const fromInputRef = useRef(null);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   useEffect(() => {
     const shouldDisableSubmit =
@@ -27,32 +28,51 @@ function AddModal({
   }, [newLetter]);
 
   const handleSubmit = () => {
-    const confirmAction = window.confirm(
-      'When approved, your letter will be publicly visible, including the city location it was sent from. Proceed?',
-    );
-    if (confirmAction) {
-      const updatedLetter = {
-        ...newLetter,
-        message: newLetter.link
+    if (!isSubmitDisabled) {
+      setShowSubmitConfirm(true);
+    }
+  };
+
+  const confirmSubmit = () => {
+    const updatedLetter = {
+      ...newLetter,
+      message: newLetter.link
         ? `${newLetter.message}\n\n${newLetter.link}`
         : newLetter.message,
-      };
+    };
 
-      handleAddLetter(updatedLetter);
-      setNewLetter({from: '', to: '', message: ''});
-      toggleAddModal();
-      displayDirectLinkAds();
-    } else {
-    }
+    setShowSubmitConfirm(false);
+    handleAddLetter(updatedLetter);
+    setNewLetter({from: '', to: '', message: ''});
+    toggleAddModal();
+    displayDirectLinkAds();
   };
 
   const togglePreview = () => {
     setShowPreview(!showPreview);
   };
 
-  const timestamp = new Date().toLocaleString('en-US', {
-    timeZone: 'Asia/Manila',
-  });
+  const previewLetter = useMemo(
+    () => ({
+      from: newLetter.from,
+      to: newLetter.to,
+      message: newLetter.link
+        ? `${newLetter.message}\n\n${newLetter.link}`
+        : newLetter.message,
+      approve: newLetter.approve,
+      timestamp: new Date().toLocaleString('en-US', {
+        timeZone: 'Asia/Manila',
+      }),
+      preview: true,
+    }),
+    [
+      newLetter.from,
+      newLetter.to,
+      newLetter.message,
+      newLetter.link,
+      newLetter.approve,
+    ],
+  );
 
   return (
     <>
@@ -215,13 +235,55 @@ Goodbye...`}
         )}
       {showPreview && ( // Show DetailsModal only if Preview is shown
         <DetailsModal
-          selectedLetter={{...newLetter, ...newLetter,
-            message: newLetter.link
-              ? `${newLetter.message}\n\n${newLetter.link}`
-              : newLetter.message, timestamp: timestamp, preview: true}}
+          selectedLetter={previewLetter}
           toggleDetailsModal={togglePreview}
           showDetailsModal={true}
         />
+      )}
+      {showSubmitConfirm && (
+        <div
+          className="submit-confirm-overlay"
+          onClick={() => setShowSubmitConfirm(false)}
+        >
+          <div
+            className="submit-confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="submit-confirm-title"
+            aria-describedby="submit-confirm-description"
+            onClick={event => event.stopPropagation()}
+          >
+            <span className="submit-confirm-icon" aria-hidden="true">
+              <RiMailSendLine size="23px" />
+            </span>
+            <h2 id="submit-confirm-title">Submit this letter?</h2>
+            <p id="submit-confirm-description">
+              Your letter will be sent for review before it appears on the
+              site.
+            </p>
+            <ul className="submit-confirm-notes">
+              <li>Once approved, the letter becomes publicly readable.</li>
+              <li>Only the general city it was sent from may be shown.</li>
+            </ul>
+            <div className="submit-confirm-actions">
+              <button
+                type="button"
+                className="submit-confirm-cancel"
+                onClick={() => setShowSubmitConfirm(false)}
+              >
+                Keep editing
+              </button>
+              <button
+                type="button"
+                className="submit-confirm-send"
+                onClick={confirmSubmit}
+              >
+                Submit letter
+                <RiMailSendLine size="17px" />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

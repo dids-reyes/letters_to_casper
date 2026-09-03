@@ -497,7 +497,11 @@ function Home() {
       <div
         className={`home-toolbar${isHeaderCompact ? " is-compact" : ""}`}
       >
-        <Header searchTerm={searchTerm} handleSearchChange={handleSearchChange} />
+        <Header
+          searchTerm={searchTerm}
+          handleSearchChange={handleSearchChange}
+          isCompact={isHeaderCompact}
+        />
         <div className="add-button">
         <button className="btn btn-primary big-button" onClick={toggleAddModal}>
           <AiFillMessage className="button-icon" size="20px" />
