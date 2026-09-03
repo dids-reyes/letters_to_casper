@@ -662,46 +662,159 @@ body {
 }
 
 .letters-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 4px;
+}
+
+/* Non-card children (empty states, infinite-scroll loader) span the full row */
+.letters-container > div:not(.letter-card) {
+  grid-column: 1 / -1;
 }
 
 .letter-card {
-  width: 200px; /* Adjust the width as per your preference */
-  height: 150px; /* Adjust the height as per your preference */
+  display: flex;
+  flex-direction: column;
+  min-height: 176px;
+  padding: 18px 20px 16px;
+  border: 1px solid #e7ddc4;
+  border-radius: 12px;
+  background-color: #fdfaef;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(120, 100, 60, 0.03) 0 1px,
+    transparent 1px 5px
+  );
+  box-shadow: 0 1px 2px rgba(60, 50, 30, 0.06);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s ease, box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.letter-card:hover {
+  transform: translateY(-3px);
+  border-color: #d8c9a4;
+  box-shadow: 0 10px 24px rgba(60, 50, 30, 0.14);
+}
+
+.letter-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.letter-card__label {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a99e7e;
+  flex-shrink: 0;
+}
+
+.letter-card__time {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  color: #b0a689;
+  flex-shrink: 0;
+}
+
+.letter-card__name {
+  margin: 3px 0 9px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 19px;
+  font-weight: 700;
+  color: #2f2b20;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: pointer;
 }
 
-.featured-card {
-  width: 200px;
-  height: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: pointer;
+.letter-card__to {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
 }
 
-.card {
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  padding: 5px;
-  margin: 5px;
-  background-color: #fefbf0;
-}
-
-.card-text {
-  font-size: 16px;
-  font-family: monospace;
-}
-
-.card-preview {
-  font-family: monospace;
+.letter-card__to-name {
+  font-family: "Courier New", Courier, monospace;
   font-size: 14px;
+  color: #6b6550;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.letter-card__rule {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #ece2c9;
+  margin: 11px 0;
+}
+
+.letter-card__preview {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #423e30;
+  overflow-wrap: anywhere;
+}
+
+.letter-card--featured {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  border-color: #e3c987;
+  background-image: none;
+  background-color: #fffdf3;
+}
+
+.letter-card--featured.is-active {
+  border-color: transparent;
+  background-color: rgba(55, 114, 255, 0.9);
+}
+
+.letter-card__featured-badge {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #b8922f;
+}
+
+.letter-card--featured.is-active .letter-card__featured-badge {
+  color: #fff;
+}
+
+.letter-card__featured-text {
+  margin: 0;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #6b6550;
+}
+
+.letter-card--featured.is-active .letter-card__featured-text {
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .btn-primary {
@@ -967,44 +1080,50 @@ body {
   }
 
   .letters-container {
-    flex-wrap: wrap;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
     max-width: 100%;
   }
 
   .letter-card {
-    width: 45%; /* 33.33% width for each item with some margin */
-    margin: 1px;
-    /* margin-left: 20px; */
-    -webkit-tap-highlight-color: transparent;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-    height: 50%;
+    min-height: 128px;
+    padding: 9px 9px 8px;
+    border-radius: 9px;
   }
 
-  .featured-card {
-    width: 45%; /* 33.33% width for each item with some margin */
-    margin: 1px;
-    /* margin-left: 20px; */
-    -webkit-tap-highlight-color: transparent;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-    height: 50%;
+  .letter-card__label {
+    font-size: 8px;
+    letter-spacing: 0.08em;
   }
 
-  .card {
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 5px;
-    margin: 5px;
-    background-color: #fefbf0;
+  .letter-card__time {
+    font-size: 9px;
   }
 
-  .card-text {
-    font-size: 13px;
-    font-family: monospace;
+  .letter-card__name {
+    margin: 2px 0 5px;
+    font-size: 12px;
   }
 
-  .card-preview {
-    font-family: monospace;
-    font-size: 13px;
+  .letter-card__to-name {
+    font-size: 10px;
+  }
+
+  .letter-card__rule {
+    margin: 6px 0;
+  }
+
+  .letter-card__preview {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .letter-card__featured-badge {
+    font-size: 9px;
+  }
+
+  .letter-card__featured-text {
+    font-size: 10px;
   }
 
   .letter-info {
