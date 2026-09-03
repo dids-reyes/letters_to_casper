@@ -1981,3 +1981,200 @@ a[data-scroll] {
     animation: none !important;
   }
 }
+
+/* =====================================================================
+   Night shift (dark theme) — toggled via html.night-shift
+   ===================================================================== */
+html.night-shift,
+html.night-shift body {
+  background-color: #14161a;
+  color: #e7e3d8;
+}
+
+html.night-shift .app-container,
+html.night-shift .app,
+html.night-shift .container {
+  background-color: #14161a;
+}
+
+html.night-shift .app-title {
+  color: #8ab4ff;
+}
+
+html.night-shift .alt-logo {
+  color: #c8c3b6;
+}
+
+/* Toolbar */
+html.night-shift .home-toolbar {
+  background: rgba(20, 22, 26, 0.96);
+}
+
+html.night-shift .home-toolbar.is-compact {
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.55);
+}
+
+/* Search */
+html.night-shift .search-field {
+  background-color: #1e2127;
+  border-color: #333842;
+  box-shadow: none;
+}
+
+html.night-shift .search-field:hover {
+  border-color: #454b57;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+html.night-shift .search-field:focus-within {
+  border-color: rgba(138, 180, 255, 0.6);
+  box-shadow: 0 1px 7px rgba(138, 180, 255, 0.25);
+}
+
+html.night-shift .search-input {
+  color: #e7e3d8;
+}
+
+html.night-shift .search-input::placeholder {
+  color: #8a8f99;
+}
+
+html.night-shift .search-icon {
+  color: #8a8f99;
+}
+
+/* Stat bar */
+html.night-shift .messages-count {
+  background: #1c1f25;
+  border-color: #2e333d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+html.night-shift .message-stat {
+  color: #c8c3b6;
+}
+
+html.night-shift .message-stat:not(:first-child) {
+  border-left-color: #333842;
+}
+
+html.night-shift .message-stat svg {
+  color: #8ab4ff;
+}
+
+html.night-shift .message-stat:hover {
+  background-color: #262a31;
+  color: #f2eee2;
+}
+
+/* Popover panels */
+html.night-shift .announcements-panel,
+html.night-shift .origins-panel {
+  background: #1c1f25;
+  border-color: #2e333d;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  color: #e7e3d8;
+}
+
+html.night-shift .announcement-item + .announcement-item {
+  border-top-color: #2e333d;
+}
+
+html.night-shift .origins-list li {
+  border-bottom-color: #2e333d;
+}
+
+/* Letter cards */
+html.night-shift .letter-card {
+  background-color: #1b1d16;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 240, 200, 0.02) 0 1px,
+    transparent 1px 5px
+  );
+  border-color: #3a3a2e;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+html.night-shift .letter-card:hover {
+  border-color: #55523f;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+html.night-shift .letter-card__name {
+  color: #efe9d7;
+}
+
+html.night-shift .letter-card__to-name {
+  color: #b7b199;
+}
+
+html.night-shift .letter-card__label,
+html.night-shift .letter-card__time {
+  color: #8a8264;
+}
+
+html.night-shift .letter-card__rule {
+  border-top-color: #3a3a2e;
+}
+
+html.night-shift .letter-card__preview {
+  color: #cfc9b5;
+}
+
+html.night-shift .letter-card--featured {
+  background-color: #1d1c14;
+  border-color: #6a5a2e;
+}
+
+html.night-shift .letter-card--featured .letter-card__featured-text {
+  color: #b7b199;
+}
+
+/* Reading modal */
+html.night-shift .letter-modal-overlay {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+html.night-shift .letter-paper {
+  background-color: #1d1c14;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 240, 200, 0.02) 0 1px,
+    transparent 1px 5px
+  );
+  border-color: #3a3a2e;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+}
+
+html.night-shift .letter-paper .letter-info,
+html.night-shift .letter-paper__body {
+  color: #e7e1cf;
+}
+
+html.night-shift .letter-paper__rule {
+  border-top-color: #3a3a2e;
+}
+
+html.night-shift .letter-paper__date .timestamp-text {
+  color: #a9a288;
+}
+
+html.night-shift .letter-paper__date-icon {
+  color: #8a8264;
+}
+
+html.night-shift .letter-paper__meta {
+  color: #a9a288;
+  border-top-color: #35352a;
+}
+
+html.night-shift .letter-modal__close {
+  background: #2a2c22;
+  color: #efe9d7;
+}
+
+/* Footer */
+html.night-shift .footer {
+  background-color: rgba(28, 31, 37, 0.92);
+}

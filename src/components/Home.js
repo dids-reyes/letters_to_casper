@@ -18,6 +18,8 @@ import {
   IoMailOpenOutline,
   IoMailUnreadOutline,
   IoNewspaperOutline,
+  IoMoonOutline,
+  IoSunnyOutline,
 } from "react-icons/io5";
 import { CiLocationOn } from "react-icons/ci";
 import { TbChristmasTree } from "react-icons/tb";
@@ -59,6 +61,27 @@ function Home() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(1);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+  const [nightShift, setNightShift] = useState(() => {
+    try {
+      const saved = localStorage.getItem("nightShift");
+      if (saved !== null) return saved === "true";
+      return !!(
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      );
+    } catch (e) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("night-shift", nightShift);
+    try {
+      localStorage.setItem("nightShift", String(nightShift));
+    } catch (e) {
+      /* storage unavailable */
+    }
+  }, [nightShift]);
   const scrollFrame = useRef(null);
 
   useEffect(() => {
@@ -489,6 +512,20 @@ function Home() {
             <IoMailUnreadOutline size={21} />
             <span>{letters.counts.unapproved}</span>
           </div>
+          <button
+            type="button"
+            className="message-stat toolbar-trigger night-shift-toggle"
+            aria-pressed={nightShift}
+            aria-label="Toggle night shift"
+            onClick={() => setNightShift((value) => !value)}
+          >
+            {nightShift ? (
+              <IoSunnyOutline size={21} />
+            ) : (
+              <IoMoonOutline size={21} />
+            )}
+            <span>{nightShift ? "Day" : "Night"}</span>
+          </button>
           </div>
           {showOrigins && (
             <div
