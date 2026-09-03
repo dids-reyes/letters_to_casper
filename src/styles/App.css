@@ -501,6 +501,24 @@ body {
   line-height: 1.5;
 }
 
+.announcement-item--link {
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.announcement-item--link:hover {
+  background: #f5f8ff;
+}
+
+.announcement-item__action {
+  display: inline-block;
+  margin-top: 6px;
+  color: #315fc9;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .origins-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -831,22 +849,10 @@ body {
   grid-column: 1 / -1;
   width: 100%;
   min-width: 0;
-  min-height: 280px;
-  padding: 22px 0 0;
+  min-height: 250px;
+  padding: 0;
   box-sizing: border-box;
   overflow: visible;
-}
-
-.letter-card__ad-label {
-  display: block;
-  width: 100%;
-  margin-bottom: 8px;
-  color: #aaa38f;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 8px;
-  letter-spacing: 0.08em;
-  text-align: center;
-  text-transform: uppercase;
 }
 
 .letter-card__ad-unit {
@@ -2286,7 +2292,7 @@ body {
   position: relative;
   z-index: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
   gap: 7px;
@@ -2297,6 +2303,7 @@ body {
   font-size: 12px;
   text-align: center;
   color: #8a8367;
+  white-space: nowrap;
 }
 
 .letter-paper__meta .letter-meta-sep {
@@ -2356,6 +2363,46 @@ body {
   outline-offset: 2px;
 }
 
+.letter-paper__actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+}
+
+.letter-paper__share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  font-weight: 400;
+  line-height: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.letter-paper__share:hover {
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+}
+
+.letter-paper__share:focus-visible {
+  outline: 3px solid rgba(55, 114, 255, 0.25);
+  outline-offset: 2px;
+}
+
 @media only screen and (max-width: 600px) {
   .letter-modal-overlay {
     padding: 20px 12px;
@@ -2383,6 +2430,23 @@ body {
     font-size: 12px;
     line-height: 1.8;
   }
+
+  .letter-paper__meta {
+    justify-content: center;
+    gap: 4px;
+    overflow-x: auto;
+    font-size: 10px;
+    scrollbar-width: none;
+  }
+
+  .letter-paper__meta::-webkit-scrollbar {
+    display: none;
+  }
+
+  .letter-paper__actions {
+    gap: 6px;
+  }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2507,6 +2571,22 @@ html.night-shift .announcement-item + .announcement-item {
   border-top-color: #2e333d;
 }
 
+html.night-shift .announcement-item--link:hover {
+  background: #252a33;
+}
+
+html.night-shift .announcement-item--link {
+  color: #b8bec8;
+}
+
+html.night-shift .announcement-item--link strong {
+  color: #f0ecdf;
+}
+
+html.night-shift .announcement-item__action {
+  color: #8ab4ff;
+}
+
 html.night-shift .origins-list li {
   border-bottom-color: #2e333d;
 }
@@ -2594,6 +2674,16 @@ html.night-shift .letter-paper__date-icon {
 html.night-shift .letter-paper__meta {
   color: #a9a288;
   border-top-color: #35352a;
+}
+
+html.night-shift .letter-paper__share {
+  background: transparent;
+  color: inherit;
+}
+
+html.night-shift .letter-paper__share:hover {
+  background: rgba(138, 180, 255, 0.14);
+  color: #a9c7ff;
 }
 
 html.night-shift .letter-modal__close {
