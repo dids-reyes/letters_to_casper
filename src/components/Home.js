@@ -3,6 +3,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import AddModal from "./AddModal";
 import Letter from "./Letter";
+import AdComponent from "./AdComponent";
 import DetailsModal from "./DetailsModal";
 import { AiFillMessage } from "react-icons/ai";
 import { FaRegHandPointUp } from "react-icons/fa";
@@ -460,6 +461,37 @@ function Home() {
     setFilteredLetters(filteredData);
   }, [letters.messages, searchTerm]);
 
+  const renderLettersWithAds = (items) => {
+    const approvedLetters = items.filter((letter) => letter.approve);
+
+    return approvedLetters.flatMap((letter, index) => {
+      const letterCard = (
+        <Letter
+          key={letter._id || `letter-${index}`}
+          letter={letter}
+          toggleDetailsModal={toggleDetailsModal}
+          setSelectedLetter={setSelectedLetter}
+        />
+      );
+
+      if ((index + 1) % 30 !== 0) {
+        return [letterCard];
+      }
+
+      return [
+        letterCard,
+        <div
+          className="letter-card letter-card--ad"
+          key={`letter-ad-${index + 1}`}
+          aria-label="Advertisement"
+        >
+          <span className="letter-card__ad-label">Advertisement</span>
+          <AdComponent />
+        </div>,
+      ];
+    });
+  };
+
   return (
     <div className="app">
       <div
@@ -524,7 +556,6 @@ function Home() {
             ) : (
               <IoMoonOutline size={21} />
             )}
-            <span>{nightShift ? "Day" : "Night"}</span>
           </button>
           </div>
           {showOrigins && (
@@ -714,24 +745,10 @@ function Home() {
               </div>
             )}
             {searchedResults.length > 0 && searchTerm !== "" ? (
-              searchedResults.map((letter, index) => (
-                <Letter
-                  key={index}
-                  letter={letter}
-                  toggleDetailsModal={toggleDetailsModal}
-                  setSelectedLetter={setSelectedLetter}
-                />
-              ))
+              renderLettersWithAds(searchedResults)
             ) : searchTerm === "" ? (
               letters.messages.length > 0 ? (
-                letters.messages.map((letter, index) => (
-                  <Letter
-                    key={index}
-                    letter={letter}
-                    toggleDetailsModal={toggleDetailsModal}
-                    setSelectedLetter={setSelectedLetter}
-                  />
-                ))
+                renderLettersWithAds(letters.messages)
               ) : (
                 <div>
                   <p>No Letters Found</p>
