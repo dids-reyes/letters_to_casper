@@ -2,6 +2,7 @@ import React, {useState, useEffect, useContext} from 'react';
 import {AuthContext} from '../AuthContext';
 import Lottie from 'react-lottie-player';
 import locked from '../lotties/locked.json';
+import logo from '../lotties/ltc_logo_1.webp';
 import axios from 'axios';
 import {Link} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
@@ -175,31 +176,32 @@ function AdminPortal() {
 
   return (
     <div className="admin-portal">
-      <center>
-        <h3>Letters to Casper - Admin Portal</h3>
-      </center>
+      <header className="admin-portal-header">
+        <img
+          className="admin-portal-logo"
+          src={logo}
+          alt="Letters to Casper"
+        />
+      </header>
       {loading === 1 && <p>Loading letters...</p>}
       {loading === 2 && <p>Error fetching letters!</p>}
 
-      <center>
+      <div className="letter-actions">
         <button
-          className="approve-button"
+          className="letter-action-button approve-button"
           disabled={!selectedLetters.length}
           onClick={handleApproveLetters}
         >
-          Approve Selected Letters
+          Approve{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
         </button>
-
-        <br />
-
         <button
-          className="approve-button"
+          className="letter-action-button delete-button"
           disabled={!selectedLetters.length}
           onClick={handleDeleteLetters}
         >
-          Delete Selected Letters
+          Delete{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
         </button>
-      </center>
+      </div>
       {letters.length > 0 && (
         <ul
           className="letter-review-list"

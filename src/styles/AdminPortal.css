@@ -1,9 +1,61 @@
-.approve-button.enabled {
-  background-color: #0056b3;
+.admin-portal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 16px 0;
+  text-align: center;
 }
 
-.approve-button.disabled {
-  background-color: #ccc;
+.admin-portal-logo {
+  width: min(250px, 70vw);
+  height: auto;
+}
+
+.letter-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.letter-action-button {
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.letter-action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.approve-button {
+  background-color: #3772ff;
+}
+
+.approve-button:hover:not(:disabled) {
+  background-color: #2352e6;
+}
+
+.delete-button {
+  background-color: #ff4d4d;
+}
+
+.delete-button:hover:not(:disabled) {
+  background-color: #e63f3f;
+}
+
+.letter-action-button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -15,6 +67,21 @@
 }
 
 @media only screen and (max-width: 768px) {
+  .letter-actions {
+    flex-direction: row;
+    gap: 10px;
+    margin: 22px auto;
+    padding: 0 14px;
+  }
+
+  .letter-action-button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
   .letter-review-box {
     background-color: #f5f5f5;
     padding: #1rem;
