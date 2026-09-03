@@ -19,7 +19,7 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
   };
 
   if (!letter.approve) {
-    return null; // If not approved, don't render the letter
+    return null; // If not approved, don't render
   }
 
   return (
