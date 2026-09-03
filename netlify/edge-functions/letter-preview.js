@@ -48,7 +48,7 @@ export default async (request, context) => {
     const canonicalUrl = `${pageUrl.origin}/letters/${encodeURIComponent(
       messageId,
     )}`;
-    const imageUrl = "https://i.ibb.co/BKKQhky/ltc-preview.png";
+    const imageUrl = `${pageUrl.origin}/ltc-preview.png`;
     const title = `Letter from: ${letter.from} to: ${letter.to}`;
     const normalizedMessage = String(letter.message || "")
       .replace(/\s+/g, " ")
@@ -95,8 +95,8 @@ export default async (request, context) => {
       <meta property="og:site_name" content="Letters to Casper" />
       <meta property="og:image" content="${escapeHtml(imageUrl)}" />
       <meta property="og:image:alt" content="${escapeHtml(title)}" />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
+      <meta property="og:image:width" content="2000" />
+      <meta property="og:image:height" content="691" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="${escapeHtml(title)}" />
       <meta name="twitter:description" content="${escapeHtml(description)}" />
