@@ -47,14 +47,18 @@ const detectForeignLanguage = (languageDetector, text) => {
   if (cleanText.replace(/[^\p{L}]/gu, "").length < 20) return null;
 
   const scriptLanguages = [
-    [/\p{Script=Hiragana}|\p{Script=Katakana}/u, "japanese", "ja"],
-    [/\p{Script=Hangul}/u, "korean", "ko"],
-    [/\p{Script=Han}/u, "chinese", "zh-CN"],
-    [/\p{Script=Thai}/u, "thai", "th"],
-    [/\p{Script=Greek}/u, "greek", "el"],
-    [/\p{Script=Hebrew}/u, "hebrew", "he"],
+    [/\p{Script=Hiragana}|\p{Script=Katakana}/gu, "japanese", "ja"],
+    [/\p{Script=Hangul}/gu, "korean", "ko"],
+    [/\p{Script=Han}/gu, "chinese", "zh-CN"],
+    [/\p{Script=Thai}/gu, "thai", "th"],
+    [/\p{Script=Greek}/gu, "greek", "el"],
+    [/\p{Script=Hebrew}/gu, "hebrew", "he"],
   ];
-  const scriptMatch = scriptLanguages.find(([pattern]) => pattern.test(cleanText));
+  const letterCount = cleanText.match(/\p{L}/gu)?.length || 0;
+  const scriptMatch = scriptLanguages.find(([pattern]) => {
+    const scriptCharacterCount = cleanText.match(pattern)?.length || 0;
+    return scriptCharacterCount >= 4 && scriptCharacterCount / letterCount >= 0.15;
+  });
   if (scriptMatch) return { name: scriptMatch[1], code: scriptMatch[2] };
 
   const matches = languageDetector.detect(cleanText, 3);
