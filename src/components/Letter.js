@@ -50,7 +50,6 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
         <span className="letter-card__label">To</span>
         <span className="letter-card__to-name">{clip(letter.to, 24)}</span>
       </div>
-      <hr className="letter-card__rule" />
       <p className="letter-card__preview">{letter.message}</p>
     </div>
   );
