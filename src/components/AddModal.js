@@ -582,11 +582,11 @@ function AddModal({
             <span className="submission-notice-eyebrow">Letter received</span>
             <h2 id="submission-notice-title">Your letter is awaiting review</h2>
             <p id="submission-notice-description">
-              Thank you for sharing it. Please give us a little time to make
-              sure the space stays safe for everyone.
+              Thank you for sharing it. Every letter goes through an automatic
+              safety check before it can appear publicly.
             </p>
             <ul className="submit-confirm-notes submission-notice-notes">
-              <li>We check for spam and abusive or harmful content.</li>
+              <li>Possible spam, abuse, and harmful content are flagged for review.</li>
               <li>Once approved, you can open your letter and share its link.</li>
             </ul>
             <p className="submission-notice-footnote">

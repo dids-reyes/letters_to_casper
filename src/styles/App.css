@@ -3030,7 +3030,7 @@ html.night-shift .letter-paper__translation-control small {
   gap: 7px;
   margin-top: 22px;
   padding-top: 14px;
-  border-top: 1px solid #ece4cd;
+  border-top: 0;
   font-family: "Courier New", Courier, monospace;
   font-size: 12px;
   text-align: center;
