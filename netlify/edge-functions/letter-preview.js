@@ -48,11 +48,8 @@ export default async (request, context) => {
     const canonicalUrl = `${pageUrl.origin}/letters/${encodeURIComponent(
       messageId,
     )}`;
-    const previewSource = "/ltc-preview.webp";
-    const imageUrl = `${pageUrl.origin}/.netlify/images?url=${encodeURIComponent(
-      previewSource,
-    )}&fm=png&w=1200&h=630&fit=contain`;
-    const title = `Letter from: ${letter.from} to: ${letter.to}`;
+    const imageUrl = `${pageUrl.origin}/ltc-social-preview.png`;
+    const title = `Letter From: ${letter.from} To: ${letter.to}`;
     const normalizedMessage = String(letter.message || "")
       .replace(/\s+/g, " ")
       .trim();
@@ -67,6 +64,8 @@ export default async (request, context) => {
       "og:url",
       "og:type",
       "og:image",
+      "og:image:secure_url",
+      "og:image:type",
       "og:image:alt",
       "og:image:width",
       "og:image:height",
@@ -77,6 +76,7 @@ export default async (request, context) => {
       "twitter:title",
       "twitter:description",
       "twitter:image",
+      "twitter:image:alt",
     ];
 
     previewKeys.forEach((key) => {
@@ -97,13 +97,16 @@ export default async (request, context) => {
       <meta property="og:description" content="${escapeHtml(description)}" />
       <meta property="og:site_name" content="Letters to Casper" />
       <meta property="og:image" content="${escapeHtml(imageUrl)}" />
+      <meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />
+      <meta property="og:image:type" content="image/png" />
       <meta property="og:image:alt" content="${escapeHtml(title)}" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="${escapeHtml(title)}" />
       <meta name="twitter:description" content="${escapeHtml(description)}" />
-      <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />`;
+      <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
+      <meta name="twitter:image:alt" content="${escapeHtml(title)}" />`;
 
     html = html.replace("</head>", `${metadata}\n  </head>`);
 

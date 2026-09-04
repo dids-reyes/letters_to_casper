@@ -2,7 +2,13 @@ import React, {useMemo, useRef, useState, useEffect} from 'react';
 import {BsX} from 'react-icons/bs';
 import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
-import {IoImageOutline, IoTrashOutline} from 'react-icons/io5';
+import {
+  IoContractOutline,
+  IoExpandOutline,
+  IoImageOutline,
+  IoShieldCheckmarkOutline,
+  IoTrashOutline,
+} from 'react-icons/io5';
 import {FaSpotify, FaYoutube} from 'react-icons/fa';
 import DetailsModal from './DetailsModal';
 import { displayDirectLinkAds } from '../data/direct_link';
@@ -19,11 +25,42 @@ function AddModal({
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [showSubmissionNotice, setShowSubmissionNotice] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitProgress, setSubmitProgress] = useState(0);
   const [submitStatus, setSubmitStatus] = useState('Preparing…');
+  const [activeLinkIcon, setActiveLinkIcon] = useState('youtube');
+  const [focusWriterMode, setFocusWriterMode] = useState(false);
   const photoInputRef = useRef(null);
+  const focusTextareaRef = useRef(null);
+
+  useEffect(() => {
+    if (!showAddModal) {
+      setFocusWriterMode(false);
+      return undefined;
+    }
+
+    setActiveLinkIcon('youtube');
+    const iconTimer = window.setInterval(() => {
+      setActiveLinkIcon(current =>
+        current === 'youtube' ? 'spotify' : 'youtube',
+      );
+    }, 5000);
+
+    return () => window.clearInterval(iconTimer);
+  }, [showAddModal]);
+
+  useEffect(() => {
+    if (!focusWriterMode) return undefined;
+
+    focusTextareaRef.current?.focus();
+    const leaveFocusMode = event => {
+      if (event.key === 'Escape') setFocusWriterMode(false);
+    };
+    document.addEventListener('keydown', leaveFocusMode);
+    return () => document.removeEventListener('keydown', leaveFocusMode);
+  }, [focusWriterMode]);
 
   useEffect(() => {
     const shouldDisableSubmit =
@@ -68,6 +105,7 @@ function AddModal({
       if (newLetter.photoPreviewUrl) URL.revokeObjectURL(newLetter.photoPreviewUrl);
       setNewLetter({from: '', to: '', message: ''});
       toggleAddModal();
+      setShowSubmissionNotice(true);
       displayDirectLinkAds();
     }
   };
@@ -172,62 +210,78 @@ function AddModal({
                     <label htmlFor="from" className="label-top-left">
                       From:
                     </label>
-                    <input
-                      autoComplete="off"
-                      required
-                      type="text"
-                      id="from"
-                      placeholder="e.g. Christoph | Chris | C"
-                      className="form-control"
-                      value={newLetter.from}
-                      maxLength="30"
-                      onChange={event =>
-                        setNewLetter({
-                          ...newLetter,
-                          from: event.target.value,
-                        })
-                      }
-                      ref={fromInputRef}
-                      onInvalid={e =>
-                        e.target.setCustomValidity(
-                          'Please enter a value for this field',
-                        )
-                      }
-                    />
+                    <span className="compose-short-field">
+                      <input
+                        autoComplete="off"
+                        required
+                        type="text"
+                        id="from"
+                        placeholder="Your name, nickname, or initial"
+                        className="form-control"
+                        value={newLetter.from}
+                        maxLength="20"
+                        onChange={event =>
+                          setNewLetter({
+                            ...newLetter,
+                            from: event.target.value,
+                          })
+                        }
+                        ref={fromInputRef}
+                        onInvalid={e =>
+                          e.target.setCustomValidity(
+                            'Please enter a value for this field',
+                          )
+                        }
+                      />
+                      <small className="character-count">
+                        {newLetter.from.length}/20
+                      </small>
+                    </span>
                   </div>
                   <div className="form-group">
                     <label htmlFor="to" className="label-top-left">
                       To:
                     </label>
-                    <input
-                      autoComplete="off"
-                      required
-                      type="text"
-                      id="to"
-                      placeholder="e.g. Emily Brown | Em | E"
-                      className="form-control error full-width"
-                      value={newLetter.to}
-                      maxLength="30"
-                      onChange={event =>
-                        setNewLetter({...newLetter, to: event.target.value})
-                      }
-                    />
+                    <span className="compose-short-field">
+                      <input
+                        autoComplete="off"
+                        required
+                        type="text"
+                        id="to"
+                        placeholder="Who is this letter for?"
+                        className="form-control error full-width"
+                        value={newLetter.to}
+                        maxLength="20"
+                        onChange={event =>
+                          setNewLetter({...newLetter, to: event.target.value})
+                        }
+                      />
+                      <small className="character-count">
+                        {newLetter.to.length}/20
+                      </small>
+                    </span>
                   </div>
                   <div className="form-group message-form-group">
-                    <label htmlFor="message" className="label-top-left">
-                      Message:
-                    </label>
+                    <div className="compose-message-label">
+                      <label htmlFor="message" className="label-top-left">
+                        Message:
+                      </label>
+                      <button
+                        type="button"
+                        className="compose-focus-toggle"
+                        onClick={() => setFocusWriterMode(true)}
+                      >
+                        <IoExpandOutline aria-hidden="true" />
+                        <span>Focus mode</span>
+                      </button>
+                    </div>
                     <span className="compose-message-field">
                       <textarea
                         style={{overflow: 'auto', resize: 'none'}}
                         autoComplete="off"
                         required
                         id="message"
-                        placeholder={`Hi... 
-
-Hello...
-
-Goodbye...`}
+                        placeholder="Write what you’ve been wanting to say…"
                         className="big-textarea full-width"
                         value={newLetter.message}
                         maxLength="500"
@@ -254,8 +308,17 @@ Goodbye...`}
                       }`}
                     >
                       <span className="compose-link-icons" aria-hidden="true">
-                        <FaYoutube className="compose-link-icon--youtube" />
-                        <FaSpotify className="compose-link-icon--spotify" />
+                        {activeLinkIcon === 'youtube' ? (
+                          <FaYoutube
+                            key="youtube"
+                            className="compose-link-icon--youtube"
+                          />
+                        ) : (
+                          <FaSpotify
+                            key="spotify"
+                            className="compose-link-icon--spotify"
+                          />
+                        )}
                       </span>
                       <input
                         data-tooltip-id="link_tooltip"
@@ -381,10 +444,51 @@ Goodbye...`}
                     aria-valuemax="100"
                     aria-valuenow={submitProgress}
                   >
-                    <span style={{width: `${submitProgress}%`}} />
+                  <span style={{width: `${submitProgress}%`}} />
                   </div>
                 )}
               </div>
+              {focusWriterMode && (
+                <section
+                  className="compose-focus-writer"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="focus-writer-title"
+                >
+                  <header className="compose-focus-writer__header">
+                    <div>
+                      <span>Just you and your words</span>
+                      <h2 id="focus-writer-title">Focus writing</h2>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFocusWriterMode(false)}
+                      aria-label="Exit focus writing mode"
+                    >
+                      <IoContractOutline aria-hidden="true" />
+                      <span>Return to letter</span>
+                    </button>
+                  </header>
+                  <div className="compose-focus-writer__paper">
+                    <textarea
+                      ref={focusTextareaRef}
+                      value={newLetter.message}
+                      maxLength="500"
+                      placeholder="Write freely. Take all the time you need…"
+                      onChange={event =>
+                        setNewLetter({
+                          ...newLetter,
+                          message: event.target.value,
+                        })
+                      }
+                    />
+                    <small>{newLetter.message.length}/500</small>
+                  </div>
+                  <p className="compose-focus-writer__hint">
+                    Your words are kept when you return. Press Esc to exit.
+                  </p>
+                </section>
+              )}
             </div>
           </div>
         )}
@@ -453,6 +557,49 @@ Goodbye...`}
                 <span style={{width: `${submitProgress}%`}} />
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {showSubmissionNotice && (
+        <div
+          className="submit-confirm-overlay submission-notice-overlay"
+          onClick={() => setShowSubmissionNotice(false)}
+        >
+          <div
+            className="submit-confirm-dialog submission-notice-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="submission-notice-title"
+            aria-describedby="submission-notice-description"
+            onClick={event => event.stopPropagation()}
+          >
+            <span
+              className="submit-confirm-icon submission-notice-icon"
+              aria-hidden="true"
+            >
+              <IoShieldCheckmarkOutline size="24px" />
+            </span>
+            <span className="submission-notice-eyebrow">Letter received</span>
+            <h2 id="submission-notice-title">Your letter is awaiting review</h2>
+            <p id="submission-notice-description">
+              Thank you for sharing it. Please give us a little time to make
+              sure the space stays safe for everyone.
+            </p>
+            <ul className="submit-confirm-notes submission-notice-notes">
+              <li>We check for spam and abusive or harmful content.</li>
+              <li>Once approved, you can open your letter and share its link.</li>
+            </ul>
+            <p className="submission-notice-footnote">
+              Check back soon by searching for the name used in your letter.
+            </p>
+            <button
+              type="button"
+              className="submission-notice-done"
+              onClick={() => setShowSubmissionNotice(false)}
+              autoFocus
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}
