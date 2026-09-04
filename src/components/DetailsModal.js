@@ -14,6 +14,8 @@ import { CiLocationOn } from "react-icons/ci";
 import {
   IoCopyOutline,
   IoDownloadOutline,
+  IoExpandOutline,
+  IoLanguageOutline,
   IoQrCodeOutline,
   IoShareSocialOutline,
 } from "react-icons/io5";
@@ -23,6 +25,67 @@ import { adminId, targetDate } from "../data/target_letters";
 import GraphemeSplitter from "grapheme-splitter";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { getOptimizedPhotoUrl } from "../data/cloudinary";
+const languageCodes = {
+  albanian: "sq", arabic: "ar", azeri: "az", bengali: "bn",
+  bulgarian: "bg", cebuano: "ceb", croatian: "hr", czech: "cs",
+  danish: "da", dutch: "nl", estonian: "et", farsi: "fa",
+  finnish: "fi", french: "fr", german: "de", hausa: "ha",
+  hindi: "hi", hungarian: "hu", icelandic: "is", indonesian: "id",
+  italian: "it", kazakh: "kk", kyrgyz: "ky", latin: "la",
+  latvian: "lv", lithuanian: "lt", macedonian: "mk", mongolian: "mn",
+  nepali: "ne", norwegian: "no", pashto: "ps", polish: "pl",
+  portuguese: "pt", romanian: "ro", russian: "ru", serbian: "sr",
+  slovak: "sk", slovene: "sl", somali: "so", spanish: "es",
+  swahili: "sw", swedish: "sv", tagalog: "tl", turkish: "tr",
+  ukrainian: "uk", urdu: "ur", uzbek: "uz", vietnamese: "vi",
+  welsh: "cy",
+};
+
+const detectForeignLanguage = (languageDetector, text) => {
+  const cleanText = String(text || "").replace(/https?:\/\/\S+/g, " ").trim();
+  if (cleanText.replace(/[^\p{L}]/gu, "").length < 20) return null;
+
+  const scriptLanguages = [
+    [/\p{Script=Hiragana}|\p{Script=Katakana}/u, "japanese", "ja"],
+    [/\p{Script=Hangul}/u, "korean", "ko"],
+    [/\p{Script=Han}/u, "chinese", "zh-CN"],
+    [/\p{Script=Thai}/u, "thai", "th"],
+    [/\p{Script=Greek}/u, "greek", "el"],
+    [/\p{Script=Hebrew}/u, "hebrew", "he"],
+  ];
+  const scriptMatch = scriptLanguages.find(([pattern]) => pattern.test(cleanText));
+  if (scriptMatch) return { name: scriptMatch[1], code: scriptMatch[2] };
+
+  const matches = languageDetector.detect(cleanText, 3);
+  if (!matches.length) return null;
+
+  const [name, confidence] = matches[0];
+  const likelyEnglishOrTagalog = matches.some(
+    ([candidate, score]) =>
+      (candidate === "english" || candidate === "tagalog") &&
+      confidence - score < 0.055
+  );
+  const code = languageCodes[name];
+  if (likelyEnglishOrTagalog || !code || confidence < 0.12) return null;
+  return { name, code };
+};
+
+const splitTranslationText = (text, maxBytes = 450) => {
+  const chunks = [];
+  let current = "";
+  for (const section of String(text).split(/(\s+)/)) {
+    for (const character of section) {
+      if (new Blob([current + character]).size > maxBytes && current) {
+        chunks.push(current);
+        current = "";
+      }
+      current += character;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+};
 
 const stringSplitter = (string) => {
   const splitter = new GraphemeSplitter();
@@ -230,7 +293,81 @@ function DetailsModal({
 
   const [showSpotify, setShowSpotify] = useState(false);
   const [showYoutube, setShowYoutube] = useState(false);
+  const [showPhoto, setShowPhoto] = useState(false);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [iframeHeight, setIframeHeight] = useState(152);
+  const [translatedMessage, setTranslatedMessage] = useState("");
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [detectedLanguage, setDetectedLanguage] = useState(null);
+
+  useEffect(() => {
+    let isCurrentLetter = true;
+    setTranslatedMessage("");
+    setIsTranslating(false);
+    setShowTranslation(false);
+    setDetectedLanguage(null);
+
+    if (message) {
+      import("languagedetect")
+        .then(({ default: LanguageDetect }) => {
+          if (!isCurrentLetter) return;
+          const detector = new LanguageDetect();
+          setDetectedLanguage(detectForeignLanguage(detector, message));
+        })
+        .catch(() => {
+          if (isCurrentLetter) setDetectedLanguage(null);
+        });
+    }
+
+    return () => {
+      isCurrentLetter = false;
+    };
+  }, [selectedLetter?._id, message]);
+
+  const handleTranslate = async () => {
+    if (showTranslation && translatedMessage) {
+      setShowTranslation(false);
+      return;
+    }
+    if (translatedMessage) {
+      setShowTranslation(true);
+      return;
+    }
+    if (!detectedLanguage || isTranslating) return;
+
+    setIsTranslating(true);
+    try {
+      const chunks = splitTranslationText(message);
+      const translations = await Promise.all(
+        chunks.map(async (chunk) => {
+          const params = new URLSearchParams({
+            q: chunk,
+            langpair: `${detectedLanguage.code}|en`,
+            mt: "1",
+          });
+          const response = await fetch(
+            `https://api.mymemory.translated.net/get?${params.toString()}`
+          );
+          if (!response.ok) throw new Error("Translation service unavailable");
+          const result = await response.json();
+          if (!result?.responseData?.translatedText) {
+            throw new Error("No translation returned");
+          }
+          return result.responseData.translatedText;
+        })
+      );
+      setTranslatedMessage(translations.join(""));
+      setShowTranslation(true);
+    } catch (error) {
+      toast.error("This letter couldn’t be translated right now.", {
+        position: "top-center",
+        autoClose: 2800,
+      });
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   useEffect(() => {
     function adjustIframeHeight() {
@@ -392,12 +529,17 @@ function DetailsModal({
     toggleDetailsModal();
     setShowSpotify(false);
     setShowYoutube(false);
+    setShowPhoto(false);
+    setShowPhotoViewer(false);
     setOpened(false);
     setIsRevealed(false);
     setHasClickedAd(false);
     setShowShareDialog(false);
     setShowQrCode(false);
     setIsDownloadingQr(false);
+    setTranslatedMessage("");
+    setIsTranslating(false);
+    setShowTranslation(false);
   };
 
   const closeShareDialog = () => {
@@ -410,6 +552,10 @@ function DetailsModal({
     if (!showDetailsModal) return;
     const onKeyDown = (event) => {
       if (event.key !== "Escape") return;
+      if (showPhotoViewer) {
+        setShowPhotoViewer(false);
+        return;
+      }
       if (showShareDialog) {
         closeShareDialog();
         return;
@@ -419,7 +565,7 @@ function DetailsModal({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDetailsModal, showShareDialog]);
+  }, [showDetailsModal, showPhotoViewer, showShareDialog]);
 
   const formatReadsCount = (readsCount) => {
     const parsed = parseInt(readsCount) || 0;
@@ -514,23 +660,49 @@ function DetailsModal({
               </div>
               <Tooltip id="timezone_tooltip" />
 
+              {detectedLanguage && (
+                <div className="letter-paper__translation-control">
+                  <button
+                    type="button"
+                    onClick={handleTranslate}
+                    disabled={isTranslating}
+                    aria-pressed={showTranslation}
+                  >
+                    <IoLanguageOutline aria-hidden="true" />
+                    <span>
+                      {isTranslating
+                        ? "Translating…"
+                        : showTranslation
+                          ? "Show original"
+                          : "Translate to English"}
+                    </span>
+                  </button>
+                  <small>{detectedLanguage.name}</small>
+                </div>
+              )}
+
               <div className="letter-paper__body letter-text">
-                <Typewriter
-                  options={{ delay: 40, loop: false, stringSplitter }}
-                  onInit={(typewriter) => {
-                    typewriter
-                      .typeString(message)
-                      .pauseFor(500)
-                      .callFunction(() => {
-                        if (spotifyLink == null) {
-                          setShowYoutube(true);
-                        } else {
-                          setShowSpotify(true);
-                        }
-                      })
-                      .start();
-                  }}
-                />
+                {showTranslation ? (
+                  <span>{translatedMessage}</span>
+                ) : (
+                  <Typewriter
+                    options={{ delay: 40, loop: false, stringSplitter }}
+                    onInit={(typewriter) => {
+                      typewriter
+                        .typeString(message)
+                        .pauseFor(500)
+                        .callFunction(() => {
+                          setShowPhoto(Boolean(selectedLetter.photo?.url));
+                          if (spotifyLink == null) {
+                            setShowYoutube(true);
+                          } else {
+                            setShowSpotify(true);
+                          }
+                        })
+                        .start();
+                    }}
+                  />
+                )}
               </div>
 
               {showSpotify && linkId && (
@@ -558,6 +730,23 @@ function DetailsModal({
                     allow="autoplay; encrypted-media"
                   ></iframe>
                 </div>
+              )}
+              {showPhoto && selectedLetter.photo?.url && (
+                <figure className="letter-paper__photo">
+                  <img
+                    src={getOptimizedPhotoUrl(selectedLetter.photo.url)}
+                    alt={`Attached to the letter from ${selectedLetter.from} to ${selectedLetter.to}`}
+                    loading="lazy"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPhotoViewer(true)}
+                    aria-label="View attached photo full screen"
+                  >
+                    <IoExpandOutline />
+                    <span>View full screen</span>
+                  </button>
+                </figure>
               )}
 
               <div className="letter-paper__meta">
@@ -740,6 +929,33 @@ function DetailsModal({
                 </div>
               )}
             </section>
+          </div>
+        )}
+
+        {showPhotoViewer && selectedLetter.photo?.url && (
+          <div
+            className="letter-photo-viewer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Full-screen letter attachment"
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowPhotoViewer(false);
+            }}
+          >
+            <button
+              type="button"
+              className="letter-photo-viewer__close"
+              onClick={() => setShowPhotoViewer(false)}
+              aria-label="Close full-screen photo"
+            >
+              <BsX />
+            </button>
+            <img
+              src={getOptimizedPhotoUrl(selectedLetter.photo.url, 1800)}
+              alt={`Attached to the letter from ${selectedLetter.from} to ${selectedLetter.to}`}
+              onClick={(event) => event.stopPropagation()}
+            />
           </div>
         )}
       </div>

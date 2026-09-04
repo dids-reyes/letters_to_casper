@@ -2,6 +2,8 @@ import React, {useMemo, useRef, useState, useEffect} from 'react';
 import {BsX} from 'react-icons/bs';
 import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
+import {IoImageOutline, IoTrashOutline} from 'react-icons/io5';
+import {FaSpotify, FaYoutube} from 'react-icons/fa';
 import DetailsModal from './DetailsModal';
 import { displayDirectLinkAds } from '../data/direct_link';
 import {Tooltip} from 'react-tooltip';
@@ -17,6 +19,11 @@ function AddModal({
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitProgress, setSubmitProgress] = useState(0);
+  const [submitStatus, setSubmitStatus] = useState('Preparing…');
+  const photoInputRef = useRef(null);
 
   useEffect(() => {
     const shouldDisableSubmit =
@@ -33,7 +40,7 @@ function AddModal({
     }
   };
 
-  const confirmSubmit = () => {
+  const confirmSubmit = async () => {
     const updatedLetter = {
       ...newLetter,
       message: newLetter.link
@@ -41,11 +48,62 @@ function AddModal({
         : newLetter.message,
     };
 
-    setShowSubmitConfirm(false);
-    handleAddLetter(updatedLetter);
-    setNewLetter({from: '', to: '', message: ''});
-    toggleAddModal();
-    displayDirectLinkAds();
+    setIsSubmitting(true);
+    setSubmitProgress(5);
+    setSubmitStatus('Preparing letter…');
+    const submitted = await handleAddLetter(updatedLetter, progress => {
+      setSubmitProgress(progress.percent);
+      setSubmitStatus(progress.label);
+    });
+
+    if (submitted) {
+      setSubmitProgress(100);
+      setSubmitStatus('Letter sent');
+      await new Promise(resolve => setTimeout(resolve, 350));
+    }
+    setIsSubmitting(false);
+
+    if (submitted) {
+      setShowSubmitConfirm(false);
+      if (newLetter.photoPreviewUrl) URL.revokeObjectURL(newLetter.photoPreviewUrl);
+      setNewLetter({from: '', to: '', message: ''});
+      toggleAddModal();
+      displayDirectLinkAds();
+    }
+  };
+
+  const handlePhotoChange = event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setPhotoError('Choose a JPG, PNG, or WebP image.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError('Choose an image smaller than 5 MB.');
+      event.target.value = '';
+      return;
+    }
+
+    if (newLetter.photoPreviewUrl) URL.revokeObjectURL(newLetter.photoPreviewUrl);
+    setPhotoError('');
+    setNewLetter({
+      ...newLetter,
+      link: '',
+      photoFile: file,
+      photoPreviewUrl: URL.createObjectURL(file),
+    });
+  };
+
+  const removePhoto = () => {
+    if (newLetter.photoPreviewUrl) URL.revokeObjectURL(newLetter.photoPreviewUrl);
+    if (photoInputRef.current) photoInputRef.current.value = '';
+    setPhotoError('');
+    const {photoFile, photoPreviewUrl, ...letterWithoutPhoto} = newLetter;
+    setNewLetter(letterWithoutPhoto);
   };
 
   const togglePreview = () => {
@@ -60,6 +118,9 @@ function AddModal({
         ? `${newLetter.message}\n\n${newLetter.link}`
         : newLetter.message,
       approve: newLetter.approve,
+      photo: newLetter.photoPreviewUrl
+        ? {url: newLetter.photoPreviewUrl}
+        : undefined,
       timestamp: new Date().toLocaleString('en-US', {
         timeZone: 'Asia/Manila',
       }),
@@ -71,6 +132,7 @@ function AddModal({
       newLetter.message,
       newLetter.link,
       newLetter.approve,
+      newLetter.photoPreviewUrl,
     ],
   );
 
@@ -184,25 +246,104 @@ Goodbye...`}
 
                   <div className="form-group">
                     <label htmlFor="link" className="label-top-left">
-                      Link:
+                      Link <span className="compose-optional">Optional</span>
                     </label>
-                    <input
-                      data-tooltip-id="link_tooltip"
-                      data-tooltip-html="On YouTube/Spotify, tap Share → Copy Link<br />then paste it here"
-                      data-tooltip-place="left-center"
-                      data-tooltip-delay-show={0}
-                      data-tooltip-variant="info"
-                      autoComplete="off"
-                      type="text"
-                      id="link"
-                      placeholder="Optional: Paste a link from YT or Spotify"
-                      className="form-control error full-width"
-                      value={newLetter.link || ''}
-                      onChange={event =>
-                        setNewLetter({...newLetter, link: event.target.value})
-                      }
-                    />
+                    <div
+                      className={`compose-link-field${
+                        newLetter.photoFile ? ' is-disabled' : ''
+                      }`}
+                    >
+                      <span className="compose-link-icons" aria-hidden="true">
+                        <FaYoutube className="compose-link-icon--youtube" />
+                        <FaSpotify className="compose-link-icon--spotify" />
+                      </span>
+                      <input
+                        data-tooltip-id="link_tooltip"
+                        data-tooltip-html="On YouTube/Spotify, tap Share → Copy Link<br />then paste it here"
+                        data-tooltip-place="left-center"
+                        data-tooltip-delay-show={0}
+                        data-tooltip-variant="info"
+                        autoComplete="off"
+                        type="text"
+                        id="link"
+                        placeholder="Paste a link from YouTube or Spotify"
+                        className="form-control error full-width"
+                        value={newLetter.link || ''}
+                        disabled={Boolean(newLetter.photoFile)}
+                        onChange={event =>
+                          setNewLetter({...newLetter, link: event.target.value})
+                        }
+                      />
+                    </div>
                     <Tooltip id="link_tooltip" />
+                    {newLetter.photoFile && (
+                      <small className="compose-field-note">
+                        Remove the photo to attach a song.
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="form-group compose-photo-group">
+                    <div className="compose-photo-label">
+                      <label htmlFor="letter-photo" className="label-top-left">
+                        Photo <span>Optional</span>
+                      </label>
+                      <small>JPG, PNG or WebP · up to 5 MB · Best at 4:3</small>
+                    </div>
+
+                    {newLetter.photoPreviewUrl ? (
+                      <div className="compose-photo-preview">
+                        <img
+                          src={newLetter.photoPreviewUrl}
+                          alt="Letter attachment preview"
+                        />
+                        <span className="compose-photo-preview__details">
+                          <strong>Photo attached</strong>
+                          <small title={newLetter.photoFile?.name}>
+                            {newLetter.photoFile?.name}
+                          </small>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={removePhoto}
+                          aria-label="Remove attached photo"
+                        >
+                          <IoTrashOutline />
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        className={`compose-photo-picker${
+                          newLetter.link ? ' is-disabled' : ''
+                        }`}
+                        htmlFor="letter-photo"
+                      >
+                        <IoImageOutline size="21px" />
+                        <span>
+                          <strong>Attach a photo</strong>
+                          <small>
+                            {newLetter.link
+                              ? 'Remove the song link first'
+                              : 'It will appear beneath your letter'}
+                          </small>
+                        </span>
+                      </label>
+                    )}
+                    <input
+                      ref={photoInputRef}
+                      id="letter-photo"
+                      className="compose-photo-input"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      disabled={Boolean(newLetter.link)}
+                      onChange={handlePhotoChange}
+                    />
+                    {photoError && (
+                      <small className="compose-photo-error" role="alert">
+                        {photoError}
+                      </small>
+                    )}
                   </div>
 
                 </div>
@@ -223,12 +364,26 @@ Goodbye...`}
                       isSubmitDisabled ? 'disabled-button' : 'submit-button'
                     }`}
                     onClick={handleSubmit}
-                    disabled={isSubmitDisabled}
+                    disabled={isSubmitDisabled || isSubmitting}
                   >
-                    <strong>Submit Letter</strong>
+                    <strong>
+                      {isSubmitting ? `${submitStatus} ${submitProgress}%` : 'Submit Letter'}
+                    </strong>
                     <RiMailSendLine className="submit-icon" size="18px" />
                   </button>
                 </div>
+                {isSubmitting && (
+                  <div
+                    className="compose-submit-progress"
+                    role="progressbar"
+                    aria-label={submitStatus}
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow={submitProgress}
+                  >
+                    <span style={{width: `${submitProgress}%`}} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -270,6 +425,7 @@ Goodbye...`}
                 type="button"
                 className="submit-confirm-cancel"
                 onClick={() => setShowSubmitConfirm(false)}
+                disabled={isSubmitting}
               >
                 Keep editing
               </button>
@@ -277,11 +433,26 @@ Goodbye...`}
                 type="button"
                 className="submit-confirm-send"
                 onClick={confirmSubmit}
+                disabled={isSubmitting}
               >
-                Submit letter
+                {isSubmitting
+                  ? `${submitStatus} ${submitProgress}%`
+                  : 'Submit letter'}
                 <RiMailSendLine size="17px" />
               </button>
             </div>
+            {isSubmitting && (
+              <div
+                className="compose-submit-progress"
+                role="progressbar"
+                aria-label={submitStatus}
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow={submitProgress}
+              >
+                <span style={{width: `${submitProgress}%`}} />
+              </div>
+            )}
           </div>
         </div>
       )}

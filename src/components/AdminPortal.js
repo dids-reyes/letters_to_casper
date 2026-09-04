@@ -7,6 +7,8 @@ import axios from 'axios';
 import {Link} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
 import '../styles/AdminPortal.css';
+import {getOptimizedPhotoUrl} from '../data/cloudinary';
+import {IoCalendarOutline, IoCheckmarkCircleOutline, IoImageOutline, IoLocationOutline, IoMailUnreadOutline, IoShieldCheckmarkOutline, IoTrashOutline} from 'react-icons/io5';
 
 function AdminPortal() {
   const {isLoggedIn} = useContext(AuthContext);
@@ -16,6 +18,21 @@ function AdminPortal() {
     counts: {approved: 0, unapproved: 0},
   });
   const [loading, setLoading] = useState(0);
+
+  const formatReviewTimestamp = timestamp =>
+    new Date(timestamp).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+  const formatReviewLocation = letter =>
+    [letter.loc?.city, letter.loc?.region, letter.loc?.country]
+      .filter(value => value && value !== 'Unknown')
+      .join(', ');
 
   useEffect(() => {
     const fetchLetters = async () => {
@@ -143,55 +160,43 @@ function AdminPortal() {
 
   if (!isLoggedIn) {
     return (
-      <>
-        <h3>This page is for LTC's Admin Portal.</h3>
-        <center>
-          <p>
-            Hi there! <b>{ip}</b> if you're lost please redirect to&nbsp;
-            <Link to="/">Home</Link>, this page requires login from
-            Administrator, your location will be traced and your Public IP address will be reported as spam if you try to enter unauthorized routes.
-          </p>
-        </center>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh',
-            marginBottom: '80px',
-          }}
-        >
-          <div>
-            <Lottie
-              loop
-              animationData={locked} // Replace with your Lottie animation data
-              play
-              style={{width: 300, height: 300}}
-            />
-          </div>
+      <main className="admin-locked">
+        <div className="admin-locked__card">
+          <Lottie loop animationData={locked} play className="admin-locked__animation" />
+          <span><IoShieldCheckmarkOutline /> Restricted area</span>
+          <h1>Admin access required</h1>
+          <p>This workspace is available only to authorized Letters to Casper administrators.</p>
+          <small>Request recorded from {ip || 'your current connection'}</small>
+          <Link to="/">Return home</Link>
         </div>
-      </>
+      </main>
     );
   }
 
   return (
     <div className="admin-portal">
+      <div className="admin-portal__letters" aria-hidden="true"><span /><span /><span /><span /><span /></div>
       <header className="admin-portal-header">
-        <img
-          className="admin-portal-logo"
-          src={logo}
-          alt="Letters to Casper"
-        />
+        <div className="admin-portal-header__brand">
+          <img className="admin-portal-logo" src={logo} alt="Letters to Casper" />
+          <span><IoShieldCheckmarkOutline /> Admin workspace</span>
+        </div>
+        <div className="admin-portal-header__intro">
+          <div><span>Letter review</span><h1>Pending letters</h1><p>Review the queue and decide what joins the collection.</p></div>
+          <div className="admin-portal-count"><IoMailUnreadOutline /><strong>{letters.length}</strong><span>Waiting</span></div>
+        </div>
       </header>
-      {loading === 1 && <p>Loading letters...</p>}
-      {loading === 2 && <p>Error fetching letters!</p>}
+      {loading === 1 && <p className="admin-portal-status">Loading letters…</p>}
+      {loading === 2 && <p className="admin-portal-status is-error">Couldn’t load the review queue.</p>}
 
       <div className="letter-actions">
+        <span className="letter-actions__selection">{selectedLetters.length ? `${selectedLetters.length} selected` : 'Select letters to begin'}</span>
         <button
           className="letter-action-button approve-button"
           disabled={!selectedLetters.length}
           onClick={handleApproveLetters}
         >
+          <IoCheckmarkCircleOutline />
           Approve{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
         </button>
         <button
@@ -199,14 +204,12 @@ function AdminPortal() {
           disabled={!selectedLetters.length}
           onClick={handleDeleteLetters}
         >
+          <IoTrashOutline />
           Delete{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
         </button>
       </div>
       {letters.length > 0 && (
-        <ul
-          className="letter-review-list"
-          style={{listStyleType: 'none', paddingLeft: 0}}
-        >
+        <ul className="letter-review-list">
           {letters.map(letter => (
             <li key={letter._id} className="letter-item">
               <input
@@ -218,16 +221,33 @@ function AdminPortal() {
               />
               <label htmlFor={`letter-${letter._id}`}>
                 <div className="letter-review-box">
-                  <p>From: {letter.from}</p>
-                  <p>To: {letter.to}</p>
-                  <p>Message: {letter.message}</p>
+                  <div className="letter-review-box__head">
+                    <span><strong>From</strong>{letter.from}</span>
+                    <span><strong>To</strong>{letter.to}</span>
+                    {letter.photo?.url && <span className="letter-photo-badge"><IoImageOutline /> Photo</span>}
+                  </div>
+                  <div className="letter-review-box__meta">
+                    <span><IoCalendarOutline />{formatReviewTimestamp(letter.timestamp)}</span>
+                    {formatReviewLocation(letter) && (
+                      <span><IoLocationOutline />{formatReviewLocation(letter)}</span>
+                    )}
+                  </div>
+                  <p>{letter.message}</p>
+                  {letter.photo?.url && (
+                    <img
+                      className="letter-review-photo"
+                      src={getOptimizedPhotoUrl(letter.photo.url, 800)}
+                      alt={`Attachment from ${letter.from}`}
+                      loading="lazy"
+                    />
+                  )}
                 </div>
               </label>
             </li>
           ))}
         </ul>
       )}
-      {letters.length === 0 && !loading && <p>No unapproved letters found.</p>}
+      {letters.length === 0 && !loading && <div className="admin-portal-empty"><IoCheckmarkCircleOutline /><strong>Queue cleared</strong><p>No letters are waiting for review.</p></div>}
     </div>
   );
 }

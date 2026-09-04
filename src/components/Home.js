@@ -305,12 +305,68 @@ function Home() {
     fetchInternationalOrigins();
   }, []);
 
-  const handleAddLetter = async (letterData) => {
+  const getResponseError = async (response, stage) => {
+    let serverMessage = "";
+
     try {
-      const { from, to, message } = letterData;
+      const body = await response.clone().json();
+      serverMessage = body?.error?.message || body?.error || body?.message || "";
+    } catch (error) {
+      try {
+        serverMessage = await response.text();
+      } catch (readError) {
+        serverMessage = "";
+      }
+    }
+
+    return `${stage} failed (HTTP ${response.status}${
+      response.statusText ? ` ${response.statusText}` : ""
+    })${serverMessage ? `: ${serverMessage}` : ""}`;
+  };
+
+  const handleAddLetter = async (letterData, onProgress = () => {}) => {
+    try {
+      const { from, to, message, photoFile } = letterData;
 
       if (from.trim() === "" || to.trim() === "" || message.trim() === "") {
-        return;
+        return false;
+      }
+
+      let photo;
+      if (photoFile) {
+        onProgress({percent: 12, label: "Reading photo…"});
+        const photoDataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("Could not read the selected photo"));
+          reader.readAsDataURL(photoFile);
+        });
+
+        onProgress({percent: 28, label: "Uploading photo…"});
+
+        const uploadResponse = await fetch(
+          `${render_url}/photo-upload`,
+          {
+            method: "POST",
+            headers: {
+              "x-api-key": api_key,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({file: photoDataUrl}),
+          }
+        );
+
+        if (!uploadResponse.ok) {
+          throw new Error(
+            await getResponseError(uploadResponse, "Photo upload")
+          );
+        }
+
+        const uploadResult = await uploadResponse.json();
+        photo = uploadResult.photo;
+        onProgress({percent: 82, label: "Photo optimized…"});
+      } else {
+        onProgress({percent: 70, label: "Preparing letter…"});
       }
 
       const timestamp = new Date().toLocaleString("en-US", {
@@ -324,6 +380,7 @@ function Home() {
         approve: false,
         timestamp,
         ip: public_ip,
+        ...(photo ? {photo} : {}),
       };
 
       const response = await fetch(render_url, {
@@ -335,20 +392,28 @@ function Home() {
         body: JSON.stringify(messageData),
       });
 
-      setLetters((prevState) => ({
-        ...prevState,
-        messages: [...prevState.messages, messageData],
-      }));
-      setNewLetter({ from: "", to: "", message: "" });
+      onProgress({percent: 92, label: "Saving letter…"});
 
       if (!response.ok) {
-        notify_error();
+        throw new Error(await getResponseError(response, "Letter submission"));
       } else {
+        setLetters((prevState) => ({
+          ...prevState,
+          messages: [...prevState.messages, messageData],
+        }));
+        setNewLetter({ from: "", to: "", message: "" });
+        onProgress({percent: 100, label: "Letter sent"});
         notify_success();
+        return true;
       }
     } catch (error) {
-      notify_error();
+      const errorMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : "Unknown error while submitting the letter";
+      notify_error(errorMessage);
       console.error("Error adding message:", error);
+      return false;
     }
   };
 
@@ -414,17 +479,23 @@ function Home() {
     setShowUiAnnouncement(false);
   };
 
-  const notify_error = () =>
-    toast.error("Failed to Submit Letter", {
+  const notify_error = (details) =>
+    toast.error(
+      <div>
+        <strong>Failed to submit letter</strong>
+        {details && <div className="submission-error-details">{details}</div>}
+      </div>,
+      {
       position: "top-center",
-      autoClose: 5000,
+      autoClose: 10000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: false,
       draggable: true,
       progress: undefined,
       theme: "light",
-    });
+      }
+    );
 
   const notify_success = () =>
     toast.success("Successfully Sent for Approval", {
