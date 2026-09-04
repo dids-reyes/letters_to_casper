@@ -11,7 +11,12 @@ import { FaUserTie } from "react-icons/fa";
 import { PiShootingStarFill } from "react-icons/pi";
 import { PiHeartBreakFill } from "react-icons/pi";
 import { CiLocationOn } from "react-icons/ci";
-import { IoShareSocialOutline } from "react-icons/io5";
+import {
+  IoCopyOutline,
+  IoDownloadOutline,
+  IoQrCodeOutline,
+  IoShareSocialOutline,
+} from "react-icons/io5";
 import { useState, useEffect } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
@@ -279,6 +284,19 @@ function DetailsModal({
     "https://www.profitableratecpmnetwork.com/rxyce75in3?key=945fab619a2a948227fecaaf9d93f787";
   const [isRevealed, setIsRevealed] = useState(false);
   const [hasClickedAd, setHasClickedAd] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(false);
+  const [isDownloadingQr, setIsDownloadingQr] = useState(false);
+
+  const letterShareUrl =
+    selectedLetter?._id && !selectedLetter.preview
+      ? `${window.location.origin}/letters/${selectedLetter._id}`
+      : "";
+  const letterQrUrl = letterShareUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(
+        letterShareUrl
+      )}`
+    : "";
 
   useEffect(() => {
     const revealLocationAfterAd = () => {
@@ -308,14 +326,12 @@ function DetailsModal({
   const handleCopyLetterLink = async () => {
     if (!selectedLetter?._id || selectedLetter.preview) return;
 
-    const letterUrl = `${window.location.origin}/letters/${selectedLetter._id}`;
-
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(letterUrl);
+        await navigator.clipboard.writeText(letterShareUrl);
       } else {
         const temporaryInput = document.createElement("textarea");
-        temporaryInput.value = letterUrl;
+        temporaryInput.value = letterShareUrl;
         temporaryInput.setAttribute("readonly", "");
         temporaryInput.style.position = "fixed";
         temporaryInput.style.opacity = "0";
@@ -330,11 +346,45 @@ function DetailsModal({
         position: "top-center",
         autoClose: 2500,
       });
+      setShowShareDialog(false);
+      setShowQrCode(false);
     } catch (error) {
       toast.error("Couldn’t copy the link. Please try again.", {
         position: "top-center",
         autoClose: 2500,
       });
+    }
+  };
+
+  const handleDownloadQr = async () => {
+    if (!letterQrUrl || isDownloadingQr) return;
+
+    setIsDownloadingQr(true);
+    try {
+      const response = await fetch(letterQrUrl);
+      if (!response.ok) throw new Error("Unable to download QR code");
+
+      const qrBlob = await response.blob();
+      const downloadUrl = URL.createObjectURL(qrBlob);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = downloadUrl;
+      downloadLink.download = `letter-to-casper-${selectedLetter._id}-qr.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      URL.revokeObjectURL(downloadUrl);
+
+      toast.info("QR code downloaded — ready to share.", {
+        position: "top-center",
+        autoClose: 2500,
+      });
+    } catch (error) {
+      toast.error("Couldn’t download the QR code. Please try again.", {
+        position: "top-center",
+        autoClose: 2500,
+      });
+    } finally {
+      setIsDownloadingQr(false);
     }
   };
 
@@ -345,17 +395,31 @@ function DetailsModal({
     setOpened(false);
     setIsRevealed(false);
     setHasClickedAd(false);
+    setShowShareDialog(false);
+    setShowQrCode(false);
+    setIsDownloadingQr(false);
+  };
+
+  const closeShareDialog = () => {
+    setShowShareDialog(false);
+    setShowQrCode(false);
+    setIsDownloadingQr(false);
   };
 
   useEffect(() => {
     if (!showDetailsModal) return;
     const onKeyDown = (event) => {
-      if (event.key === "Escape") handleCloseModal();
+      if (event.key !== "Escape") return;
+      if (showShareDialog) {
+        closeShareDialog();
+        return;
+      }
+      handleCloseModal();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDetailsModal]);
+  }, [showDetailsModal, showShareDialog]);
 
   const formatReadsCount = (readsCount) => {
     const parsed = parseInt(readsCount) || 0;
@@ -425,8 +489,6 @@ function DetailsModal({
                   />
                 </div>
               </div>
-
-              <hr className="letter-paper__rule" />
 
               <div
                 className="letter-paper__date"
@@ -575,12 +637,17 @@ function DetailsModal({
                           <span>{isRevealed ? "View on Map" : "Locate"}</span>
                         </a>
                       )}
+                      {hasLocation &&
+                        !selectedLetter.preview &&
+                        selectedLetter._id && (
+                          <span className="letter-meta-sep">·</span>
+                        )}
                       {!selectedLetter.preview && selectedLetter._id && (
                         <button
                           type="button"
                           className="letter-paper__share"
-                          onClick={handleCopyLetterLink}
-                          aria-label="Copy letter link to share"
+                          onClick={() => setShowShareDialog(true)}
+                          aria-label="Share this letter"
                           title="Share letter"
                         >
                           <IoShareSocialOutline size="12px" />
@@ -595,6 +662,86 @@ function DetailsModal({
             </div>
           )}
         </div>
+
+        {showShareDialog && (
+          <div
+            className="letter-share-dialog-overlay"
+            onClick={(event) => {
+              event.stopPropagation();
+              closeShareDialog();
+            }}
+          >
+            <section
+              className="letter-share-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="letter-share-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="letter-share-dialog__close"
+                onClick={closeShareDialog}
+                aria-label="Close share options"
+              >
+                <BsX />
+              </button>
+
+              <span className="letter-share-dialog__eyebrow">Send it onward</span>
+              <h2 id="letter-share-title">Share this letter</h2>
+              <p>Choose how you would like to pass this letter along.</p>
+
+              <div className="letter-share-dialog__options">
+                <button type="button" onClick={handleCopyLetterLink}>
+                  <span className="letter-share-dialog__option-icon">
+                    <IoCopyOutline />
+                  </span>
+                  <span>
+                    <strong>Copy link</strong>
+                    <small>Paste it anywhere</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={showQrCode ? "is-selected" : ""}
+                  onClick={() => setShowQrCode(true)}
+                >
+                  <span className="letter-share-dialog__option-icon">
+                    <IoQrCodeOutline />
+                  </span>
+                  <span>
+                    <strong>Share as QR</strong>
+                    <small>Let someone scan it</small>
+                  </span>
+                </button>
+              </div>
+
+              {showQrCode && (
+                <div className="letter-share-dialog__qr">
+                  <img
+                    src={letterQrUrl}
+                    alt="QR code for this letter"
+                    width="240"
+                    height="240"
+                    referrerPolicy="no-referrer"
+                  />
+                  <span>Scan to open this letter</span>
+                  <button
+                    type="button"
+                    className="letter-share-dialog__download"
+                    onClick={handleDownloadQr}
+                    disabled={isDownloadingQr}
+                  >
+                    <IoDownloadOutline />
+                    <span>
+                      {isDownloadingQr ? "Downloading…" : "Download QR"}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
       </div>
     )
   );

@@ -723,6 +723,7 @@ body {
 }
 
 .letter-card {
+  --letter-card-rule-space: 19px;
   display: flex;
   flex-direction: column;
   min-height: 180px;
@@ -730,11 +731,7 @@ body {
   border: 1px solid #e7ddc4;
   border-radius: 11px;
   background-color: #fdfaef;
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgba(120, 100, 60, 0.03) 0 1px,
-    transparent 1px 5px
-  );
+  background-image: none;
   box-shadow: 0 1px 2px rgba(60, 50, 30, 0.06);
   text-align: left;
   cursor: pointer;
@@ -809,20 +806,24 @@ body {
   text-overflow: ellipsis;
 }
 
-.letter-card__rule {
-  width: 100%;
-  border: none;
-  border-top: 1px solid #ece2c9;
-  margin: 8px 0;
-}
-
 .letter-card__preview {
-  margin: 0;
+  margin: 8px 0 0;
+  padding: 0 1px 1px;
+  height: calc(var(--letter-card-rule-space) * 5);
+  min-height: calc(var(--letter-card-rule-space) * 5);
+  box-sizing: border-box;
   display: -webkit-box;
   -webkit-line-clamp: 5;
   line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(var(--letter-card-rule-space) - 1px),
+    rgba(120, 100, 60, 0.09) calc(var(--letter-card-rule-space) - 1px)
+      var(--letter-card-rule-space)
+  );
+  background-position: 0 -3px;
   font-family: "Courier New", Courier, monospace;
   font-size: 12px;
   line-height: 1.55;
@@ -1303,6 +1304,7 @@ body {
   }
 
   .letter-card {
+    --letter-card-rule-space: 15px;
     height: 140px;
     min-height: 140px;
     box-sizing: border-box;
@@ -1327,11 +1329,8 @@ body {
     font-size: 10px;
   }
 
-  .letter-card__rule {
-    margin: 6px 0;
-  }
-
   .letter-card__preview {
+    margin-top: 6px;
     font-size: 10px;
     line-height: 1.5;
   }
@@ -2216,11 +2215,7 @@ body {
   border-radius: 10px;
   border: 1px solid #ece2c9;
   background-color: #faf7ec;
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgba(120, 100, 60, 0.035) 0 1px,
-    transparent 1px 5px
-  );
+  background-image: none;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
   animation: letter-paper-in 0.4s ease;
 }
@@ -2237,20 +2232,15 @@ body {
 }
 
 .letter-paper__head {
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
 .letter-paper .letter-info {
   margin-left: 0;
-  font-size: 15px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
   line-height: 1.6;
   color: #2f2b20;
-}
-
-.letter-paper__rule {
-  border: none;
-  border-top: 1px solid #e4dcc4;
-  margin: 2px 8px 18px 2px;
 }
 
 .letter-paper__date {
@@ -2258,7 +2248,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
   text-align: center;
 }
 
@@ -2268,7 +2258,8 @@ body {
 }
 
 .letter-paper__date .timestamp-text {
-  font-size: 13px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
   color: #6b6550;
 }
 
@@ -2277,8 +2268,16 @@ body {
   z-index: 1;
   margin: 0;
   min-height: 40px;
+  padding: 0 2px 2px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 27px,
+    rgba(120, 100, 60, 0.1) 27px 28px
+  );
+  background-position: 0 -5px;
+  font-family: "Courier New", Courier, monospace;
   font-size: 13px;
-  line-height: 1.85;
+  line-height: 28px;
   color: #2f2b20;
 }
 
@@ -2403,7 +2402,216 @@ body {
   outline-offset: 2px;
 }
 
+.letter-share-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 25, 38, 0.42);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: letter-share-fade-in 0.2s ease-out;
+}
+
+.letter-share-dialog {
+  position: relative;
+  width: min(430px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid rgba(55, 114, 255, 0.18);
+  border-radius: 22px;
+  background: #fffdf7;
+  box-shadow: 0 24px 70px rgba(20, 31, 58, 0.25);
+  color: #282b35;
+  text-align: left;
+  animation: letter-share-rise-in 0.24s ease-out;
+}
+
+.letter-share-dialog__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(55, 114, 255, 0.08);
+  color: #385995;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.letter-share-dialog__eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #3772ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.letter-share-dialog h2 {
+  margin: 0 42px 6px 0;
+  font-size: 1.35rem;
+}
+
+.letter-share-dialog > p {
+  margin: 0 0 20px;
+  color: #717681;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.letter-share-dialog__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.letter-share-dialog__options > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid #e3e7ef;
+  border-radius: 14px;
+  background: #fff;
+  color: #303540;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.letter-share-dialog__options > button:hover,
+.letter-share-dialog__options > button.is-selected {
+  border-color: rgba(55, 114, 255, 0.55);
+  background: rgba(55, 114, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.letter-share-dialog__option-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: rgba(55, 114, 255, 0.11);
+  color: #3772ff;
+  font-size: 19px;
+}
+
+.letter-share-dialog__options strong,
+.letter-share-dialog__options small {
+  display: block;
+}
+
+.letter-share-dialog__options strong {
+  font-size: 0.84rem;
+  line-height: 1.25;
+}
+
+.letter-share-dialog__options small {
+  margin-top: 2px;
+  color: #818691;
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+
+.letter-share-dialog__qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 15px;
+  border-radius: 16px;
+  background: #f4f7ff;
+  color: #667080;
+  font-size: 0.78rem;
+  animation: letter-share-rise-in 0.2s ease-out;
+}
+
+.letter-share-dialog__qr img {
+  display: block;
+  width: min(210px, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  padding: 7px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.letter-share-dialog__download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 4px;
+  padding: 9px 15px;
+  border: 1px solid rgba(55, 114, 255, 0.25);
+  border-radius: 999px;
+  background: #3772ff;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 5px 14px rgba(55, 114, 255, 0.22);
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.letter-share-dialog__download:hover:not(:disabled) {
+  background: #2352e6;
+  transform: translateY(-1px);
+}
+
+.letter-share-dialog__download:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.letter-share-dialog__download:focus-visible {
+  outline: 3px solid rgba(55, 114, 255, 0.3);
+  outline-offset: 2px;
+}
+
+@keyframes letter-share-fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes letter-share-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
 @media only screen and (max-width: 600px) {
+  .letter-share-dialog {
+    padding: 24px 18px 20px;
+    border-radius: 19px;
+  }
+
+  .letter-share-dialog__options > button {
+    gap: 8px;
+    padding: 11px 9px;
+  }
+
+  .letter-share-dialog__option-icon {
+    width: 32px;
+    height: 32px;
+  }
+
   .letter-modal-overlay {
     padding: 20px 12px;
   }
@@ -2423,12 +2631,16 @@ body {
   }
 
   .letter-paper .letter-info {
-    font-size: 14px;
+    font-size: 12px;
+  }
+
+  .letter-paper__date .timestamp-text {
+    font-size: 11px;
   }
 
   .letter-paper__body {
     font-size: 12px;
-    line-height: 1.8;
+    line-height: 28px;
   }
 
   .letter-paper__meta {
@@ -2594,11 +2806,7 @@ html.night-shift .origins-list li {
 /* Letter cards */
 html.night-shift .letter-card {
   background-color: #1b1d16;
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgba(255, 240, 200, 0.02) 0 1px,
-    transparent 1px 5px
-  );
+  background-image: none;
   border-color: #3a3a2e;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
@@ -2621,12 +2829,14 @@ html.night-shift .letter-card__time {
   color: #8a8264;
 }
 
-html.night-shift .letter-card__rule {
-  border-top-color: #3a3a2e;
-}
-
 html.night-shift .letter-card__preview {
   color: #cfc9b5;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(var(--letter-card-rule-space) - 1px),
+    rgba(255, 240, 200, 0.06)
+      calc(var(--letter-card-rule-space) - 1px) var(--letter-card-rule-space)
+  );
 }
 
 html.night-shift .letter-card--featured {
@@ -2645,11 +2855,7 @@ html.night-shift .letter-modal-overlay {
 
 html.night-shift .letter-paper {
   background-color: #1d1c14;
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgba(255, 240, 200, 0.02) 0 1px,
-    transparent 1px 5px
-  );
+  background-image: none;
   border-color: #3a3a2e;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
 }
@@ -2659,8 +2865,12 @@ html.night-shift .letter-paper__body {
   color: #e7e1cf;
 }
 
-html.night-shift .letter-paper__rule {
-  border-top-color: #3a3a2e;
+html.night-shift .letter-paper__body {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 27px,
+    rgba(255, 240, 200, 0.07) 27px 28px
+  );
 }
 
 html.night-shift .letter-paper__date .timestamp-text {
@@ -2684,6 +2894,31 @@ html.night-shift .letter-paper__share {
 html.night-shift .letter-paper__share:hover {
   background: rgba(138, 180, 255, 0.14);
   color: #a9c7ff;
+}
+
+html.night-shift .letter-share-dialog {
+  border-color: #41483f;
+  background: #20231d;
+  color: #eee9dc;
+}
+
+html.night-shift .letter-share-dialog > p,
+html.night-shift .letter-share-dialog__options small,
+html.night-shift .letter-share-dialog__qr {
+  color: #aaa99f;
+}
+
+html.night-shift .letter-share-dialog__options > button {
+  border-color: #3b4039;
+  background: #292d26;
+  color: #eee9dc;
+}
+
+html.night-shift .letter-share-dialog__options > button:hover,
+html.night-shift .letter-share-dialog__options > button.is-selected,
+html.night-shift .letter-share-dialog__qr {
+  border-color: rgba(138, 180, 255, 0.55);
+  background: rgba(94, 139, 232, 0.12);
 }
 
 html.night-shift .letter-modal__close {
