@@ -8,7 +8,7 @@ import {Link} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
 import '../styles/AdminPortal.css';
 import {getOptimizedPhotoUrl} from '../data/cloudinary';
-import {IoCalendarOutline, IoCheckmarkCircleOutline, IoImageOutline, IoLocationOutline, IoMailUnreadOutline, IoShieldCheckmarkOutline, IoTrashOutline} from 'react-icons/io5';
+import {IoCalendarOutline, IoCheckmarkCircleOutline, IoImageOutline, IoLocationOutline, IoMailUnreadOutline, IoShieldCheckmarkOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
 
 function AdminPortal() {
   const {isLoggedIn} = useContext(AuthContext);
@@ -59,6 +59,9 @@ function AdminPortal() {
   }, []);
 
   const [selectedLetters, setSelectedLetters] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const handleSelectChange = event => {
     const newSelectedLetters = [...selectedLetters];
@@ -112,10 +115,8 @@ function AdminPortal() {
       return;
     }
 
-    if (!window.confirm(`Delete ${selectedLetters.length} letter(s)? This cannot be undone.`)) {
-      return;
-    }
-
+    setIsDeleting(true);
+    setDeleteError('');
     try {
       const response = await fetch(`${render_url}/api/messages/delete`, {
         method: 'POST',
@@ -135,11 +136,38 @@ function AdminPortal() {
       );
       setLetters(updatedLetters);
       setSelectedLetters([]);
+      setShowDeleteConfirm(false);
     } catch (error) {
       console.error('Error deleting letters:', error);
-      alert('An error occurred while deleting letters.');
+      setDeleteError('The selected letters couldn’t be deleted. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
+
+  const openDeleteConfirm = () => {
+    if (!selectedLetters.length) return;
+    setDeleteError('');
+    setShowDeleteConfirm(true);
+  };
+
+  const closeDeleteConfirm = () => {
+    if (isDeleting) return;
+    setShowDeleteConfirm(false);
+    setDeleteError('');
+  };
+
+  useEffect(() => {
+    if (!showDeleteConfirm) return undefined;
+    const handleDialogKeyDown = event => {
+      if (event.key === 'Escape' && !isDeleting) {
+        setShowDeleteConfirm(false);
+        setDeleteError('');
+      }
+    };
+    document.addEventListener('keydown', handleDialogKeyDown);
+    return () => document.removeEventListener('keydown', handleDialogKeyDown);
+  }, [showDeleteConfirm, isDeleting]);
 
   const [ip, setIP] = useState('');
 
@@ -202,7 +230,7 @@ function AdminPortal() {
         <button
           className="letter-action-button delete-button"
           disabled={!selectedLetters.length}
-          onClick={handleDeleteLetters}
+          onClick={openDeleteConfirm}
         >
           <IoTrashOutline />
           Delete{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
@@ -248,6 +276,64 @@ function AdminPortal() {
         </ul>
       )}
       {letters.length === 0 && !loading && <div className="admin-portal-empty"><IoCheckmarkCircleOutline /><strong>Queue cleared</strong><p>No letters are waiting for review.</p></div>}
+      {showDeleteConfirm && (
+        <div className="admin-delete-overlay" onClick={closeDeleteConfirm}>
+          <section
+            className="admin-delete-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="admin-delete-title"
+            aria-describedby="admin-delete-description"
+            onClick={event => event.stopPropagation()}
+          >
+            <span className="admin-delete-dialog__icon" aria-hidden="true">
+              <IoWarningOutline />
+            </span>
+            <span className="admin-delete-dialog__eyebrow">Permanent action</span>
+            <h2 id="admin-delete-title">
+              Delete {selectedLetters.length}{' '}
+              {selectedLetters.length === 1 ? 'letter' : 'letters'}?
+            </h2>
+            <p id="admin-delete-description">
+              These selected review requests will be permanently removed from
+              the queue. This action cannot be undone.
+            </p>
+            <div className="admin-delete-dialog__summary">
+              <IoTrashOutline />
+              <span>
+                <strong>{selectedLetters.length}</strong>
+                {selectedLetters.length === 1
+                  ? ' selected letter'
+                  : ' selected letters'}
+              </span>
+            </div>
+            {deleteError && (
+              <p className="admin-delete-dialog__error" role="alert">
+                {deleteError}
+              </p>
+            )}
+            <div className="admin-delete-dialog__actions">
+              <button
+                type="button"
+                className="admin-delete-dialog__cancel"
+                onClick={closeDeleteConfirm}
+                disabled={isDeleting}
+              >
+                Keep letters
+              </button>
+              <button
+                type="button"
+                className="admin-delete-dialog__confirm"
+                onClick={handleDeleteLetters}
+                disabled={isDeleting}
+              >
+                <IoTrashOutline />
+                {isDeleting ? 'Deleting…' : 'Delete permanently'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ function Footer() {
           If you want to request deletion of your post, contact us at{" "}
           letters2casper@gmail.com{" "}
         </p>
-        <p>
+        <nav className="footer-nav" aria-label="Footer navigation">
           <Link
             to="/seek_help"
             style={{
@@ -19,8 +19,7 @@ function Footer() {
             }}
           >
             Seek Help
-          </Link>{" "}
-          |&nbsp;
+          </Link>
           <Link
             to="/privacy_policy"
             style={{
@@ -30,8 +29,7 @@ function Footer() {
             }}
           >
             Privacy Policy
-          </Link>{" "}
-          |&nbsp;
+          </Link>
           <Link
             to="/terms_and_conditions"
             style={{
@@ -41,8 +39,7 @@ function Footer() {
             }}
           >
             Terms & Conditions
-          </Link>{" "}
-          |&nbsp;
+          </Link>
           <Link
             to="/developer_portal"
             style={{
@@ -52,8 +49,7 @@ function Footer() {
             }}
           >
             Developers
-          </Link>{" "}
-          |&nbsp;
+          </Link>
           <Link
             to="/about_us"
             style={{
@@ -64,7 +60,7 @@ function Footer() {
           >
             About Us
           </Link>
-        </p>
+        </nav>
       </div>
     </footer>
   );

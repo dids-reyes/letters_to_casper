@@ -1,84 +1,60 @@
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
+import {Link} from 'react-router-dom';
+import {
+  IoArrowBackOutline,
+  IoLockClosedOutline,
+  IoMailOutline,
+  IoShieldCheckmarkOutline,
+  IoTimeOutline,
+} from 'react-icons/io5';
 import SideAd from './AdComponent';
-import blck_logo from '../lotties/black_ltc_logo.webp';
+import logo from '../lotties/ltc_logo_1.webp';
+import '../styles/LegalPages.css';
 
 function PrivacyPolicy() {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => window.scrollTo(0, 0), []);
+
+  const sections = [
+    {
+      id: 'information',
+      title: 'Information Collection and Use',
+      content: <>
+        <p>At Letters to Casper, we respect your privacy and operate on a principle of minimal data collection. We don't require sign-ups or logins, and you can post letters anonymously without disclosing personal details.</p>
+        <p>We store submitted letters so they can be reviewed, displayed, and shared on the website. We also collect the sender's city and region for confirmation purposes if they later request deletion of a letter. We don't use this information for commercial purposes or to extract personal information from users.</p>
+        <p>We may display advertisements from approved advertising networks, including Google AdSense. We don't process online payments or offer services for sale through the website.</p>
+      </>,
+    },
+    {id:'compliance', title:'Compliance Statements', content:<p>We are committed to adhering to privacy regulations to protect your data and rights. Letters to Casper complies with the California Online Privacy Protection Act (CalOPPA), the General Data Protection Regulation (GDPR) for European Union citizens, the California Consumer Privacy Act (CCPA), and the Philippine Data Privacy Act of 2012 <a href="https://www.officialgazette.gov.ph/2012/08/15/republic-act-no-10173/" target="_blank" rel="noopener noreferrer">(Republic Act No. 10173)</a>.</p>},
+    {id:'cookies', title:'Cookies and Tracking', content:<p>We use cookies and similar technologies to improve your experience and understand how visitors interact with the site. You may disable cookies through your browser settings, although doing so may affect some website functionality.</p>},
+    {id:'security', title:'Data Security', content:<p>We take data security seriously and implement measures intended to protect information from unauthorized access, alteration, or destruction. The website uses SSL encryption to safeguard data transmitted between your device and our servers.</p>},
+    {id:'third-parties', title:'Third-Party Services', content:<p>Our website may contain links to third-party sites or services. We are not responsible for their privacy practices or content. We recommend reviewing the privacy policies of external sites you visit.</p>},
+    {id:'children', title:"Children's Privacy", content:<p>Our website is not intended for children under 13. We do not knowingly collect personal information from children. If we learn that a child under 13 has provided personal information, we will take steps to delete it.</p>},
+    {id:'changes', title:'Changes to This Policy', content:<p>We may update this Privacy Policy from time to time. Changes will be posted on this page and become effective immediately upon posting.</p>},
+  ];
 
   return (
-    <div style={{ margin: '20px', fontFamily: 'monospace' }}>
-      <center>
-        <a href="https://letterstocasper.com">
-          <img
-            id="logo-ltc"
-            className="blck_logo"
-            src={blck_logo}
-            alt="Letters to Casper"
-          />
-        </a>
-      </center>
-      {/* <h1>Privacy Policy</h1> */}
-      <br/>
-      <p style={{ fontSize: 'smaller' }}>Last updated: June 18, 2024</p>
-      <p>
-        Protecting your privacy is fundamental to us. This <u>Privacy Policy</u> outlines how we collect, use, and safeguard your information when you use our website.
-      </p>
-
-      <h3>Information Collection and Use</h3>
-      <p>
-        At Letters to Casper, we respect your privacy and operate on a principle of minimal data collection. We don't require sign-ups or logins, and we don't track or store any personal information. You can post letters anonymously without disclosing any personal details.
-      </p>
-      <p>
-        We do collect and store all submitted letters solely for the purpose of facilitating the display and sharing of user-generated content on our website. Additionally, we collect the location or city and region of the sender for confirmation purposes if they wish to delete their letter entry to avoid deletion from unknown users. However, we don't use this information for commercial purposes or to extract any personal information from users.
-      </p>
-      <p>
-        We may display pop-up advertisements from approved advertising networks. However, we don't utilize retargeting or personalized advertising.
-      </p>
-      <p>
-        We partner with ad networks like adsense. These networks enable us to show ads that users can watch to support our site. We do not engage in tracking or storing personal data through these ads.
-      </p>
-      <p>
-        If you need to reach out to us for any reason, you can do so at letters2casper@gmail.com. Please note that we don't process online payments or offer any services for sale through our website.
-      </p>
-
-      <h3>Compliance Statements</h3>
-      <p>
-        We are committed to adhering to privacy regulations to ensure the protection of your data and rights. Letters to Casper complies with the California Online Privacy Protection Act (CalOPPA), the General Data Protection Regulation (GDPR) for European Union citizens, the California Consumer Privacy Act (CCPA), and the Data Privacy Act of 2012 <a href="https://www.officialgazette.gov.ph/2012/08/15/republic-act-no-10173/">(Republic Act No. 10173)</a> of the Philippines.
-      </p>
-
-      <h3>Cookies and Tracking</h3>
-      <p>
-        We use cookies and similar tracking technologies to enhance your experience on our website. These are small files that are stored on your device. They help us understand how you interact with our site, allowing us to improve our services. You can choose to disable cookies through your browser settings, but this may affect the functionality of our website.
-      </p>
-
-      <h3>Data Security</h3>
-      <p>
-        We take data security seriously and implement measures to protect your information from unauthorized access, alteration, or destruction. Our website uses SSL encryption to safeguard the data transmitted between your device and our servers.
-      </p>
-
-      <h3>Third-Party Services</h3>
-      <p>
-        Our website may contain links to third-party sites or services. We are not responsible for the privacy practices or the content of these external sites. We recommend reviewing the privacy policies of any third-party sites you visit.
-      </p>
-
-      <h3>Children's Privacy</h3>
-      <p>
-        Our website is not intended for children under the age of 13. We do not knowingly collect personal information from children. If we become aware that a child under 13 has provided us with personal information, we will take steps to delete such information.
-      </p>
-
-      <h3>Changes to This Privacy Policy</h3>
-      <p>
-        We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. Changes are effective immediately upon posting.
-      </p>
-
-      <h3>Contact Us</h3>
-      <p>
-        If you have any questions or concerns regarding our Privacy Policy, please do not hesitate to contact us at letters2casper@gmail.com. Your privacy matters to us, and we are here to address any inquiries you may have.
-      </p>
-      <SideAd />
-    </div>
+    <main className="legal-page">
+      <nav className="legal-nav">
+        <Link to="/" className="legal-brand"><img src={logo} alt="Letters to Casper" /></Link>
+        <Link to="/" className="legal-back"><IoArrowBackOutline /><span>Back to letters</span></Link>
+      </nav>
+      <header className="legal-hero">
+        <span className="legal-eyebrow"><IoShieldCheckmarkOutline /> Your privacy</span>
+        <h1>Privacy Policy</h1>
+        <p>A clear overview of the information connected to your use of Letters to Casper and how we work to protect it.</p>
+        <span className="legal-updated"><IoTimeOutline /> Last updated June 18, 2024</span>
+      </header>
+      <div className="legal-overview"><IoLockClosedOutline /><div><strong>Privacy, in brief</strong><p>No account is required. Letters are submitted anonymously, and we aim to collect only what is needed to operate and safeguard the platform.</p></div></div>
+      <div className="legal-layout">
+        <aside className="legal-index"><span>On this page</span>{sections.map((section,index)=><a key={section.id} href={`#${section.id}`}><small>{String(index+1).padStart(2,'0')}</small>{section.title}</a>)}</aside>
+        <article className="legal-content">
+          <p className="legal-intro">Protecting your privacy is fundamental to us. This Privacy Policy explains how we collect, use, and safeguard information when you use our website.</p>
+          {sections.map((section,index)=><section id={section.id} key={section.id}><span>{String(index+1).padStart(2,'0')}</span><h2>{section.title}</h2>{section.content}</section>)}
+        </article>
+      </div>
+      <section className="legal-contact"><IoMailOutline /><div><small>Questions or concerns?</small><h2>We’re here to help.</h2><p>Your privacy matters to us. Contact the Letters to Casper team for any policy-related inquiry.</p></div><a href="mailto:letters2casper@gmail.com">Email us</a></section>
+      <div className="legal-ad"><SideAd /></div>
+    </main>
   );
 }
 
