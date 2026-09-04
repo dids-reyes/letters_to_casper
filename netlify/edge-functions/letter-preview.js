@@ -48,7 +48,7 @@ export default async (request, context) => {
     const canonicalUrl = `${pageUrl.origin}/letters/${encodeURIComponent(
       messageId,
     )}`;
-    const imageUrl = `${pageUrl.origin}/ltc-social-preview.png`;
+    const imageUrl = `${pageUrl.origin}/ltc-header-social.png`;
     const title = `Letter From: ${letter.from} To: ${letter.to}`;
     const normalizedMessage = String(letter.message || "")
       .replace(/\s+/g, " ")
