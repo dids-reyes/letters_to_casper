@@ -2,6 +2,54 @@ body {
   background-color: #fff;
 }
 
+/* About */
+.about-page { width:100%; min-height:100vh; box-sizing:border-box; padding:24px clamp(16px,2.5vw,42px) 56px; background:radial-gradient(circle at 85% 7%,rgba(55,114,255,.09),transparent 24%),linear-gradient(180deg,#fbfcff 0,#fff 42%); color:#20242c; }
+.about-nav,.about-hero,.about-values,.about-story,.about-purpose,.about-closing,.about-ad { width:min(1480px,100%); margin-right:auto; margin-left:auto; }
+.about-nav { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.about-brand img { display:block; width:min(210px,48vw); height:auto; }
+.about-back { display:inline-flex; align-items:center; gap:7px; padding:9px 12px; border:1px solid #e4e8f0; border-radius:999px; color:#58616f; font-size:11px; font-weight:650; text-decoration:none; transition:border-color .2s ease,color .2s ease,transform .2s ease; }
+.about-back:hover { border-color:rgba(55,114,255,.35); color:#3772ff; transform:translateY(-1px); }
+.about-hero { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(290px,.85fr); align-items:center; gap:clamp(40px,8vw,100px); padding:clamp(70px,10vw,125px) 0 80px; }
+.about-eyebrow { display:inline-flex; align-items:center; gap:6px; color:#3772ff; font-size:10px; font-weight:750; letter-spacing:.13em; text-transform:uppercase; }
+.about-hero h1 { max-width:720px; margin:14px 0 20px; color:#172033; font-family:Georgia,"Times New Roman",serif; font-size:clamp(39px,6vw,70px); font-weight:500; letter-spacing:-.035em; line-height:1.04; }
+.about-hero__copy > p { max-width:650px; margin:0; color:#667080; font-size:14px; line-height:1.85; }
+.about-hero__letter { position:relative; box-sizing:border-box; min-height:310px; padding:42px 38px; overflow:hidden; border:1px solid #e7e0ce; border-radius:6px 6px 18px 6px; background:#fffdf5; box-shadow:0 25px 60px rgba(64,58,43,.13); color:#423c2f; font-family:"Courier New",Courier,monospace; transform:rotate(1.5deg); }
+.about-hero__letter::after { position:absolute; right:-1px; bottom:-1px; width:48px; height:48px; content:""; background:linear-gradient(135deg,#ece5d2 0 49%,#fbfcff 51%); }
+.about-hero__letter > span { display:block; margin-bottom:34px; font-size:13px; }
+.about-hero__letter i { display:block; height:1px; margin:21px 0; background:#ddd6c3; }
+.about-hero__letter i:nth-of-type(1) { width:94%; }.about-hero__letter i:nth-of-type(2) { width:79%; }.about-hero__letter i:nth-of-type(3) { width:88%; }
+.about-hero__letter strong { display:block; margin-top:28px; color:#716853; font-size:11px; font-weight:500; line-height:1.7; }
+.about-values { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid #e9edf3; border-bottom:1px solid #e9edf3; }
+.about-values article { display:flex; align-items:flex-start; gap:13px; padding:27px clamp(15px,3vw,30px); }
+.about-values article + article { border-left:1px solid #e9edf3; }
+.about-values article > span { display:grid; flex:0 0 auto; place-items:center; width:36px; height:36px; border-radius:11px; background:#edf3ff; color:#3772ff; font-size:18px; }
+.about-values strong { display:block; margin:1px 0 5px; color:#2b3340; font-size:12px; }.about-values p { margin:0; color:#808896; font-size:10px; line-height:1.55; }
+.about-story { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr); gap:clamp(45px,9vw,120px); padding:110px 0; }
+.about-section-number { color:#3772ff; font-size:9px; font-weight:750; letter-spacing:.13em; text-transform:uppercase; }
+.about-story h2,.about-purpose h2,.about-closing h2 { margin:12px 0 22px; color:#1c2432; font-family:Georgia,"Times New Roman",serif; font-size:clamp(30px,4vw,46px); font-weight:500; letter-spacing:-.025em; line-height:1.12; }
+.about-story__content p { margin:0 0 16px; color:#697382; font-size:13px; line-height:1.85; }
+.about-definition { align-self:center; padding:34px; border:1px solid #dfe6f2; border-radius:20px; background:#f7f9fd; }
+.about-definition > span { color:#202b3d; font-family:Georgia,"Times New Roman",serif; font-size:28px; }.about-definition > p { margin:5px 0 20px; color:#8992a0; font-size:11px; }.about-definition > strong { color:#3772ff; font-size:9px; letter-spacing:.12em; text-transform:uppercase; }
+.about-definition blockquote { margin:12px 0 0; color:#566171; font-family:Georgia,"Times New Roman",serif; font-size:16px; line-height:1.65; }
+.about-purpose { box-sizing:border-box; padding:85px clamp(30px,7vw,90px); border-radius:26px; background:#172238; }
+.about-purpose h2 { max-width:720px; color:#f7f9ff; }.about-purpose__columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(25px,6vw,75px); }.about-purpose__columns p { margin:0; color:#aeb9cc; font-size:12px; line-height:1.85; }
+.about-closing { padding:115px 20px 85px; box-sizing:border-box; text-align:center; }.about-closing > svg { color:#3772ff; font-size:25px; }.about-closing h2 { margin-bottom:13px; }.about-closing p { max-width:560px; margin:0 auto 25px; color:#747e8c; font-size:13px; line-height:1.75; }.about-closing a { display:inline-flex; padding:12px 18px; border-radius:12px; background:#3772ff; box-shadow:0 7px 20px rgba(55,114,255,.22); color:#fff; font-size:11px; font-weight:700; text-decoration:none; }.about-ad { overflow:hidden; }
+
+@media (max-width:760px) {
+  .about-page { padding:18px 16px 40px; }.about-brand img { width:min(175px,48vw); }.about-back span { display:none; }.about-back { display:grid; place-items:center; width:36px; height:36px; padding:0; }
+  .about-hero { grid-template-columns:1fr; gap:45px; padding:65px 0 60px; }.about-hero__letter { width:min(410px,94%); min-height:265px; margin:auto; padding:34px 30px; }
+  .about-values { grid-template-columns:1fr; }.about-values article + article { border-top:1px solid #e9edf3; border-left:0; }.about-story { grid-template-columns:1fr; gap:40px; padding:80px 0; }.about-definition { padding:27px 24px; }
+  .about-purpose { padding:58px 24px; border-radius:20px; }.about-purpose__columns { grid-template-columns:1fr; gap:14px; }.about-closing { padding:85px 8px 65px; }
+}
+
+html.night-shift .about-page { background:radial-gradient(circle at 85% 7%,rgba(80,130,240,.12),transparent 24%),#151912; color:#ecebdd; }
+html.night-shift .about-hero h1,html.night-shift .about-story h2,html.night-shift .about-closing h2 { color:#f1eee1; }
+html.night-shift .about-hero__copy > p,html.night-shift .about-story__content p,html.night-shift .about-closing p { color:#aaa99f; }
+html.night-shift .about-back,html.night-shift .about-values { border-color:#343a32; }.night-shift .about-values article + article { border-color:#343a32; }
+html.night-shift .about-values strong { color:#e8e6da; }html.night-shift .about-values article > span { background:rgba(80,130,240,.13); color:#8ab4ff; }
+html.night-shift .about-hero__letter { border-color:#3e3b2e; background:#22231b; color:#ded9c7; box-shadow:0 25px 60px rgba(0,0,0,.35); }html.night-shift .about-hero__letter::after { background:linear-gradient(135deg,#353529 0 49%,#151912 51%); }
+html.night-shift .about-definition { border-color:#393f37; background:#20241d; }html.night-shift .about-definition > span { color:#f0ecdf; }html.night-shift .about-definition blockquote { color:#c1beb0; }
+
 .submission-error-details {
   margin-top: 5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -365,7 +413,7 @@ body {
   padding: 7px 12px;
   color: #4b5563;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
   white-space: nowrap;
   cursor: default;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -1247,7 +1295,7 @@ body {
   white-space: pre-wrap;
   text-align: left;
   font-family: monospace;
-  font-size: 14px;
+  font-size: 15px;
   margin-left: 10px;
 }
 
@@ -1379,19 +1427,49 @@ body {
     position: fixed;
     bottom: 0;
     width: 100%;
+    box-sizing: border-box;
+    padding: 6px 10px;
     font-size: 11px;
   }
 
   .footer p,
   .footer-nav {
-    margin: 3px 0;
+    margin: 2px 0;
     font-size: 9px;
   }
 
+  .footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2px 7px;
+  }
+
+  .footer-nav a {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .footer-nav a + a::before {
+    margin-right: 7px;
+    color: rgba(255, 255, 255, 0.6);
+    content: "|";
+  }
+
   .app-container {
-    max-width: 90%; /*  */
+    max-width: 90%;
     margin: 0 auto;
     /* overflow-x: hidden; /1* I SPENT 24 Hours in this SHIT *1/ */
+  }
+
+  .about-page,
+  .legal-page,
+  .developers-page,
+  .help-page {
+    flex: 0 0 100vw;
+    width: 100vw;
+    max-width: 100vw;
   }
 
   .search-bar {
@@ -1561,7 +1639,7 @@ body {
   padding: 8px 16px;
   border: none;
   background-color: #fefbf0;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
@@ -1826,7 +1904,7 @@ body {
   color: #2d2a21;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(22px, 4vw, 30px);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .compose-focus-writer__header button {
@@ -2651,7 +2729,7 @@ body {
 .letter-modal {
   position: relative;
   width: 100%;
-  max-width: 560px;
+  max-width: 580px;
   margin: auto;
 }
 
@@ -2839,9 +2917,23 @@ body {
 .letter-paper .letter-info {
   margin-left: 0;
   font-family: "Courier New", Courier, monospace;
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 400;
   line-height: 1.6;
-  color: #282419;
+  color: #332f24;
+}
+
+.letter-paper .letter-info .Typewriter__wrapper {
+  color: #332f24;
+}
+
+.letter-paper .letter-info .Typewriter__wrapper strong {
+  color: #080704;
+}
+
+.letter-paper .letter-info strong {
+  color: #080704;
+  font-weight: 800;
 }
 
 .letter-paper__date {
@@ -2860,8 +2952,13 @@ body {
 
 .letter-paper__date .timestamp-text {
   font-family: "Courier New", Courier, monospace;
-  font-size: 12px;
-  color: #605a47;
+  font-size: 13px;
+  font-weight: 400;
+  color: #393428;
+}
+
+.letter-paper__date .timestamp-text .Typewriter__wrapper {
+  font-weight: 400;
 }
 
 .letter-paper__body {
@@ -2878,8 +2975,13 @@ body {
   background-position: 0 -5px;
   font-family: "Courier New", Courier, monospace;
   font-size: 13px;
+  font-weight: 400;
   line-height: 28px;
-  color: #282419;
+  color: #332f24;
+}
+
+.letter-paper__body .Typewriter__wrapper {
+  color: #332f24;
 }
 
 .letter-paper__translation-control {
@@ -3118,7 +3220,7 @@ html.night-shift .letter-paper__translation-control small {
   color: inherit;
   font-family: "Courier New", Courier, monospace;
   font-size: inherit;
-  font-weight: 400;
+  font-weight: 500;
   line-height: inherit;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -3361,15 +3463,15 @@ html.night-shift .letter-paper__translation-control small {
   }
 
   .letter-modal-overlay {
-    padding: 20px 12px;
+    padding: 20px 5px;
   }
 
   .letter-modal__close {
     top: -14px;
-    right: -6px;
-    width: 38px;
-    height: 38px;
-    font-size: 24px;
+    right: 2px;
+    width: 34px;
+    height: 34px;
+    font-size: 21px;
   }
 
   .letter-paper {
@@ -3379,15 +3481,15 @@ html.night-shift .letter-paper__translation-control small {
   }
 
   .letter-paper .letter-info {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .letter-paper__date .timestamp-text {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .letter-paper__body {
-    font-size: 12px;
+    font-size: 14px;
     line-height: 28px;
   }
 
@@ -3611,6 +3713,10 @@ html.night-shift .letter-paper {
 html.night-shift .letter-paper .letter-info,
 html.night-shift .letter-paper__body {
   color: #e7e1cf;
+}
+
+html.night-shift .letter-paper .letter-info strong {
+  color: #f4eedc;
 }
 
 html.night-shift .letter-paper__body {

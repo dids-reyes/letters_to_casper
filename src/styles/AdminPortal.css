@@ -48,6 +48,29 @@
 .admin-portal-empty strong { display:block; margin-top:8px; color:#e8edf8; font-size:18px; }
 .admin-portal-empty p { margin:5px 0 0; font-size:12px; }
 
+.admin-delete-overlay { position:fixed; inset:0; z-index:100; display:grid; place-items:center; box-sizing:border-box; padding:20px; background:rgba(3,8,18,.76); backdrop-filter:blur(9px); animation:adminDeleteFade .2s ease both; }
+.admin-delete-dialog { position:relative; width:min(430px,100%); box-sizing:border-box; padding:28px; border:1px solid rgba(255,112,126,.22); border-radius:22px; background:linear-gradient(155deg,rgba(27,37,59,.98),rgba(14,22,38,.99)); box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 45px rgba(184,42,58,.08); text-align:left; animation:adminDeleteIn .3s cubic-bezier(.22,1,.36,1) both; }
+.admin-delete-dialog::before { position:absolute; top:0; right:25px; left:25px; height:1px; content:""; background:linear-gradient(90deg,transparent,rgba(255,116,130,.7),transparent); }
+.admin-delete-dialog__icon { display:grid; place-items:center; width:45px; height:45px; margin-bottom:14px; border:1px solid rgba(255,109,123,.22); border-radius:14px; background:rgba(210,52,68,.12); color:#ff8794; font-size:23px; }
+.admin-delete-dialog__eyebrow { color:#ff8794; font-size:9px; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
+.admin-delete-dialog h2 { margin:6px 0 8px; color:#f8f9ff; font-size:24px; line-height:1.2; }
+.admin-delete-dialog > p { margin:0; color:#9aa6ba; font-size:12px; line-height:1.65; }
+.admin-delete-dialog__summary { display:flex; align-items:center; gap:11px; margin-top:18px; padding:13px 14px; border:1px solid rgba(151,172,216,.12); border-radius:13px; background:rgba(8,15,28,.45); color:#8997ad; font-size:11px; }
+.admin-delete-dialog__summary > svg { flex:0 0 auto; color:#ff7f8c; font-size:20px; }
+.admin-delete-dialog__summary span { display:flex; align-items:baseline; gap:5px; }
+.admin-delete-dialog__summary strong { color:#f3f5fc; font-size:17px; }
+.admin-delete-dialog .admin-delete-dialog__error { margin-top:12px; padding:9px 11px; border-radius:9px; background:rgba(210,52,68,.12); color:#ff9ca6; font-size:10px; }
+.admin-delete-dialog__actions { display:flex; gap:10px; margin-top:22px; }
+.admin-delete-dialog__actions button { display:inline-flex; flex:1; align-items:center; justify-content:center; gap:7px; min-height:43px; padding:10px 13px; border-radius:11px; font-size:11px; font-weight:750; cursor:pointer; transition:transform .2s ease,background-color .2s ease,box-shadow .2s ease,opacity .2s ease; }
+.admin-delete-dialog__actions button:hover:not(:disabled) { transform:translateY(-1px); }
+.admin-delete-dialog__actions button:disabled { opacity:.55; cursor:wait; }
+.admin-delete-dialog__cancel { border:1px solid rgba(157,179,226,.16); background:rgba(121,145,193,.08); color:#b8c2d4; }
+.admin-delete-dialog__cancel:hover:not(:disabled) { background:rgba(121,145,193,.14); }
+.admin-delete-dialog__confirm { border:1px solid rgba(255,115,128,.24); background:linear-gradient(135deg,#d53c4d,#a92032); color:#fff; box-shadow:0 8px 20px rgba(184,37,54,.22); }
+
+@keyframes adminDeleteFade { from{opacity:0} to{opacity:1} }
+@keyframes adminDeleteIn { from{opacity:0;transform:translateY(14px) scale(.97)} to{opacity:1;transform:none} }
+
 .admin-portal__letters { position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
 .admin-portal__letters span { position:absolute; bottom:-70px; width:42px; height:28px; border:1px solid rgba(177,201,255,.13); border-radius:4px; background:rgba(121,158,242,.07); animation:portalLetter 21s linear infinite; }
 .admin-portal__letters span::before { position:absolute; inset:0; content:""; clip-path:polygon(0 0,50% 60%,100% 0,100% 8%,50% 68%,0 8%); background:rgba(168,194,255,.1); }
@@ -63,5 +86,5 @@
 @keyframes portalLetter { 0%{opacity:0;transform:translateY(0) rotate(-7deg)}12%{opacity:.5}88%{opacity:.3}100%{opacity:0;transform:translate(18px,-115vh) rotate(8deg)} }
 
 @media(max-width:720px){.admin-portal{padding:22px 12px 55px}.admin-portal-header__intro{align-items:center}.admin-portal-header p{max-width:220px}.admin-portal-count{min-width:82px;padding:10px}.letter-review-list{grid-template-columns:1fr}.letter-actions{top:8px}.letter-actions__selection{display:none}.letter-action-button{flex:1;min-width:0;padding:8px 6px}.letter-review-box{min-height:150px;padding:16px}.letter-review-box__head{gap:10px}.letter-review-box > p{font-size:11px}}
-@media(max-width:420px){.admin-portal-header__brand > span{font-size:8px}.admin-portal-header h1{font-size:28px}.admin-portal-count span{display:none}.admin-portal-count{display:flex;min-width:auto}.letter-action-button{font-size:11px}}
-@media(prefers-reduced-motion:reduce){.admin-portal::before,.admin-locked::before,.admin-portal__letters span{animation:none}}
+@media(max-width:420px){.admin-portal-header__brand > span{font-size:8px}.admin-portal-header h1{font-size:28px}.admin-portal-count span{display:none}.admin-portal-count{display:flex;min-width:auto}.letter-action-button{font-size:11px}.admin-delete-dialog{padding:23px 19px;border-radius:18px}.admin-delete-dialog__actions{flex-direction:column-reverse}.admin-delete-dialog__actions button{flex:auto;width:100%}}
+@media(prefers-reduced-motion:reduce){.admin-portal::before,.admin-locked::before,.admin-portal__letters span,.admin-delete-overlay,.admin-delete-dialog{animation:none}}

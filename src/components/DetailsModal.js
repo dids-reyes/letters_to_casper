@@ -263,7 +263,7 @@ function DetailsModal({
 
     if (youtubeMatch && youtubeMatch[1]) {
       // Extract the YouTube video ID from the match
-      const videoId = youtubeMatch[1];
+      const videoId = youtubeMatch[1].split(/[?&]/)[0];
       const newMessage = message
         .replace(youtubeLinkRegex, "")
         .replace(/\s*$/, "");
@@ -728,10 +728,11 @@ function DetailsModal({
                   <iframe
                     width="100%"
                     height={iframeHeight}
-                    src={`https://www.youtube-nocookie.com/embed/${linkId}&autoplay=1;&controls=0`}
+                    src={`https://www.youtube-nocookie.com/embed/${linkId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
                     title="YouTube video player"
                     frameBorder="0"
-                    allow="autoplay; encrypted-media"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowFullScreen
                   ></iframe>
                 </div>
               )}
