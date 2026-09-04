@@ -19,11 +19,10 @@ import {
   IoQrCodeOutline,
   IoShareSocialOutline,
 } from "react-icons/io5";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
 import GraphemeSplitter from "grapheme-splitter";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { getOptimizedPhotoUrl } from "../data/cloudinary";
 const languageCodes = {
@@ -128,73 +127,67 @@ function DetailsModal({
     }
   }
 
-  const [ip, setIP] = useState("");
-
-  const getData = async () => {
-    try {
-      const res = await axios.get("https://api.ipify.org/?format=json");
-      setIP(res.data.ip);
-    } catch (error) {
-      console.error("Error fetching address:", error);
-      return "blocked";
-    }
-  };
-
-  useEffect(() => {
-    getData();
-  }, []);
-
   const MAX_STORAGE_SIZE = 1000;
+  const readRequestsInFlight = useRef(new Set());
+  const [displayedReads, setDisplayedReads] = useState(0);
+  const [opened, setOpened] = useState(false);
 
-  const clearStorageIfNeeded = () => {
-    const storedData = localStorage.getItem("readLetters");
-    if (storedData) {
-      const readLetters = JSON.parse(storedData);
-      // console.log('Read letters:', readLetters.length);
-      if (readLetters.length >= MAX_STORAGE_SIZE) {
-        // console.log('Reached max storage size, clearing localStorage');
-        localStorage.removeItem("readLetters");
-      }
-    } else {
-      // console.log('No readLetters found in localStorage');
+  useEffect(() => {
+    setDisplayedReads(parseInt(selectedLetter?.reads, 10) || 0);
+  }, [selectedLetter?._id, selectedLetter?.reads]);
+
+  const getReadLetters = () => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("readLetters") || "[]");
+      return Array.isArray(stored) ? stored : [];
+    } catch (error) {
+      localStorage.removeItem("readLetters");
+      return [];
     }
   };
 
-  useEffect(() => {
-    clearStorageIfNeeded();
-  }, []);
+  const getReaderId = () => {
+    const storageKey = "lettersToCasperReaderId";
+    let readerId = localStorage.getItem(storageKey);
+    if (!readerId) {
+      readerId =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(storageKey, readerId);
+    }
+    return readerId;
+  };
 
   const incrementReads = async () => {
     if (selectedLetter && !selectedLetter.preview) {
-      // Check if the letter ID is already in localStorage
-      const readLetters = JSON.parse(localStorage.getItem("readLetters")) || [];
+      const letterIdToCount = selectedLetter._id;
+      let readLetters = getReadLetters();
 
-      if (readLetters.includes(selectedLetter._id)) {
-        // console.log('Letter already read in this session');
+      if (readLetters.length >= MAX_STORAGE_SIZE) {
+        localStorage.removeItem("readLetters");
+        readLetters = [];
+      }
+
+      if (
+        readLetters.includes(letterIdToCount) ||
+        readRequestsInFlight.current.has(letterIdToCount)
+      ) {
         return;
       }
 
-      const storedData = localStorage.getItem("readLetters");
-      if (storedData) {
-        const readLetters = JSON.parse(storedData);
-        // console.log('Read letters:', readLetters.length);
-        if (readLetters.length >= MAX_STORAGE_SIZE) {
-          // console.log('Reached max storage size, clearing localStorage');
-          localStorage.removeItem("readLetters");
-        }
-      } else {
-        // console.log('No readLetters found in localStorage');
-      }
+      readRequestsInFlight.current.add(letterIdToCount);
 
       try {
         const response = await fetch(
-          `${render_url}/${selectedLetter._id}/read`,
+          `${render_url}/${letterIdToCount}/read`,
           {
             method: "POST",
             headers: {
               "x-api-key": api_key,
               "Content-Type": "application/json",
             },
+            body: JSON.stringify({ readerId: getReaderId() }),
           }
         );
 
@@ -202,23 +195,28 @@ function DetailsModal({
           throw new Error("Failed to update reads count");
         }
 
-        // Update localStorage to mark the letter as read
-        readLetters.push(selectedLetter._id);
+        const result = await response.json().catch(() => ({}));
+        readLetters.push(letterIdToCount);
         localStorage.setItem("readLetters", JSON.stringify(readLetters));
-
-        // console.log('Read count incremented');
+        setDisplayedReads((current) => {
+          const serverReads = parseInt(result.reads, 10);
+          if (!Number.isNaN(serverReads)) return serverReads;
+          return result.counted === false ? current : current + 1;
+        });
       } catch (error) {
-        // console.error('Error updating reads count:', error);
+        console.error("Error updating reads count:", error);
+      } finally {
+        readRequestsInFlight.current.delete(letterIdToCount);
       }
     }
   };
 
   useEffect(() => {
-    if (ip) {
+    if (showDetailsModal && opened && selectedLetter?._id) {
       incrementReads();
     }
     // eslint-disable-next-line
-  }, [ip]);
+  }, [showDetailsModal, opened, selectedLetter?._id]);
 
   const formatTimestamp = (timestamp) => {
     const options = {
@@ -391,8 +389,6 @@ function DetailsModal({
   }, []);
 
   // Envelope-opening intro animation
-  const [opened, setOpened] = useState(false);
-
   useEffect(() => {
     if (!showDetailsModal || !selectedLetter) {
       setOpened(false);
@@ -608,7 +604,7 @@ function DetailsModal({
               <span className="letter-envelope__hint">opening a letter…</span>
             </div>
           ) : (
-            <div className="letter-paper" onClick={incrementReads}>
+            <div className="letter-paper">
               <div className="letter-paper__head">
                 <div className="letter-info" style={{ marginBottom: "4px" }}>
                   <Typewriter
@@ -809,7 +805,7 @@ function DetailsModal({
                 <span className="letter-meta-sep">·</span>
                 <span className="letter-paper__reads">
                   <i className="las la-eye fade-icon letter-paper__reads-eye" />
-                  {formatReadsCount(selectedLetter.reads)}
+                  {formatReadsCount(displayedReads)}
                 </span>
 
                 {(hasLocation ||

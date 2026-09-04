@@ -388,6 +388,89 @@ html.night-shift .about-definition { border-color:#393f37; background:#20241d; }
   max-width: 100%;
 }
 
+.night-mode-suggestion {
+  position: absolute;
+  top: calc(100% + 13px);
+  right: 0;
+  z-index: 1050;
+  width: min(245px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 14px 38px 13px 15px;
+  border: 1px solid rgba(126, 164, 255, 0.3);
+  border-radius: 14px;
+  background: #172238;
+  box-shadow: 0 14px 34px rgba(15, 27, 50, 0.24);
+  color: #fff;
+  text-align: left;
+  animation: night-tip-in 0.35s ease both;
+}
+
+.night-mode-suggestion::before {
+  position: absolute;
+  top: -7px;
+  right: 18px;
+  width: 13px;
+  height: 13px;
+  border-top: 1px solid rgba(126, 164, 255, 0.3);
+  border-left: 1px solid rgba(126, 164, 255, 0.3);
+  background: #172238;
+  content: "";
+  transform: rotate(45deg);
+}
+
+.night-mode-suggestion strong,
+.night-mode-suggestion span {
+  display: block;
+}
+
+.night-mode-suggestion strong {
+  font-size: 12px;
+}
+
+.night-mode-suggestion span {
+  margin-top: 4px;
+  color: #bdc9dc;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.night-mode-suggestion__close {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #aebbd0;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.night-mode-suggestion__action {
+  margin-top: 10px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #3772ff;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@keyframes night-tip-in {
+  from { opacity: 0; transform: translateY(-5px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .night-mode-suggestion { animation: none; }
+}
+
 .messages-count {
   display: inline-flex;
   align-items: center;
@@ -3715,8 +3798,14 @@ html.night-shift .letter-paper__body {
   color: #e7e1cf;
 }
 
-html.night-shift .letter-paper .letter-info strong {
-  color: #f4eedc;
+html.night-shift .letter-paper .letter-info .Typewriter__wrapper,
+html.night-shift .letter-paper__body .Typewriter__wrapper {
+  color: #e7e1cf;
+}
+
+html.night-shift .letter-paper .letter-info strong,
+html.night-shift .letter-paper .letter-info .Typewriter__wrapper strong {
+  color: #fffaf0;
 }
 
 html.night-shift .letter-paper__body {

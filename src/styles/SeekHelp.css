@@ -26,4 +26,5 @@ html.night-shift .help-page{background:radial-gradient(circle at 85% 5%,rgba(80,
   .help-advocate-grid article > img { width:42px; height:42px; margin:auto; border-radius:10px; }
   .help-advocate-grid article > div { text-align:center; }
   .help-advocate-grid article span { justify-content:center; margin-top:5px; }
+  .help-page { flex:0 0 100vw; width:100vw; max-width:100vw; }
 }
