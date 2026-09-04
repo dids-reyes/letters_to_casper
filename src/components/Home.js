@@ -89,6 +89,17 @@ function Home() {
       return false;
     }
   });
+  const [isLateNight, setIsLateNight] = useState(() => {
+    const hour = new Date().getHours();
+    return hour >= 23 || hour < 5;
+  });
+  const [nightTipDismissed, setNightTipDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem("nightModeTipDismissed") === "true";
+    } catch (error) {
+      return false;
+    }
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle("night-shift", nightShift);
@@ -98,6 +109,24 @@ function Home() {
       /* storage unavailable */
     }
   }, [nightShift]);
+
+  useEffect(() => {
+    const updateLateNight = () => {
+      const hour = new Date().getHours();
+      setIsLateNight(hour >= 23 || hour < 5);
+    };
+    const intervalId = window.setInterval(updateLateNight, 60000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  const dismissNightModeTip = () => {
+    setNightTipDismissed(true);
+    try {
+      sessionStorage.setItem("nightModeTipDismissed", "true");
+    } catch (error) {
+      /* storage unavailable */
+    }
+  };
   const scrollFrame = useRef(null);
 
   useEffect(() => {
@@ -678,6 +707,27 @@ function Home() {
             )}
           </button>
           </div>
+          {isLateNight && !nightShift && !nightTipDismissed && (
+            <aside className="night-mode-suggestion" role="status">
+              <button
+                type="button"
+                className="night-mode-suggestion__close"
+                onClick={dismissNightModeTip}
+                aria-label="Dismiss Night Mode suggestion"
+              >
+                ×
+              </button>
+              <strong>Still up?</strong>
+              <span>Night Mode may feel easier on your eyes.</span>
+              <button
+                type="button"
+                className="night-mode-suggestion__action"
+                onClick={() => setNightShift(true)}
+              >
+                Turn on Night Mode
+              </button>
+            </aside>
+          )}
           {showOrigins && (
             <div
               id="origins-panel"
