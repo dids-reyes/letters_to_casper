@@ -1,13 +1,11 @@
 import React, {createContext, useEffect, useState} from 'react';
 
 const ADMIN_SESSION_KEY = 'ltc-admin-session';
-const ADMIN_SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
-
 const readAdminSession = () => {
   try {
     const storedSession = JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || 'null');
     if (
-      storedSession?.username &&
+      storedSession?.username && storedSession?.sessionToken &&
       Number(storedSession.expiresAt) > Date.now()
     ) {
       return storedSession;
@@ -26,6 +24,7 @@ const readAdminSession = () => {
 const AuthContext = createContext({
   isLoggedIn: false,
   adminName: '',
+  sessionToken: '',
   login: () => {},
   logout: () => {},
 });
@@ -33,10 +32,11 @@ const AuthContext = createContext({
 const AuthProvider = ({children}) => {
   const [session, setSession] = useState(readAdminSession);
 
-  const login = username => {
+  const login = ({username, sessionToken, expiresAt}) => {
     const nextSession = {
       username: String(username || '').trim(),
-      expiresAt: Date.now() + ADMIN_SESSION_DURATION,
+      sessionToken,
+      expiresAt: Number(expiresAt),
     };
     try {
       localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(nextSession));
@@ -74,6 +74,7 @@ const AuthProvider = ({children}) => {
       value={{
         isLoggedIn: Boolean(session),
         adminName: session?.username || '',
+        sessionToken: session?.sessionToken || '',
         login,
         logout,
       }}

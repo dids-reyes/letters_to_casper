@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, {useState, useEffect, useContext, useCallback} from 'react';
 import {AuthContext} from '../AuthContext';
 import Lottie from 'react-lottie-player';
 import locked from '../lotties/locked.json';
@@ -8,16 +8,32 @@ import {Link} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
 import '../styles/AdminPortal.css';
 import {getOptimizedPhotoUrl} from '../data/cloudinary';
-import {IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoMailUnreadOutline, IoShieldCheckmarkOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
+import {IoAddCircleOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoMailUnreadOutline, IoSearchOutline, IoShieldCheckmarkOutline, IoStarOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
 
 function AdminPortal() {
-  const {isLoggedIn, adminName} = useContext(AuthContext);
+  const {isLoggedIn, adminName, sessionToken, logout} = useContext(AuthContext);
+  const canManageFeatured = adminName.toLowerCase() === 'didsirwynreyes';
+
+  const adminHeaders = useCallback(extraHeaders => ({
+    'x-api-key': api_key,
+    Authorization: `Bearer ${sessionToken}`,
+    ...extraHeaders,
+  }), [sessionToken]);
 
   const [letters, setLetters] = useState({
     messages: [],
     counts: {approved: 0, unapproved: 0},
   });
   const [loading, setLoading] = useState(0);
+  const [activeSection, setActiveSection] = useState('review');
+  const [featuredLetters, setFeaturedLetters] = useState([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [featuredQuery, setFeaturedQuery] = useState('');
+  const [featuredResults, setFeaturedResults] = useState([]);
+  const [featuredSearching, setFeaturedSearching] = useState(false);
+  const [featuredActionId, setFeaturedActionId] = useState('');
+  const [featuredError, setFeaturedError] = useState('');
+  const [featuredToRemove, setFeaturedToRemove] = useState(null);
 
   const formatReviewTimestamp = timestamp =>
     new Date(timestamp).toLocaleString('en-US', {
@@ -35,14 +51,17 @@ function AdminPortal() {
       .join(', ');
 
   useEffect(() => {
+    if (!sessionToken) return undefined;
     const fetchLetters = async () => {
       setLoading(1);
       try {
         const response = await fetch(`${render_url}/api/messages/unapproved`, {
-          headers: {
-            'x-api-key': api_key,
-          },
+          headers: adminHeaders(),
         });
+        if (response.status === 401) {
+          logout();
+          return;
+        }
         if (!response.ok) {
           throw new Error('Failed to fetch letters');
         }
@@ -56,7 +75,101 @@ function AdminPortal() {
     };
 
     fetchLetters();
-  }, []);
+  }, [adminHeaders, logout, sessionToken]);
+
+  useEffect(() => {
+    if (!sessionToken) return undefined;
+    const fetchFeaturedLetters = async () => {
+      setFeaturedLoading(true);
+      try {
+        const response = await fetch(`${render_url}/api/messages/featured/manage`, {
+          headers: adminHeaders(),
+        });
+        if (response.status === 401) {
+          logout();
+          return;
+        }
+        if (!response.ok) throw new Error('Failed to fetch featured letters');
+        const data = await response.json();
+        setFeaturedLetters(data.messages || []);
+      } catch (error) {
+        console.error('Error fetching featured letters:', error);
+        setFeaturedError('Couldn’t load featured letters.');
+      } finally {
+        setFeaturedLoading(false);
+      }
+    };
+    fetchFeaturedLetters();
+  }, [adminHeaders, logout, sessionToken]);
+
+  useEffect(() => {
+    if (!sessionToken) return undefined;
+    const query = featuredQuery.trim();
+    if (query.length < 2) {
+      setFeaturedResults([]);
+      setFeaturedSearching(false);
+      return undefined;
+    }
+    const controller = new AbortController();
+    setFeaturedSearching(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `${render_url}/api/messages/featured/search?q=${encodeURIComponent(query)}`,
+          {headers: adminHeaders(), signal: controller.signal},
+        );
+        if (response.status === 401) {
+          logout();
+          return;
+        }
+        if (!response.ok) throw new Error('Search failed');
+        const data = await response.json();
+        setFeaturedResults(data.messages || []);
+        setFeaturedSearching(false);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setFeaturedError('Couldn’t search letters right now.');
+          setFeaturedSearching(false);
+        }
+      }
+    }, 500);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [adminHeaders, featuredQuery, logout, sessionToken]);
+
+  const updateFeaturedLetter = async (letter, action) => {
+    if (!canManageFeatured) return;
+    setFeaturedActionId(letter._id);
+    setFeaturedError('');
+    try {
+      const response = await fetch(`${render_url}/api/messages/featured/${action}`, {
+        method: 'POST',
+        headers: adminHeaders({'Content-Type': 'application/json'}),
+        body: JSON.stringify({letterId: letter._id}),
+      });
+      if (response.status === 401) {
+        logout();
+        return;
+      }
+      if (!response.ok) throw new Error(`Failed to ${action} featured letter`);
+      if (action === 'add') {
+        const data = await response.json();
+        setFeaturedLetters(current => [
+          data.message,
+          ...current.filter(item => item._id !== data.message._id),
+        ]);
+      } else {
+        setFeaturedLetters(current => current.filter(item => item._id !== letter._id));
+        setFeaturedToRemove(null);
+      }
+    } catch (error) {
+      setFeaturedError(`Couldn’t ${action === 'add' ? 'feature' : 'remove'} this letter.`);
+    } finally {
+      setFeaturedActionId('');
+    }
+  };
 
   const [selectedLetters, setSelectedLetters] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -91,11 +204,15 @@ function AdminPortal() {
       const response = await fetch(`${render_url}/api/messages/approve`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': api_key,
+          ...adminHeaders({'Content-Type': 'application/json'}),
         },
         body: JSON.stringify({letterIds: approvableLetters}),
       });
+
+      if (response.status === 401) {
+        logout();
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to approve letters');
@@ -124,11 +241,15 @@ function AdminPortal() {
       const response = await fetch(`${render_url}/api/messages/delete`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': api_key,
+          ...adminHeaders({'Content-Type': 'application/json'}),
         },
         body: JSON.stringify({letterIds: selectedLetters}),
       });
+
+      if (response.status === 401) {
+        logout();
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to delete letters');
@@ -223,6 +344,15 @@ function AdminPortal() {
           <div className="admin-portal-count"><IoMailUnreadOutline /><strong>{letters.length}</strong><span>Waiting</span></div>
         </div>
       </header>
+      <nav className="admin-workspace-tabs" aria-label="Admin portal sections">
+        <button className={activeSection === 'review' ? 'is-active' : ''} onClick={() => setActiveSection('review')}>
+          <IoMailUnreadOutline /> Review Queue <span>{letters.length || 0}</span>
+        </button>
+        <button className={activeSection === 'featured' ? 'is-active' : ''} onClick={() => setActiveSection('featured')}>
+          <IoStarOutline /> Featured Letters <span>{featuredLetters.length}</span>
+        </button>
+      </nav>
+      {activeSection === 'review' && <>
       {loading === 1 && <p className="admin-portal-status">Loading letters…</p>}
       {loading === 2 && <p className="admin-portal-status is-error">Couldn’t load the review queue.</p>}
 
@@ -286,6 +416,84 @@ function AdminPortal() {
         </ul>
       )}
       {letters.length === 0 && !loading && <div className="admin-portal-empty"><IoCheckmarkCircleOutline /><strong>Queue cleared</strong><p>No letters are waiting for review.</p></div>}
+      </>}
+      {activeSection === 'featured' && (
+        <section className="featured-manager">
+          <header className="featured-manager__header">
+            <div><span>Collection curation</span><h2>Featured letters</h2><p>Choose the letters highlighted in the public Featured collection.</p></div>
+            <div className="featured-manager__count"><IoStarOutline /><strong>{featuredLetters.length}</strong><span>Featured</span></div>
+          </header>
+
+          <div className="featured-search">
+            <IoSearchOutline aria-hidden="true" />
+            <input value={featuredQuery} onChange={event => setFeaturedQuery(event.target.value)} placeholder="Search sender, recipient, or message" aria-label="Search approved letters" />
+            {featuredSearching && <span className="featured-search__spinner" aria-label="Searching" />}
+          </div>
+          {featuredError && <p className="featured-manager__error" role="alert">{featuredError}</p>}
+          {!canManageFeatured && <p className="featured-manager__access-note"><IoShieldCheckmarkOutline /> You have view-only access to Featured Letters.</p>}
+
+          {featuredQuery.trim().length >= 2 && !featuredSearching && (
+            <div className="featured-search-results">
+              <h3>Search results</h3>
+              {featuredResults.length ? featuredResults.map(letter => {
+                const isAlreadyFeatured = featuredLetters.some(item => item._id === letter._id);
+                return (
+                  <article key={letter._id} className="featured-letter-row">
+                    <div><span>From <strong>{letter.from}</strong> to <strong>{letter.to}</strong></span><p>{letter.message}</p></div>
+                    <button title={!canManageFeatured ? 'Only the featured manager can add letters' : ''} disabled={!canManageFeatured || isAlreadyFeatured || featuredActionId === letter._id} onClick={() => updateFeaturedLetter(letter, 'add')}>
+                      {isAlreadyFeatured ? <><IoCheckmarkCircleOutline /> Featured</> : <><IoAddCircleOutline /> Add</>}
+                    </button>
+                  </article>
+                );
+              }) : <p className="featured-manager__empty">No approved letters matched your search.</p>}
+            </div>
+          )}
+
+          <div className="featured-current">
+            <h3>Currently featured</h3>
+            {featuredLoading ? <p className="featured-manager__empty">Loading featured letters…</p> : featuredLetters.length ? (
+              <div className="featured-current__grid">
+                {featuredLetters.map(letter => (
+                  <article key={letter._id} className="featured-letter-card">
+                    <span className="featured-letter-card__badge"><IoStarOutline /> Featured</span>
+                    <div className="featured-letter-card__names"><span>From <strong>{letter.from}</strong></span><span>To <strong>{letter.to}</strong></span></div>
+                    <p>{letter.message}</p>
+                    <footer><span><IoCalendarOutline /> {formatReviewTimestamp(letter.timestamp)}</span><button title={!canManageFeatured ? 'Only the featured manager can remove letters' : ''} disabled={!canManageFeatured || featuredActionId === letter._id} onClick={() => setFeaturedToRemove(letter)}><IoTrashOutline /> Remove</button></footer>
+                  </article>
+                ))}
+              </div>
+            ) : <p className="featured-manager__empty">No letters are featured yet. Search above to add one.</p>}
+          </div>
+        </section>
+      )}
+      {featuredToRemove && (
+        <div className="admin-delete-overlay" onClick={() => {
+          if (!featuredActionId) setFeaturedToRemove(null);
+        }}>
+          <section
+            className="admin-delete-dialog featured-remove-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="featured-remove-title"
+            onClick={event => event.stopPropagation()}
+          >
+            <span className="featured-remove-dialog__icon" aria-hidden="true"><IoStarOutline /></span>
+            <span className="featured-remove-dialog__eyebrow">Featured collection</span>
+            <h2 id="featured-remove-title">Remove this featured letter?</h2>
+            <p>It will remain publicly available, but it will no longer appear in the Featured collection.</p>
+            <div className="featured-remove-dialog__letter">
+              <span>From <strong>{featuredToRemove.from}</strong></span>
+              <span>To <strong>{featuredToRemove.to}</strong></span>
+            </div>
+            <div className="admin-delete-dialog__actions">
+              <button type="button" className="admin-delete-dialog__cancel" onClick={() => setFeaturedToRemove(null)} disabled={featuredActionId === featuredToRemove._id}>Keep featured</button>
+              <button type="button" className="featured-remove-dialog__confirm" onClick={() => updateFeaturedLetter(featuredToRemove, 'remove')} disabled={featuredActionId === featuredToRemove._id}>
+                <IoTrashOutline /> {featuredActionId === featuredToRemove._id ? 'Removing…' : 'Remove from Featured'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {showDeleteConfirm && (
         <div className="admin-delete-overlay" onClick={closeDeleteConfirm}>
           <section

@@ -46,7 +46,12 @@ function Admin() {
         const {error} = await response.json();
         throw new Error(error);
       }
-      login(username);
+      const session = await response.json();
+      login({
+        username: session.username || username,
+        sessionToken: session.sessionToken,
+        expiresAt: session.expiresAt,
+      });
       navigate('/admin_portal');
     } catch (error) {
       setError(error.message);
