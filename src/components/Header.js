@@ -1,6 +1,5 @@
 import React, {useState, useEffect} from 'react';
 import logo from '../lotties/ltc_logo_1.webp';
-import {Tooltip} from 'react-tooltip';
 import Typewriter from 'typewriter-effect';
 import {FiSearch} from 'react-icons/fi';
 import {alt_letters} from '../data/alt_letters';
@@ -71,12 +70,6 @@ function Header({searchTerm, handleSearchChange, isCompact = false}) {
       <div className="search-bar">
         <div
           className="search-field"
-          // eslint-disable-next-line
-          data-tooltip-id="search_tooltip"
-          data-tooltip-html="Try searching your name; <br/>you might find an open letter written for you."
-          data-tooltip-place="left-center"
-          data-tooltip-delay-show={2000}
-          data-tooltip-variant="info"
         >
           <FiSearch className="search-icon" aria-hidden="true" />
           <input
@@ -88,7 +81,6 @@ function Header({searchTerm, handleSearchChange, isCompact = false}) {
             aria-label="Search letters"
           />
         </div>
-        <Tooltip id="search_tooltip" />
       </div>
     </div>
   );

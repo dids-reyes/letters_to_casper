@@ -8,10 +8,10 @@ import {Link} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
 import '../styles/AdminPortal.css';
 import {getOptimizedPhotoUrl} from '../data/cloudinary';
-import {IoCalendarOutline, IoCheckmarkCircleOutline, IoImageOutline, IoLocationOutline, IoMailUnreadOutline, IoShieldCheckmarkOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
+import {IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoMailUnreadOutline, IoShieldCheckmarkOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
 
 function AdminPortal() {
-  const {isLoggedIn} = useContext(AuthContext);
+  const {isLoggedIn, adminName} = useContext(AuthContext);
 
   const [letters, setLetters] = useState({
     messages: [],
@@ -79,7 +79,10 @@ function AdminPortal() {
   };
 
   const handleApproveLetters = async () => {
-    if (!selectedLetters.length) {
+    const approvableLetters = selectedLetters.filter(id =>
+      letters.some(letter => letter._id === id && !letter.burnRequested),
+    );
+    if (!approvableLetters.length) {
       alert('Please select at least one letter to approve.');
       return;
     }
@@ -91,7 +94,7 @@ function AdminPortal() {
           'Content-Type': 'application/json',
           'x-api-key': api_key,
         },
-        body: JSON.stringify({letterIds: selectedLetters}),
+        body: JSON.stringify({letterIds: approvableLetters}),
       });
 
       if (!response.ok) {
@@ -99,7 +102,7 @@ function AdminPortal() {
       }
 
       const updatedLetters = letters.filter(
-        letter => !selectedLetters.includes(letter._id),
+        letter => !approvableLetters.includes(letter._id),
       );
       setLetters(updatedLetters);
       setSelectedLetters([]);
@@ -207,7 +210,13 @@ function AdminPortal() {
       <header className="admin-portal-header">
         <div className="admin-portal-header__brand">
           <img className="admin-portal-logo" src={logo} alt="Letters to Casper" />
-          <span><IoShieldCheckmarkOutline /> Admin workspace</span>
+          <span className="admin-identity">
+            <IoShieldCheckmarkOutline />
+            <span className="admin-identity__copy">
+              <small>Signed in as</small>
+              <strong>{adminName || 'Admin'}</strong>
+            </span>
+          </span>
         </div>
         <div className="admin-portal-header__intro">
           <div><span>Letter review</span><h1>Pending letters</h1><p>Review the queue and decide what joins the collection.</p></div>
@@ -253,6 +262,7 @@ function AdminPortal() {
                     <span><strong>From</strong>{letter.from}</span>
                     <span><strong>To</strong>{letter.to}</span>
                     {letter.photo?.url && <span className="letter-photo-badge"><IoImageOutline /> Photo</span>}
+                    {letter.burnRequested && <span className="letter-burn-badge"><IoFlameOutline /> Burned by author</span>}
                   </div>
                   <div className="letter-review-box__meta">
                     <span><IoCalendarOutline />{formatReviewTimestamp(letter.timestamp)}</span>

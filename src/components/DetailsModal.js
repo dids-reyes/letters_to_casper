@@ -41,9 +41,43 @@ const languageCodes = {
   welsh: "cy",
 };
 
+const philippineLanguageNames = new Set([
+  "bicolano",
+  "bikol",
+  "cebuano",
+  "filipino",
+  "hiligaynon",
+  "ilocano",
+  "kapampangan",
+  "pangasinan",
+  "tagalog",
+  "waray",
+]);
+
+const philippineLanguageWords = new Set([
+  // Cebuano
+  "amping", "dili", "gyud", "imong", "kaayo", "mao", "nimo", "ngano", "unsa",
+  // Ilocano
+  "adu", "agyaman", "haan", "kayat", "ken", "manen", "nak", "sika",
+  // Hiligaynon
+  "gid", "indi", "palangga", "salamat", "sang", "saon", "subong",
+  // Waray
+  "diri", "gud", "hain", "hira", "kasingkasing", "waray",
+  // Bikol
+  "dai", "marhay", "ngonian", "oragon", "pirmi",
+  // Kapampangan and Pangasinan
+  "ali", "kaluguran", "kening", "masanting", "neka", "walay",
+]);
+
+const hasPhilippineLanguageSignals = text => {
+  const words = String(text || "").toLocaleLowerCase("en").match(/\p{L}+/gu) || [];
+  return new Set(words.filter(word => philippineLanguageWords.has(word))).size >= 2;
+};
+
 const detectForeignLanguage = (languageDetector, text) => {
   const cleanText = String(text || "").replace(/https?:\/\/\S+/g, " ").trim();
   if (cleanText.replace(/[^\p{L}]/gu, "").length < 20) return null;
+  if (hasPhilippineLanguageSignals(cleanText)) return null;
 
   const scriptLanguages = [
     [/\p{Script=Hiragana}|\p{Script=Katakana}/gu, "japanese", "ja"],
@@ -64,13 +98,18 @@ const detectForeignLanguage = (languageDetector, text) => {
   if (!matches.length) return null;
 
   const [name, confidence] = matches[0];
-  const likelyEnglishOrTagalog = matches.some(
+  const likelyEnglishOrPhilippineLanguage = matches.some(
     ([candidate, score]) =>
-      (candidate === "english" || candidate === "tagalog") &&
+      (candidate === "english" || philippineLanguageNames.has(candidate)) &&
       confidence - score < 0.055
   );
   const code = languageCodes[name];
-  if (likelyEnglishOrTagalog || !code || confidence < 0.12) return null;
+  if (
+    philippineLanguageNames.has(name) ||
+    likelyEnglishOrPhilippineLanguage ||
+    !code ||
+    confidence < 0.12
+  ) return null;
   return { name, code };
 };
 

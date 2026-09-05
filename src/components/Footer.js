@@ -5,10 +5,6 @@ function Footer() {
   return (
     <footer className="footer">
       <div className="footer-content">
-        <p>
-          If you want to request deletion of your post, contact us at{" "}
-          letters2casper@gmail.com{" "}
-        </p>
         <nav className="footer-nav" aria-label="Footer navigation">
           <Link
             to="/seek_help"
