@@ -13,7 +13,7 @@ function Admin() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {setIsLoggedIn} = useContext(AuthContext);
+  const {login} = useContext(AuthContext);
 
   const navigate = useNavigate();
 
@@ -46,7 +46,7 @@ function Admin() {
         const {error} = await response.json();
         throw new Error(error);
       }
-      setIsLoggedIn(true);
+      login(username);
       navigate('/admin_portal');
     } catch (error) {
       setError(error.message);

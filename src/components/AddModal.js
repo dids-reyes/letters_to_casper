@@ -1,11 +1,12 @@
 import React, {useMemo, useRef, useState, useEffect} from 'react';
-import {BsX} from 'react-icons/bs';
+import {BsCheck2, BsClipboard, BsX} from 'react-icons/bs';
 import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
 import {
   IoContractOutline,
   IoExpandOutline,
   IoImageOutline,
+  IoShareSocialOutline,
   IoShieldCheckmarkOutline,
   IoTrashOutline,
 } from 'react-icons/io5';
@@ -26,6 +27,11 @@ function AddModal({
   const [showPreview, setShowPreview] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showSubmissionNotice, setShowSubmissionNotice] = useState(false);
+  const [showShareCelebration, setShowShareCelebration] = useState(false);
+  const [siteShareStatus, setSiteShareStatus] = useState('');
+  const [submittedBurnKey, setSubmittedBurnKey] = useState('');
+  const [burnKeyCopied, setBurnKeyCopied] = useState(false);
+  const [showBurnKeyHint, setShowBurnKeyHint] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitProgress, setSubmitProgress] = useState(0);
@@ -94,6 +100,9 @@ function AddModal({
     });
 
     if (submitted) {
+      setSubmittedBurnKey(submitted.burnKey || '');
+      setBurnKeyCopied(false);
+      setShowBurnKeyHint(false);
       setSubmitProgress(100);
       setSubmitStatus('Letter sent');
       await new Promise(resolve => setTimeout(resolve, 350));
@@ -107,6 +116,65 @@ function AddModal({
       toggleAddModal();
       setShowSubmissionNotice(true);
       displayDirectLinkAds();
+    }
+  };
+
+  const copyBurnKey = async () => {
+    if (!submittedBurnKey) return;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(submittedBurnKey);
+      } else {
+        const copyField = document.createElement('textarea');
+        copyField.value = submittedBurnKey;
+        copyField.setAttribute('readonly', '');
+        copyField.style.position = 'fixed';
+        copyField.style.opacity = '0';
+        document.body.appendChild(copyField);
+        copyField.select();
+        document.execCommand('copy');
+        document.body.removeChild(copyField);
+      }
+      setBurnKeyCopied(true);
+      setShowBurnKeyHint(false);
+    } catch (error) {
+      setBurnKeyCopied(false);
+    }
+  };
+
+  const finishSubmissionNotice = () => {
+    setShowSubmissionNotice(false);
+    setShowShareCelebration(true);
+    setSiteShareStatus('');
+  };
+
+  const shareWebsite = async () => {
+    const shareData = {
+      title: 'Letters to Casper',
+      text: 'A quiet place for words we carry. Read a letter or leave one of your own.',
+      url: window.location.origin,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setSiteShareStatus('Thanks for sharing the warmth.');
+      } else if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareData.url);
+        setSiteShareStatus('Website link copied. Share it with someone who may need it.');
+      } else {
+        const copyField = document.createElement('textarea');
+        copyField.value = shareData.url;
+        copyField.setAttribute('readonly', '');
+        copyField.style.position = 'fixed';
+        copyField.style.opacity = '0';
+        document.body.appendChild(copyField);
+        copyField.select();
+        document.execCommand('copy');
+        document.body.removeChild(copyField);
+        setSiteShareStatus('Website link copied. Share it with someone who may need it.');
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') setSiteShareStatus('Sharing is unavailable right now.');
     }
   };
 
@@ -563,7 +631,9 @@ function AddModal({
       {showSubmissionNotice && (
         <div
           className="submit-confirm-overlay submission-notice-overlay"
-          onClick={() => setShowSubmissionNotice(false)}
+          onClick={() => {
+            if (!submittedBurnKey) setShowSubmissionNotice(false);
+          }}
         >
           <div
             className="submit-confirm-dialog submission-notice-dialog"
@@ -589,18 +659,78 @@ function AddModal({
               <li>Possible spam, abuse, and harmful content are flagged for review.</li>
               <li>Once approved, you can open your letter and share its link.</li>
             </ul>
+            {submittedBurnKey && (
+              <div className="submission-burn-key">
+                <div>
+                  <span>Your private burn key</span>
+                  <strong>{submittedBurnKey}</strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={copyBurnKey}
+                  aria-label="Copy burn key"
+                  aria-describedby={showBurnKeyHint && !burnKeyCopied ? 'burn-key-copy-hint' : undefined}
+                >
+                  {burnKeyCopied ? <BsCheck2 /> : <BsClipboard />}
+                </button>
+                {showBurnKeyHint && !burnKeyCopied && (
+                  <span id="burn-key-copy-hint" className="submission-burn-key-hint" role="tooltip">
+                    Copy this burn key first
+                  </span>
+                )}
+                <p>Save this somewhere private or put it in your notes. It is shown only once and lets you remove your letter after it is approved.</p>
+                {burnKeyCopied && <small role="status">Burn key copied</small>}
+              </div>
+            )}
             <p className="submission-notice-footnote">
               Check back soon by searching for the name used in your letter.
             </p>
             <button
               type="button"
-              className="submission-notice-done"
-              onClick={() => setShowSubmissionNotice(false)}
+              className={`submission-notice-done${submittedBurnKey && !burnKeyCopied ? ' is-locked' : ''}`}
+              aria-disabled={submittedBurnKey && !burnKeyCopied}
+              onClick={() => {
+                if (submittedBurnKey && !burnKeyCopied) {
+                  setShowBurnKeyHint(true);
+                  return;
+                }
+                finishSubmissionNotice();
+              }}
               autoFocus
             >
-              Got it
+              {submittedBurnKey ? 'I’ve saved my key' : 'Got it'}
             </button>
           </div>
+        </div>
+      )}
+      {showShareCelebration && (
+        <div className="submit-confirm-overlay share-celebration-overlay">
+          <section
+            className="share-celebration-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="share-celebration-title"
+          >
+            <div className="share-celebration-achievement" aria-hidden="true">
+              <img
+                src={`${process.env.PUBLIC_URL}/android-chrome-512x512.png`}
+                alt=""
+              />
+            </div>
+            <span className="submission-notice-eyebrow">Thank you for sharing</span>
+            <h2 id="share-celebration-title">Your words made it here.</h2>
+            <p>
+              Help more people find a place for the words they carry. Tell a
+              friend, share Letters to Casper, and follow along for what comes next.
+            </p>
+            <button type="button" className="share-celebration-primary" onClick={shareWebsite}>
+              <IoShareSocialOutline /> Share Letters to Casper
+            </button>
+            {siteShareStatus && <span className="share-celebration-status" role="status">{siteShareStatus}</span>}
+            <button type="button" className="share-celebration-finish" onClick={() => setShowShareCelebration(false)}>
+              Close
+            </button>
+          </section>
         </div>
       )}
     </>

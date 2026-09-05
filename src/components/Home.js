@@ -5,17 +5,20 @@ import AddModal from "./AddModal";
 import Letter from "./Letter";
 import AdComponent from "./AdComponent";
 import DetailsModal from "./DetailsModal";
+import Firefly3D from "./Firefly3D";
 import { AiFillMessage } from "react-icons/ai";
 import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
 import under_construction from "../lotties/under_construction.json";
 import empty from "../lotties/empty2.json";
+import lettersToCasperLogo from "../lotties/ltc_logo_1.webp";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Typewriter from "typewriter-effect";
 import {
   IoArrowUpOutline,
   IoHelpCircleOutline,
+  IoFlameOutline,
   IoInformationCircleOutline,
   IoMailOpenOutline,
   IoMailUnreadOutline,
@@ -35,6 +38,7 @@ import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
+const FIREFLY_ENABLED = false;
 
 const formatCountry = (country) => {
   try {
@@ -65,6 +69,11 @@ function Home() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(1);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+  const [fireflyVisit, setFireflyVisit] = useState(null);
+  const [showBurnLetter, setShowBurnLetter] = useState(false);
+  const [burnKey, setBurnKey] = useState("");
+  const [burnStatus, setBurnStatus] = useState({type: "idle", message: ""});
+  const [isBurning, setIsBurning] = useState(false);
   const [letterGridColumns, setLetterGridColumns] = useState(() => {
     if (window.innerWidth > 1200) return 6;
     if (window.innerWidth > 900) return 4;
@@ -155,6 +164,70 @@ function Home() {
   }, []);
 
   useEffect(() => {
+    if (!FIREFLY_ENABLED || loading !== 0) return undefined;
+
+    let scheduleTimer;
+    let visitTimer;
+    let cancelled = false;
+    const isTestingLocally = process.env.NODE_ENV !== "production";
+
+    const scheduleVisit = (firstVisit = false) => {
+      const delay = isTestingLocally
+        ? firstVisit ? 1200 : 3500
+        : firstVisit
+          ? 12000 + Math.random() * 18000
+          : 45000 + Math.random() * 50000;
+      scheduleTimer = window.setTimeout(beginVisit, delay);
+    };
+
+    const beginVisit = () => {
+      if (cancelled) return;
+      const visibleCards = Array.from(
+        document.querySelectorAll(".letters-container .letter-card")
+      ).map((card) => card.getBoundingClientRect()).filter(
+        (rect) => rect.bottom > 80 && rect.top < window.innerHeight - 55
+      );
+
+      if (visibleCards.length === 0) {
+        scheduleVisit(false);
+        return;
+      }
+
+      const card = visibleCards[Math.floor(Math.random() * visibleCards.length)];
+      const entersFromLeft = Math.random() > 0.5;
+      const startX = entersFromLeft ? -36 : window.innerWidth + 36;
+      const startY = 80 + Math.random() * Math.max(100, window.innerHeight - 180);
+      const restX = card.left + (Math.random() > 0.5 ? card.width * 0.18 : card.width * 0.78);
+      const restY = card.top + 5;
+      const exitX = entersFromLeft ? window.innerWidth + 40 : -40;
+      const exitY = 55 + Math.random() * Math.max(100, window.innerHeight - 140);
+      const duration = isTestingLocally ? 8200 : 9800;
+
+      setFireflyVisit({
+        id: Date.now(), startX, startY, restX, restY, exitX, exitY,
+        direction: entersFromLeft ? 1 : -1,
+        curveOneX: window.innerWidth * (entersFromLeft ? 0.24 : 0.76),
+        curveOneY: Math.max(50, restY - 85 - Math.random() * 70),
+        curveTwoX: restX + (entersFromLeft ? -45 : 45),
+        curveTwoY: restY + 35 + Math.random() * 40,
+        duration,
+      });
+
+      visitTimer = window.setTimeout(() => {
+        setFireflyVisit(null);
+        scheduleVisit(false);
+      }, duration);
+    };
+
+    scheduleVisit(true);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(scheduleTimer);
+      window.clearTimeout(visitTimer);
+    };
+  }, [loading]);
+
+  useEffect(() => {
     const updateLetterGridColumns = () => {
       const nextColumns =
         window.innerWidth > 1200 ? 6 : window.innerWidth > 900 ? 4 : 3;
@@ -169,7 +242,6 @@ function Home() {
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
-    searchLetters();
   };
 
   const [isFeatured, setIsFeatured] = useState(false);
@@ -426,6 +498,7 @@ function Home() {
       if (!response.ok) {
         throw new Error(await getResponseError(response, "Letter submission"));
       } else {
+        const submission = await response.json();
         setLetters((prevState) => ({
           ...prevState,
           messages: [...prevState.messages, messageData],
@@ -433,7 +506,7 @@ function Home() {
         setNewLetter({ from: "", to: "", message: "" });
         onProgress({percent: 100, label: "Letter sent"});
         notify_success();
-        return true;
+        return submission;
       }
     } catch (error) {
       const errorMessage =
@@ -443,6 +516,42 @@ function Home() {
       notify_error(errorMessage);
       console.error("Error adding message:", error);
       return false;
+    }
+  };
+
+  const handleBurnLetter = async event => {
+    event.preventDefault();
+    const normalizedKey = burnKey.trim();
+    if (!normalizedKey) {
+      setBurnStatus({type: "error", message: "Enter the private burn key for your letter."});
+      return;
+    }
+
+    setIsBurning(true);
+    setBurnStatus({type: "idle", message: ""});
+    try {
+      const response = await fetch(`${render_url}/burn`, {
+        method: "POST",
+        headers: {"x-api-key": api_key, "Content-Type": "application/json"},
+        body: JSON.stringify({burnKey: normalizedKey}),
+      });
+      if (!response.ok) throw new Error(await getResponseError(response, "Burn request"));
+      const result = await response.json();
+      setLetters(previous => ({
+        ...previous,
+        messages: previous.messages.filter(letter => letter._id !== result.letterId),
+        counts: {
+          ...previous.counts,
+          approved: Math.max(0, previous.counts.approved - 1),
+          unapproved: previous.counts.unapproved + 1,
+        },
+      }));
+      setBurnKey("");
+      setBurnStatus({type: "success", message: "Your letter has been burned and is no longer public."});
+    } catch (error) {
+      setBurnStatus({type: "error", message: error.message || "The letter could not be burned."});
+    } finally {
+      setIsBurning(false);
     }
   };
 
@@ -503,7 +612,7 @@ function Home() {
     try {
       localStorage.setItem(UI_ANNOUNCEMENT_KEY, "seen");
     } catch (error) {
-      /* Storage may be unavailable; the announcement can still be dismissed. */
+      /* The dialog can still be dismissed when browser storage is unavailable. */
     }
     setShowUiAnnouncement(false);
   };
@@ -546,26 +655,45 @@ function Home() {
     messages: [],
     counts: { approved: 0, unapproved: 0 },
   });
+  const [isSearching, setIsSearching] = useState(false);
 
-  const searchLetters = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${render_url}?search=${searchTerm}`, {
-        headers: {
-          "x-api-key": api_key,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to search letters");
-      }
-      const data = await response.json();
-      setSearchedLetters(data);
-      setLoading(0);
-    } catch (error) {
-      console.error("Error searching letters:", error);
-      setLoading(0);
+  useEffect(() => {
+    const query = searchTerm.trim();
+    if (!query) {
+      setIsSearching(false);
+      setSearchedLetters({messages: [], counts: {approved: 0, unapproved: 0}});
+      return undefined;
     }
-  };
+
+    const controller = new AbortController();
+    setIsSearching(true);
+    const debounceTimer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `${render_url}?search=${encodeURIComponent(query)}`,
+          {
+            headers: {"x-api-key": api_key},
+            signal: controller.signal,
+          },
+        );
+        if (!response.ok) throw new Error("Failed to search letters");
+        const data = await response.json();
+        setSearchedLetters(data);
+        setIsSearching(false);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Error searching letters:", error);
+          setSearchedLetters({messages: [], counts: {approved: 0, unapproved: 0}});
+          setIsSearching(false);
+        }
+      }
+    }, 600);
+
+    return () => {
+      window.clearTimeout(debounceTimer);
+      controller.abort();
+    };
+  }, [searchTerm]);
 
   const searchedResults = searchedLetters.messages.filter((letter) => {
     const { from, to, message } = letter;
@@ -672,6 +800,21 @@ function Home() {
           >
             <CiLocationOn size={21} />
             <span>Origins</span>
+          </button>
+          <button
+            type="button"
+            className="message-stat toolbar-trigger burn-letter-trigger"
+            aria-label="Burn one of your letters"
+            aria-expanded={showBurnLetter}
+            onClick={() => {
+              setShowBurnLetter(true);
+              setShowOrigins(false);
+              setShowAnnouncements(false);
+              setBurnStatus({type: "idle", message: ""});
+            }}
+          >
+            <IoFlameOutline size={21} />
+            <span>Burn</span>
           </button>
           <button
             type="button"
@@ -846,6 +989,67 @@ function Home() {
         </div>
       </div>
       </div>
+      {showBurnLetter && (
+        <div
+          className="burn-letter-overlay"
+          onClick={() => {
+            if (burnStatus.type !== "success") setShowBurnLetter(false);
+          }}
+        >
+          <section
+            className={`burn-letter-dialog${burnStatus.type === "success" ? " is-success" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="burn-letter-title"
+            onClick={event => event.stopPropagation()}
+          >
+            {burnStatus.type !== "success" && (
+              <button type="button" className="burn-letter-close" aria-label="Close" onClick={() => setShowBurnLetter(false)}>×</button>
+            )}
+            {burnStatus.type === "success" ? (
+              <div className="burn-letter-success" role="status">
+                <div className="burn-letter-animation" aria-hidden="true">
+                  <span className="burn-letter-paper" />
+                  <IoFlameOutline className="burn-letter-flame" />
+                  <i /><i /><i /><i />
+                  <span className="burn-letter-achievement">
+                    <img src={`${process.env.PUBLIC_URL}/android-chrome-512x512.png`} alt="" />
+                  </span>
+                </div>
+                <span className="burn-letter-eyebrow">Letter burned</span>
+                <h2 id="burn-letter-title">Your letter is gone.</h2>
+                <p>The letter has turned to ashes. You’re choosing to let go, move forward, and make space for what comes next.</p>
+                <button type="button" onClick={() => setShowBurnLetter(false)}>Move Forward</button>
+              </div>
+            ) : (
+              <>
+                <span className="burn-letter-icon" aria-hidden="true"><IoFlameOutline /></span>
+                <span className="burn-letter-eyebrow">Your letter, your choice</span>
+                <h2 id="burn-letter-title">Burn a letter you wrote</h2>
+                <p>Ready to let go? Enter your secret key to burn this letter and leave the memory behind.</p>
+                <form onSubmit={handleBurnLetter}>
+                  <label htmlFor="burn-letter-key">Secret burn key</label>
+                  <input
+                    id="burn-letter-key"
+                    type="text"
+                    value={burnKey}
+                    onChange={event => setBurnKey(event.target.value)}
+                    placeholder="LTC-••••-••••-••••-••••"
+                    autoComplete="off"
+                    spellCheck="false"
+                    disabled={isBurning}
+                  />
+                  {burnStatus.message && <p className={`burn-letter-status is-${burnStatus.type}`} role="status">{burnStatus.message}</p>}
+                  <button type="submit" disabled={isBurning}>
+                    <IoFlameOutline /> {isBurning ? "Burning letter…" : "Burn my letter"}
+                  </button>
+                </form>
+                <small>Burning removes the letter you wrote.</small>
+              </>
+            )}
+          </section>
+        </div>
+      )}
       <ToastContainer
         containerId="notify"
         position="top-right"
@@ -867,6 +1071,28 @@ function Home() {
         handleAddLetter={handleAddLetter}
         setNewLetter={setNewLetter}
       />
+      {FIREFLY_ENABLED && loading === 0 && fireflyVisit && (
+        <div
+          key={fireflyVisit.id}
+          className="easter-firefly"
+          aria-hidden="true"
+          style={{
+            "--firefly-start-x": `${fireflyVisit.startX}px`,
+            "--firefly-start-y": `${fireflyVisit.startY}px`,
+            "--firefly-curve-one-x": `${fireflyVisit.curveOneX}px`,
+            "--firefly-curve-one-y": `${fireflyVisit.curveOneY}px`,
+            "--firefly-curve-two-x": `${fireflyVisit.curveTwoX}px`,
+            "--firefly-curve-two-y": `${fireflyVisit.curveTwoY}px`,
+            "--firefly-rest-x": `${fireflyVisit.restX}px`,
+            "--firefly-rest-y": `${fireflyVisit.restY}px`,
+            "--firefly-exit-x": `${fireflyVisit.exitX}px`,
+            "--firefly-exit-y": `${fireflyVisit.exitY}px`,
+            "--firefly-duration": `${fireflyVisit.duration}ms`,
+          }}
+        >
+          <Firefly3D duration={fireflyVisit.duration} direction={fireflyVisit.direction} />
+        </div>
+      )}
       {loading === 1 ? (
         <div className="load-letters">
           <center>
@@ -942,7 +1168,13 @@ function Home() {
                 </p>
               </div>
             )}
-            {searchedResults.length > 0 && searchTerm !== "" ? (
+            {isSearching ? (
+              <div className="letter-search-loading" role="status" aria-live="polite">
+                <span className="letter-search-spinner" aria-hidden="true" />
+                <strong>Searching letters…</strong>
+                <p>Waiting for the closest matches.</p>
+              </div>
+            ) : searchedResults.length > 0 && searchTerm !== "" ? (
               renderLettersWithAds(searchedResults)
             ) : searchTerm === "" ? (
               letters.messages.length > 0 ? (
@@ -1017,7 +1249,6 @@ function Home() {
       {showUiAnnouncement && (
         <div
           className="ui-announcement-overlay"
-          onClick={dismissUiAnnouncement}
         >
           <section
             className="ui-announcement-dialog"
@@ -1027,32 +1258,34 @@ function Home() {
             aria-describedby="ui-announcement-message"
             onClick={(event) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              className="ui-announcement-close"
-              onClick={dismissUiAnnouncement}
-              aria-label="Close announcement"
-            >
-              &times;
-            </button>
-            <span className="ui-announcement-icon" aria-hidden="true">
-              <IoInformationCircleOutline size={26} />
+            <span className="ui-announcement-icon ui-announcement-logo" aria-hidden="true">
+              <img src={lettersToCasperLogo} alt="" />
             </span>
-            <span className="ui-announcement-eyebrow">A little update</span>
+            <span className="ui-announcement-eyebrow">A new chapter</span>
             <h2 id="ui-announcement-title">
-              Letters to Casper is getting a fresh look
+              Some letters stay. Some help us let go.
             </h2>
             <p id="ui-announcement-message">
-              We’re thoughtfully refreshing the site’s design and experience.
-              You may notice a few things changing while the work is still
-              ongoing, but everything you love is still here.
+              We’re moving into a new phase, and maybe you are, too. Your letter
+              can stay for as long as you want, but if it no longer belongs in
+              your story, you can choose to burn it and move forward.
             </p>
+            <div className="ui-announcement-highlights">
+              <div>
+                <IoFlameOutline aria-hidden="true" />
+                <span><strong>Leave it, or let it go</strong>Save your private key and use it only if you no longer want the letter to remain.</span>
+              </div>
+              <div>
+                <IoInformationCircleOutline aria-hidden="true" />
+                <span><strong>A gentler experience</strong>Enjoy a refreshed design, cleaner mobile layout, and smoother ways to read and share.</span>
+              </div>
+            </div>
             <button
               type="button"
               className="ui-announcement-action"
               onClick={dismissUiAnnouncement}
             >
-              Got it
+              Move on
             </button>
           </section>
         </div>
