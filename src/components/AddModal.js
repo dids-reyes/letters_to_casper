@@ -678,7 +678,7 @@ function AddModal({
                     Copy this burn key first
                   </span>
                 )}
-                <p>Save this somewhere private or put it in your notes. It is shown only once and lets you remove your letter after it is approved.</p>
+                <p>Save this key in your notes in case you’d like to burn or remove your letter someday.</p>
                 {burnKeyCopied && <small role="status">Burn key copied</small>}
               </div>
             )}
