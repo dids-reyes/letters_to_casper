@@ -84,6 +84,8 @@
 .approve-button { background:linear-gradient(135deg,#3772ff,#2352e6); box-shadow:0 7px 18px rgba(55,114,255,.22); }
 .delete-button { border-color:rgba(255,98,112,.25); background:rgba(201,55,70,.14); color:#ff94a0; }
 .letter-action-button:disabled { opacity:.36; cursor:not-allowed; box-shadow:none; }
+.moderation-remove-button { border-color:rgba(240,177,75,.22); background:rgba(183,120,28,.12); color:#efc37a; }
+.moderation-status { width:min(1050px,100%); box-sizing:border-box; margin:-8px auto 14px; padding:9px 12px; border:1px solid rgba(117,161,255,.13); border-radius:10px; background:rgba(55,114,255,.08); color:#9ab5ef; font-size:9px; text-align:center; }
 
 .letter-review-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; width:min(1050px,100%); margin:0 auto; padding:0; list-style:none; }
 .letter-item { position:relative; min-width:0; }
@@ -101,6 +103,15 @@
 .letter-review-box__meta span { display:inline-flex; align-items:center; gap:5px; }
 .letter-review-box__meta svg { flex:0 0 auto; color:#638ce7; font-size:12px; }
 .letter-review-box > p { margin:18px 0 0; padding-top:15px; border-top:1px solid rgba(157,181,229,.1); color:#aeb8c9; font-family:"Courier New",monospace; font-size:12px; line-height:1.65; white-space:pre-wrap; }
+.letter-moderation-decisions { display:grid; gap:6px; margin-top:15px; padding-top:12px; border-top:1px solid rgba(157,181,229,.1); }
+.letter-moderation-decisions > div { display:flex; align-items:flex-start; gap:7px; padding:8px 9px; border-radius:9px; font-size:9px; line-height:1.4; }
+.letter-moderation-decisions > div > svg { flex:0 0 auto; margin-top:1px; font-size:13px; }
+.letter-moderation-decisions > div span { color:#93a0b3; }
+.letter-moderation-decisions > div strong { color:#dce4f2; font-weight:750; }
+.letter-moderation-decisions > div.is-publish { border:1px solid rgba(81,174,132,.15); background:rgba(48,143,98,.09); }
+.letter-moderation-decisions > div.is-publish > svg { color:#71d2a4; }
+.letter-moderation-decisions > div.is-remove { border:1px solid rgba(235,169,75,.15); background:rgba(177,112,29,.09); }
+.letter-moderation-decisions > div.is-remove > svg { color:#edbd75; }
 .letter-review-photo { display:block; width:min(100%,320px); aspect-ratio:4/3; margin:15px auto 0; border-radius:11px; object-fit:cover; }
 .admin-portal-empty { width:min(420px,calc(100% - 30px)); box-sizing:border-box; margin:70px auto 0; padding:34px; border:1px solid rgba(155,181,240,.14); border-radius:20px; background:rgba(19,29,48,.72); color:#8190a7; text-align:center; }
 .admin-portal-empty svg { color:#70a0ff; font-size:36px; }
