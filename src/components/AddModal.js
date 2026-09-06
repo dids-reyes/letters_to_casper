@@ -4,7 +4,10 @@ import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
 import {
   IoContractOutline,
+  IoCopyOutline,
+  IoChevronDownOutline,
   IoExpandOutline,
+  IoInformationCircleOutline,
   IoImageOutline,
   IoShareSocialOutline,
   IoShieldCheckmarkOutline,
@@ -13,7 +16,49 @@ import {
 import {FaSpotify, FaYoutube} from 'react-icons/fa';
 import DetailsModal from './DetailsModal';
 import { displayDirectLinkAds } from '../data/direct_link';
-import {Tooltip} from 'react-tooltip';
+import {render_url, api_key} from '../data/keys';
+
+const validateSongLink = rawLink => {
+  const value = String(rawLink || '').trim();
+  if (!value) return {valid: true, service: ''};
+  if (/\s|\|/.test(value)) return {valid: false, message: 'Paste only the copied song link without extra text.'};
+
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (url.protocol !== 'https:') return {valid: false, message: 'The song link must start with https://'};
+
+    if (host === 'youtu.be') {
+      const videoId = url.pathname.split('/').filter(Boolean)[0];
+      if (/^[A-Za-z0-9_-]{11}$/.test(videoId || '') && !url.searchParams.has('list')) {
+        return {valid: true, service: 'youtube'};
+      }
+      return {valid: false, message: 'Use the Copy link option for one YouTube video, not a playlist or radio link.'};
+    }
+
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      const videoId = url.pathname === '/watch' ? url.searchParams.get('v') : '';
+      if (/^[A-Za-z0-9_-]{11}$/.test(videoId || '') && !url.searchParams.has('list')) {
+        return {valid: true, service: 'youtube'};
+      }
+      return {valid: false, message: 'YouTube playlists and radio links are not supported. Copy the individual video link.'};
+    }
+
+    if (host === 'open.spotify.com') {
+      const path = url.pathname.split('/').filter(Boolean);
+      if (path.length === 2 && path[0] === 'track' && /^[A-Za-z0-9]{22}$/.test(path[1])) {
+        return {valid: true, service: 'spotify'};
+      }
+      return {valid: false, message: 'Use the Copy link option for one Spotify song, not a playlist, album, or artist.'};
+    }
+
+    return {valid: false, message: 'Only individual YouTube video and Spotify song links are supported.'};
+  } catch (error) {
+    return {valid: false, message: 'This does not look like a complete YouTube or Spotify link.'};
+  }
+};
+
+const EMAIL_NOTIFICATIONS_ENABLED = false;
 
 function AddModal({
   showAddModal,
@@ -25,21 +70,33 @@ function AddModal({
   const fromInputRef = useRef(null);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [showPreviewSuggestion, setShowPreviewSuggestion] = useState(false);
+  const [previewSuggestionShown, setPreviewSuggestionShown] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showSubmissionNotice, setShowSubmissionNotice] = useState(false);
   const [showShareCelebration, setShowShareCelebration] = useState(false);
   const [siteShareStatus, setSiteShareStatus] = useState('');
   const [submittedBurnKey, setSubmittedBurnKey] = useState('');
+  const [submittedLetterId, setSubmittedLetterId] = useState('');
+  const [notificationEmail, setNotificationEmail] = useState('');
+  const [notificationEmailStatus, setNotificationEmailStatus] = useState({type: 'idle', message: ''});
+  const [savingNotificationEmail, setSavingNotificationEmail] = useState(false);
   const [burnKeyCopied, setBurnKeyCopied] = useState(false);
   const [showBurnKeyHint, setShowBurnKeyHint] = useState(false);
+  const [showBurnKeyExplanation, setShowBurnKeyExplanation] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitProgress, setSubmitProgress] = useState(0);
   const [submitStatus, setSubmitStatus] = useState('Preparing…');
   const [activeLinkIcon, setActiveLinkIcon] = useState('youtube');
   const [focusWriterMode, setFocusWriterMode] = useState(false);
+  const [showOptionalExtras, setShowOptionalExtras] = useState(false);
+  const [showLinkGuide, setShowLinkGuide] = useState(false);
+  const [linkGuidePage, setLinkGuidePage] = useState(0);
   const photoInputRef = useRef(null);
   const focusTextareaRef = useRef(null);
+  const linkGuideSwipeStartRef = useRef(null);
+  const songLinkValidation = validateSongLink(newLetter.link);
 
   useEffect(() => {
     if (!showAddModal) {
@@ -48,6 +105,10 @@ function AddModal({
     }
 
     setActiveLinkIcon('youtube');
+    setLinkGuidePage(0);
+    setShowOptionalExtras(false);
+    setShowPreviewSuggestion(false);
+    setPreviewSuggestionShown(false);
     const iconTimer = window.setInterval(() => {
       setActiveLinkIcon(current =>
         current === 'youtube' ? 'spotify' : 'youtube',
@@ -56,6 +117,12 @@ function AddModal({
 
     return () => window.clearInterval(iconTimer);
   }, [showAddModal]);
+
+  useEffect(() => {
+    if (!showPreviewSuggestion) return undefined;
+    const timer = window.setTimeout(() => setShowPreviewSuggestion(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [showPreviewSuggestion]);
 
   useEffect(() => {
     if (!focusWriterMode) return undefined;
@@ -73,12 +140,36 @@ function AddModal({
       !newLetter.from ||
       !newLetter.to ||
       !newLetter.message ||
-      newLetter.message.length < 10;
+      newLetter.message.length < 10 ||
+      !songLinkValidation.valid;
     setIsSubmitDisabled(shouldDisableSubmit);
-  }, [newLetter]);
+  }, [newLetter, songLinkValidation.valid]);
+
+  const openLinkGuide = () => {
+    setLinkGuidePage(0);
+    setShowLinkGuide(true);
+  };
+
+  const startLinkGuideSwipe = event => {
+    linkGuideSwipeStartRef.current = event.clientX;
+  };
+
+  const finishLinkGuideSwipe = event => {
+    if (linkGuideSwipeStartRef.current === null) return;
+    const distance = event.clientX - linkGuideSwipeStartRef.current;
+    linkGuideSwipeStartRef.current = null;
+    if (Math.abs(distance) < 45) return;
+    setLinkGuidePage(page => Math.max(0, Math.min(2, page + (distance < 0 ? 1 : -1))));
+  };
 
   const handleSubmit = () => {
     if (!isSubmitDisabled) {
+      if (!previewSuggestionShown && !showPreview) {
+        setPreviewSuggestionShown(true);
+        setShowPreviewSuggestion(true);
+        return;
+      }
+      setShowPreviewSuggestion(false);
       setShowSubmitConfirm(true);
     }
   };
@@ -101,8 +192,12 @@ function AddModal({
 
     if (submitted) {
       setSubmittedBurnKey(submitted.burnKey || '');
+      setSubmittedLetterId(submitted.letterId || '');
+      setNotificationEmail('');
+      setNotificationEmailStatus({type: 'idle', message: ''});
       setBurnKeyCopied(false);
       setShowBurnKeyHint(false);
+      setShowBurnKeyExplanation(false);
       setSubmitProgress(100);
       setSubmitStatus('Letter sent');
       await new Promise(resolve => setTimeout(resolve, 350));
@@ -142,7 +237,43 @@ function AddModal({
     }
   };
 
-  const finishSubmissionNotice = () => {
+  const saveNotificationEmail = async () => {
+    const email = notificationEmail.trim();
+    if (!email) return true;
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setNotificationEmailStatus({type: 'error', message: 'Enter a valid email address.'});
+      return false;
+    }
+    if (!submittedLetterId || !submittedBurnKey) {
+      setNotificationEmailStatus({type: 'error', message: 'Notification signup is unavailable for this letter.'});
+      return false;
+    }
+
+    setSavingNotificationEmail(true);
+    setNotificationEmailStatus({type: 'idle', message: ''});
+    try {
+      const response = await fetch(`${render_url}/${submittedLetterId}/notification-email`, {
+        method: 'POST',
+        headers: {'x-api-key': api_key, 'Content-Type': 'application/json'},
+        body: JSON.stringify({email, burnKey: submittedBurnKey}),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Could not save your email.');
+      setNotificationEmailStatus({type: 'success', message: 'We’ll email you when your letter is approved.'});
+      return true;
+    } catch (error) {
+      setNotificationEmailStatus({type: 'error', message: error.message});
+      return false;
+    } finally {
+      setSavingNotificationEmail(false);
+    }
+  };
+
+  const finishSubmissionNotice = async () => {
+    if (notificationEmail.trim() && notificationEmailStatus.type !== 'success') {
+      const saved = await saveNotificationEmail();
+      if (!saved) return;
+    }
     setShowSubmissionNotice(false);
     setShowShareCelebration(true);
     setSiteShareStatus('');
@@ -213,6 +344,8 @@ function AddModal({
   };
 
   const togglePreview = () => {
+    setPreviewSuggestionShown(true);
+    setShowPreviewSuggestion(false);
     setShowPreview(!showPreview);
   };
 
@@ -366,14 +499,35 @@ function AddModal({
                     </span>
                   </div>
 
+                  <section className={`compose-optional-extras${showOptionalExtras ? ' is-open' : ''}`}>
+                    <button
+                      type="button"
+                      className="compose-optional-extras__toggle"
+                      aria-expanded={showOptionalExtras}
+                      aria-controls="compose-optional-extras-content"
+                      onClick={() => setShowOptionalExtras(current => !current)}
+                    >
+                      <span>
+                        <strong>Letter Attachments</strong>
+                        <small>{newLetter.photoFile ? 'Photo attached' : newLetter.link ? songLinkValidation.valid ? 'Song link added' : 'Song link needs attention' : 'Add a song or photo'}</small>
+                      </span>
+                      <IoChevronDownOutline aria-hidden="true" />
+                    </button>
+                    <div id="compose-optional-extras-content" className="compose-optional-extras__content" hidden={!showOptionalExtras}>
                   <div className="form-group">
-                    <label htmlFor="link" className="label-top-left">
-                      Link <span className="compose-optional">Optional</span>
-                    </label>
+                    <div className="compose-link-label">
+                      <label htmlFor="link" className="label-top-left">
+                        Link <span className="compose-optional">Optional</span>
+                      </label>
+                      <button type="button" onClick={openLinkGuide}>
+                        <IoInformationCircleOutline aria-hidden="true" />
+                        <span>Tip · How to add a song</span>
+                      </button>
+                    </div>
                     <div
                       className={`compose-link-field${
                         newLetter.photoFile ? ' is-disabled' : ''
-                      }`}
+                      }${newLetter.link && !songLinkValidation.valid ? ' is-invalid' : ''}${newLetter.link && songLinkValidation.valid ? ' is-valid' : ''}`}
                     >
                       <span className="compose-link-icons" aria-hidden="true">
                         {activeLinkIcon === 'youtube' ? (
@@ -389,11 +543,6 @@ function AddModal({
                         )}
                       </span>
                       <input
-                        data-tooltip-id="link_tooltip"
-                        data-tooltip-html="On YouTube/Spotify, tap Share → Copy Link<br />then paste it here"
-                        data-tooltip-place="left-center"
-                        data-tooltip-delay-show={0}
-                        data-tooltip-variant="info"
                         autoComplete="off"
                         type="text"
                         id="link"
@@ -401,12 +550,23 @@ function AddModal({
                         className="form-control error full-width"
                         value={newLetter.link || ''}
                         disabled={Boolean(newLetter.photoFile)}
+                        aria-invalid={Boolean(newLetter.link && !songLinkValidation.valid)}
+                        aria-describedby={newLetter.link && !songLinkValidation.valid ? 'song-link-error' : undefined}
                         onChange={event =>
                           setNewLetter({...newLetter, link: event.target.value})
                         }
                       />
                     </div>
-                    <Tooltip id="link_tooltip" />
+                    {newLetter.link && !songLinkValidation.valid && (
+                      <small id="song-link-error" className="compose-link-error" role="alert">
+                        {songLinkValidation.message}
+                      </small>
+                    )}
+                    {newLetter.link && songLinkValidation.valid && (
+                      <small className="compose-link-success">
+                        {songLinkValidation.service === 'youtube' ? 'YouTube video' : 'Spotify song'} link ready
+                      </small>
+                    )}
                     {newLetter.photoFile && (
                       <small className="compose-field-note">
                         Remove the photo to attach a song.
@@ -476,18 +636,27 @@ function AddModal({
                       </small>
                     )}
                   </div>
+                    </div>
+                  </section>
 
                 </div>
                 <div className="modal-footer">
                   {!showPreview && !isSubmitDisabled && (
-                    <button
-                      type="button"
-                      className="preview-button"
-                      onClick={togglePreview}
-                    >
-                      <strong>Preview</strong>
-                      <VscPreview className="preview-icon" size="18px" />
-                    </button>
+                    <span className="preview-suggestion-anchor">
+                      {showPreviewSuggestion && (
+                        <span className="preview-suggestion-tooltip" role="tooltip">
+                          See how your letter looks before sending.
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="preview-button"
+                        onClick={togglePreview}
+                      >
+                        <strong>Preview</strong>
+                        <VscPreview className="preview-icon" size="18px" />
+                      </button>
+                    </span>
                   )}
                   <button
                     type="button"
@@ -566,6 +735,54 @@ function AddModal({
           toggleDetailsModal={togglePreview}
           showDetailsModal={true}
         />
+      )}
+      {showLinkGuide && (
+        <div className="song-link-guide-overlay" onClick={() => setShowLinkGuide(false)}>
+          <section
+            className="song-link-guide"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="song-link-guide-title"
+            onClick={event => event.stopPropagation()}
+            onPointerDown={startLinkGuideSwipe}
+            onPointerUp={finishLinkGuideSwipe}
+            onPointerCancel={() => { linkGuideSwipeStartRef.current = null; }}
+          >
+            <button type="button" className="song-link-guide__close" onClick={() => setShowLinkGuide(false)} aria-label="Close song link guide"><BsX /></button>
+            <span className="song-link-guide__eyebrow">Step {linkGuidePage + 1} of 3</span>
+            <h3 id="song-link-guide-title">
+              {linkGuidePage === 0 && 'Open the individual song'}
+              {linkGuidePage === 1 && 'Tap the Share button'}
+              {linkGuidePage === 2 && 'Choose Copy link'}
+            </h3>
+            <p>
+              {linkGuidePage === 0 && 'Open the exact YouTube video or Spotify track you want to attach. Do not open a playlist, album, or radio mix.'}
+              {linkGuidePage === 1 && 'On the song or video screen, find Share. On YouTube it uses an arrow; Spotify may place it inside the three-dot menu.'}
+              {linkGuidePage === 2 && 'Tap Copy link, return here, and paste only that link into the field.'}
+            </p>
+
+            <div
+              key={linkGuidePage}
+              className={`song-link-guide__visual is-step-${linkGuidePage + 1}`}
+              aria-hidden="true"
+            >
+              {linkGuidePage === 0 && (
+                <><div className="song-guide-card is-youtube"><FaYoutube /><span /><strong>Individual video</strong><small>Not a playlist</small></div><div className="song-guide-card is-spotify"><FaSpotify /><span /><strong>Individual track</strong><small>Not an album</small></div></>
+              )}
+              {linkGuidePage === 1 && (
+                <><div className="song-guide-screen"><span className="song-guide-screen__media" /><div><i /><i /><i /></div><button><IoShareSocialOutline /> Share</button></div><IoShareSocialOutline className="song-guide-focus-icon" /></>
+              )}
+              {linkGuidePage === 2 && (
+                <><div className="song-guide-copy-sheet"><span>Share</span><button><IoCopyOutline /><strong>Copy link</strong></button></div><div className="song-guide-link-sample">youtu.be/video<span>✓</span></div></>
+              )}
+            </div>
+
+            <div className="song-link-guide__dots" aria-label={`Guide page ${linkGuidePage + 1} of 3`}>
+              {[0, 1, 2].map(page => <span key={page} className={page === linkGuidePage ? 'is-active' : ''} />)}
+            </div>
+            <small className="song-link-guide__swipe-hint">Swipe to view each step</small>
+          </section>
+        </div>
       )}
       {showSubmitConfirm && (
         <div
@@ -661,45 +878,99 @@ function AddModal({
             </ul>
             {submittedBurnKey && (
               <div className="submission-burn-key">
-                <div>
-                  <span>Your private burn key</span>
-                  <strong>{submittedBurnKey}</strong>
+                <div className="submission-burn-key__heading">
+                  <span>Your Burn Key</span>
+                  <button
+                    type="button"
+                    aria-expanded={showBurnKeyExplanation}
+                    onClick={() => setShowBurnKeyExplanation(current => !current)}
+                  >
+                    What’s this?
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={copyBurnKey}
-                  aria-label="Copy burn key"
-                  aria-describedby={showBurnKeyHint && !burnKeyCopied ? 'burn-key-copy-hint' : undefined}
-                >
-                  {burnKeyCopied ? <BsCheck2 /> : <BsClipboard />}
-                </button>
-                {showBurnKeyHint && !burnKeyCopied && (
-                  <span id="burn-key-copy-hint" className="submission-burn-key-hint" role="tooltip">
-                    Copy this burn key first
-                  </span>
+                <div className="submission-burn-key__value">
+                  <strong>{submittedBurnKey}</strong>
+                  <button
+                    type="button"
+                    onClick={copyBurnKey}
+                    aria-label="Copy burn key"
+                    aria-describedby={showBurnKeyHint && !burnKeyCopied ? 'burn-key-copy-hint' : undefined}
+                  >
+                    {burnKeyCopied ? <BsCheck2 /> : <BsClipboard />}
+                  </button>
+                  {showBurnKeyHint && !burnKeyCopied && (
+                    <span id="burn-key-copy-hint" className="submission-burn-key-hint" role="tooltip">
+                      Copy this burn key first
+                    </span>
+                  )}
+                </div>
+                <p>Save this key in your notes to remove your letter someday.</p>
+                {showBurnKeyExplanation && (
+                  <p className="submission-burn-key__explanation">
+                    It’s your private key for removing the letter after it’s approved. Only you will receive it.
+                  </p>
                 )}
-                <p>Save this key in your notes in case you’d like to burn or remove your letter someday.</p>
                 {burnKeyCopied && <small role="status">Burn key copied</small>}
               </div>
             )}
+            {EMAIL_NOTIFICATIONS_ENABLED && <div className="submission-email-notice">
+              <div className="submission-email-notice__heading">
+                <label htmlFor="approval-notification-email">Email notification</label>
+                <span>Optional</span>
+              </div>
+              <p>Want to know when it’s approved? Leave your email and we’ll notify you once.</p>
+              <div className="submission-email-notice__field">
+                <input
+                  id="approval-notification-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  maxLength="254"
+                  placeholder="you@example.com"
+                  value={notificationEmail}
+                  disabled={savingNotificationEmail || notificationEmailStatus.type === 'success'}
+                  onChange={event => {
+                    setNotificationEmail(event.target.value);
+                    if (notificationEmailStatus.type === 'error') {
+                      setNotificationEmailStatus({type: 'idle', message: ''});
+                    }
+                  }}
+                />
+                <button type="button" onClick={saveNotificationEmail} disabled={!notificationEmail.trim() || savingNotificationEmail || notificationEmailStatus.type === 'success'}>
+                  {savingNotificationEmail ? 'Saving…' : notificationEmailStatus.type === 'success' ? 'Saved' : 'Notify me'}
+                </button>
+              </div>
+              {notificationEmailStatus.message && <small className={`is-${notificationEmailStatus.type}`} role="status">{notificationEmailStatus.message}</small>}
+            </div>}
             <p className="submission-notice-footnote">
-              Check back soon by searching for the name used in your letter.
+              Check back soon to share it once approved.
             </p>
-            <button
-              type="button"
-              className={`submission-notice-done${submittedBurnKey && !burnKeyCopied ? ' is-locked' : ''}`}
-              aria-disabled={submittedBurnKey && !burnKeyCopied}
-              onClick={() => {
-                if (submittedBurnKey && !burnKeyCopied) {
-                  setShowBurnKeyHint(true);
-                  return;
-                }
-                finishSubmissionNotice();
-              }}
-              autoFocus
-            >
-              {submittedBurnKey ? 'I’ve saved my key' : 'Got it'}
-            </button>
+            <div className="submission-notice-actions">
+              <button
+                type="button"
+                className={`submission-notice-done${submittedBurnKey && !burnKeyCopied ? ' is-locked' : ''}`}
+                aria-disabled={submittedBurnKey && !burnKeyCopied}
+                onClick={() => {
+                  if (submittedBurnKey && !burnKeyCopied) {
+                    setShowBurnKeyHint(true);
+                    return;
+                  }
+                  finishSubmissionNotice();
+                }}
+                autoFocus
+              >
+                {submittedBurnKey ? 'I’ve saved my key' : 'Got it'}
+              </button>
+              {submittedBurnKey && (
+                <button
+                  type="button"
+                  className="submission-notice-skip"
+                  onClick={finishSubmissionNotice}
+                >
+                  I Won’t Need It
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
