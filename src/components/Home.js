@@ -32,7 +32,6 @@ import { RiAdvertisementLine } from "react-icons/ri";
 import { render_url, api_key } from "../data/keys";
 import tc from "thousands-counter";
 import InfiniteScroll from "react-infinite-scroll-component";
-import axios from "axios";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
@@ -342,22 +341,6 @@ function Home() {
     // eslint-disable-next-line
   }, []);
 
-  const [public_ip, setIP] = useState("");
-
-  const getData = async () => {
-    try {
-      const res = await axios.get("https://api.ipify.org/?format=json");
-      setIP(res.data.ip);
-    } catch (error) {
-      console.error("Error fetching address:", error);
-      return "blocked";
-    }
-  };
-
-  useEffect(() => {
-    getData();
-  }, []);
-
   const [locations, setLocations] = useState([]);
   const [internationalOrigins, setInternationalOrigins] = useState([]);
 
@@ -480,7 +463,6 @@ function Home() {
         message,
         approve: false,
         timestamp,
-        ip: public_ip,
         ...(photo ? {photo} : {}),
       };
 
@@ -725,6 +707,15 @@ function Home() {
 
   const renderLettersWithAds = (items) => {
     const approvedLetters = items.filter((letter) => letter.approve);
+    const warmthScores = approvedLetters.map(letter => {
+      const reads = Math.max(0, Number(letter.reads) || 0);
+      const reactions = ["love", "sad"].reduce(
+        (total, key) => total + Math.max(0, Number(letter.echoes?.[key]) || 0),
+        0,
+      );
+      return Math.log2(reads + 1) + reactions * 3;
+    });
+    const maxWarmthScore = Math.max(0, ...warmthScores);
     const leadingCards = searchTerm === "" ? 1 : 0;
     const firstAdAfter =
       Math.round((60 + leadingCards) / letterGridColumns) *
@@ -741,6 +732,7 @@ function Home() {
           letter={letter}
           toggleDetailsModal={toggleDetailsModal}
           setSelectedLetter={setSelectedLetter}
+          maxWarmthScore={maxWarmthScore}
         />
       );
 
@@ -791,6 +783,7 @@ function Home() {
           <button
             type="button"
             className="message-stat toolbar-trigger"
+            aria-label="Open letter origins"
             aria-expanded={showOrigins}
             aria-controls="origins-panel"
             onClick={() => {
@@ -819,6 +812,7 @@ function Home() {
           <button
             type="button"
             className="message-stat toolbar-trigger"
+            aria-label="Open updates feed"
             aria-expanded={showAnnouncements}
             aria-controls="announcements-panel"
             onClick={() => {

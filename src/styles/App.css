@@ -914,6 +914,8 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
 
 .letter-card {
   --letter-card-rule-space: 19px;
+  --letter-warmth: 0.08;
+  --letter-warmth-rgb: 72 112 235;
   display: flex;
   flex-direction: column;
   min-height: 180px;
@@ -922,7 +924,10 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
   border-radius: 11px;
   background-color: #fdfaef;
   background-image: none;
-  box-shadow: 0 1px 2px rgba(60, 50, 30, 0.06);
+  box-shadow:
+    0 1px 2px rgba(60, 50, 30, 0.06),
+    0 0 calc(5px + var(--letter-warmth) * 17px)
+      rgb(var(--letter-warmth-rgb) / calc(0.035 + var(--letter-warmth) * 0.16));
   text-align: left;
   cursor: pointer;
   overflow: hidden;
@@ -934,7 +939,25 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
 .letter-card:hover {
   transform: translateY(-3px);
   border-color: #d8c9a4;
-  box-shadow: 0 10px 24px rgba(60, 50, 30, 0.14);
+  box-shadow:
+    0 10px 24px rgba(60, 50, 30, 0.14),
+    0 0 calc(7px + var(--letter-warmth) * 19px)
+      rgb(var(--letter-warmth-rgb) / calc(0.045 + var(--letter-warmth) * 0.18));
+}
+
+.letter-card--warmth-quiet { border-color: rgba(117, 137, 190, 0.25); }
+.letter-card--warmth-noticed { border-color: rgba(91, 124, 213, 0.34); }
+.letter-card--warmth-resonating { border-color: rgba(88, 116, 222, 0.46); }
+.letter-card--warmth-deeply-felt { border-color: rgba(108, 101, 224, 0.58); }
+
+.letter-card--mood-love {
+  --letter-warmth-rgb: 238 105 153;
+  border-color: rgb(222 119 157 / calc(0.2 + var(--letter-warmth) * 0.38));
+}
+
+.letter-card--mood-sad {
+  --letter-warmth-rgb: 87 137 207;
+  border-color: rgb(92 138 202 / calc(0.2 + var(--letter-warmth) * 0.38));
 }
 
 .letter-card__top {
@@ -1029,6 +1052,7 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
   border-color: #e3c987;
   background-image: none;
   background-color: #fffdf3;
+  box-shadow: 0 1px 2px rgba(60, 50, 30, 0.06);
 }
 
 .letter-card--featured.is-active {
@@ -1630,6 +1654,10 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     box-sizing: border-box;
     padding: 9px 9px 8px;
     border-radius: 9px;
+    box-shadow:
+      0 1px 2px rgba(60, 50, 30, 0.05),
+      0 0 calc(3px + var(--letter-warmth) * 10px)
+        rgb(var(--letter-warmth-rgb) / calc(0.025 + var(--letter-warmth) * 0.1));
   }
 
   .letter-card__label {
@@ -1894,6 +1922,65 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     right: 10px;
     text-align: right;
     font-size: 11px;
+  }
+}
+
+@media only screen and (max-width: 400px) {
+  .home-toolbar.is-compact .information-panel {
+    width: 100%;
+  }
+
+  .home-toolbar.is-compact .messages-count {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    justify-content: space-evenly;
+    padding: 3px 2px;
+    overflow: visible;
+  }
+
+  .home-toolbar.is-compact .message-stat {
+    min-width: 0;
+    gap: 2px;
+    padding: 4px 3px;
+    font-size: 9px;
+  }
+
+  .home-toolbar.is-compact .message-stat svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+  }
+
+  .home-toolbar.is-compact .toolbar-trigger > span {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 350px) {
+  .home-toolbar.is-compact {
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .home-toolbar.is-compact .header .logo--compact-mark,
+  .home-toolbar.is-compact .big-button {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+
+  .home-toolbar.is-compact .search-field {
+    min-height: 36px;
+    padding-inline: 8px;
+  }
+
+  .home-toolbar.is-compact .search-input {
+    min-width: 0;
+    padding-inline: 5px;
+    font-size: 12px;
   }
 }
 
@@ -2931,43 +3018,11 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   font-size: 11px;
 }
 
-.pulsating-icon {
-  animation: pulsate 1s ease-in-out infinite alternate;
-}
-
-@keyframes pulsate {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
 /* Default Light Mode */
 :root {
   --bg-color: #ffffff;
   --text-color: #000000;
   --card-bg: #f5f5f5;
-}
-
-@keyframes fade {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.fade-icon {
-  animation: fade 1s infinite;
 }
 
 .las.la-eye {
@@ -3200,7 +3255,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 .letter-paper .letter-info {
   margin-left: 0;
   font-family: "Courier New", Courier, monospace;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 400;
   line-height: 1.6;
   color: #332f24;
@@ -3235,7 +3290,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 
 .letter-paper__date .timestamp-text {
   font-family: "Courier New", Courier, monospace;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   color: #393428;
 }
@@ -3257,7 +3312,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   );
   background-position: 0 -5px;
   font-family: "Courier New", Courier, monospace;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 28px;
   color: #332f24;
@@ -3325,6 +3380,21 @@ html.night-shift .letter-paper__translation-control small {
   position: relative;
   z-index: 1;
   margin-top: 18px;
+}
+
+.letter-paper__media--youtube {
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  background: #000;
+}
+
+.letter-paper__media--youtube iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .letter-paper__photo {
@@ -3413,8 +3483,8 @@ html.night-shift .letter-paper__translation-control small {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  margin-top: 22px;
-  padding-top: 14px;
+  margin-top: 18px;
+  padding-top: 0;
   border-top: 0;
   font-family: "Courier New", Courier, monospace;
   font-size: 12px;
@@ -3439,9 +3509,15 @@ html.night-shift .letter-paper__translation-control small {
   gap: 5px;
 }
 
-.letter-paper__reads-eye {
-  font-size: 14px;
-  color: #8a8367;
+.letter-paper__reads-eye,
+.letter-paper__locate > svg,
+.letter-paper__share > svg,
+.letter-paper__echo > svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+  color: inherit;
+  opacity: 0.9;
 }
 
 .letter-paper__locate {
@@ -3518,6 +3594,145 @@ html.night-shift .letter-paper__translation-control small {
 .letter-paper__share:focus-visible {
   outline: 3px solid rgba(55, 114, 255, 0.25);
   outline-offset: 2px;
+}
+
+.letter-reaction-cluster,
+.letter-echo-control,
+.letter-echo-summary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.letter-reaction-cluster {
+  gap: 4px;
+}
+
+.letter-reaction-cluster .letter-echo-control {
+  order: 1;
+}
+
+.letter-reaction-cluster .letter-echo-summary {
+  order: 2;
+}
+
+.letter-paper__echo,
+.letter-echo-summary > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.letter-paper__echo > svg {
+  font-size: 13px;
+}
+
+.letter-echo-summary > button {
+  color: inherit;
+}
+
+.letter-echo-picker,
+.letter-echo-breakdown {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  z-index: 20;
+  padding: 8px;
+  border: 1px solid #e2d8bd;
+  border-radius: 14px;
+  background: rgba(255, 253, 245, 0.98);
+  box-shadow: 0 12px 32px rgba(55, 45, 24, 0.2);
+  color: #514a39;
+  animation: letter-echo-pop 0.2s ease both;
+}
+
+.letter-echo-picker {
+  display: flex;
+  gap: 2px;
+  padding: 5px 7px;
+  border-radius: 999px;
+}
+
+.letter-echo-picker > button {
+  display: grid;
+  justify-items: center;
+  min-width: 40px;
+  padding: 5px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #6e6653;
+  font: inherit;
+  font-size: 9px;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.letter-echo-picker > button svg {
+  box-sizing: border-box;
+  width: 29px;
+  height: 29px;
+  padding: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(55, 114, 255, 0.18);
+  background: #edf3ff;
+  color: #3772ff;
+  font-size: 17px;
+  box-shadow: 0 4px 10px rgba(55, 114, 255, 0.1);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1.25);
+}
+
+.letter-echo-picker > button > span {
+  display: none;
+}
+
+.letter-echo-picker > button:hover,
+.letter-echo-picker > button.is-selected {
+  border-color: rgba(55, 114, 255, 0.2);
+  background: rgba(55, 114, 255, 0.09);
+  color: #294faa;
+}
+
+.letter-echo-picker > button:hover svg,
+.letter-echo-picker > button.is-selected svg {
+  transform: translateY(-3px) scale(1.12);
+}
+
+.letter-echo-breakdown {
+  display: grid;
+  width: 190px;
+  gap: 4px;
+}
+
+.letter-echo-breakdown > span {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  text-align: left;
+}
+
+.letter-echo-breakdown svg {
+  color: #527bd9;
+  font-size: 14px;
+}
+
+.letter-echo-breakdown strong {
+  color: #2f3745;
+}
+
+@keyframes letter-echo-pop {
+  from { opacity: 0; transform: translateY(5px) scale(0.98); }
+  to { opacity: 1; transform: none; }
 }
 
 .letter-share-dialog-overlay {
@@ -3764,22 +3979,24 @@ html.night-shift .letter-paper__translation-control small {
   }
 
   .letter-paper .letter-info {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .letter-paper__date .timestamp-text {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .letter-paper__body {
-    font-size: 14px;
+    font-size: 15px;
     line-height: 28px;
   }
 
   .letter-paper__meta {
     justify-content: center;
+    flex-wrap: wrap;
     gap: 4px;
-    overflow-x: auto;
+    overflow: visible;
+    row-gap: 8px;
     font-size: 10px;
     scrollbar-width: none;
   }
@@ -3790,6 +4007,45 @@ html.night-shift .letter-paper__translation-control small {
 
   .letter-paper__actions {
     gap: 6px;
+  }
+
+  .letter-echo-picker,
+  .letter-echo-breakdown {
+    position: absolute;
+    right: -4px;
+    bottom: calc(100% + 9px);
+    left: auto;
+    width: max-content;
+    max-width: calc(100vw - 20px);
+  }
+
+  .letter-echo-picker {
+    justify-content: center;
+    gap: 1px;
+    padding: 4px 6px;
+    border-radius: 999px;
+  }
+
+  .letter-echo-picker > button {
+    position: relative;
+    min-width: 34px;
+    padding: 3px;
+    border-radius: 999px;
+  }
+
+  .letter-echo-picker > button svg {
+    width: 26px;
+    height: 26px;
+    padding: 5px;
+  }
+
+  .letter-echo-picker > button > span {
+    display: none;
+  }
+
+  .letter-echo-breakdown {
+    right: 0;
+    width: min(190px, calc(100vw - 30px));
   }
 
 }
@@ -3941,12 +4197,33 @@ html.night-shift .letter-card {
   background-color: #1b1d16;
   background-image: none;
   border-color: #3a3a2e;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 0 calc(5px + var(--letter-warmth) * 15px)
+      rgb(var(--letter-warmth-rgb) / calc(0.04 + var(--letter-warmth) * 0.14));
 }
 
 html.night-shift .letter-card:hover {
   border-color: #55523f;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.5),
+    0 0 calc(7px + var(--letter-warmth) * 17px)
+      rgb(var(--letter-warmth-rgb) / calc(0.05 + var(--letter-warmth) * 0.16));
+}
+
+html.night-shift .letter-card--warmth-quiet { border-color: rgba(116, 128, 166, 0.3); }
+html.night-shift .letter-card--warmth-noticed { border-color: rgba(100, 132, 219, 0.42); }
+html.night-shift .letter-card--warmth-resonating { border-color: rgba(111, 136, 234, 0.55); }
+html.night-shift .letter-card--warmth-deeply-felt { border-color: rgba(137, 126, 246, 0.68); }
+
+html.night-shift .letter-card--mood-love {
+  --letter-warmth-rgb: 242 113 162;
+  border-color: rgb(225 119 160 / calc(0.24 + var(--letter-warmth) * 0.38));
+}
+
+html.night-shift .letter-card--mood-sad {
+  --letter-warmth-rgb: 83 128 194;
+  border-color: rgb(90 132 192 / calc(0.24 + var(--letter-warmth) * 0.38));
 }
 
 html.night-shift .letter-card__name {
@@ -4067,6 +4344,28 @@ html.night-shift .letter-share-dialog__qr {
 html.night-shift .letter-modal__close {
   background: #2a2c22;
   color: #efe9d7;
+}
+
+html.night-shift .letter-echo-picker,
+html.night-shift .letter-echo-breakdown {
+  border-color: rgba(177, 192, 221, 0.2);
+  background: rgba(35, 38, 44, 0.98);
+  color: #d7dbea;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
+}
+
+html.night-shift .letter-echo-picker > button {
+  color: #c6cad7;
+}
+
+html.night-shift .letter-echo-picker > button:hover,
+html.night-shift .letter-echo-picker > button.is-selected {
+  background: rgba(111, 151, 242, 0.14);
+  color: #dce6ff;
+}
+
+html.night-shift .letter-echo-breakdown strong {
+  color: #fff;
 }
 
 html.night-shift .ui-announcement-dialog {
