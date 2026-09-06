@@ -10,13 +10,17 @@ import { BsBookmarkHeartFill } from "react-icons/bs";
 import { FaUserTie } from "react-icons/fa";
 import { PiShootingStarFill } from "react-icons/pi";
 import { PiHeartBreakFill } from "react-icons/pi";
-import { CiLocationOn } from "react-icons/ci";
+import { TbHeart, TbMoodSad } from "react-icons/tb";
 import {
   IoCopyOutline,
   IoDownloadOutline,
   IoExpandOutline,
+  IoEyeOutline,
+  IoHeartOutline,
   IoLanguageOutline,
+  IoLocationOutline,
   IoQrCodeOutline,
+  IoSadOutline,
   IoShareSocialOutline,
 } from "react-icons/io5";
 import { useState, useEffect, useRef } from "react";
@@ -134,6 +138,16 @@ const stringSplitter = (string) => {
   return splitter.splitGraphemes(string);
 };
 
+const echoOptions = [
+  {id: "love", label: "Love", icon: TbHeart},
+  {id: "sad", label: "Sad", icon: TbMoodSad},
+];
+
+const normalizeEchoes = echoes => echoOptions.reduce((totals, option) => ({
+  ...totals,
+  [option.id]: Math.max(0, Number(echoes?.[option.id]) || 0),
+}), {});
+
 function DetailsModal({
   showDetailsModal,
   toggleDetailsModal,
@@ -169,11 +183,29 @@ function DetailsModal({
   const MAX_STORAGE_SIZE = 1000;
   const readRequestsInFlight = useRef(new Set());
   const [displayedReads, setDisplayedReads] = useState(0);
+  const [echoes, setEchoes] = useState(() => normalizeEchoes());
+  const [selectedEcho, setSelectedEcho] = useState("");
+  const [showEchoPicker, setShowEchoPicker] = useState(false);
+  const [showEchoBreakdown, setShowEchoBreakdown] = useState(false);
+  const [savingEcho, setSavingEcho] = useState(false);
   const [opened, setOpened] = useState(false);
 
   useEffect(() => {
     setDisplayedReads(parseInt(selectedLetter?.reads, 10) || 0);
   }, [selectedLetter?._id, selectedLetter?.reads]);
+
+  useEffect(() => {
+    setEchoes(normalizeEchoes(selectedLetter?.echoes));
+    setShowEchoPicker(false);
+    setShowEchoBreakdown(false);
+    try {
+      const saved = JSON.parse(localStorage.getItem("letterEchoes") || "{}");
+      setSelectedEcho(saved[selectedLetter?._id] || "");
+    } catch (error) {
+      localStorage.removeItem("letterEchoes");
+      setSelectedEcho("");
+    }
+  }, [selectedLetter?._id, selectedLetter?.echoes]);
 
   const getReadLetters = () => {
     try {
@@ -248,6 +280,48 @@ function DetailsModal({
         readRequestsInFlight.current.delete(letterIdToCount);
       }
     }
+  };
+
+  const echoTotal = Object.values(echoes).reduce((total, count) => total + count, 0);
+  const DominantReactionIcon = echoes.sad > echoes.love ? IoSadOutline : IoHeartOutline;
+
+  const saveEcho = async reaction => {
+    if (!selectedLetter?._id || selectedLetter.preview || savingEcho) return;
+    setSavingEcho(true);
+    try {
+      const response = await fetch(`${render_url}/${selectedLetter._id}/echo`, {
+        method: "POST",
+        headers: {
+          "x-api-key": api_key,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({reaction, readerId: getReaderId()}),
+      });
+      if (!response.ok) throw new Error("Failed to leave an echo");
+      const result = await response.json();
+      setEchoes(normalizeEchoes(result.echoes));
+      setSelectedEcho(result.selected || reaction);
+      const saved = JSON.parse(localStorage.getItem("letterEchoes") || "{}");
+      saved[selectedLetter._id] = result.selected || reaction;
+      localStorage.setItem("letterEchoes", JSON.stringify(saved));
+      setShowEchoPicker(false);
+      toast.info("Your reaction was added.", {
+        position: "top-center",
+        autoClose: 1800,
+      });
+    } catch (error) {
+      toast.error("Your reaction couldn’t be saved right now.", {
+        position: "top-center",
+        autoClose: 2400,
+      });
+    } finally {
+      setSavingEcho(false);
+    }
+  };
+
+  const toggleEchoPicker = () => {
+    setShowEchoBreakdown(false);
+    setShowEchoPicker(current => !current);
   };
 
   useEffect(() => {
@@ -336,7 +410,6 @@ function DetailsModal({
   const [showYoutube, setShowYoutube] = useState(false);
   const [showPhoto, setShowPhoto] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
-  const [iframeHeight, setIframeHeight] = useState(152);
   const [translatedMessage, setTranslatedMessage] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
@@ -409,23 +482,6 @@ function DetailsModal({
       setIsTranslating(false);
     }
   };
-
-  useEffect(() => {
-    function adjustIframeHeight() {
-      if (window.innerWidth < 768) {
-        setIframeHeight(152);
-      } else {
-        setIframeHeight(250);
-      }
-    }
-
-    window.addEventListener("resize", adjustIframeHeight);
-    adjustIframeHeight();
-
-    return () => {
-      window.removeEventListener("resize", adjustIframeHeight);
-    };
-  }, []);
 
   // Envelope-opening intro animation
   useEffect(() => {
@@ -759,10 +815,8 @@ function DetailsModal({
                 </div>
               )}
               {showYoutube && linkId && (
-                <div className="letter-paper__media">
+                <div className="letter-paper__media letter-paper__media--youtube">
                   <iframe
-                    width="100%"
-                    height={iframeHeight}
                     src={`https://www.youtube-nocookie.com/embed/${linkId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
                     title="YouTube video player"
                     frameBorder="0"
@@ -843,7 +897,7 @@ function DetailsModal({
                 </span>
                 <span className="letter-meta-sep">·</span>
                 <span className="letter-paper__reads">
-                  <i className="las la-eye fade-icon letter-paper__reads-eye" />
+                  <IoEyeOutline className="letter-paper__reads-eye" />
                   {formatReadsCount(displayedReads)}
                 </span>
 
@@ -862,7 +916,7 @@ function DetailsModal({
                           rel="noopener noreferrer"
                           onClick={handleLocateClick}
                         >
-                          <CiLocationOn size="12px" />
+                          <IoLocationOutline size="12px" />
                           <span>{isRevealed ? "View on Map" : "Locate"}</span>
                         </a>
                       )}
@@ -882,6 +936,74 @@ function DetailsModal({
                           <IoShareSocialOutline size="12px" />
                           <span>Share</span>
                         </button>
+                      )}
+                      {!selectedLetter.preview && selectedLetter._id && (
+                        <>
+                          <span className="letter-meta-sep">·</span>
+                          <span className="letter-reaction-cluster">
+                            {echoTotal > 0 && (
+                              <span className="letter-echo-summary">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setShowEchoPicker(false);
+                                    setShowEchoBreakdown(current => !current);
+                                  }}
+                                  aria-expanded={showEchoBreakdown}
+                                  aria-label={`${echoTotal} ${echoTotal === 1 ? "reaction" : "reactions"}; show breakdown`}
+                                >
+                                  {echoTotal}
+                                </button>
+                                {showEchoBreakdown && (
+                                  <div className="letter-echo-breakdown" role="tooltip">
+                                    {echoOptions.filter(option => echoes[option.id] > 0).map(option => {
+                                      const EchoIcon = option.icon;
+                                      return (
+                                        <span key={option.id}>
+                                          <EchoIcon />
+                                          <span>{option.label}</span>
+                                          <strong>{echoes[option.id]}</strong>
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </span>
+                            )}
+                            <span className="letter-echo-control">
+                              <button
+                                type="button"
+                                className="letter-paper__echo"
+                                onClick={toggleEchoPicker}
+                                aria-expanded={showEchoPicker}
+                                aria-label="React to this letter"
+                              >
+                                <DominantReactionIcon />
+                              </button>
+                              {showEchoPicker && (
+                                <div className="letter-echo-picker" role="menu" aria-label="Choose a reaction">
+                                  {echoOptions.map(option => {
+                                    const ReactionIcon = option.icon;
+                                    return (
+                                      <button
+                                        key={option.id}
+                                        type="button"
+                                        role="menuitem"
+                                        aria-label={option.label}
+                                        className={selectedEcho === option.id ? "is-selected" : ""}
+                                        disabled={savingEcho}
+                                        onClick={() => saveEcho(option.id)}
+                                      >
+                                        <ReactionIcon />
+                                        <span>{option.label}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </span>
+                          </span>
+                        </>
                       )}
                     </span>
                   </>

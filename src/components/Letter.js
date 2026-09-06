@@ -24,8 +24,43 @@ const timeAgo = (timestamp) => {
   return `${Math.floor(days / 365)}y`;
 };
 
-function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
+const getWarmthScore = letter => {
+  const reads = Math.max(0, Number(letter?.reads) || 0);
+  const reactions = ["love", "sad"].reduce(
+    (total, key) => total + Math.max(0, Number(letter?.echoes?.[key]) || 0),
+    0,
+  );
+  return Math.log2(reads + 1) + reactions * 3;
+};
+
+function Letter({ letter, toggleDetailsModal, setSelectedLetter, maxWarmthScore = 0 }) {
   const navigate = useNavigate();
+  const warmthScore = getWarmthScore(letter);
+  const relativeWarmth = maxWarmthScore > 0 ? warmthScore / maxWarmthScore : 0;
+  const absoluteWarmth = Math.min(warmthScore / 12, 1);
+  const warmth = warmthScore > 0
+    ? Math.min(0.86, 0.1 + Math.sqrt(relativeWarmth) * 0.38 + absoluteWarmth * 0.34)
+    : 0.08;
+  const warmthLevel = warmth < 0.3
+    ? "quiet"
+    : warmth < 0.5
+      ? "noticed"
+      : warmth < 0.7
+        ? "resonating"
+        : "deeply-felt";
+  const warmthLabel = {
+    quiet: "Quietly noticed",
+    noticed: "Noticed",
+    resonating: "Resonating",
+    "deeply-felt": "Deeply felt",
+  }[warmthLevel];
+  const loveCount = Math.max(0, Number(letter?.echoes?.love) || 0);
+  const sadCount = Math.max(0, Number(letter?.echoes?.sad) || 0);
+  const reactionMood = loveCount > sadCount
+    ? "love"
+    : sadCount > loveCount
+      ? "sad"
+      : "neutral";
 
   const handleClick = () => {
     setSelectedLetter(letter);
@@ -38,7 +73,13 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter }) {
   }
 
   return (
-    <div className="letter-card" onClick={handleClick}>
+    <div
+      className={`letter-card letter-card--warmth-${warmthLevel} letter-card--mood-${reactionMood}`}
+      style={{"--letter-warmth": warmth.toFixed(3)}}
+      data-warmth={warmthLabel}
+      aria-label={`Letter from ${letter.from} to ${letter.to}. ${warmthLabel}.`}
+      onClick={handleClick}
+    >
       <div className="letter-card__top">
         <div className="letter-card__from">
           <span className="letter-card__label">From</span>
