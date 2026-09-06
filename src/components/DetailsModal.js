@@ -20,7 +20,6 @@ import {
   IoLanguageOutline,
   IoLocationOutline,
   IoQrCodeOutline,
-  IoSadOutline,
   IoShareSocialOutline,
 } from "react-icons/io5";
 import { useState, useEffect, useRef } from "react";
@@ -185,6 +184,7 @@ function DetailsModal({
   const [displayedReads, setDisplayedReads] = useState(0);
   const [echoes, setEchoes] = useState(() => normalizeEchoes());
   const [selectedEcho, setSelectedEcho] = useState("");
+  const [pendingEcho, setPendingEcho] = useState("");
   const [showEchoPicker, setShowEchoPicker] = useState(false);
   const [showEchoBreakdown, setShowEchoBreakdown] = useState(false);
   const [savingEcho, setSavingEcho] = useState(false);
@@ -198,6 +198,7 @@ function DetailsModal({
     setEchoes(normalizeEchoes(selectedLetter?.echoes));
     setShowEchoPicker(false);
     setShowEchoBreakdown(false);
+    setPendingEcho("");
     try {
       const saved = JSON.parse(localStorage.getItem("letterEchoes") || "{}");
       setSelectedEcho(saved[selectedLetter?._id] || "");
@@ -283,7 +284,7 @@ function DetailsModal({
   };
 
   const echoTotal = Object.values(echoes).reduce((total, count) => total + count, 0);
-  const DominantReactionIcon = echoes.sad > echoes.love ? IoSadOutline : IoHeartOutline;
+  const DominantReactionIcon = echoes.sad > echoes.love ? TbMoodSad : IoHeartOutline;
 
   const saveEcho = async reaction => {
     if (!selectedLetter?._id || selectedLetter.preview || savingEcho) return;
@@ -322,6 +323,22 @@ function DetailsModal({
   const toggleEchoPicker = () => {
     setShowEchoBreakdown(false);
     setShowEchoPicker(current => !current);
+  };
+
+  const requestEcho = reaction => {
+    if (selectedEcho && selectedEcho !== reaction) {
+      setShowEchoPicker(false);
+      setPendingEcho(reaction);
+      return;
+    }
+    saveEcho(reaction);
+  };
+
+  const confirmEchoSwitch = async () => {
+    const reaction = pendingEcho;
+    if (!reaction) return;
+    await saveEcho(reaction);
+    setPendingEcho("");
   };
 
   useEffect(() => {
@@ -973,10 +990,13 @@ function DetailsModal({
                             <span className="letter-echo-control">
                               <button
                                 type="button"
-                                className="letter-paper__echo"
+                                className={`letter-paper__echo${selectedEcho ? " is-reacted" : ""}`}
                                 onClick={toggleEchoPicker}
                                 aria-expanded={showEchoPicker}
-                                aria-label="React to this letter"
+                                aria-pressed={Boolean(selectedEcho)}
+                                aria-label={selectedEcho
+                                  ? `Your ${selectedEcho} reaction is selected. Change reaction`
+                                  : "React to this letter"}
                               >
                                 <DominantReactionIcon />
                               </button>
@@ -992,7 +1012,7 @@ function DetailsModal({
                                         aria-label={option.label}
                                         className={selectedEcho === option.id ? "is-selected" : ""}
                                         disabled={savingEcho}
-                                        onClick={() => saveEcho(option.id)}
+                                        onClick={() => requestEcho(option.id)}
                                       >
                                         <ReactionIcon />
                                         <span>{option.label}</span>
@@ -1090,6 +1110,37 @@ function DetailsModal({
                   </button>
                 </div>
               )}
+            </section>
+          </div>
+        )}
+
+        {pendingEcho && (
+          <div
+            className="letter-share-dialog-overlay"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!savingEcho) setPendingEcho("");
+            }}
+          >
+            <section
+              className="letter-share-dialog letter-reaction-confirm-dialog"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="reaction-confirm-title"
+              onClick={event => event.stopPropagation()}
+            >
+              <span className="letter-share-dialog__eyebrow">Change reaction</span>
+              <div className="letter-reaction-confirm-dialog__icon" aria-hidden="true">
+                {pendingEcho === "sad" ? <TbMoodSad /> : <TbHeart />}
+              </div>
+              <h2 id="reaction-confirm-title">Switch your reaction?</h2>
+              <p>Your previous reaction will be replaced with {pendingEcho === "sad" ? "Sad" : "Love"}.</p>
+              <div className="letter-reaction-confirm-dialog__actions">
+                <button type="button" className="is-cancel" onClick={() => setPendingEcho("")} disabled={savingEcho}>Keep current</button>
+                <button type="button" className="is-confirm" onClick={confirmEchoSwitch} disabled={savingEcho}>
+                  {savingEcho ? "Switching…" : "Switch reaction"}
+                </button>
+              </div>
             </section>
           </div>
         )}

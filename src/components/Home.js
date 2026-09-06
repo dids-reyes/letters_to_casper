@@ -17,13 +17,18 @@ import "react-toastify/dist/ReactToastify.css";
 import Typewriter from "typewriter-effect";
 import {
   IoArrowUpOutline,
+  IoChevronBackOutline,
+  IoChevronForwardOutline,
   IoHelpCircleOutline,
   IoFlameOutline,
+  IoHeartOutline,
+  IoImageOutline,
   IoInformationCircleOutline,
   IoMailOpenOutline,
   IoMailUnreadOutline,
   IoNewspaperOutline,
   IoMoonOutline,
+  IoLocationOutline,
   IoSunnyOutline,
 } from "react-icons/io5";
 import { CiLocationOn } from "react-icons/ci";
@@ -57,6 +62,7 @@ function Home() {
   });
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
+  const [feedPage, setFeedPage] = useState(0);
   const [showOrigins, setShowOrigins] = useState(false);
   const [newLetter, setNewLetter] = useState({
     from: "",
@@ -136,6 +142,7 @@ function Home() {
     }
   };
   const scrollFrame = useRef(null);
+  const feedPagesRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -757,6 +764,33 @@ function Home() {
     });
   };
 
+  const goToFeedPage = page => {
+    const nextPage = Math.max(0, Math.min(3, page));
+    setFeedPage(nextPage);
+    feedPagesRef.current?.scrollTo({
+      left: feedPagesRef.current.clientWidth * nextPage,
+      behavior: "smooth",
+    });
+  };
+
+  const handleFeedScroll = event => {
+    const pageWidth = event.currentTarget.clientWidth;
+    if (!pageWidth) return;
+    setFeedPage(Math.max(0, Math.min(3, Math.round(event.currentTarget.scrollLeft / pageWidth))));
+  };
+
+  const christmasCountdownMatch = typeof daysLeftXmas === "string"
+    ? daysLeftXmas.match(/^(\d+) days?, (\d+) hours?, (\d+) minutes?, (\d+) seconds?/)
+    : null;
+  const christmasCountdownParts = christmasCountdownMatch
+    ? [
+        [christmasCountdownMatch[1], "Days"],
+        [christmasCountdownMatch[2], "Hours"],
+        [christmasCountdownMatch[3], "Minutes"],
+        [christmasCountdownMatch[4], "Seconds"],
+      ]
+    : null;
+
   return (
     <div className="app">
       <div
@@ -816,6 +850,7 @@ function Home() {
             aria-expanded={showAnnouncements}
             aria-controls="announcements-panel"
             onClick={() => {
+              if (!showAnnouncements) setFeedPage(0);
               setShowAnnouncements(!showAnnouncements);
               setShowOrigins(false);
             }}
@@ -921,7 +956,7 @@ function Home() {
               id="announcements-panel"
               className="announcements-panel feed-panel"
               role="region"
-              aria-label="Announcements"
+              aria-label="Letters to Casper update report"
             >
               <button
                 type="button"
@@ -931,53 +966,95 @@ function Home() {
               >
                 &times;
               </button>
-              <div className="announcement-item">
-                <IoInformationCircleOutline size={21} />
-                <div>
-                  <strong>A fresh look is on the way</strong>
-                  <p>
-                    We’re thoughtfully refreshing the Letters to Casper
-                    experience. You may notice a few changes while the work is
-                    still ongoing.
-                  </p>
-                </div>
-              </div>
-              <Link
-                to="/seek_help"
-                className="announcement-item announcement-item--link"
-                onClick={() => setShowAnnouncements(false)}
-              >
-                <IoHelpCircleOutline size={21} />
-                <div>
-                  <strong>It’s okay to seek help</strong>
-                  <p>
-                    If you’re not feeling okay or need mental health support,
-                    visit our Seek Help page for services and resources.
-                  </p>
-                  <span className="announcement-item__action">
-                    View support resources →
-                  </span>
-                </div>
-              </Link>
-              <div className="announcement-item">
-                <RiAdvertisementLine size={21} />
-                <div>
-                  <strong>About our ads</strong>
-                  <p>
-                    Ads help keep Letters to Casper running. We don't promote
-                    gambling and don't control the specific ads shown.
-                  </p>
-                </div>
-              </div>
-              {daysLeftXmas !== 0 && (
-                <div className="announcement-item">
-                  <TbChristmasTree size={21} />
-                  <div>
-                    <strong>Christmas countdown</strong>
-                    <p>{daysLeftXmas} days until Christmas.</p>
+              <header className="feed-report__masthead">
+                <h2>Feed</h2>
+                <div><time dateTime="2026-09">September 2026</time><span>Issue 01</span></div>
+              </header>
+
+              <div className="feed-report__pages" ref={feedPagesRef} onScroll={handleFeedScroll}>
+                <section className="feed-report__page" aria-label="Recent updates, page 1 of 4">
+                  <div className="feed-report__lead">
+                    <span>From the desk</span>
+                    <h3>A gentler way to read, feel, and let go.</h3>
+                    <p>We’re moving into a fresh phase. Every letter can now carry a little more life while keeping the experience quiet and personal.</p>
                   </div>
-                </div>
-              )}
+                  <div className="feed-report__updates">
+                    <article className="feed-report__story is-featured">
+                      <IoHeartOutline aria-hidden="true" />
+                      <div><span className="feed-report__kicker">New · Reactions</span><h4>Leave a feeling behind</h4><p>Respond with Love or Sad. Your choice is remembered, and switching reactions asks for confirmation.</p></div>
+                    </article>
+                    <article className="feed-report__story">
+                      <IoFlameOutline aria-hidden="true" />
+                      <div><span className="feed-report__kicker">New · Burn keys</span><h4>Your letter, your choice</h4><p>New letters receive a private key you can use to remove your letter after approval whenever you’re ready to let it go.</p></div>
+                    </article>
+                    <article className="feed-report__story">
+                      <IoInformationCircleOutline aria-hidden="true" />
+                      <div><span className="feed-report__kicker">Design note</span><h4>Letters that quietly glow</h4><p>Borders respond to their warmth: amber for reads, pink for Love, and blue for Sad.</p></div>
+                    </article>
+                  </div>
+                </section>
+
+                <section className="feed-report__page" aria-label="Recent updates, page 2 of 4">
+                  <div className="feed-report__lead">
+                    <span>More ways to share</span>
+                    <h3>Give your words a place and a picture.</h3>
+                    <p>A few thoughtful additions now make letters feel closer to the moments and places behind them.</p>
+                  </div>
+                  <div className="feed-report__updates">
+                    <article className="feed-report__story is-featured">
+                      <IoImageOutline aria-hidden="true" />
+                      <div><span className="feed-report__kicker">Now available · Photos</span><h4>Attach a memory</h4><p>You can optionally add one photo to a new letter. Preview it before sending and open it full screen while reading.</p></div>
+                    </article>
+                    <article className="feed-report__story is-wide">
+                      <IoLocationOutline aria-hidden="true" />
+                      <div><span className="feed-report__kicker">Explore · Origins</span><h4>See where it came from</h4><p>When location is available, use Locate on an open letter to view its general origin on the map.</p></div>
+                    </article>
+                  </div>
+                </section>
+
+                <section className="feed-report__page feed-report__page--care" aria-label="Community care and support, page 3 of 4">
+                  <div className="feed-report__lead">
+                    <span>Community care</span>
+                    <h3>A little support can make the page feel lighter.</h3>
+                    <p>Resources are here when you need help, while ads quietly help keep Letters to Casper available to everyone.</p>
+                  </div>
+                  <div className="feed-report__updates">
+                    <Link className="feed-report__story is-featured feed-report__story--link" to="/seek_help" onClick={() => setShowAnnouncements(false)}>
+                      <IoHelpCircleOutline aria-hidden="true" />
+                      <div><span className="feed-report__kicker">Seek Help resources</span><h4>You do not have to carry it alone</h4><p>Find mental-health services and support options gathered for moments when you or someone you care about may need them.</p><strong className="feed-report__story-action">View support resources →</strong></div>
+                    </Link>
+                    <article className="feed-report__story is-wide">
+                      <RiAdvertisementLine aria-hidden="true" />
+                      <div><span className="feed-report__kicker">Supporting the site</span><h4>How ads help this quiet corner</h4><p>Advertising helps cover hosting, storage, and the services behind every letter, allowing the collection to remain free to read and use.</p></div>
+                    </article>
+                  </div>
+                </section>
+
+                <section className="feed-report__page feed-report__page--christmas" aria-label="Christmas countdown, page 4 of 4">
+                  <div className="feed-report__holiday-mark" aria-hidden="true"><TbChristmasTree /></div>
+                  <span className="feed-report__kicker">A seasonal note</span>
+                  <h3>{daysLeftXmas === 0 ? "Christmas is here." : "Christmas is getting closer."}</h3>
+                  {daysLeftXmas === 0 ? (
+                    <p>May today bring a little warmth to every letter waiting to be read.</p>
+                  ) : christmasCountdownParts ? (
+                    <div className="feed-report__countdown" aria-label={daysLeftXmas}>
+                      {christmasCountdownParts.map(([value, label]) => (
+                        <span key={label}><strong>{value}</strong><small>{label}</small></span>
+                      ))}
+                    </div>
+                  ) : (
+                    <strong className="feed-report__christmas-message">{daysLeftXmas}</strong>
+                  )}
+                  {daysLeftXmas !== 0 && <p>A small countdown for a season filled with words, memories, and people we hold close.</p>}
+                  <small>More announcements and special features can appear on pages like this soon.</small>
+                </section>
+              </div>
+
+              <nav className="feed-report__pagination" aria-label="Feed pages">
+                <button type="button" onClick={() => goToFeedPage(feedPage - 1)} disabled={feedPage === 0} aria-label="Previous update page"><IoChevronBackOutline /></button>
+                <div>{[0, 1, 2, 3].map(page => <button key={page} type="button" className={feedPage === page ? "is-active" : ""} onClick={() => goToFeedPage(page)} aria-label={`Go to update page ${page + 1}`} aria-current={feedPage === page ? "page" : undefined} />)}</div>
+                <button type="button" onClick={() => goToFeedPage(feedPage + 1)} disabled={feedPage === 3} aria-label="Next update page"><IoChevronForwardOutline /></button>
+              </nav>
             </div>
           )}
         </div>

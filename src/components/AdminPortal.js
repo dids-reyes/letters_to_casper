@@ -34,6 +34,7 @@ function AdminPortal() {
   const [featuredSearching, setFeaturedSearching] = useState(false);
   const [featuredActionId, setFeaturedActionId] = useState('');
   const [featuredError, setFeaturedError] = useState('');
+  const [featuredToAdd, setFeaturedToAdd] = useState(null);
   const [featuredToRemove, setFeaturedToRemove] = useState(null);
 
   const formatReviewTimestamp = timestamp =>
@@ -161,6 +162,7 @@ function AdminPortal() {
           data.message,
           ...current.filter(item => item._id !== data.message._id),
         ]);
+        setFeaturedToAdd(null);
       } else {
         setFeaturedLetters(current => current.filter(item => item._id !== letter._id));
         setFeaturedToRemove(null);
@@ -501,7 +503,7 @@ function AdminPortal() {
                 return (
                   <article key={letter._id} className="featured-letter-row">
                     <div><span>From <strong>{letter.from}</strong> to <strong>{letter.to}</strong></span><p>{letter.message}</p></div>
-                    <button title={!canManageFeatured ? 'Only the featured manager can add letters' : ''} disabled={!canManageFeatured || isAlreadyFeatured || featuredActionId === letter._id} onClick={() => updateFeaturedLetter(letter, 'add')}>
+                    <button title={!canManageFeatured ? 'Only the featured manager can add letters' : ''} disabled={!canManageFeatured || isAlreadyFeatured || featuredActionId === letter._id} onClick={() => setFeaturedToAdd(letter)}>
                       {isAlreadyFeatured ? <><IoCheckmarkCircleOutline /> Featured</> : <><IoAddCircleOutline /> Add</>}
                     </button>
                   </article>
@@ -526,6 +528,34 @@ function AdminPortal() {
             ) : <p className="featured-manager__empty">No letters are featured yet. Search above to add one.</p>}
           </div>
         </section>
+      )}
+      {featuredToAdd && (
+        <div className="admin-delete-overlay" onClick={() => {
+          if (!featuredActionId) setFeaturedToAdd(null);
+        }}>
+          <section
+            className="admin-delete-dialog featured-add-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="featured-add-title"
+            onClick={event => event.stopPropagation()}
+          >
+            <span className="featured-add-dialog__icon" aria-hidden="true"><IoStarOutline /></span>
+            <span className="featured-add-dialog__eyebrow">Featured collection</span>
+            <h2 id="featured-add-title">Add this letter to Featured?</h2>
+            <p>This letter will be highlighted in the public Featured collection.</p>
+            <div className="featured-remove-dialog__letter">
+              <span>From <strong>{featuredToAdd.from}</strong></span>
+              <span>To <strong>{featuredToAdd.to}</strong></span>
+            </div>
+            <div className="admin-delete-dialog__actions">
+              <button type="button" className="admin-delete-dialog__cancel" onClick={() => setFeaturedToAdd(null)} disabled={featuredActionId === featuredToAdd._id}>Cancel</button>
+              <button type="button" className="featured-add-dialog__confirm" onClick={() => updateFeaturedLetter(featuredToAdd, 'add')} disabled={featuredActionId === featuredToAdd._id}>
+                <IoStarOutline /> {featuredActionId === featuredToAdd._id ? 'Adding…' : 'Add to Featured'}
+              </button>
+            </div>
+          </section>
+        </div>
       )}
       {featuredToRemove && (
         <div className="admin-delete-overlay" onClick={() => {
