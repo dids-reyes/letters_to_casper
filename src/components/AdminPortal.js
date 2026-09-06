@@ -13,6 +13,7 @@ import {IoAddCircleOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoFlame
 function AdminPortal() {
   const {isLoggedIn, adminName, sessionToken, logout} = useContext(AuthContext);
   const canManageFeatured = adminName.toLowerCase() === 'didsirwynreyes';
+  const canFinalizeLetters = adminName.toLowerCase() === 'didsirwynreyes';
 
   const adminHeaders = useCallback(extraHeaders => ({
     'x-api-key': api_key,
@@ -175,6 +176,8 @@ function AdminPortal() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [moderationAction, setModerationAction] = useState('');
+  const [moderationStatus, setModerationStatus] = useState('');
 
   const handleSelectChange = event => {
     const newSelectedLetters = [...selectedLetters];
@@ -226,6 +229,53 @@ function AdminPortal() {
     } catch (error) {
       console.error('Error approving letters:', error);
       alert('An error occurred while approving letters.');
+    }
+  };
+
+  const handleModerationDecision = async action => {
+    const letterIds = selectedLetters.filter(id =>
+      letters.some(letter => letter._id === id && !letter.burnRequested),
+    );
+    if (!letterIds.length) {
+      setModerationStatus('Select at least one pending letter.');
+      return;
+    }
+
+    setModerationAction(action);
+    setModerationStatus('');
+    try {
+      const decisions = await Promise.all(letterIds.map(async letterId => {
+        const response = await fetch(`${render_url}/api/messages/${letterId}/moderation`, {
+          method: 'POST',
+          headers: adminHeaders({'Content-Type': 'application/json'}),
+          body: JSON.stringify({action}),
+        });
+        if (response.status === 401) {
+          logout();
+          throw new Error('Session expired');
+        }
+        if (!response.ok) throw new Error('Unable to save decision');
+        return response.json();
+      }));
+
+      const decisionsByLetter = new Map(
+        decisions.map(result => [String(result.letterId), result.moderationDecisions]),
+      );
+      setLetters(current => current.map(letter =>
+        decisionsByLetter.has(letter._id)
+          ? {...letter, moderationDecisions: decisionsByLetter.get(letter._id)}
+          : letter,
+      ));
+      setSelectedLetters([]);
+      setModerationStatus(
+        action === 'publish'
+          ? `${letterIds.length} ${letterIds.length === 1 ? 'letter' : 'letters'} marked to join the collection.`
+          : `${letterIds.length} ${letterIds.length === 1 ? 'letter' : 'letters'} marked for removal.`,
+      );
+    } catch (error) {
+      setModerationStatus('Your moderation decision couldn’t be saved.');
+    } finally {
+      setModerationAction('');
     }
   };
 
@@ -360,21 +410,22 @@ function AdminPortal() {
         <span className="letter-actions__selection">{selectedLetters.length ? `${selectedLetters.length} selected` : 'Select letters to begin'}</span>
         <button
           className="letter-action-button approve-button"
-          disabled={!selectedLetters.length}
-          onClick={handleApproveLetters}
+          disabled={!selectedLetters.length || Boolean(moderationAction)}
+          onClick={canFinalizeLetters ? handleApproveLetters : () => handleModerationDecision('publish')}
         >
           <IoCheckmarkCircleOutline />
-          Approve{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
+          {canFinalizeLetters ? 'Publish' : moderationAction === 'publish' ? 'Marking…' : 'Mark to Publish'}{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
         </button>
         <button
-          className="letter-action-button delete-button"
-          disabled={!selectedLetters.length}
-          onClick={openDeleteConfirm}
+          className={`letter-action-button delete-button${!canFinalizeLetters ? ' moderation-remove-button' : ''}`}
+          disabled={!selectedLetters.length || Boolean(moderationAction)}
+          onClick={canFinalizeLetters ? openDeleteConfirm : () => handleModerationDecision('remove')}
         >
           <IoTrashOutline />
-          Delete{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
+          {canFinalizeLetters ? 'Delete' : moderationAction === 'remove' ? 'Marking…' : 'Mark to Remove'}{selectedLetters.length > 0 && ` (${selectedLetters.length})`}
         </button>
       </div>
+      {moderationStatus && <p className="moderation-status" role="status">{moderationStatus}</p>}
       {letters.length > 0 && (
         <ul className="letter-review-list">
           {letters.map(letter => (
@@ -401,6 +452,16 @@ function AdminPortal() {
                     )}
                   </div>
                   <p>{letter.message}</p>
+                  {letter.moderationDecisions?.length > 0 && (
+                    <div className="letter-moderation-decisions">
+                      {letter.moderationDecisions.map(decision => (
+                        <div key={`${decision.admin}-${decision.createdAt}`} className={`is-${decision.action}`}>
+                          {decision.action === 'publish' ? <IoCheckmarkCircleOutline /> : <IoTrashOutline />}
+                          <span><strong>{decision.admin}</strong> {decision.action === 'publish' ? 'marked this letter to join the collection' : 'marked this letter for removal'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {letter.photo?.url && (
                     <img
                       className="letter-review-photo"
