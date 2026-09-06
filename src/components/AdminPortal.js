@@ -36,6 +36,12 @@ function AdminPortal() {
   const [featuredError, setFeaturedError] = useState('');
   const [featuredToAdd, setFeaturedToAdd] = useState(null);
   const [featuredToRemove, setFeaturedToRemove] = useState(null);
+  const [manageQuery, setManageQuery] = useState('');
+  const [manageResults, setManageResults] = useState([]);
+  const [manageSearching, setManageSearching] = useState(false);
+  const [manageError, setManageError] = useState('');
+  const [letterToPermanentlyDelete, setLetterToPermanentlyDelete] = useState(null);
+  const [manageDeleteLoading, setManageDeleteLoading] = useState(false);
 
   const formatReviewTimestamp = timestamp =>
     new Date(timestamp).toLocaleString('en-US', {
@@ -141,6 +147,45 @@ function AdminPortal() {
     };
   }, [adminHeaders, featuredQuery, logout, sessionToken]);
 
+  useEffect(() => {
+    if (!sessionToken) return undefined;
+    const query = manageQuery.trim();
+    if (query.length < 2) {
+      setManageResults([]);
+      setManageSearching(false);
+      setManageError('');
+      return undefined;
+    }
+    const controller = new AbortController();
+    setManageSearching(true);
+    setManageError('');
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `${render_url}/api/messages/manage/search?q=${encodeURIComponent(query)}`,
+          {headers: adminHeaders(), signal: controller.signal},
+        );
+        if (response.status === 401) {
+          logout();
+          return;
+        }
+        if (!response.ok) throw new Error('Search failed');
+        const data = await response.json();
+        setManageResults(data.messages || []);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setManageError('Couldn’t search letters right now.');
+        }
+      } finally {
+        if (!controller.signal.aborted) setManageSearching(false);
+      }
+    }, 500);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [adminHeaders, logout, manageQuery, sessionToken]);
+
   const updateFeaturedLetter = async (letter, action) => {
     if (!canManageFeatured) return;
     setFeaturedActionId(letter._id);
@@ -171,6 +216,34 @@ function AdminPortal() {
       setFeaturedError(`Couldn’t ${action === 'add' ? 'feature' : 'remove'} this letter.`);
     } finally {
       setFeaturedActionId('');
+    }
+  };
+
+  const permanentlyDeleteManagedLetter = async () => {
+    if (!canFinalizeLetters || !letterToPermanentlyDelete) return;
+    const letterId = letterToPermanentlyDelete._id;
+    setManageDeleteLoading(true);
+    setManageError('');
+    try {
+      const response = await fetch(`${render_url}/api/messages/delete`, {
+        method: 'POST',
+        headers: adminHeaders({'Content-Type': 'application/json'}),
+        body: JSON.stringify({letterIds: [letterId]}),
+      });
+      if (response.status === 401) {
+        logout();
+        return;
+      }
+      if (!response.ok) throw new Error('Delete failed');
+      setManageResults(current => current.filter(letter => letter._id !== letterId));
+      setFeaturedLetters(current => current.filter(letter => letter._id !== letterId));
+      setLetters(current => current.filter(letter => letter._id !== letterId));
+      setSelectedLetters(current => current.filter(id => id !== letterId));
+      setLetterToPermanentlyDelete(null);
+    } catch (error) {
+      setManageError('This letter couldn’t be permanently deleted. Please try again.');
+    } finally {
+      setManageDeleteLoading(false);
     }
   };
 
@@ -403,6 +476,9 @@ function AdminPortal() {
         <button className={activeSection === 'featured' ? 'is-active' : ''} onClick={() => setActiveSection('featured')}>
           <IoStarOutline /> Featured Letters <span>{featuredLetters.length}</span>
         </button>
+        <button className={activeSection === 'manage' ? 'is-active' : ''} onClick={() => setActiveSection('manage')}>
+          <IoTrashOutline /> Manage Letters
+        </button>
       </nav>
       {activeSection === 'review' && <>
       {loading === 1 && <p className="admin-portal-status">Loading letters…</p>}
@@ -521,12 +597,47 @@ function AdminPortal() {
                     <span className="featured-letter-card__badge"><IoStarOutline /> Featured</span>
                     <div className="featured-letter-card__names"><span>From <strong>{letter.from}</strong></span><span>To <strong>{letter.to}</strong></span></div>
                     <p>{letter.message}</p>
-                    <footer><span><IoCalendarOutline /> {formatReviewTimestamp(letter.timestamp)}</span><button title={!canManageFeatured ? 'Only the featured manager can remove letters' : ''} disabled={!canManageFeatured || featuredActionId === letter._id} onClick={() => setFeaturedToRemove(letter)}><IoTrashOutline /> Remove</button></footer>
+                    <footer><span><IoCalendarOutline /> {formatReviewTimestamp(letter.timestamp)}</span><button title={!canManageFeatured ? 'Only the featured manager can unfeature letters' : 'Remove from Featured only'} disabled={!canManageFeatured || featuredActionId === letter._id} onClick={() => setFeaturedToRemove(letter)}><IoStarOutline /> Unfeature</button></footer>
                   </article>
                 ))}
               </div>
             ) : <p className="featured-manager__empty">No letters are featured yet. Search above to add one.</p>}
           </div>
+        </section>
+      )}
+      {activeSection === 'manage' && (
+        <section className="featured-manager letter-manager">
+          <header className="featured-manager__header letter-manager__header">
+            <div><span>Collection management</span><h2>Manage letters</h2><p>Find any letter by its ID, sender, recipient, or message.</p></div>
+            <div className="featured-manager__count letter-manager__count"><IoTrashOutline /><strong>All</strong><span>Letters</span></div>
+          </header>
+          <div className="featured-search">
+            <IoSearchOutline aria-hidden="true" />
+            <input value={manageQuery} onChange={event => setManageQuery(event.target.value)} placeholder="Search letter ID, sender, recipient, or message" aria-label="Search all letters" />
+            {manageSearching && <span className="featured-search__spinner" aria-label="Searching" />}
+          </div>
+          {manageError && <p className="featured-manager__error" role="alert">{manageError}</p>}
+          {!canFinalizeLetters && <p className="featured-manager__access-note"><IoShieldCheckmarkOutline /> You can search and view letters. Permanent deletion is restricted.</p>}
+          {manageQuery.trim().length < 2 ? (
+            <p className="featured-manager__empty letter-manager__prompt">Enter at least two characters to find a letter.</p>
+          ) : !manageSearching && (
+            <div className="featured-search-results letter-manager__results">
+              <h3>Search results</h3>
+              {manageResults.length ? manageResults.map(letter => (
+                <article key={letter._id} className="featured-letter-row managed-letter-row">
+                  <div>
+                    <div className="managed-letter-row__topline">
+                      <span>From <strong>{letter.from}</strong> to <strong>{letter.to}</strong></span>
+                      <span className={`managed-letter-status ${letter.burnRequested ? 'is-burned' : letter.approve ? 'is-public' : 'is-pending'}`}>{letter.burnRequested ? 'Burned' : letter.approve ? 'Public' : 'Pending'}</span>
+                    </div>
+                    <p>{letter.message}</p>
+                    <small><IoCalendarOutline /> {formatReviewTimestamp(letter.timestamp)} · ID {letter._id}</small>
+                  </div>
+                  <button className="managed-letter-delete" title={!canFinalizeLetters ? 'Only didsirwynreyes can permanently delete letters' : 'Permanently delete this letter'} disabled={!canFinalizeLetters} onClick={() => setLetterToPermanentlyDelete(letter)}><IoTrashOutline /> Delete</button>
+                </article>
+              )) : <p className="featured-manager__empty">No letters matched your search.</p>}
+            </div>
+          )}
         </section>
       )}
       {featuredToAdd && (
@@ -570,7 +681,7 @@ function AdminPortal() {
           >
             <span className="featured-remove-dialog__icon" aria-hidden="true"><IoStarOutline /></span>
             <span className="featured-remove-dialog__eyebrow">Featured collection</span>
-            <h2 id="featured-remove-title">Remove this featured letter?</h2>
+            <h2 id="featured-remove-title">Remove from Featured?</h2>
             <p>It will remain publicly available, but it will no longer appear in the Featured collection.</p>
             <div className="featured-remove-dialog__letter">
               <span>From <strong>{featuredToRemove.from}</strong></span>
@@ -579,8 +690,28 @@ function AdminPortal() {
             <div className="admin-delete-dialog__actions">
               <button type="button" className="admin-delete-dialog__cancel" onClick={() => setFeaturedToRemove(null)} disabled={featuredActionId === featuredToRemove._id}>Keep featured</button>
               <button type="button" className="featured-remove-dialog__confirm" onClick={() => updateFeaturedLetter(featuredToRemove, 'remove')} disabled={featuredActionId === featuredToRemove._id}>
-                <IoTrashOutline /> {featuredActionId === featuredToRemove._id ? 'Removing…' : 'Remove from Featured'}
+                <IoStarOutline /> {featuredActionId === featuredToRemove._id ? 'Updating…' : 'Unfeature Letter'}
               </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {letterToPermanentlyDelete && (
+        <div className="admin-delete-overlay" onClick={() => {
+          if (!manageDeleteLoading) setLetterToPermanentlyDelete(null);
+        }}>
+          <section className="admin-delete-dialog managed-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="managed-delete-title" onClick={event => event.stopPropagation()}>
+            <span className="admin-delete-dialog__icon" aria-hidden="true"><IoWarningOutline /></span>
+            <span className="admin-delete-dialog__eyebrow">Permanent action</span>
+            <h2 id="managed-delete-title">Permanently delete this letter?</h2>
+            <p>This removes the entire letter from the collection and cannot be undone.</p>
+            <div className="featured-remove-dialog__letter">
+              <span>From <strong>{letterToPermanentlyDelete.from}</strong></span>
+              <span>To <strong>{letterToPermanentlyDelete.to}</strong></span>
+            </div>
+            <div className="admin-delete-dialog__actions">
+              <button type="button" className="admin-delete-dialog__cancel" onClick={() => setLetterToPermanentlyDelete(null)} disabled={manageDeleteLoading}>Keep letter</button>
+              <button type="button" className="admin-delete-dialog__confirm" onClick={permanentlyDeleteManagedLetter} disabled={manageDeleteLoading}><IoTrashOutline /> {manageDeleteLoading ? 'Deleting…' : 'Delete permanently'}</button>
             </div>
           </section>
         </div>

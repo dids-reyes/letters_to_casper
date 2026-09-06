@@ -43,6 +43,16 @@ import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
 const FIREFLY_ENABLED = false;
+const CHRISTMAS_SNOWFLAKES = Array.from({length: 30}, (_, index) => ({
+  left: (index * 37 + 11) % 101,
+  size: 2.4 + ((index * 13) % 36) / 10,
+  duration: 6.8 + ((index * 17) % 55) / 10,
+  delay: -((index * 29) % 120) / 10,
+  drift: -30 + ((index * 43) % 61),
+  sway: -16 + ((index * 31) % 33),
+  opacity: 0.58 + ((index * 19) % 37) / 100,
+  blur: ((index * 7) % 10) / 10,
+}));
 
 const formatCountry = (country) => {
   try {
@@ -1031,6 +1041,23 @@ function Home() {
                 </section>
 
                 <section className="feed-report__page feed-report__page--christmas" aria-label="Christmas countdown, page 4 of 4">
+                  <div className="feed-report__snow" aria-hidden="true">
+                    {CHRISTMAS_SNOWFLAKES.map((flake, index) => (
+                      <i
+                        key={index}
+                        style={{
+                          "--snow-left": `${flake.left}%`,
+                          "--snow-size": `${flake.size}px`,
+                          "--snow-duration": `${flake.duration}s`,
+                          "--snow-delay": `${flake.delay}s`,
+                          "--snow-drift": `${flake.drift}px`,
+                          "--snow-sway": `${flake.sway}px`,
+                          "--snow-opacity": flake.opacity,
+                          "--snow-blur": `${flake.blur}px`,
+                        }}
+                      />
+                    ))}
+                  </div>
                   <div className="feed-report__holiday-mark" aria-hidden="true"><TbChristmasTree /></div>
                   <span className="feed-report__kicker">A seasonal note</span>
                   <h3>{daysLeftXmas === 0 ? "Christmas is here." : "Christmas is getting closer."}</h3>
