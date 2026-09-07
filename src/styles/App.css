@@ -1382,6 +1382,7 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
   --letter-warmth: 0.08;
   --letter-warmth-rgb: 210 160 90;
   --letter-surface: #fdfaef;
+  /* Keep the outline neutral; reaction color belongs to the traveling segment. */
   --letter-border-track: #e7ddc4;
   display: flex;
   flex-direction: column;
@@ -1450,24 +1451,16 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
       rgb(var(--letter-warmth-rgb) / calc(0.09 + var(--letter-warmth) * 0.36));
 }
 
-.letter-card--warmth-quiet { --letter-border-track: rgba(117, 137, 190, 0.25); }
-.letter-card--warmth-noticed { --letter-border-track: rgba(91, 124, 213, 0.34); }
-.letter-card--warmth-resonating { --letter-border-track: rgba(88, 116, 222, 0.46); }
-.letter-card--warmth-deeply-felt { --letter-border-track: rgba(108, 101, 224, 0.58); }
-
 .letter-card--mood-love {
   --letter-warmth-rgb: 238 105 153;
-  --letter-border-track: rgb(222 119 157 / calc(0.4 + var(--letter-warmth) * 0.76));
 }
 
 .letter-card--mood-sad {
   --letter-warmth-rgb: 87 137 207;
-  --letter-border-track: rgb(92 138 202 / calc(0.4 + var(--letter-warmth) * 0.76));
 }
 
 .letter-card--mood-neutral {
   --letter-warmth-rgb: 210 160 90;
-  --letter-border-track: rgb(196 146 75 / calc(0.34 + var(--letter-warmth) * 0.68));
 }
 
 .letter-card__top {
@@ -5516,24 +5509,16 @@ html.night-shift .letter-card:hover {
       rgb(var(--letter-warmth-rgb) / calc(0.05 + var(--letter-warmth) * 0.16));
 }
 
-html.night-shift .letter-card--warmth-quiet { --letter-border-track: rgba(116, 128, 166, 0.3); }
-html.night-shift .letter-card--warmth-noticed { --letter-border-track: rgba(100, 132, 219, 0.42); }
-html.night-shift .letter-card--warmth-resonating { --letter-border-track: rgba(111, 136, 234, 0.55); }
-html.night-shift .letter-card--warmth-deeply-felt { --letter-border-track: rgba(137, 126, 246, 0.68); }
-
 html.night-shift .letter-card--mood-love {
   --letter-warmth-rgb: 242 113 162;
-  --letter-border-track: rgb(225 119 160 / calc(0.24 + var(--letter-warmth) * 0.38));
 }
 
 html.night-shift .letter-card--mood-sad {
   --letter-warmth-rgb: 83 128 194;
-  --letter-border-track: rgb(90 132 192 / calc(0.24 + var(--letter-warmth) * 0.38));
 }
 
 html.night-shift .letter-card--mood-neutral {
   --letter-warmth-rgb: 222 171 92;
-  --letter-border-track: rgb(205 158 83 / calc(0.2 + var(--letter-warmth) * 0.35));
 }
 
 html.night-shift .letter-card__name {
