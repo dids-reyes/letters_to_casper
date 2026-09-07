@@ -220,3 +220,10 @@
   .featured-remove-dialog__letter strong { font-size:11px; }
   .admin-delete-dialog__actions button { font-size:12px; }
 }
+
+@media (max-width: 720px) {
+  .admin-workspace-tabs { flex-wrap:wrap; }
+  .admin-workspace-tabs button { flex:1 1 calc(50% - 7px); }
+  .burned-letter-manager .managed-letter-row { flex-wrap:wrap; }
+  .burned-letter-manager .managed-letter-row > div { flex-basis:100%; }
+}
