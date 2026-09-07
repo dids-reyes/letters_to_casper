@@ -21,10 +21,9 @@ function AdminPortal() {
     ...extraHeaders,
   }), [sessionToken]);
 
-  const [letters, setLetters] = useState({
-    messages: [],
-    counts: {approved: 0, unapproved: 0},
-  });
+  const [letters, setLetters] = useState([]);
+  const reviewLetters = letters.filter(letter => !letter.burnRequested);
+  const burnedLetters = letters.filter(letter => letter.burnRequested);
   const [loading, setLoading] = useState(0);
   const [activeSection, setActiveSection] = useState('review');
   const [featuredLetters, setFeaturedLetters] = useState([]);
@@ -74,7 +73,7 @@ function AdminPortal() {
           throw new Error('Failed to fetch letters');
         }
         const data = await response.json();
-        setLetters(data.messages);
+        setLetters(data.messages || []);
         setLoading(0);
       } catch (error) {
         console.error('Error fetching letters:', error);
@@ -466,12 +465,15 @@ function AdminPortal() {
         </div>
         <div className="admin-portal-header__intro">
           <div><span>Letter review</span><h1>Pending letters</h1><p>Review the queue and decide what joins the collection.</p></div>
-          <div className="admin-portal-count"><IoMailUnreadOutline /><strong>{letters.length}</strong><span>Waiting</span></div>
+          <div className="admin-portal-count"><IoMailUnreadOutline /><strong>{reviewLetters.length}</strong><span>Waiting</span></div>
         </div>
       </header>
       <nav className="admin-workspace-tabs" aria-label="Admin portal sections">
         <button className={activeSection === 'review' ? 'is-active' : ''} onClick={() => setActiveSection('review')}>
-          <IoMailUnreadOutline /> Review Queue <span>{letters.length || 0}</span>
+          <IoMailUnreadOutline /> Review Queue <span>{reviewLetters.length}</span>
+        </button>
+        <button className={activeSection === 'burned' ? 'is-active' : ''} onClick={() => setActiveSection('burned')}>
+          <IoFlameOutline /> Burned Letters <span>{burnedLetters.length}</span>
         </button>
         <button className={activeSection === 'featured' ? 'is-active' : ''} onClick={() => setActiveSection('featured')}>
           <IoStarOutline /> Featured Letters <span>{featuredLetters.length}</span>
@@ -504,9 +506,9 @@ function AdminPortal() {
         </button>
       </div>
       {moderationStatus && <p className="moderation-status" role="status">{moderationStatus}</p>}
-      {letters.length > 0 && (
+      {reviewLetters.length > 0 && (
         <ul className="letter-review-list">
-          {letters.map(letter => (
+          {reviewLetters.map(letter => (
             <li key={letter._id} className="letter-item">
               <input
                 type="checkbox"
@@ -521,7 +523,6 @@ function AdminPortal() {
                     <span><strong>From</strong>{letter.from}</span>
                     <span><strong>To</strong>{letter.to}</span>
                     {letter.photo?.url && <span className="letter-photo-badge"><IoImageOutline /> Photo</span>}
-                    {letter.burnRequested && <span className="letter-burn-badge"><IoFlameOutline /> Burned by author</span>}
                   </div>
                   <div className="letter-review-box__meta">
                     <span><IoCalendarOutline />{formatReviewTimestamp(letter.timestamp)}</span>
@@ -554,8 +555,44 @@ function AdminPortal() {
           ))}
         </ul>
       )}
-      {letters.length === 0 && !loading && <div className="admin-portal-empty"><IoCheckmarkCircleOutline /><strong>Queue cleared</strong><p>No letters are waiting for review.</p></div>}
+      {reviewLetters.length === 0 && !loading && <div className="admin-portal-empty"><IoCheckmarkCircleOutline /><strong>Queue cleared</strong><p>No letters are waiting for review.</p></div>}
       </>}
+      {activeSection === 'burned' && (
+        <section className="featured-manager burned-letter-manager">
+          <header className="featured-manager__header">
+            <div><span>Removed by authors</span><h2>Burned letters</h2><p>Letters users burned are no longer public. Permanently delete their remaining records here.</p></div>
+            <div className="featured-manager__count"><IoFlameOutline /><strong>{burnedLetters.length}</strong><span>Burned</span></div>
+          </header>
+          {!canFinalizeLetters && <p className="featured-manager__access-note"><IoShieldCheckmarkOutline /> You have view-only access. Permanent deletion is restricted.</p>}
+          {loading === 1 && <p className="featured-manager__empty">Loading burned letters…</p>}
+          {loading === 2 && <p className="featured-manager__error" role="alert">Couldn’t load burned letters.</p>}
+          {!loading && (burnedLetters.length ? (
+            <div className="featured-current">
+              {burnedLetters.map(letter => (
+                <article key={letter._id} className="featured-letter-row managed-letter-row">
+                  <div>
+                    <div className="managed-letter-row__topline">
+                      <span>From <strong>{letter.from}</strong> to <strong>{letter.to}</strong></span>
+                      <span className="managed-letter-status is-burned"><IoFlameOutline /> Burned by author</span>
+                    </div>
+                    <p>{letter.message}</p>
+                    <small><IoCalendarOutline /> {formatReviewTimestamp(letter.timestamp)} · ID {letter._id}</small>
+                  </div>
+                  <button
+                    className="managed-letter-delete"
+                    title={!canFinalizeLetters ? 'Only didsirwynreyes can permanently delete letters' : 'Permanently delete this burned letter'}
+                    disabled={!canFinalizeLetters}
+                    onClick={() => {
+                      setManageError('');
+                      setLetterToPermanentlyDelete(letter);
+                    }}
+                  ><IoTrashOutline /> Delete permanently</button>
+                </article>
+              ))}
+            </div>
+          ) : <div className="admin-portal-empty"><IoFlameOutline /><strong>No burned letters</strong><p>Letters burned by users will appear here.</p></div>)}
+        </section>
+      )}
       {activeSection === 'featured' && (
         <section className="featured-manager">
           <header className="featured-manager__header">
@@ -709,6 +746,7 @@ function AdminPortal() {
               <span>From <strong>{letterToPermanentlyDelete.from}</strong></span>
               <span>To <strong>{letterToPermanentlyDelete.to}</strong></span>
             </div>
+            {manageError && <p className="admin-delete-dialog__error" role="alert">{manageError}</p>}
             <div className="admin-delete-dialog__actions">
               <button type="button" className="admin-delete-dialog__cancel" onClick={() => setLetterToPermanentlyDelete(null)} disabled={manageDeleteLoading}>Keep letter</button>
               <button type="button" className="admin-delete-dialog__confirm" onClick={permanentlyDeleteManagedLetter} disabled={manageDeleteLoading}><IoTrashOutline /> {manageDeleteLoading ? 'Deleting…' : 'Delete permanently'}</button>
