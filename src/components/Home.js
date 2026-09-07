@@ -14,7 +14,7 @@ import empty from "../lotties/empty2.json";
 import lettersToCasperLogo from "../lotties/ltc_logo_1.webp";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Typewriter from "typewriter-effect";
+import MailboxLoading from "./MailboxLoading";
 import {
   IoArrowUpOutline,
   IoChevronBackOutline,
@@ -332,7 +332,6 @@ function Home() {
     if (goBackToNotFeatured) {
       setGoBackToNotFeatured(false);
     } else {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
       setLoading(1);
     }
     try {
@@ -1192,44 +1191,7 @@ function Home() {
         </div>
       )}
       {loading === 1 ? (
-        <div className="load-letters">
-          <center>
-            <Lottie
-              loop
-              animationData={ghost1}
-              play
-              style={{ width: 300, height: 300 }}
-            />
-          </center>
-          <div>
-            <Typewriter
-              options={{ delay: 20, loop: false, cursor: ""}}
-              onInit={(typewriter) => {
-                typewriter
-                  .typeString(
-                    `Opening up the mailbox... <br/>things take just a bit longer to load up at first.`
-                  )
-                  .pauseFor(3000)
-                  .start();
-              }}
-            />
-          </div>
-          <div>
-            <Typewriter
-              options={{ delay: 20, loop: false, cursor: ""}}
-              onInit={(typewriter) => {
-                typewriter
-                  .pauseFor(7000)
-                  .typeString(
-                    `<br/><br/>Please wait about a minute while we get the site ready.`
-                  )
-                  .pauseFor(3000)
-                  .start();
-              }}
-            />
-          </div>
-          <br />
-        </div>
+        <MailboxLoading />
       ) : loading === 2 ? (
         <>
           <center>

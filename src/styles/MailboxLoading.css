@@ -1,0 +1,39 @@
+.mailbox-loading { width:min(400px,100%); margin:12px auto 36px; padding:0 clamp(12px,4vw,20px); box-sizing:border-box; text-align:center; color:#4b463d; }
+.mailbox-loading__ghost { width:min(220px,100%); aspect-ratio:1; height:auto; margin:0 auto; transition:width .6s ease; }
+.mailbox-loading.is-waking .mailbox-loading__ghost { width:min(160px,100%); height:auto; }
+.mailbox-loading__status h2 { margin:0 0 10px; font-family:Georgia,'Times New Roman',serif; font-size:clamp(20px,5vw,23px); font-weight:400; line-height:1.3; }
+.mailbox-loading__status p { max-width:340px; min-height:44px; margin:0 auto; color:#81796d; font-size:12px; line-height:1.7; }
+.mailbox-loading__waiting { margin:22px auto 0; width:100%; container-type:inline-size; animation:mailbox-note-in .6s ease both; }
+.mailbox-loading__delivery { position:relative; height:74px; width:min(260px,100%); margin:0 auto 14px; overflow:hidden; }
+.mailbox-loading__trail { position:absolute; top:38px; left:15px; right:35px; border-top:1px dashed #d9cbb3; }
+.mailbox-loading__letter { position:absolute; top:18px; left:0; display:grid; place-items:center; width:42px; height:33px; border:1px solid #d9cbb3; border-radius:6px; background:#fffaf0; color:#ab8650; font-size:27px; opacity:0; animation:mailbox-delivery 7.2s var(--delivery-delay) linear infinite; }
+.mailbox-loading__mailbox { --mailbox-body:#fff4df; --mailbox-opening:#65513a; position:absolute; top:10px; right:0; display:grid; place-items:center; width:52px; height:52px; color:#ab8650; font-size:42px; animation:mailbox-receive 2.4s ease-in-out infinite; transform-origin:center bottom; }
+.mailbox-loading__note { min-height:21px; margin:0; white-space:nowrap; color:#75634d; font-family:Georgia,'Times New Roman',serif; font-size:min(14px,3.7cqi); font-style:italic; line-height:1.5; animation:mailbox-note-in .6s ease both; }
+.mailbox-loading__hint { display:block; margin-top:12px; color:#8c8378; font-size:10px; line-height:1.6; }
+@keyframes mailbox-delivery { 0% { left:0; opacity:0; transform:translateY(8px) rotate(-12deg); } 15% { opacity:1; } 45% { left:40%; transform:translateY(-8px) rotate(7deg); } 78% { opacity:1; } 100% { left:calc(100% - 48px); opacity:0; transform:translateY(5px) rotate(-6deg) scale(.7); } }
+@keyframes mailbox-receive { 50% { transform:rotate(-5deg); } }
+@keyframes mailbox-note-in { from { opacity:0; } to { opacity:1; } }
+html.night-shift .mailbox-loading { color:#e4dece; }
+html.night-shift .mailbox-loading__status p,html.night-shift .mailbox-loading__hint { color:#b2ac9e; }
+html.night-shift .mailbox-loading__note { color:#d3c3a7; }
+html.night-shift .mailbox-loading__trail { border-color:#57513f; }
+html.night-shift .mailbox-loading__letter { border-color:#6d6047; background:#302e23; color:#d6b67e; }
+html.night-shift .mailbox-loading__mailbox { --mailbox-body:#383326; --mailbox-opening:#141710; color:#d6b67e; }
+@media(prefers-reduced-motion:reduce) {
+  .mailbox-loading__ghost { transition:none; }
+  .mailbox-loading__waiting,.mailbox-loading__note,.mailbox-loading__mailbox,.mailbox-loading__letter { animation:none; }
+  .mailbox-loading__letter:nth-child(2) { opacity:1; left:35%; }
+}
+
+
+/* Keep the centered desktop scene compact and clear of the footer. */
+@media (min-width: 769px) {
+  .mailbox-loading { margin:0 auto 70px; }
+  .mailbox-loading .mailbox-loading__ghost,
+  .mailbox-loading.is-waking .mailbox-loading__ghost { width:100px; }
+  .mailbox-loading__status h2 { margin-bottom:6px; font-size:21px; }
+  .mailbox-loading__status p { min-height:0; }
+  .mailbox-loading__waiting { margin-top:10px; }
+  .mailbox-loading__delivery { margin-bottom:6px; }
+  .mailbox-loading__hint { margin-top:8px; }
+}
