@@ -1,4 +1,6 @@
 import React, {useMemo, useRef, useState, useEffect} from 'react';
+import {createPortal} from 'react-dom';
+import {Tooltip} from 'react-tooltip';
 import {BsCheck2, BsClipboard, BsX} from 'react-icons/bs';
 import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
@@ -8,6 +10,8 @@ import {
   IoChevronDownOutline,
   IoExpandOutline,
   IoInformationCircleOutline,
+  IoHelpCircleOutline,
+  IoKeyOutline,
   IoImageOutline,
   IoShareSocialOutline,
   IoShieldCheckmarkOutline,
@@ -643,13 +647,24 @@ function AddModal({
                 <div className="modal-footer">
                   {!showPreview && !isSubmitDisabled && (
                     <span className="preview-suggestion-anchor">
-                      {showPreviewSuggestion && (
-                        <span className="preview-suggestion-tooltip" role="tooltip">
+                      {showPreviewSuggestion && createPortal(
+                        <Tooltip
+                          id="compose-preview-tip"
+                          anchorSelect="#compose-preview-button"
+                          className="preview-suggestion-tooltip"
+                          positionStrategy="fixed"
+                          place="top"
+                          offset={11}
+                          isOpen={showPreviewSuggestion}
+                        >
                           See how your letter looks before sending.
-                        </span>
+                        </Tooltip>,
+                        document.body,
                       )}
                       <button
                         type="button"
+                        id="compose-preview-button"
+                        aria-describedby={showPreviewSuggestion ? 'compose-preview-tip' : undefined}
                         className="preview-button"
                         onClick={togglePreview}
                       >
@@ -879,17 +894,18 @@ function AddModal({
             {submittedBurnKey && (
               <div className="submission-burn-key">
                 <div className="submission-burn-key__heading">
-                  <span>Your Burn Key</span>
+                  <span><IoKeyOutline size="14px" aria-hidden="true" />Your Burn Key</span>
                   <button
                     type="button"
                     aria-expanded={showBurnKeyExplanation}
                     onClick={() => setShowBurnKeyExplanation(current => !current)}
                   >
+                    <IoHelpCircleOutline size="14px" aria-hidden="true" />
                     What’s this?
                   </button>
                 </div>
                 <div className="submission-burn-key__value">
-                  <strong>{submittedBurnKey}</strong>
+                  <strong tabIndex={0} aria-label="Your burn key">{submittedBurnKey}</strong>
                   <button
                     type="button"
                     onClick={copyBurnKey}
@@ -904,10 +920,10 @@ function AddModal({
                     </span>
                   )}
                 </div>
-                <p>Save this key in your notes to remove your letter someday.</p>
+                <p>Save this key so you can burn the letter if you ever change your mind.</p>
                 {showBurnKeyExplanation && (
                   <p className="submission-burn-key__explanation">
-                    It’s your private key for removing the letter after it’s approved. Only you will receive it.
+                    Keep this private key safe. Once your letter is approved and published, this key will be sent only to you so you can permanently remove your message whenever you're ready to let it go.
                   </p>
                 )}
                 {burnKeyCopied && <small role="status">Burn key copied</small>}
