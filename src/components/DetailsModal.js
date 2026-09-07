@@ -210,10 +210,10 @@ function DetailsModal({
 
   const getReadLetters = () => {
     try {
-      const stored = JSON.parse(localStorage.getItem("readLetters") || "[]");
+      const stored = JSON.parse(localStorage.getItem("readLettersByDeviceV2") || "[]");
       return Array.isArray(stored) ? stored : [];
     } catch (error) {
-      localStorage.removeItem("readLetters");
+      localStorage.removeItem("readLettersByDeviceV2");
       return [];
     }
   };
@@ -237,7 +237,7 @@ function DetailsModal({
       let readLetters = getReadLetters();
 
       if (readLetters.length >= MAX_STORAGE_SIZE) {
-        localStorage.removeItem("readLetters");
+        localStorage.removeItem("readLettersByDeviceV2");
         readLetters = [];
       }
 
@@ -269,7 +269,7 @@ function DetailsModal({
 
         const result = await response.json().catch(() => ({}));
         readLetters.push(letterIdToCount);
-        localStorage.setItem("readLetters", JSON.stringify(readLetters));
+        localStorage.setItem("readLettersByDeviceV2", JSON.stringify(readLetters));
         setDisplayedReads((current) => {
           const serverReads = parseInt(result.reads, 10);
           if (!Number.isNaN(serverReads)) return serverReads;
