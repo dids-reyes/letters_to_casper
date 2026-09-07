@@ -1678,12 +1678,15 @@ html.night-shift .letter-search-loading p { color:#8e948c; }
 .burn-letter-achievement img { display:block; width:47px; height:47px; object-fit:contain; }
 @keyframes burn-achievement-in { to { opacity:1; transform:scale(1) rotate(0); } }
 
-.submission-burn-key { position:relative; margin:17px 0 4px; padding:14px; border:1px solid #d8c6ab; border-radius:14px; background:linear-gradient(145deg,#fffaf0,#fffdf8); box-shadow:0 7px 20px rgba(105,78,46,.07); text-align:left; }
+.submission-burn-key { position:relative; margin:17px 0 4px; padding:12px; border:1px solid #e5d8c5; border-radius:12px; background:#fffaf2; text-align:left; }
 .submission-burn-key__heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:9px; }
-.submission-burn-key__heading > span { color:#8c633d; font-size:10px; font-weight:850; letter-spacing:.09em; text-transform:uppercase; }
-.submission-burn-key__heading > button { padding:2px 0; border:0; background:transparent; color:#3772ff; font-size:9.5px; font-weight:750; cursor:pointer; }
+.submission-burn-key__heading > span { display:inline-flex; align-items:center; gap:6px; color:#8c633d; font-size:10px; font-weight:850; letter-spacing:.09em; text-transform:uppercase; }
+.submission-burn-key__heading > button { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; padding:2px 0; border:0; background:transparent; color:#80766b; font-size:9.5px; font-weight:400; cursor:pointer; }
+.submission-burn-key__heading > button:hover { color:#51483e; }
+html.night-shift .submission-burn-key__heading > button { color:#aaa398; }
+html.night-shift .submission-burn-key__heading > button:hover { color:#e1d8cb; }
 .submission-burn-key__value { position:relative; display:flex; align-items:center; gap:8px; padding:9px 9px 9px 11px; border:1px solid #e5d8c5; border-radius:11px; background:#fff; }
-.submission-burn-key strong { display:block; flex:1; min-width:0; overflow-wrap:anywhere; color:#342c25; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; letter-spacing:.035em; }
+.submission-burn-key strong { display:block; flex:1; min-width:0; white-space:nowrap; overflow-x:auto; color:#342c25; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; letter-spacing:.035em; }
 .submission-burn-key__value > button { display:grid; flex:0 0 auto; place-items:center; width:33px; height:33px; padding:0; border:1px solid #d8c9b3; border-radius:9px; background:#fff9ef; color:#805332; cursor:pointer; }
 .submission-burn-key > p { margin:9px 1px 0; color:#776b61; font-size:9.5px; line-height:1.45; }
 .submission-burn-key > p.submission-burn-key__explanation { margin-top:8px; padding:8px 9px; border-radius:9px; background:rgba(55,114,255,.07); color:#687181; }
@@ -3600,11 +3603,9 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
   width: 100%;
 }
 
-.preview-suggestion-tooltip {
-  position: absolute;
-  bottom: calc(100% + 11px);
-  left: 50%;
-  z-index: 5;
+/* Portal tooltip sits above the compose dialog without being clipped by it. */
+.preview-suggestion-tooltip.react-tooltip {
+  z-index: 2000;
   width: max-content;
   max-width: min(230px, 72vw);
   box-sizing: border-box;
@@ -3619,24 +3620,6 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
   line-height: 1.4;
   text-align: center;
   pointer-events: none;
-  transform: translateX(-50%);
-  animation: preview-tip-in 0.22s ease both;
-}
-
-.preview-suggestion-tooltip::after {
-  position: absolute;
-  top: calc(100% - 5px);
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  background: #263653;
-  content: "";
-  transform: translateX(-50%) rotate(45deg);
-}
-
-@keyframes preview-tip-in {
-  from { opacity: 0; transform: translate(-50%, 5px) scale(0.97); }
-  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 
 .compose-dialog .submit-button {
@@ -3976,10 +3959,7 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
 
   .submission-burn-key {
     margin-top: 14px;
-    padding: 13px;
-    border-width: 1.5px;
-    border-color: #caa977;
-    box-shadow: 0 8px 24px rgba(126, 87, 43, 0.12);
+    padding: 11px;
   }
 
   .submission-burn-key__heading > span {
