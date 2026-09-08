@@ -138,6 +138,19 @@ const stringSplitter = (string) => {
   return splitter.splitGraphemes(string);
 };
 
+const shortLetterAge = timestamp => {
+  const time = new Date(timestamp).getTime();
+  if (!Number.isFinite(time)) return "";
+  const seconds = Math.max(0, Math.floor((Date.now() - time) / 1000));
+  const units = [[31536000, "y"], [2592000, "mo."], [604800, "w"], [86400, "d"], [3600, "h"], [60, "min."]];
+  const unit = units.find(([duration]) => seconds >= duration);
+  if (!unit) return "just now";
+  const count = Math.floor(seconds / unit[0]);
+  const label = unit[1] === "mo." && count > 1 ? "mos." : unit[1];
+  const space = ["min.", "mo."].includes(unit[1]) ? " " : "";
+  return `${count}${space}${label} ago`;
+};
+
 const echoOptions = [
   {id: "love", label: "Love", icon: TbHeart},
   {id: "sad", label: "Sad", icon: TbMoodSad},
@@ -944,9 +957,7 @@ function DetailsModal({
                 )}
 
                 <span className="letter-paper__age" title={js_ago(new Date(selectedLetter.timestamp), {format: "long"})}>
-                  {js_ago(new Date(selectedLetter.timestamp), {
-                    format: "long",
-                  })}
+                  {shortLetterAge(selectedLetter.timestamp)}
                 </span>
                 <span className="letter-meta-sep">·</span>
                 <span className="letter-paper__reads">

@@ -822,7 +822,7 @@ function Home() {
             aria-label={`${letters.counts.approved} open letters`}
           >
             <IoMailOpenOutline size={21} />
-            <span className="message-stat__count">{tc(letters.counts.approved)}<span className="message-stat__open-label"> Open</span></span>
+            <span className="message-stat__count">{tc(letters.counts.approved)}</span>
           </div>
           <button
             type="button"

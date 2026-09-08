@@ -123,7 +123,7 @@ function AddModal({
   const [linkGuidePage, setLinkGuidePage] = useState(0);
   const photoInputRef = useRef(null);
   const focusTextareaRef = useRef(null);
-  const linkGuideSwipeStartRef = useRef(null);
+  const linkGuidePagesRef = useRef(null);
   const songLinkValidation = validateSongLink(newLetter.link);
 
   useEffect(() => {
@@ -178,16 +178,14 @@ function AddModal({
     setShowLinkGuide(true);
   };
 
-  const startLinkGuideSwipe = event => {
-    linkGuideSwipeStartRef.current = event.clientX;
+  const handleLinkGuideScroll = event => {
+    const {clientWidth, scrollLeft} = event.currentTarget;
+    if (clientWidth) setLinkGuidePage(Math.max(0, Math.min(2, Math.round(scrollLeft / clientWidth))));
   };
 
-  const finishLinkGuideSwipe = event => {
-    if (linkGuideSwipeStartRef.current === null) return;
-    const distance = event.clientX - linkGuideSwipeStartRef.current;
-    linkGuideSwipeStartRef.current = null;
-    if (Math.abs(distance) < 45) return;
-    setLinkGuidePage(page => Math.max(0, Math.min(2, page + (distance < 0 ? 1 : -1))));
+  const goToLinkGuidePage = page => {
+    const pages = linkGuidePagesRef.current;
+    pages?.scrollTo({left: pages.clientWidth * page, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
   };
 
   const handleSubmit = () => {
@@ -611,7 +609,7 @@ function AddModal({
                       <label htmlFor="letter-photo" className="label-top-left">
                         Photo <span>Optional</span>
                       </label>
-                      <small>JPG, PNG or WebP · up to 5 MB · Best at 4:3</small>
+                      <small>jpg, png or webp · up to 5 MB · Best at 4:3</small>
                     </div>
 
                     {newLetter.photoPreviewUrl ? (
@@ -785,43 +783,46 @@ function AddModal({
             className="song-link-guide"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="song-link-guide-title"
+            aria-label="How to add a song"
             onClick={event => event.stopPropagation()}
-            onPointerDown={startLinkGuideSwipe}
-            onPointerUp={finishLinkGuideSwipe}
-            onPointerCancel={() => { linkGuideSwipeStartRef.current = null; }}
           >
             <button type="button" className="song-link-guide__close" onClick={() => setShowLinkGuide(false)} aria-label="Close song link guide"><BsX /></button>
-            <span className="song-link-guide__eyebrow">Step {linkGuidePage + 1} of 3</span>
-            <h3 id="song-link-guide-title">
-              {linkGuidePage === 0 && 'Open the individual song'}
-              {linkGuidePage === 1 && 'Tap the Share button'}
-              {linkGuidePage === 2 && 'Choose Copy link'}
+            <div className="song-link-guide__pages" ref={linkGuidePagesRef} onScroll={handleLinkGuideScroll}>
+              {[0, 1, 2].map(page => (
+                <section key={page} className="song-link-guide__page" aria-label={`Step ${page + 1} of 3`}>
+            <span className="song-link-guide__eyebrow">Step {page + 1} of 3</span>
+            <h3 >
+              {page === 0 && 'Open the individual song'}
+              {page === 1 && 'Tap the Share button'}
+              {page === 2 && 'Choose Copy link'}
             </h3>
             <p>
-              {linkGuidePage === 0 && 'Open the exact YouTube video or Spotify track you want to attach. Do not open a playlist, album, or radio mix.'}
-              {linkGuidePage === 1 && 'On the song or video screen, find Share. On YouTube it uses an arrow; Spotify may place it inside the three-dot menu.'}
-              {linkGuidePage === 2 && 'Tap Copy link, return here, and paste only that link into the field.'}
+              {page === 0 && 'Open the exact YouTube video or Spotify track you want to attach. Do not open a playlist, album, or radio mix.'}
+              {page === 1 && 'On the song or video screen, find Share. On YouTube it uses an arrow; Spotify may place it inside the three-dot menu.'}
+              {page === 2 && 'Tap Copy link, return here, and paste only that link into the field.'}
             </p>
 
             <div
-              key={linkGuidePage}
-              className={`song-link-guide__visual is-step-${linkGuidePage + 1}`}
+              className={`song-link-guide__visual is-step-${page + 1}`}
               aria-hidden="true"
             >
-              {linkGuidePage === 0 && (
+              {page === 0 && (
                 <><div className="song-guide-card is-youtube"><FaYoutube /><span /><strong>Individual video</strong><small>Not a playlist</small></div><div className="song-guide-card is-spotify"><FaSpotify /><span /><strong>Individual track</strong><small>Not an album</small></div></>
               )}
-              {linkGuidePage === 1 && (
+              {page === 1 && (
                 <><div className="song-guide-screen"><span className="song-guide-screen__media" /><div><i /><i /><i /></div><button><IoShareSocialOutline /> Share</button></div><IoShareSocialOutline className="song-guide-focus-icon" /></>
               )}
-              {linkGuidePage === 2 && (
+              {page === 2 && (
                 <><div className="song-guide-copy-sheet"><span>Share</span><button><IoCopyOutline /><strong>Copy link</strong></button></div><div className="song-guide-link-sample">youtu.be/video<span>✓</span></div></>
               )}
             </div>
 
+                </section>
+              ))}
+            </div>
+
             <div className="song-link-guide__dots" aria-label={`Guide page ${linkGuidePage + 1} of 3`}>
-              {[0, 1, 2].map(page => <span key={page} className={page === linkGuidePage ? 'is-active' : ''} />)}
+              {[0, 1, 2].map(page => <button type="button" key={page} aria-label={`Go to step ${page + 1}`} aria-current={page === linkGuidePage ? 'step' : undefined} onClick={() => goToLinkGuidePage(page)} className={page === linkGuidePage ? 'is-active' : ''} />)}
             </div>
             <small className="song-link-guide__swipe-hint">Swipe to view each step</small>
           </section>
