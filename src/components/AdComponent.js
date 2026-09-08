@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 
 const SideAd = () => {
   useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
     const pushAd = () => {
       try {
         const adsbygoogle = window.adsbygoogle;
@@ -20,7 +21,9 @@ const SideAd = () => {
       }
     }, 300);
 
-    return () => {
+    if (process.env.NODE_ENV !== "production") return null;
+
+  return () => {
       clearInterval(interval);
     };
   }, []);

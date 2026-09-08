@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-R63X4TZX45"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-R63X4TZX45');
-  </script>
-    <!-- hCaptcha -->
-    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    <!-- Live third-party integrations are excluded from local development. -->
+    <script>
+      if ('%NODE_ENV%' === 'production') {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){window.dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-R63X4TZX45');
+        [
+          ['https://www.googletagmanager.com/gtag/js?id=G-R63X4TZX45'],
+          ['https://js.hcaptcha.com/1/api.js'],
+          ['https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8952526995046987', 'anonymous']
+        ].forEach(function (integration) {
+          var script = document.createElement('script');
+          script.src = integration[0];
+          script.async = true;
+          if (integration[1]) script.crossOrigin = integration[1];
+          document.head.appendChild(script);
+        });
+      }
+    </script>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" type="image/x-icon" />
     <link
@@ -110,12 +119,6 @@
     -->
     <title>Letters to Casper</title>
     <link rel="canonical" href="https://www.letterstocasper.com/" />
-    <!-- Google Adsense -->
-    <script
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8952526995046987"
-      crossorigin="anonymous"
-    ></script>
     <meta name="google-adsense-account" content="ca-pub-8952526995046987" />
     <meta name="google-site-verification" content="XrjNTEdzz-w1PuYM0vm_4AI2xswC9TChA8IFVvxWSr0" />
   </head>

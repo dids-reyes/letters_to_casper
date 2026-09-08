@@ -6,6 +6,13 @@ const clip = (str, max) => {
   return str.length > max ? `${str.slice(0, max - 1)}…` : str;
 };
 
+// Remove music/video URLs only from the card copy; retain the original letter.
+const previewMessage = (message = "") => message
+  .replace(/\b(?:https?:\/\/)?(?:[a-z0-9-]+\.)*(?:youtube\.com|youtu\.be|spotify\.com|spotify\.link)\/[^\s<>]*/gi, "")
+  .replace(/[ \t]+\n/g, "\n")
+  .replace(/\n{3,}/g, "\n\n")
+  .trim();
+
 const timeAgo = (timestamp) => {
   const then = new Date(timestamp).getTime();
   if (Number.isNaN(then)) return "";
@@ -91,7 +98,7 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter, maxWarmthScore 
         <span className="letter-card__label">To</span>
         <span className="letter-card__to-name">{clip(letter.to, 24)}</span>
       </div>
-      <p className="letter-card__preview">{letter.message}</p>
+      <p className="letter-card__preview">{previewMessage(letter.message)}</p>
     </div>
   );
 }

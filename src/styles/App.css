@@ -1386,8 +1386,10 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
   --letter-border-track: #e7ddc4;
   display: flex;
   flex-direction: column;
-  min-height: 180px;
-  padding: 13px 14px 12px;
+  height: 170px;
+  min-height: 170px;
+  box-sizing: border-box;
+  padding: 13px 14px 10px;
   border: 1px solid transparent;
   border-radius: 11px;
   background:
@@ -1527,6 +1529,7 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
   padding: 0 1px 1px;
   height: calc(var(--letter-card-rule-space) * 5);
   min-height: calc(var(--letter-card-rule-space) * 5);
+  flex-shrink: 0;
   box-sizing: border-box;
   display: -webkit-box;
   -webkit-line-clamp: 5;
@@ -2167,10 +2170,10 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 
   .letter-card {
     --letter-card-rule-space: 15px;
-    height: 140px;
-    min-height: 140px;
+    height: 130px;
+    min-height: 130px;
     box-sizing: border-box;
-    padding: 9px 9px 8px;
+    padding: 9px 9px 7px;
     border-radius: 9px;
     box-shadow:
       0 1px 2px rgba(60, 50, 30, 0.05),
@@ -6167,4 +6170,17 @@ html.night-shift .letter-envelope__seal {
 
 html.night-shift .letter-envelope__hint {
   color: #c8c3b6;
+}
+
+/* Fit the complete search hint to the field, including the compact toolbar. */
+@media (max-width: 768px) {
+  .search-field {
+    container-type: inline-size;
+  }
+
+  .search-input::placeholder {
+    font-size: 12px;
+    font-size: min(14px, calc(6.25cqi - 2.5px));
+    letter-spacing: normal;
+  }
 }
