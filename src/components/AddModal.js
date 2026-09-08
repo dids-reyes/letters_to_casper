@@ -12,6 +12,7 @@ import {
   IoInformationCircleOutline,
   IoHelpCircleOutline,
   IoKeyOutline,
+  IoMailOutline,
   IoImageOutline,
   IoShareSocialOutline,
   IoShieldCheckmarkOutline,
@@ -77,12 +78,35 @@ function AddModal({
   const [showPreviewSuggestion, setShowPreviewSuggestion] = useState(false);
   const [previewSuggestionShown, setPreviewSuggestionShown] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [retentionAgreed, setRetentionAgreed] = useState(false);
   const [showSubmissionNotice, setShowSubmissionNotice] = useState(false);
   const [showShareCelebration, setShowShareCelebration] = useState(false);
   const [siteShareStatus, setSiteShareStatus] = useState('');
   const [submittedBurnKey, setSubmittedBurnKey] = useState('');
   const [submittedLetterId, setSubmittedLetterId] = useState('');
   const [notificationEmail, setNotificationEmail] = useState('');
+  const [emailExpanded, setEmailExpanded] = useState(false);
+  const [emailAvailability, setEmailAvailability] = useState('checking');
+  useEffect(() => {
+    if (!showSubmissionNotice || !emailExpanded) return undefined;
+    let active = true;
+    const controller = new AbortController();
+    const check = async () => {
+      try {
+        const response = await fetch(`${render_url}/notification-email/status`, {
+          headers: {'x-api-key': api_key}, signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Unavailable');
+        const result = await response.json();
+        if (active) setEmailAvailability(result.available ? 'available' : 'unavailable');
+      } catch {
+        if (active) setEmailAvailability('unavailable');
+      }
+    };
+    check();
+    const timer = window.setInterval(check, 30000);
+    return () => { active = false; controller.abort(); window.clearInterval(timer); };
+  }, [showSubmissionNotice, emailExpanded]);
   const [notificationEmailStatus, setNotificationEmailStatus] = useState({type: 'idle', message: ''});
   const [savingNotificationEmail, setSavingNotificationEmail] = useState(false);
   const [burnKeyCopied, setBurnKeyCopied] = useState(false);
@@ -174,11 +198,13 @@ function AddModal({
         return;
       }
       setShowPreviewSuggestion(false);
+      setRetentionAgreed(false);
       setShowSubmitConfirm(true);
     }
   };
 
   const confirmSubmit = async () => {
+    if (!retentionAgreed || isSubmitting) return;
     const updatedLetter = {
       ...newLetter,
       message: newLetter.link
@@ -198,6 +224,8 @@ function AddModal({
       setSubmittedBurnKey(submitted.burnKey || '');
       setSubmittedLetterId(submitted.letterId || '');
       setNotificationEmail('');
+      setEmailExpanded(false);
+      setEmailAvailability('checking');
       setNotificationEmailStatus({type: 'idle', message: ''});
       setBurnKeyCopied(false);
       setShowBurnKeyHint(false);
@@ -214,7 +242,6 @@ function AddModal({
       setNewLetter({from: '', to: '', message: ''});
       toggleAddModal();
       setShowSubmissionNotice(true);
-      displayDirectLinkAds();
     }
   };
 
@@ -242,6 +269,7 @@ function AddModal({
   };
 
   const saveNotificationEmail = async () => {
+    if (emailAvailability !== 'available') return false;
     const email = notificationEmail.trim();
     if (!email) return true;
     if (!/^\S+@\S+\.\S+$/.test(email)) {
@@ -262,7 +290,10 @@ function AddModal({
         body: JSON.stringify({email, burnKey: submittedBurnKey}),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || 'Could not save your email.');
+      if (!response.ok) {
+        if (result.code === 'EMAIL_UNAVAILABLE') setEmailAvailability('unavailable');
+        throw new Error(result.error || 'Could not save your email.');
+      }
       setNotificationEmailStatus({type: 'success', message: 'We’ll email you when your letter is approved.'});
       return true;
     } catch (error) {
@@ -273,14 +304,11 @@ function AddModal({
     }
   };
 
-  const finishSubmissionNotice = async () => {
-    if (notificationEmail.trim() && notificationEmailStatus.type !== 'success') {
-      const saved = await saveNotificationEmail();
-      if (!saved) return;
-    }
+  const finishSubmissionNotice = () => {
     setShowSubmissionNotice(false);
     setShowShareCelebration(true);
     setSiteShareStatus('');
+    displayDirectLinkAds();
   };
 
   const shareWebsite = async () => {
@@ -824,6 +852,22 @@ function AddModal({
               <li>Once approved, the letter becomes publicly readable.</li>
               <li>Only the general city it was sent from may be shown.</li>
             </ul>
+            <label className="submit-retention-agreement">
+              <input
+                type="checkbox"
+                checked={retentionAgreed}
+                onChange={event => setRetentionAgreed(event.target.checked)}
+                disabled={isSubmitting}
+                required
+              />
+              <span>I agree that if my letter is featured, copies may be kept for legal and marketing purposes even after I burn it.</span>
+            </label>
+            <details className="submit-retention-details">
+              <summary>Read more</summary>
+              <div className="submit-retention-details__text" tabIndex={0} role="region" aria-label="Full letter retention agreement">
+                I understand that burning my letter removes it from public view on the site. If my letter is selected as a featured letter, I agree that Letters to Casper may retain copies for legal recordkeeping and marketing purposes, even after I burn it.
+              </div>
+            </details>
             <div className="submit-confirm-actions">
               <button
                 type="button"
@@ -837,7 +881,7 @@ function AddModal({
                 type="button"
                 className="submit-confirm-send"
                 onClick={confirmSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !retentionAgreed}
               >
                 {isSubmitting
                   ? `${submitStatus} ${submitProgress}%`
@@ -930,21 +974,24 @@ function AddModal({
               </div>
             )}
             {EMAIL_NOTIFICATIONS_ENABLED && <div className="submission-email-notice">
-              <div className="submission-email-notice__heading">
-                <label htmlFor="approval-notification-email">Email notification</label>
-                <span>Optional</span>
-              </div>
+              <button type="button" className="submission-email-notice__heading" aria-expanded={emailExpanded} aria-controls="notification-email-content" onClick={() => setEmailExpanded(current => !current)}>
+                <IoMailOutline size="15px" aria-hidden="true" />
+                <strong>Notify me by email</strong>
+                <IoChevronDownOutline size="12px" style={{transform: emailExpanded ? 'rotate(180deg)' : undefined}} aria-hidden="true" />
+              </button>
+              {emailExpanded && <div id="notification-email-content" className="submission-email-notice__content">
               <p>Want to know when it’s approved? Leave your email and we’ll notify you once.</p>
               <div className="submission-email-notice__field">
                 <input
                   id="approval-notification-email"
+                  aria-label="Your email address"
                   type="email"
                   inputMode="email"
                   autoComplete="email"
                   maxLength="254"
-                  placeholder="you@example.com"
+                  placeholder="Your email address"
                   value={notificationEmail}
-                  disabled={savingNotificationEmail || notificationEmailStatus.type === 'success'}
+                  disabled={emailAvailability !== 'available' || savingNotificationEmail || notificationEmailStatus.type === 'success'}
                   onChange={event => {
                     setNotificationEmail(event.target.value);
                     if (notificationEmailStatus.type === 'error') {
@@ -952,11 +999,13 @@ function AddModal({
                     }
                   }}
                 />
-                <button type="button" onClick={saveNotificationEmail} disabled={!notificationEmail.trim() || savingNotificationEmail || notificationEmailStatus.type === 'success'}>
-                  {savingNotificationEmail ? 'Saving…' : notificationEmailStatus.type === 'success' ? 'Saved' : 'Notify me'}
+                <button type="button" onClick={saveNotificationEmail} disabled={emailAvailability !== 'available' || !notificationEmail.trim() || savingNotificationEmail || notificationEmailStatus.type === 'success'}>
+                  {notificationEmailStatus.type === 'success' ? 'Saved' : emailAvailability === 'checking' ? 'Checking…' : emailAvailability === 'unavailable' ? 'Unavailable' : savingNotificationEmail ? 'Saving…' : 'Notify me'}
                 </button>
               </div>
+              {emailAvailability === 'unavailable' && notificationEmailStatus.type !== 'success' && <small role="status">Email notifications are temporarily unavailable. Please check back later.</small>}
               {notificationEmailStatus.message && <small className={`is-${notificationEmailStatus.type}`} role="status">{notificationEmailStatus.message}</small>}
+              </div>}
             </div>}
             <p className="submission-notice-footnote">
               Check back soon to share it once approved.
