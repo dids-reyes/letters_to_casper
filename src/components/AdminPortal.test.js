@@ -63,3 +63,17 @@ test('restricts permanent deletion for other administrators', async () => {
   fireEvent.click(screen.getByRole('button', {name: /Burned Letters/}));
   expect(screen.getByRole('button', {name: 'Delete permanently'})).toBeDisabled();
 });
+
+test('separates auto moderation failures and clears selection when switching queues', async () => {
+  const failed = {...pending, _id: 'failed', message: 'Flagged message', autoModeration: {status: 'flagged', reason: 'Spam'}};
+  global.fetch.mockImplementation(async url => ({ok: true, json: async () => ({messages: url.endsWith('/unapproved') ? [pending, burned, failed] : []})}));
+  await openPortal();
+  expect(screen.queryByText('Flagged message')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('checkbox'));
+  fireEvent.click(screen.getByRole('button', {name: /Manual Review 1/}));
+  expect(screen.getByText('Flagged message')).toBeInTheDocument();
+  expect(screen.getByText('Not approved by auto mod')).toBeInTheDocument();
+  expect(screen.getByText('Spam')).toBeInTheDocument();
+  expect(screen.queryByText('Pending message')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', {name: /^Publish/})).toBeDisabled();
+});
