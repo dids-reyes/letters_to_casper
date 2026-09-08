@@ -6180,7 +6180,7 @@ html.night-shift .letter-envelope__hint {
 
   .search-input::placeholder {
     font-size: 12px;
-    font-size: min(14px, calc(6.25cqi - 2.5px));
+    font-size: min(14px, 5cqi);
     letter-spacing: normal;
   }
 }
