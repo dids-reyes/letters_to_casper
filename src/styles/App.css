@@ -3249,7 +3249,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   text-align: center;
 }
 
-.song-link-guide > p {
+.song-link-guide__page > p {
   max-width: 345px;
   min-height: 38px;
   margin: 0 auto;
@@ -3273,9 +3273,8 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     repeating-linear-gradient(to bottom, transparent 0 23px, rgba(143,128,92,.08) 24px),
     #fbf8ef;
   cursor: grab;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
   user-select: none;
-  animation: song-guide-page-in 0.25s ease both;
 }
 
 .song-link-guide__visual:active { cursor: grabbing; }
@@ -3345,8 +3344,8 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   margin-bottom: 9px;
 }
 
-.song-link-guide__dots span { width: 6px; height: 6px; border-radius: 99px; background: #d2d8e1; transition: width 0.2s ease, background 0.2s ease; }
-.song-link-guide__dots span.is-active { width: 18px; background: #3772ff; }
+.song-link-guide__dots button { width: 6px; height: 6px; border-radius: 99px; background: #d2d8e1; transition: width 0.2s ease, background 0.2s ease; }
+.song-link-guide__dots button.is-active { width: 18px; background: #3772ff; }
 
 .song-link-guide__swipe-hint {
   display: block;
@@ -3359,7 +3358,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 @media (max-width: 480px) {
   .song-link-guide { padding: 19px 15px 16px; border-radius: 18px; }
   .song-link-guide h3 { font-size: 17px; }
-  .song-link-guide > p { min-height:0; font-size:11.5px; }
+  .song-link-guide__page > p { min-height:0; font-size:11.5px; }
   .song-link-guide__visual { min-height: 118px; padding: 10px 8px; }
   .song-guide-card { padding: 9px 7px; }
   .song-guide-card > svg { font-size: 16px; }
@@ -3380,7 +3379,7 @@ html.night-shift .compose-optional-extras__content { border-color:#3d444e; }
 html.night-shift .song-link-guide { border-color: #424b59; background: #252a31; color: #eee9dc; }
 html.night-shift .song-link-guide__close { background: #343a43; color: #c9ccd1; }
 html.night-shift .song-link-guide h3 { color: #ddd9ce; }
-html.night-shift .song-link-guide > p { color: #b2b5ba; }
+html.night-shift .song-link-guide__page > p { color: #b2b5ba; }
 html.night-shift .song-link-guide__visual { background: linear-gradient(145deg, #20252d, #292f39); }
 html.night-shift .song-guide-card,
 html.night-shift .song-guide-screen,
@@ -3429,7 +3428,7 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
   color: #8a919d;
   font-size: 10px;
   font-weight: 500;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .compose-photo-label > small {
@@ -5880,8 +5879,7 @@ html.night-shift .submit-retention-details summary { color:#a0b2ce; }
     line-height:1;
   }
   .home-toolbar.is-compact .message-stat svg { display:block; width:18px; height:18px; flex:0 0 18px; }
-  .home-toolbar.is-compact .toolbar-trigger > span,
-  .home-toolbar.is-compact .message-stat__open-label { display:none; }
+  .home-toolbar.is-compact .toolbar-trigger > span { display:none; }
 }
 
 .home-toolbar.is-compact .message-stat--count { align-items:center; justify-content:center; }
@@ -5917,3 +5915,31 @@ html.night-shift .submission-email-notice .submission-email-notice__heading { co
 @media (max-width: 600px) {
   .submission-notice-dialog .submission-notice-footnote { font-size:10px; line-height:1.5; margin:12px 0; }
 }
+
+/* Preserve inline attachment rows while adapting to the available dialog width. */
+.compose-optional-extras__content { grid-template-columns:minmax(0,1fr); container-type:inline-size; }
+.compose-optional-extras__content .form-group,
+.compose-optional-extras__toggle > span { min-width:0; }
+@media (max-width: 480px) {
+  .compose-optional-extras__content { padding:11px; }
+  .compose-link-label,
+  .compose-photo-label { flex-direction:row; flex-wrap:nowrap; align-items:center; gap:6px; }
+  .compose-dialog .compose-link-label .label-top-left,
+  .compose-dialog .compose-photo-label .label-top-left { font-size:min(11px,4cqi); white-space:nowrap; }
+  .compose-dialog .compose-link-label .compose-optional,
+  .compose-dialog .compose-photo-label label span { font-size:min(10px,3.5cqi); margin-left:2px; }
+  .compose-link-label > button { gap:3px; font-size:min(10px,3.5cqi); white-space:nowrap; }
+  .compose-link-label > button svg { flex-shrink:0; }
+  .compose-photo-label > small { font-size:min(10px,3cqi); white-space:nowrap; }
+  .compose-link-field { min-width:0; padding:0 9px; gap:5px; }
+  .compose-link-field .form-control::placeholder { font-size:min(12px,3.8cqi); }
+  .compose-photo-picker > span { min-width:0; overflow-wrap:anywhere; }
+  .compose-photo-picker > svg { flex-shrink:0; }
+}
+
+.song-link-guide__pages { display:flex; width:100%; overflow-x:auto; overflow-y:hidden; scroll-behavior:smooth; scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain; touch-action:pan-x pan-y; }
+.song-link-guide__pages::-webkit-scrollbar { display:none; }
+.song-link-guide__page { flex:0 0 100%; min-width:0; box-sizing:border-box; max-height:calc(100dvh - 170px); overflow-y:auto; scroll-snap-align:start; scroll-snap-stop:always; scrollbar-width:thin; }
+.song-link-guide__dots button { border:0; padding:0; cursor:pointer; box-sizing:content-box; background-clip:content-box; border-top:8px solid transparent; border-bottom:8px solid transparent; }
+.song-link-guide__dots button:focus-visible { outline:2px solid #3772ff; outline-offset:2px; }
+@media (prefers-reduced-motion:reduce) { .song-link-guide__pages { scroll-behavior:auto; } }
