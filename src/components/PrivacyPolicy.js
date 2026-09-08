@@ -20,10 +20,11 @@ function PrivacyPolicy() {
       title: 'Information Collection and Use',
       content: <>
         <p>At Letters to Casper, we respect your privacy and operate on a principle of minimal data collection. We don't require sign-ups or logins, and you can post letters anonymously without disclosing personal details.</p>
-        <p>We store submitted letters so they can be reviewed, displayed, and shared on the website. We also collect the sender's city and region for confirmation purposes if they later request deletion of a letter. We don't use this information for commercial purposes or to extract personal information from users.</p>
+        <p>We store submitted letters so they can be reviewed, displayed, and shared on the website. We also collect the sender's city and region for confirmation purposes if they later request deletion of a letter. We don't use this location information for commercial purposes or to extract personal information from users.</p>
         <p>We may display advertisements from approved advertising networks, including Google AdSense. We don't process online payments or offer services for sale through the website.</p>
       </>,
     },
+    {id:'featured-retention', title:'Burning and Retention of Featured Letters', content:<><p>Burning your letter removes it from public view on the site. If your letter is selected as a featured letter, we may retain copies of that letter for legal recordkeeping and marketing purposes, even after you burn it, as described in the submission agreement and our <Link to="/terms_and_conditions">Terms &amp; Conditions</Link>.</p><p>This retention provision concerns copies of selected featured letters, including information you chose to include in the letter. It does not authorize marketing use of your notification email address or location data. For questions or requests concerning retained copies, contact us at <a href="mailto:letters2casper@gmail.com">letters2casper@gmail.com</a>.</p></>},
     {id:'compliance', title:'Compliance Statements', content:<p>We are committed to adhering to privacy regulations to protect your data and rights. Letters to Casper complies with the California Online Privacy Protection Act (CalOPPA), the General Data Protection Regulation (GDPR) for European Union citizens, the California Consumer Privacy Act (CCPA), and the Philippine Data Privacy Act of 2012 <a href="https://www.officialgazette.gov.ph/2012/08/15/republic-act-no-10173/" target="_blank" rel="noopener noreferrer">(Republic Act No. 10173)</a>.</p>},
     {id:'cookies', title:'Cookies and Tracking', content:<p>We use cookies and similar technologies to improve your experience and understand how visitors interact with the site. You may disable cookies through your browser settings, although doing so may affect some website functionality.</p>},
     {id:'security', title:'Data Security', content:<p>We take data security seriously and implement measures intended to protect information from unauthorized access, alteration, or destruction. The website uses SSL encryption to safeguard data transmitted between your device and our servers.</p>},
@@ -42,7 +43,7 @@ function PrivacyPolicy() {
         <span className="legal-eyebrow"><IoShieldCheckmarkOutline /> Your privacy</span>
         <h1>Privacy Policy</h1>
         <p>A clear overview of the information connected to your use of Letters to Casper and how we work to protect it.</p>
-        <span className="legal-updated"><IoTimeOutline /> Last updated June 18, 2024</span>
+        <span className="legal-updated"><IoTimeOutline /> Last updated September 8, 2026</span>
       </header>
       <div className="legal-overview"><IoLockClosedOutline /><div><strong>Privacy, in brief</strong><p>No account is required. Letters are submitted anonymously, and we aim to collect only what is needed to operate and safeguard the platform.</p></div></div>
       <div className="legal-layout">

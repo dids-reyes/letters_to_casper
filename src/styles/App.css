@@ -2249,19 +2249,23 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 
   .footer-nav {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    justify-content: center;
-    gap: 2px 7px;
+    justify-content: safe center;
+    gap: clamp(2px, 1vw, 7px);
+    overflow-x: auto;
+    white-space: nowrap;
+    font-size: clamp(8px, 2.4vw, 9px);
   }
 
   .footer-nav a {
+    flex: 0 0 auto;
     margin: 0;
     white-space: nowrap;
   }
 
   .footer-nav a + a::before {
-    margin-right: 7px;
+    margin-right: clamp(2px, 1vw, 7px);
     color: rgba(255, 255, 255, 0.6);
     content: "|";
   }
@@ -3834,7 +3838,7 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
   gap: 10px;
 }
 
-.submission-email-notice__heading label {
+.submission-email-notice__heading strong {
   color: #353c47;
   font-size: 10.5px;
   font-weight: 750;
@@ -3848,7 +3852,7 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
   text-transform: uppercase;
 }
 
-.submission-email-notice > p {
+.submission-email-notice__content > p {
   margin: 4px 0 9px;
   color: #7a828e;
   font-size: 9.5px;
@@ -3895,15 +3899,15 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
   cursor: default;
 }
 
-.submission-email-notice > small {
+.submission-email-notice__content > small {
   display: block;
   margin-top: 7px;
   font-size: 9px;
   line-height: 1.4;
 }
 
-.submission-email-notice > small.is-success { color: #2e6acb; }
-.submission-email-notice > small.is-error { color: #b24c4c; }
+.submission-email-notice__content > small.is-success { color: #2e6acb; }
+.submission-email-notice__content > small.is-error { color: #b24c4c; }
 
 .submission-notice-done {
   width: 100%;
@@ -5144,11 +5148,20 @@ html.night-shift .letter-paper__translation-control small {
   .letter-paper__body {
     font-size: 15px;
     line-height: 28px;
+    /* Cap the message at twelve lines; keep the surrounding letter separate. */
+    box-sizing: content-box;
+    max-height: calc(12 * 28px);
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
   }
 
   .letter-paper__meta {
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 4px;
     overflow: visible;
     row-gap: 8px;
@@ -5739,12 +5752,12 @@ html.night-shift .submission-email-notice {
   background: #272c33;
 }
 
-html.night-shift .submission-email-notice__heading label {
+html.night-shift .submission-email-notice__heading strong {
   color: #ece8dc;
 }
 
 html.night-shift .submission-email-notice__heading span,
-html.night-shift .submission-email-notice > p {
+html.night-shift .submission-email-notice__content > p {
   color: #aaa99f;
 }
 
@@ -5810,4 +5823,97 @@ html.night-shift .letter-paper__photo {
 /* Footer */
 html.night-shift .footer {
   background-color: rgba(28, 31, 37, 0.92);
+}
+
+.submission-email-notice__heading { width:100%; padding:0; border:0; background:transparent; text-align:left; cursor:pointer; }
+.submission-email-notice__heading span { display:inline-flex; align-items:center; gap:7px; }
+.submission-email-notice__heading svg { transition:transform .2s ease; }
+.submission-email-notice__content { margin-top:10px; }
+.submission-email-notice__label { display:block; margin-bottom:5px; font-size:10px; color:#7a828e; }
+
+@media (max-width: 600px) {
+  .letter-paper__age { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .letter-paper__reads,
+  .letter-paper__badges,
+  .letter-paper__meta > .letter-meta-sep { flex-shrink:0; }
+  .letter-paper__actions { gap:4px; flex-wrap:nowrap; }
+  .letter-paper__reads { gap:3px; }
+  .letter-reaction-cluster { gap:3px; }
+  .letter-paper__locate.is-revealed { padding:4px; }
+}
+
+.submit-retention-agreement { display:flex; align-items:flex-start; gap:10px; margin:16px 0; color:#697384; font-size:11px; line-height:1.6; text-align:left; cursor:pointer; }
+.submit-retention-agreement input { flex:0 0 auto; width:16px; height:16px; margin:3px 0 0; accent-color:#3772ff; }
+.submit-confirm-send:disabled { opacity:.5; cursor:not-allowed; }
+html.night-shift .submit-retention-agreement { color:#b4b7bc; }
+
+.submit-retention-details { margin:-9px 0 16px 26px; color:#697384; font-size:11px; line-height:1.6; text-align:left; }
+.submit-retention-details summary { width:fit-content; color:#637591; cursor:pointer; }
+.submit-retention-details__text { max-height:100px; overflow-y:auto; margin-top:7px; padding-right:8px; }
+html.night-shift .submit-retention-details { color:#b4b7bc; }
+html.night-shift .submit-retention-details summary { color:#a0b2ce; }
+
+/* Equal cells keep the scrolled mobile toolbar centered across phone widths. */
+@media (max-width: 480px) {
+  .home-toolbar.is-compact .information-panel { width:100%; }
+  .home-toolbar.is-compact .messages-count {
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    width:100%;
+    max-width:430px;
+    box-sizing:border-box;
+    padding:4px;
+    overflow:visible;
+  }
+  .home-toolbar.is-compact .message-stat {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-width:0;
+    width:100%;
+    min-height:36px;
+    box-sizing:border-box;
+    margin:0;
+    padding:4px 2px;
+    gap:3px;
+    font-size:9px;
+    line-height:1;
+  }
+  .home-toolbar.is-compact .message-stat svg { display:block; width:18px; height:18px; flex:0 0 18px; }
+  .home-toolbar.is-compact .toolbar-trigger > span,
+  .home-toolbar.is-compact .message-stat__open-label { display:none; }
+}
+
+.home-toolbar.is-compact .message-stat--count { align-items:center; justify-content:center; }
+.home-toolbar.is-compact .message-stat__count {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  align-self:center;
+  min-height:18px;
+  line-height:18px;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.home-toolbar.is-compact .message-stat--count > svg { display:block; align-self:center; }
+@media (max-width: 480px) {
+  .home-toolbar.is-compact .messages-count { grid-template-columns:1.3fr repeat(3,minmax(0,1fr)) 1.15fr 1fr; }
+  .home-toolbar.is-compact .message-stat--count { gap:4px; }
+}
+
+/* A quiet disclosure row within the submission dialog. */
+.submission-email-notice { padding:12px 0; border:0; border-top:1px solid #e8e3da; border-radius:0; background:transparent; }
+.submission-email-notice__heading strong { color:#6b655b; font-weight:600; }
+.submission-email-notice__heading > span { font-weight:400; letter-spacing:0; text-transform:none; }
+html.night-shift .submission-email-notice { border-color:#414238; background:transparent; }
+
+.submission-email-notice { margin-top:14px; padding:0; border:0; }
+.submission-email-notice .submission-email-notice__heading { width:fit-content; margin:0 auto; padding:8px 10px; justify-content:center; gap:7px; border-radius:8px; color:#80796d; }
+.submission-email-notice .submission-email-notice__heading strong { font-size:10px; font-weight:400; color:inherit; }
+.submission-email-notice__heading:hover { background:rgba(125,113,88,.06); }
+.submission-email-notice__heading:focus-visible { outline:2px solid #3772ff; outline-offset:2px; }
+.submission-email-notice__content { margin-top:6px; padding:10px 0 2px; }
+html.night-shift .submission-email-notice .submission-email-notice__heading { color:#b6b0a3; }
+@media (max-width: 600px) {
+  .submission-notice-dialog .submission-notice-footnote { font-size:10px; line-height:1.5; margin:12px 0; }
 }

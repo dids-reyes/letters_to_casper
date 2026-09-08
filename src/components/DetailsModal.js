@@ -1,4 +1,5 @@
 import React from "react";
+import {useLocation} from "react-router-dom";
 import { BsX } from "react-icons/bs";
 import { BsMailboxFlag } from "react-icons/bs";
 import Typewriter from "typewriter-effect";
@@ -430,6 +431,29 @@ function DetailsModal({
   const [translatedMessage, setTranslatedMessage] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
+  const messageBodyRef = useRef(null);
+  useEffect(() => {
+    const body = messageBodyRef.current;
+    if (!body || !showDetailsModal || !opened) return undefined;
+    const mobile = window.matchMedia('(max-width: 600px)');
+    let followTyping = true;
+    body.scrollTop = 0;
+    const onScroll = () => {
+      followTyping = body.scrollHeight - body.clientHeight - body.scrollTop <= 32;
+    };
+    const observer = new MutationObserver(() => {
+      if (mobile.matches && followTyping && !showTranslation) {
+        body.scrollTop = body.scrollHeight;
+      }
+    });
+    body.addEventListener('scroll', onScroll, {passive: true});
+    observer.observe(body, {childList: true, characterData: true, subtree: true});
+    return () => {
+      observer.disconnect();
+      body.removeEventListener('scroll', onScroll);
+    };
+  }, [showDetailsModal, opened, selectedLetter?._id, showTranslation]);
+
   const [detectedLanguage, setDetectedLanguage] = useState(null);
 
   useEffect(() => {
@@ -534,6 +558,18 @@ function DetailsModal({
   const [isRevealed, setIsRevealed] = useState(false);
   const [hasClickedAd, setHasClickedAd] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const location = useLocation();
+  const handledEmailShare = useRef('');
+  useEffect(() => {
+    const id = selectedLetter?._id;
+    if (!showDetailsModal || !id || selectedLetter.preview) return;
+    if (new URLSearchParams(location.search).get('share') !== '1') return;
+    if (handledEmailShare.current === id) return;
+    handledEmailShare.current = id;
+    setOpened(true);
+    setShowShareDialog(true);
+  }, [showDetailsModal, selectedLetter?._id, selectedLetter?.preview, location.search]);
+
   const [showQrCode, setShowQrCode] = useState(false);
   const [isDownloadingQr, setIsDownloadingQr] = useState(false);
 
@@ -793,7 +829,7 @@ function DetailsModal({
                 </div>
               )}
 
-              <div className="letter-paper__body letter-text">
+              <div ref={messageBodyRef} className="letter-paper__body letter-text" tabIndex={0} role="region" aria-label="Letter message">
                 {showTranslation ? (
                   <span>{translatedMessage}</span>
                 ) : (
@@ -907,7 +943,7 @@ function DetailsModal({
                   </>
                 )}
 
-                <span>
+                <span className="letter-paper__age" title={js_ago(new Date(selectedLetter.timestamp), {format: "long"})}>
                   {js_ago(new Date(selectedLetter.timestamp), {
                     format: "long",
                   })}

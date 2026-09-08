@@ -818,10 +818,11 @@ function Home() {
         <div className="information-panel">
           <div className="messages-count" aria-label="Letter information">
           <div
-            className="message-stat"
+            className="message-stat message-stat--count"
+            aria-label={`${letters.counts.approved} open letters`}
           >
             <IoMailOpenOutline size={21} />
-            <span>{tc(letters.counts.approved)} Open</span>
+            <span className="message-stat__count">{tc(letters.counts.approved)}<span className="message-stat__open-label"> Open</span></span>
           </div>
           <button
             type="button"
@@ -868,11 +869,11 @@ function Home() {
             <span>Feed</span>
           </button>
           <div
-            className="message-stat"
+            className="message-stat message-stat--count"
             aria-label={`${letters.counts.unapproved} pending letters`}
           >
             <IoMailUnreadOutline size={21} />
-            <span>{letters.counts.unapproved}</span>
+            <span className="message-stat__count">{tc(letters.counts.unapproved)}</span>
           </div>
           <button
             type="button"
