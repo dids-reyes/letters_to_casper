@@ -227,3 +227,16 @@
   .burned-letter-manager .managed-letter-row { flex-wrap:wrap; }
   .burned-letter-manager .managed-letter-row > div { flex-basis:100%; }
 }
+
+.letter-auto-moderation {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d7b971;
+  border-radius: 9px;
+  background: #fff8e8;
+  color: #705319;
+}
+.letter-auto-moderation > strong { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.letter-auto-moderation > p { margin: 6px 0; font-size: 12px; overflow-wrap: anywhere; }
+.letter-auto-moderation > small { font-size: 11px; }
+html.night-shift .letter-auto-moderation { background: #302b20; border-color: #6b5932; color: #e2c887; }

@@ -22,10 +22,13 @@ function AdminPortal() {
   }), [sessionToken]);
 
   const [letters, setLetters] = useState([]);
-  const reviewLetters = letters.filter(letter => !letter.burnRequested);
+  const needsManualReview = letter => ['flagged', 'error'].includes(letter.autoModeration?.status);
+  const reviewLetters = letters.filter(letter => !letter.burnRequested && !needsManualReview(letter));
+  const manualLetters = letters.filter(letter => !letter.burnRequested && needsManualReview(letter));
   const burnedLetters = letters.filter(letter => letter.burnRequested);
   const [loading, setLoading] = useState(0);
   const [activeSection, setActiveSection] = useState('review');
+  const visibleReviewLetters = activeSection === 'manual' ? manualLetters : reviewLetters;
   const [featuredLetters, setFeaturedLetters] = useState([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [featuredQuery, setFeaturedQuery] = useState('');
@@ -247,6 +250,7 @@ function AdminPortal() {
   };
 
   const [selectedLetters, setSelectedLetters] = useState([]);
+  useEffect(() => { setSelectedLetters([]); }, [activeSection]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -472,6 +476,9 @@ function AdminPortal() {
         <button className={activeSection === 'review' ? 'is-active' : ''} onClick={() => setActiveSection('review')}>
           <IoMailUnreadOutline /> Review Queue <span>{reviewLetters.length}</span>
         </button>
+        <button className={activeSection === 'manual' ? 'is-active' : ''} onClick={() => setActiveSection('manual')}>
+          <IoWarningOutline /> Manual Review <span>{manualLetters.length}</span>
+        </button>
         <button className={activeSection === 'burned' ? 'is-active' : ''} onClick={() => setActiveSection('burned')}>
           <IoFlameOutline /> Burned Letters <span>{burnedLetters.length}</span>
         </button>
@@ -482,7 +489,8 @@ function AdminPortal() {
           <IoTrashOutline /> Manage Letters
         </button>
       </nav>
-      {activeSection === 'review' && <>
+      {['review', 'manual'].includes(activeSection) && <>
+      {activeSection === 'manual' && <h2>Manual review</h2>}
       {loading === 1 && <p className="admin-portal-status">Loading letters…</p>}
       {loading === 2 && <p className="admin-portal-status is-error">Couldn’t load the review queue.</p>}
 
@@ -506,9 +514,9 @@ function AdminPortal() {
         </button>
       </div>
       {moderationStatus && <p className="moderation-status" role="status">{moderationStatus}</p>}
-      {reviewLetters.length > 0 && (
+      {visibleReviewLetters.length > 0 && (
         <ul className="letter-review-list">
-          {reviewLetters.map(letter => (
+          {visibleReviewLetters.map(letter => (
             <li key={letter._id} className="letter-item">
               <input
                 type="checkbox"
@@ -531,6 +539,13 @@ function AdminPortal() {
                     )}
                   </div>
                   <p>{letter.message}</p>
+                  {needsManualReview(letter) && (
+                    <div className="letter-auto-moderation">
+                      <strong><IoWarningOutline /> Not approved by auto mod</strong>
+                      <p>{letter.autoModeration.reason || 'Automatic moderation could not approve this letter.'}</p>
+                      {letter.autoModeration.retryAt && <small>One timeout retry scheduled for {formatReviewTimestamp(letter.autoModeration.retryAt)}. You can review this letter now.</small>}
+                    </div>
+                  )}
                   {letter.moderationDecisions?.length > 0 && (
                     <div className="letter-moderation-decisions">
                       {letter.moderationDecisions.map(decision => (
@@ -555,7 +570,7 @@ function AdminPortal() {
           ))}
         </ul>
       )}
-      {reviewLetters.length === 0 && !loading && <div className="admin-portal-empty"><IoCheckmarkCircleOutline /><strong>Queue cleared</strong><p>No letters are waiting for review.</p></div>}
+      {visibleReviewLetters.length === 0 && !loading && <div className="admin-portal-empty"><IoCheckmarkCircleOutline /><strong>Queue cleared</strong><p>No letters are waiting for review.</p></div>}
       </>}
       {activeSection === 'burned' && (
         <section className="featured-manager burned-letter-manager">
