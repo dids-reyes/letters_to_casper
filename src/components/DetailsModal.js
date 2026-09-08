@@ -928,25 +928,21 @@ function DetailsModal({
                       {early_bird && (
                         <>
                           <FaEarlybirds size="15px" />
-                          &nbsp;
                           <BsBookmarkHeartFill size="15px" />
                         </>
                       )}
                       {letterId === adminId && (
                         <>
-                          &nbsp;
                           <FaUserTie size="15px" />
                         </>
                       )}
                       {eleven_eleven && (
                         <>
-                          &nbsp;
                           <PiShootingStarFill size="15px" />
                         </>
                       )}
                       {twelve_fifty_one && (
                         <>
-                          &nbsp;
                           <PiHeartBreakFill size="15px" />
                         </>
                       )}

@@ -4283,7 +4283,7 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
 @keyframes letter-env-flap {
   to {
     transform: rotateX(178deg);
-    background: #ded3b0;
+    background: var(--letter-envelope-open-flap, #ded3b0);
   }
 }
 
@@ -4585,7 +4585,17 @@ html.night-shift .letter-paper__translation-control small {
 .letter-paper__badges {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
+  line-height: 1;
   color: #6b6550;
+}
+
+.letter-paper__badges > svg {
+  display: block;
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  opacity: 0.9;
 }
 
 .letter-paper__reads {
@@ -5943,3 +5953,218 @@ html.night-shift .submission-email-notice .submission-email-notice__heading { co
 .song-link-guide__dots button { border:0; padding:0; cursor:pointer; box-sizing:content-box; background-clip:content-box; border-top:8px solid transparent; border-bottom:8px solid transparent; }
 .song-link-guide__dots button:focus-visible { outline:2px solid #3772ff; outline-offset:2px; }
 @media (prefers-reduced-motion:reduce) { .song-link-guide__pages { scroll-behavior:auto; } }
+
+@media (min-width: 601px) {
+  .compose-dialog .compose-optional-extras__content,
+  .compose-dialog .modal-footer { border-top:0; }
+}
+
+/* Complete night-shift colors for Origins and the letter composer. */
+html.night-shift .origins-panel,
+html.night-shift .compose-dialog,
+html.night-shift .compose-focus-writer {
+  color-scheme: dark;
+}
+
+html.night-shift .origins-panel .announcements-header,
+html.night-shift .international-origins > strong {
+  color: #e7e3d8;
+}
+
+html.night-shift .origins-caption,
+html.night-shift .origins-panel .announcements-empty,
+html.night-shift .origins-panel .announcements-header button {
+  color: #aaaeb7;
+}
+
+html.night-shift .origins-list li,
+html.night-shift .international-origins li {
+  background: #262a31;
+  color: #d5d8df;
+}
+
+html.night-shift .international-origins {
+  border-color: #333842;
+}
+
+html.night-shift .origin-rank,
+html.night-shift .international-origins li span:last-child {
+  background: rgba(138, 180, 255, 0.12);
+  color: #8ab4ff;
+}
+
+html.night-shift .compose-dialog {
+  background: #1c1f25;
+  border-color: #3d444e;
+  color: #e7e3d8;
+}
+
+html.night-shift .compose-heading h2,
+html.night-shift .compose-dialog .form-group label,
+html.night-shift .compose-dialog .message-form-group label {
+  color: #e7e3d8;
+}
+
+html.night-shift .compose-heading p,
+html.night-shift .compose-dialog .close {
+  color: #aaaeb7;
+}
+
+html.night-shift .compose-heading-icon,
+html.night-shift .compose-focus-toggle {
+  background: rgba(138, 180, 255, 0.12);
+  color: #8ab4ff;
+}
+
+html.night-shift .compose-dialog .form-control,
+html.night-shift .compose-dialog .big-textarea,
+html.night-shift .compose-short-field,
+html.night-shift .compose-link-field {
+  background: #252a31;
+  border-color: #444c58;
+  color: #e7e3d8;
+}
+
+html.night-shift .compose-dialog .form-control::placeholder,
+html.night-shift .compose-focus-writer textarea::placeholder {
+  color: #a2a8b2;
+  opacity: 1;
+}
+
+html.night-shift .compose-dialog .form-control:focus,
+html.night-shift .compose-dialog .big-textarea:focus,
+html.night-shift .compose-short-field:focus-within,
+html.night-shift .compose-link-field:focus-within {
+  background: #292f38;
+  border-color: #8ab4ff;
+  box-shadow: 0 0 0 3px rgba(138, 180, 255, 0.14);
+}
+
+/* The wrapper owns the border and focus ring of these combined fields. */
+html.night-shift .compose-dialog .compose-short-field .form-control,
+html.night-shift .compose-dialog .compose-link-field .form-control {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+html.night-shift .compose-dialog .character-count {
+  background: #252a31;
+  color: #aaaeb7;
+}
+
+html.night-shift .compose-dialog .compose-short-field .character-count {
+  background: transparent;
+}
+
+html.night-shift .compose-dialog .modal-footer {
+  border-color: #333842;
+}
+
+html.night-shift .compose-dialog .preview-button {
+  background: #29364e;
+  color: #a9c7ff;
+}
+
+html.night-shift .compose-dialog .preview-button:hover {
+  background: #334665;
+}
+
+html.night-shift .compose-dialog .disabled-button,
+html.night-shift .compose-dialog .form-control:disabled {
+  background: #242830;
+  color: #929aa6;
+}
+
+html.night-shift .compose-dialog .close:hover,
+html.night-shift .origins-panel .announcements-header button:hover {
+  background: #303640;
+  color: #f0ecdf;
+}
+
+html.night-shift .compose-photo-picker:not(.is-disabled):hover {
+  background: #303a46;
+  border-color: #8ab4ff;
+}
+
+html.night-shift .compose-photo-preview button:hover {
+  background: #402d32;
+  border-color: #ad6874;
+  color: #ffb0b0;
+}
+
+html.night-shift .compose-photo-error {
+  color: #ff9a9a;
+}
+
+html.night-shift .compose-focus-writer {
+  background: radial-gradient(circle at 15% 10%, rgba(138, 180, 255, 0.08), transparent 32%), #14161a;
+}
+
+html.night-shift .compose-focus-writer__paper {
+  background: #1d1f1b;
+  border-color: #3d4139;
+  box-shadow: 0 22px 65px rgba(0, 0, 0, 0.3);
+}
+
+html.night-shift .compose-focus-writer__header h2,
+html.night-shift .compose-focus-writer__paper textarea {
+  color: #e7e1cf;
+}
+
+html.night-shift .compose-focus-writer__paper textarea {
+  background-image: repeating-linear-gradient(to bottom, transparent 0 31px, rgba(255, 240, 200, 0.08) 31px 32px);
+}
+
+html.night-shift .compose-focus-writer__header > div > span,
+html.night-shift .compose-focus-writer__paper > small,
+html.night-shift .compose-focus-writer__hint {
+  color: #aaa99f;
+}
+
+html.night-shift .compose-focus-writer__header button {
+  background: #292d33;
+  border-color: #444c58;
+  color: #e7e3d8;
+}
+
+/* Keep the animated flap dark throughout its opening keyframe. */
+html.night-shift .letter-envelope {
+  --letter-envelope-open-flap: #35382c;
+}
+
+html.night-shift .letter-envelope__back {
+  background: #303328;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+html.night-shift .letter-envelope__front {
+  background: #484b3b;
+}
+
+html.night-shift .letter-envelope__flap {
+  background: #555744;
+}
+
+html.night-shift .letter-envelope__note {
+  background: #24261e;
+  border-color: #64634c;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+html.night-shift .letter-envelope__note::before,
+html.night-shift .letter-envelope__note::after {
+  background: #62614b;
+}
+
+html.night-shift .letter-envelope__note::after {
+  box-shadow: 0 12px 0 #62614b, 0 24px 0 #62614b;
+}
+
+html.night-shift .letter-envelope__seal {
+  color: #dc98a8;
+}
+
+html.night-shift .letter-envelope__hint {
+  color: #c8c3b6;
+}
