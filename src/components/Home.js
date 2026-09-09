@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import OriginsView from "./OriginsView";
 import Header from "./Header";
 import Footer from "./Footer";
 import AddModal from "./AddModal";
@@ -74,6 +75,7 @@ function Home() {
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [feedPage, setFeedPage] = useState(0);
   const [showOrigins, setShowOrigins] = useState(false);
+  const closeOrigins = useCallback(() => setShowOrigins(false), []);
   const [countPopover, setCountPopover] = useState("");
   const countPopoverRef = useRef(null);
   const countTriggerRef = useRef(null);
@@ -980,22 +982,8 @@ function Home() {
             </aside>
           )}
           {showOrigins && (
-            <div
-              id="origins-panel"
-              className="announcements-panel origins-panel"
-              role="region"
-              aria-label="Top letter origins"
-            >
-              <div className="announcements-header">
-                <strong>Top Letter Origins</strong>
-                <button
-                  type="button"
-                  aria-label="Close letter origins"
-                  onClick={() => setShowOrigins(false)}
-                >
-                  &times;
-                </button>
-              </div>
+            <OriginsView onClose={closeOrigins}>
+              <h2>Top Letter Origins</h2>
               <p className="origins-caption">
                 Ranked from the most letters to the least
               </p>
@@ -1028,7 +1016,7 @@ function Home() {
                   </ul>
                 </div>
               )}
-            </div>
+            </OriginsView>
           )}
           {showAnnouncements && (
             <div
