@@ -74,6 +74,50 @@ function Home() {
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [feedPage, setFeedPage] = useState(0);
   const [showOrigins, setShowOrigins] = useState(false);
+  const [countPopover, setCountPopover] = useState("");
+  const countPopoverRef = useRef(null);
+  const countTriggerRef = useRef(null);
+  const closeCountPopover = () => {
+    setCountPopover("");
+    countTriggerRef.current?.focus();
+  };
+  const toggleCountPopover = (kind, event) => {
+    countTriggerRef.current = event.currentTarget;
+    setCountPopover(current => current === kind ? "" : kind);
+    setShowOrigins(false);
+    setShowAnnouncements(false);
+  };
+  useEffect(() => {
+    if (!countPopover) return;
+    const panel = countPopoverRef.current;
+    const trigger = countTriggerRef.current;
+    const positionArrow = () => {
+      const box = panel.getBoundingClientRect();
+      const anchor = trigger.getBoundingClientRect();
+      panel.style.setProperty('--count-arrow', `${Math.max(15, Math.min(box.width - 15, anchor.left + anchor.width / 2 - box.left))}px`);
+    };
+    positionArrow();
+    panel.querySelector('button')?.focus();
+    const dismissOutside = event => {
+      if (!panel.contains(event.target) && !trigger.contains(event.target)) setCountPopover("");
+    };
+    const dismissEscape = event => {
+      if (event.key === 'Escape') { setCountPopover(""); trigger.focus(); }
+    };
+    const observer = new ResizeObserver(positionArrow);
+    observer.observe(panel);
+    observer.observe(trigger);
+    window.addEventListener('resize', positionArrow);
+    document.addEventListener('pointerdown', dismissOutside);
+    document.addEventListener('keydown', dismissEscape);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', positionArrow);
+      document.removeEventListener('pointerdown', dismissOutside);
+      document.removeEventListener('keydown', dismissEscape);
+    };
+  }, [countPopover]);
+
   const [newLetter, setNewLetter] = useState({
     from: "",
     to: "",
@@ -817,13 +861,18 @@ function Home() {
         </button>
         <div className="information-panel">
           <div className="messages-count" aria-label="Letter information">
-          <div
-            className="message-stat message-stat--count"
+          <button
+            type="button"
+            className="message-stat message-stat--count count-popover-trigger"
             aria-label={`${letters.counts.approved} open letters`}
+            aria-haspopup="dialog"
+            aria-expanded={countPopover === "opened"}
+            aria-controls={countPopover === "opened" ? "letter-count-popover" : undefined}
+            onClick={event => toggleCountPopover("opened", event)}
           >
             <IoMailOpenOutline size={21} />
             <span className="message-stat__count">{tc(letters.counts.approved)}</span>
-          </div>
+          </button>
           <button
             type="button"
             className="message-stat toolbar-trigger"
@@ -868,13 +917,18 @@ function Home() {
             <IoNewspaperOutline size={21} />
             <span>Feed</span>
           </button>
-          <div
-            className="message-stat message-stat--count"
+          <button
+            type="button"
+            className="message-stat message-stat--count count-popover-trigger"
             aria-label={`${letters.counts.unapproved} pending letters`}
+            aria-haspopup="dialog"
+            aria-expanded={countPopover === "pending"}
+            aria-controls={countPopover === "pending" ? "letter-count-popover" : undefined}
+            onClick={event => toggleCountPopover("pending", event)}
           >
             <IoMailUnreadOutline size={21} />
             <span className="message-stat__count">{tc(letters.counts.unapproved)}</span>
-          </div>
+          </button>
           <button
             type="button"
             className="message-stat toolbar-trigger night-shift-toggle"
@@ -889,6 +943,21 @@ function Home() {
             )}
           </button>
           </div>
+          {countPopover && (
+            <section id="letter-count-popover" ref={countPopoverRef}
+              className={`letter-count-popover is-${countPopover}`} role="dialog"
+              aria-labelledby="letter-count-title" aria-describedby="letter-count-description">
+              <button type="button" className="letter-count-popover__close" aria-label="Close letter count" onClick={closeCountPopover}>×</button>
+              <span className="letter-count-popover__icon" aria-hidden="true">
+                {countPopover === "opened" ? <IoMailOpenOutline /> : <IoMailUnreadOutline />}
+              </span>
+              <h2 id="letter-count-title">{countPopover === "opened" ? "Number of Open Letters" : "Number of Pending Letters for Approval"}</h2>
+              <strong className="letter-count-popover__number">{Number(countPopover === "opened" ? letters.counts.approved : letters.counts.unapproved).toLocaleString()}</strong>
+              <p id="letter-count-description">{countPopover === "opened"
+                ? "Search through these letters, maybe someone wrote a letter for you."
+                : "Once your letter is approved and published, you can share it with others."}</p>
+            </section>
+          )}
           {isLateNight && !nightShift && !nightTipDismissed && (
             <aside className="night-mode-suggestion" role="status">
               <button
@@ -991,7 +1060,7 @@ function Home() {
                   <div className="feed-report__updates">
                     <article className="feed-report__story is-featured">
                       <IoHeartOutline aria-hidden="true" />
-                      <div><span className="feed-report__kicker">New · Reactions</span><h4>Leave a feeling behind</h4><p>Respond with Love or Sad. Your choice is remembered, and switching reactions asks for confirmation.</p></div>
+                      <div><span className="feed-report__kicker">New · Reactions</span><h4>Leave a feeling behind</h4><p>Respond with Love or Sad. Your choice is remembered.</p></div>
                     </article>
                     <article className="feed-report__story">
                       <IoFlameOutline aria-hidden="true" />

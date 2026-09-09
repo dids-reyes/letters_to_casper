@@ -300,7 +300,7 @@ function DetailsModal({
   const echoTotal = Object.values(echoes).reduce((total, count) => total + count, 0);
   const DominantReactionIcon = echoes.sad > echoes.love ? TbMoodSad : IoHeartOutline;
 
-  const saveEcho = async reaction => {
+  const saveEcho = async (reaction, remove = false) => {
     if (!selectedLetter?._id || selectedLetter.preview || savingEcho) return;
     setSavingEcho(true);
     try {
@@ -310,17 +310,18 @@ function DetailsModal({
           "x-api-key": api_key,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({reaction, readerId: getReaderId()}),
+        body: JSON.stringify({reaction, remove, readerId: getReaderId()}),
       });
       if (!response.ok) throw new Error("Failed to leave an echo");
       const result = await response.json();
       setEchoes(normalizeEchoes(result.echoes));
-      setSelectedEcho(result.selected || reaction);
+      setSelectedEcho(result.selected ?? reaction);
       const saved = JSON.parse(localStorage.getItem("letterEchoes") || "{}");
-      saved[selectedLetter._id] = result.selected || reaction;
+      if (result.selected === "") delete saved[selectedLetter._id];
+      else saved[selectedLetter._id] = result.selected ?? reaction;
       localStorage.setItem("letterEchoes", JSON.stringify(saved));
       setShowEchoPicker(false);
-      toast.info("Your reaction was added.", {
+      toast.info(result.selected === "" ? "Your reaction was removed." : "Your reaction was added.", {
         position: "top-center",
         autoClose: 1800,
       });
@@ -340,7 +341,8 @@ function DetailsModal({
   };
 
   const requestEcho = reaction => {
-    if (selectedEcho && selectedEcho !== reaction) {
+    if (savingEcho) return;
+    if (selectedEcho) {
       setShowEchoPicker(false);
       setPendingEcho(reaction);
       return;
@@ -351,7 +353,7 @@ function DetailsModal({
   const confirmEchoSwitch = async () => {
     const reaction = pendingEcho;
     if (!reaction) return;
-    await saveEcho(reaction);
+    await saveEcho(reaction, reaction === selectedEcho);
     setPendingEcho("");
   };
 
@@ -444,6 +446,7 @@ function DetailsModal({
   const [translatedMessage, setTranslatedMessage] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
+  const hasLetterAttachment = Boolean(linkId || selectedLetter?.photo?.url);
   const messageBodyRef = useRef(null);
   useEffect(() => {
     const body = messageBodyRef.current;
@@ -465,7 +468,7 @@ function DetailsModal({
       observer.disconnect();
       body.removeEventListener('scroll', onScroll);
     };
-  }, [showDetailsModal, opened, selectedLetter?._id, showTranslation]);
+  }, [showDetailsModal, opened, selectedLetter?._id, showTranslation, hasLetterAttachment]);
 
   const [detectedLanguage, setDetectedLanguage] = useState(null);
 
@@ -842,7 +845,7 @@ function DetailsModal({
                 </div>
               )}
 
-              <div ref={messageBodyRef} className="letter-paper__body letter-text" tabIndex={0} role="region" aria-label="Letter message">
+              <div ref={messageBodyRef} className={`letter-paper__body letter-text${hasLetterAttachment ? " letter-paper__body--scrollable" : ""}`} tabIndex={0} role="region" aria-label="Letter message">
                 {showTranslation ? (
                   <span>{translatedMessage}</span>
                 ) : (
@@ -1038,7 +1041,7 @@ function DetailsModal({
                                 aria-expanded={showEchoPicker}
                                 aria-pressed={Boolean(selectedEcho)}
                                 aria-label={selectedEcho
-                                  ? `Your ${selectedEcho} reaction is selected. Change reaction`
+                                  ? `Your ${selectedEcho} reaction is selected. Change or remove reaction`
                                   : "React to this letter"}
                               >
                                 <DominantReactionIcon />
@@ -1176,12 +1179,14 @@ function DetailsModal({
               <div className="letter-reaction-confirm-dialog__icon" aria-hidden="true">
                 {pendingEcho === "sad" ? <TbMoodSad /> : <TbHeart />}
               </div>
-              <h2 id="reaction-confirm-title">Switch your reaction?</h2>
-              <p>Your previous reaction will be replaced with {pendingEcho === "sad" ? "Sad" : "Love"}.</p>
+              <h2 id="reaction-confirm-title">{pendingEcho === selectedEcho ? "Undo your reaction?" : "Switch your reaction?"}</h2>
+              <p>{pendingEcho === selectedEcho
+                ? `Your ${pendingEcho === "sad" ? "Sad" : "Love"} reaction will be removed from this letter.`
+                : `Your previous reaction will be replaced with ${pendingEcho === "sad" ? "Sad" : "Love"}.`}</p>
               <div className="letter-reaction-confirm-dialog__actions">
                 <button type="button" className="is-cancel" onClick={() => setPendingEcho("")} disabled={savingEcho}>Keep current</button>
                 <button type="button" className="is-confirm" onClick={confirmEchoSwitch} disabled={savingEcho}>
-                  {savingEcho ? "Switching…" : "Switch reaction"}
+                  {savingEcho ? "Saving…" : pendingEcho === selectedEcho ? "Undo reaction" : "Switch reaction"}
                 </button>
               </div>
             </section>

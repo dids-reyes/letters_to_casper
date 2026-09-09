@@ -691,8 +691,9 @@ html.night-shift .about-definition { border-color:#393f37; background:#20241d; }
 
 .feed-report__story {
   display: grid;
-  grid-template-columns: 27px minmax(0, 1fr);
-  gap: 9px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
   padding: 15px 11px;
 }
 
@@ -728,9 +729,10 @@ html.night-shift .about-definition { border-color:#393f37; background:#20241d; }
 }
 
 .feed-report__story > svg {
-  width: 27px;
-  height: 27px;
-  padding: 6px;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  align-self: center;
   box-sizing: border-box;
   border: 1px solid rgba(55, 114, 255, 0.18);
   border-radius: 50%;
@@ -5160,15 +5162,21 @@ html.night-shift .letter-paper__translation-control small {
   .letter-paper__body {
     font-size: 15px;
     line-height: 28px;
-    /* Cap the message at twelve lines; keep the surrounding letter separate. */
+    overflow-wrap: anywhere;
+    /* Text-only letters grow naturally up to twenty visible lines. */
     box-sizing: content-box;
-    max-height: calc(12 * 28px);
-    overflow-y: scroll;
+    max-height: calc(20 * 28px);
+    overflow-y: auto;
     scrollbar-gutter: stable;
     overflow-x: hidden;
     overflow-wrap: anywhere;
     overscroll-behavior-y: contain;
     scrollbar-width: thin;
+  }
+
+  .letter-paper__body--scrollable {
+    max-height: calc(12 * 28px);
+    overflow-y: scroll;
   }
 
   .letter-paper__meta {
@@ -6184,3 +6192,50 @@ html.night-shift .letter-envelope__hint {
     letter-spacing: normal;
   }
 }
+
+.count-popover-trigger { font-family: inherit; cursor: pointer; background: transparent; border: 0; }
+.count-popover-trigger:focus-visible { outline: 2px solid #3772ff; outline-offset: -2px; border-radius: 8px; }
+.letter-count-popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  z-index: 1050;
+  width: min(310px, 100%, calc(100vw - 24px));
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border: 1px solid #ded3b9;
+  border-radius: 16px;
+  background: #fffdf5;
+  color: #38352b;
+  box-shadow: 0 12px 32px rgba(42, 37, 25, 0.16);
+  text-align: left;
+}
+.letter-count-popover.is-pending { left: auto; right: 0; }
+.letter-count-popover::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: var(--count-arrow, 24px);
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border-top: 1px solid #ded3b9;
+  border-left: 1px solid #ded3b9;
+  transform: translateX(-50%) rotate(45deg);
+}
+.letter-count-popover__close {
+  position: absolute; top: 7px; right: 9px; width: 30px; height: 30px;
+  border: 0; border-radius: 50%; background: transparent; color: #827963;
+  font-size: 23px; cursor: pointer;
+}
+.letter-count-popover__close:hover { background: rgba(128, 117, 85, 0.1); }
+.letter-count-popover__icon { display: inline-flex; font-size: 25px; color: #3772ff; }
+.letter-count-popover h2 { margin: 8px 12px 6px 0; font: 600 17px/1.35 Georgia, serif; }
+.letter-count-popover__number { display: block; color: #315fc7; font-size: 27px; font-variant-numeric: tabular-nums; }
+.letter-count-popover p { margin: 9px 0 0; font-size: 12px; line-height: 1.6; color: #79715f; }
+html.night-shift .letter-count-popover { background: #20231d; border-color: #484c40; color: #eee9dc; box-shadow: 0 12px 32px rgba(0,0,0,.4); }
+html.night-shift .letter-count-popover::before { border-color: #484c40; }
+html.night-shift .letter-count-popover p,
+html.night-shift .letter-count-popover__close { color: #b6b1a4; }
+html.night-shift .letter-count-popover__icon,
+html.night-shift .letter-count-popover__number { color: #8ab4ff; }
