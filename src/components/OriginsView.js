@@ -1,10 +1,16 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {render_url, api_key} from '../data/keys';
 import '../styles/OriginsView.css';
+import {IoLocationOutline, IoMailOpenOutline} from 'react-icons/io5';
 import logo from '../lotties/ltc_logo_1.webp';
 
 const letterCount = count => `${count.toLocaleString()} ${count === 1 ? 'Letter' : 'Letters'}`;
+
+const originName = origin => {
+  const parts = [origin.city, origin.region].filter(value => typeof value === 'string' && value.trim()).map(value => value.trim());
+  return parts.filter((value, index) => parts.findIndex(part => part.toLowerCase() === value.toLowerCase()) === index).join(', ') || 'Philippines';
+};
 
 const project = ([lon, lat], local) => local
   ? [(lon - 115) * 40, (22 - lat) * 40]
@@ -29,6 +35,27 @@ export default function OriginsView({onClose, children}) {
   const [selection, setSelection] = useState('');
   const pages = useRef(null);
   const dialog = useRef(null);
+  const locationTitle = useRef(null);
+  useLayoutEffect(() => {
+    const title = locationTitle.current;
+    if (!title) return;
+    let active = true;
+    const fit = () => {
+      if (!active) return;
+      title.style.fontSize = '14px';
+      const available = title.clientWidth;
+      if (available > 0 && title.scrollWidth > available) {
+        title.style.fontSize = `${Math.floor(14 * available / title.scrollWidth * 100) / 100}px`;
+      }
+    };
+    fit();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(fit) : null;
+    observer?.observe(title.parentElement);
+    window.addEventListener('resize', fit);
+    document.fonts?.ready.then(fit);
+    return () => {active = false; observer?.disconnect(); window.removeEventListener('resize', fit);};
+  }, [selection, page]);
+
   useEffect(() => {
     const focused = document.activeElement;
     const overflow = document.body.style.overflow;
@@ -87,7 +114,7 @@ export default function OriginsView({onClose, children}) {
     setPage(index); setSelection('');
     pages.current.scrollTo({left: pages.current.clientWidth * index, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
   };
-  return createPortal(<section id="origins-panel" className="origins-view" role="dialog" aria-modal="true" aria-labelledby="origins-title" ref={dialog}>
+  return createPortal(<section id="origins-panel" className="origins-view" role="dialog" aria-modal="true" aria-label="Origins" ref={dialog}>
     <header className="origins-view__header">
       <div className="origins-view__branding"><img src={logo} alt="Letters to Casper" /></div>
       <button type="button" onClick={onClose} aria-label="Close letter origins">×</button>
@@ -98,7 +125,19 @@ export default function OriginsView({onClose, children}) {
     <main className="origins-view__content">
       <nav className="origins-view__tabs" aria-label="Choose a map">{['Philippines', 'Around the world'].map((label, i) => <button type="button" key={label} onClick={() => go(i)} aria-pressed={page === i}>{label}</button>)}</nav>
       <p className="origins-view__intro">From familiar islands to places far away. Tap to explore where letters begin.</p>
-      <p className="origins-view__selection" role="status">{selection || (page === 0 ? 'Tap a blue dot to see its city and letter count.' : 'Tap a blue country to see its letter count.')}</p>
+      <div className={`origins-view__selection${selection ? ' has-selection' : ''}`} role="status" aria-live="polite" aria-atomic="true">
+        <span className="origins-view__selection-icon" aria-hidden="true"><IoLocationOutline /></span>
+        <div className="origins-view__selection-copy">
+          <small>{selection ? 'Letters from' : 'Discover an origin'}</small>
+          <strong ref={locationTitle}>{selection ? selection.name : page === 0 ? 'Where in the Philippines?' : 'Where in the world?'}</strong>
+          {!selection && <span>{page === 0 ? 'Tap a blue dot to explore its letters.' : 'Tap a blue country to explore its letters.'}</span>}
+        </div>
+        {selection && <span className="origins-view__selection-count"><IoMailOpenOutline aria-hidden="true" />{letterCount(selection.count)}</span>}
+      </div>
+      {status === 'ready' && <div className="origins-view__map-summary">
+        <span>{page === 0 ? `${localPoints.length} ${localPoints.length === 1 ? 'city location' : 'city locations'}` : `${Object.keys(countries).length} ${Object.keys(countries).length === 1 ? 'country' : 'countries'}`}</span>
+        <span><i aria-hidden="true" />{page === 0 ? 'Blue dots mark letter origins' : 'Deeper blue means more letters'}</span>
+      </div>}
       {status === 'ready' && !origins.length && <p>No published letter locations yet.</p>}
       {status === 'loading' && <p role="status">Gathering letter origins…</p>}
       {status === 'error' && <div role="alert">The map couldn’t load. <button type="button" onClick={() => setAttempt(value => value + 1)}>Try again</button></div>}
@@ -110,13 +149,13 @@ export default function OriginsView({onClose, children}) {
               const label = `${shape.properties.name}: ${letterCount(count)}`;
               return <path key={shape.properties.code + shape.properties.name} d={shape.path} className={local ? `island-group--${shape.properties.islandGroup || 'luzon'}` : count ? 'has-letters' : ''} fillRule="evenodd"
                 style={!local && count ? {fillOpacity: Math.min(1, 0.35 + Math.log10(count + 1) / 5)} : undefined}
-                onClick={() => !local && setSelection(label)} tabIndex={!local && count ? 0 : undefined} role={!local && count ? 'button' : undefined}
-                aria-label={!local && count ? label : undefined} onKeyDown={event => {if (!local && ['Enter', ' '].includes(event.key)) {event.preventDefault(); setSelection(label);}}}><title>{local ? shape.properties.name : label}</title></path>;
+                onClick={() => !local && setSelection({name: shape.properties.name, count})} tabIndex={!local && count ? 0 : undefined} role={!local && count ? 'button' : undefined}
+                aria-label={!local && count ? label : undefined} onKeyDown={event => {if (!local && ['Enter', ' '].includes(event.key)) {event.preventDefault(); setSelection({name: shape.properties.name, count});}}}><title>{local ? shape.properties.name : label}</title></path>;
             })}
             {local && localPoints.map((origin, i) => {
               const [cx, cy] = project([origin.longitude, origin.latitude], true);
-              const label = `${origin.city || 'Philippines'}: ${letterCount(origin.count)}`;
-              return <g key={i} className="origins-map__point" role="button" tabIndex={0} aria-label={label} onClick={() => setSelection(label)} onKeyDown={event => {if (['Enter', ' '].includes(event.key)) {event.preventDefault(); setSelection(label);}}}>
+              const label = `${originName(origin)}: ${letterCount(origin.count)}`;
+              return <g key={i} className="origins-map__point" role="button" tabIndex={0} aria-label={label} onClick={() => setSelection({name: originName(origin), count: origin.count})} onKeyDown={event => {if (['Enter', ' '].includes(event.key)) {event.preventDefault(); setSelection({name: originName(origin), count: origin.count});}}}>
                 <title>{label}</title><circle cx={cx} cy={cy} r="14" className="origins-map__hit"/><circle cx={cx} cy={cy} r="4"/></g>;
             })}
           </svg>
@@ -124,7 +163,7 @@ export default function OriginsView({onClose, children}) {
             {['Luzon', 'Visayas', 'Mindanao'].map(group => <span key={group}><i className={`island-swatch--${group.toLowerCase()}`} aria-hidden="true" />{group}</span>)}
           </div>}
       <p className="origins-view__note">Locations are approximate.</p>
-          {status === 'ready' && <p className="origins-view__legend">{local ? `${localPoints.length} city locations · blue dots mark letter origins` : `${shapes.filter(shape => shape.properties.code !== 'PH_DETAIL' && (countries[shape.properties.code] || countries[shape.properties.name.toUpperCase()])).length} countries · deeper blue means more letters`}</p>}
+
         </section>)}
       </div>
       <div className="origins-view__rankings">{children}</div>

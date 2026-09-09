@@ -18,7 +18,8 @@ test('opens at Philippines, shows real city totals, switches to world and retain
   const point = await screen.findByRole('button',{name:'Manila: 3 Letters'});
   expect(screen.getByRole('button',{name:'Philippines'})).toHaveAttribute('aria-pressed','true');
   fireEvent.click(point);
-  expect(screen.getByRole('status')).toHaveTextContent('Manila: 3 Letters');
+  expect(screen.getByRole('status')).toHaveTextContent('Manila');
+  expect(screen.getByRole('status')).toHaveTextContent('3 Letters');
   fireEvent.click(screen.getByRole('button',{name:'Around the world'}));
   expect(screen.getByRole('button',{name:'Around the world'})).toHaveAttribute('aria-pressed','true');
   expect(screen.getByText('Top Letter Origins')).toBeInTheDocument();
