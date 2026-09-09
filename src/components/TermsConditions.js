@@ -11,7 +11,9 @@ import logo from '../lotties/ltc_logo_1.webp';
 import '../styles/LegalPages.css';
 
 function TermsAndConditions() {
-  useEffect(() => window.scrollTo(0, 0), []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const sections = [
     {id:'use', title:'Use of Website', content:<><p>You may use our website for lawful purposes and in accordance with these Terms and Conditions. You may not use the website to:</p><ul><li>Engage in fraudulent activity</li><li>Upload or transmit viruses or malicious code</li><li>Violate intellectual property rights</li><li>Harass, abuse, or harm another person</li></ul></>},
