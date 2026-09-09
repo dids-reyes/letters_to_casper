@@ -1,13 +1,12 @@
-export let render_url;
-export let render_base_url;
-export let api_key = process.env.REACT_APP_API_KEY;
-const localHost = window.location.hostname;
-const useLocalBackend = process.env.REACT_APP_USE_LOCAL_BACKEND === 'true';
+const useLocalBackend = process.env.NODE_ENV === 'development' &&
+  process.env.REACT_APP_USE_LOCAL_BACKEND !== 'true';
+const localBaseUrl = (process.env.REACT_APP_LOCAL_API_BASE_URL ||
+  `http://${window.location.hostname}:8000`).replace(/\/+$/, '');
 
-if (useLocalBackend) {
-  render_url = `http://${localHost}:4000/api/messages`;
-  render_base_url = `http://${localHost}:4000`;
-} else {
-  render_url = process.env.REACT_APP_API_URL?.replace(/\/+$/, '');
-  render_base_url = process.env.REACT_APP_BASE_URL?.replace(/\/+$/, '');
-}
+export const render_base_url = useLocalBackend
+  ? localBaseUrl
+  : process.env.REACT_APP_BASE_URL?.replace(/\/+$/, '');
+export const render_url = useLocalBackend
+  ? `${localBaseUrl}/api/messages`
+  : process.env.REACT_APP_API_URL?.replace(/\/+$/, '');
+export const api_key = process.env.REACT_APP_API_KEY;
