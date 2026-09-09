@@ -490,7 +490,6 @@ function AdminPortal() {
         </button>
       </nav>
       {['review', 'manual'].includes(activeSection) && <>
-      {activeSection === 'manual' && <h2>Manual review</h2>}
       {loading === 1 && <p className="admin-portal-status">Loading letters…</p>}
       {loading === 2 && <p className="admin-portal-status is-error">Couldn’t load the review queue.</p>}
 

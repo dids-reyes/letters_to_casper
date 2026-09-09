@@ -26,7 +26,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
-import GraphemeSplitter from "grapheme-splitter";
+import stringSplitter from "../data/splitLetterCharacters";
 import { toast } from "react-toastify";
 import { getOptimizedPhotoUrl } from "../data/cloudinary";
 const languageCodes = {
@@ -131,11 +131,6 @@ const splitTranslationText = (text, maxBytes = 450) => {
   }
   if (current) chunks.push(current);
   return chunks;
-};
-
-const stringSplitter = (string) => {
-  const splitter = new GraphemeSplitter();
-  return splitter.splitGraphemes(string);
 };
 
 const shortLetterAge = timestamp => {
