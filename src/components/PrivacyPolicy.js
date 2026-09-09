@@ -12,7 +12,9 @@ import logo from '../lotties/ltc_logo_1.webp';
 import '../styles/LegalPages.css';
 
 function PrivacyPolicy() {
-  useEffect(() => window.scrollTo(0, 0), []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const sections = [
     {
