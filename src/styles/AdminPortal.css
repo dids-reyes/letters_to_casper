@@ -228,15 +228,34 @@
   .burned-letter-manager .managed-letter-row > div { flex-basis:100%; }
 }
 
+/* Match the portal's dark review cards and muted pending-status badges. */
 .letter-auto-moderation {
   margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid #d7b971;
-  border-radius: 9px;
-  background: #fff8e8;
-  color: #705319;
+  padding: 11px 12px;
+  border: 1px solid rgba(155,181,240,.14);
+  border-radius: 12px;
+  background: rgba(13,23,41,.48);
+  color: #aeb8c9;
 }
-.letter-auto-moderation > strong { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-.letter-auto-moderation > p { margin: 6px 0; font-size: 12px; overflow-wrap: anywhere; }
-.letter-auto-moderation > small { font-size: 11px; }
-html.night-shift .letter-auto-moderation { background: #302b20; border-color: #6b5932; color: #e2c887; }
+.letter-auto-moderation > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 5px 8px;
+  border: 1px solid rgba(238,194,87,.18);
+  border-radius: 999px;
+  background: rgba(213,160,33,.1);
+  color: #e7c66d;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+.letter-auto-moderation > strong > svg { flex: 0 0 auto; font-size: 13px; }
+.letter-auto-moderation > p { margin: 8px 0 5px; color: #aeb8c9; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.letter-auto-moderation > small { display: block; color: #8e9bb0; font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  .letter-auto-moderation > p { font-size: 12px; }
+  .letter-auto-moderation > small { font-size: 10.5px; }
+}
