@@ -6239,3 +6239,49 @@ html.night-shift .letter-count-popover p,
 html.night-shift .letter-count-popover__close { color: #b6b1a4; }
 html.night-shift .letter-count-popover__icon,
 html.night-shift .letter-count-popover__number { color: #8ab4ff; }
+
+/* Proportional writing fields on smaller phones. */
+@media (max-width: 480px) {
+  .compose-dialog .compose-short-field .form-control {
+    min-height: 40px;
+    padding: 9px 11px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .compose-dialog .compose-short-field {
+    border-radius: 10px;
+  }
+
+  .compose-dialog .compose-short-field .character-count {
+    padding-right: 10px;
+    font-size: 10px;
+  }
+
+  .compose-dialog .form-group > label,
+  .compose-dialog .compose-message-label > label {
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+
+  .compose-dialog .compose-message-label > label {
+    margin-bottom: 0;
+  }
+
+  .compose-dialog .big-textarea {
+    height: clamp(108px, 30vw, 120px);
+    min-height: 108px;
+    padding: 10px 11px 26px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .compose-dialog .big-textarea::placeholder {
+    font-size: 13px;
+  }
+
+  .compose-dialog .modal-body {
+    gap: 11px;
+  }
+}
