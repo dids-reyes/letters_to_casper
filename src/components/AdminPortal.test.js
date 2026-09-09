@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import {fireEvent, render, screen, within, waitFor} from '@testing-library/react';
-import {MemoryRouter} from 'react-router-dom';
+import {MemoryRouter, Routes, Route} from 'react-router-dom';
 import {AuthContext} from '../AuthContext';
 import AdminPortal from './AdminPortal';
 
@@ -15,6 +15,7 @@ const originalFetch = global.fetch;
 const logout = jest.fn();
 
 beforeEach(() => {
+  logout.mockClear();
   axios.get.mockResolvedValue({data: {ip: '127.0.0.1'}});
   global.fetch = jest.fn(async url => ({
     ok: true,
@@ -62,6 +63,23 @@ test('restricts permanent deletion for other administrators', async () => {
   await openPortal('moderator');
   fireEvent.click(screen.getByRole('button', {name: /Burned Letters/}));
   expect(screen.getByRole('button', {name: 'Delete permanently'})).toBeDisabled();
+});
+
+test('signs the administrator out and redirects to the login route', async () => {
+  render(
+    <MemoryRouter initialEntries={['/admin_portal']} future={{v7_startTransition: true, v7_relativeSplatPath: true}}>
+      <AuthContext.Provider value={{isLoggedIn: true, adminName: 'didsirwynreyes', sessionToken: 'test-session', logout}}>
+        <Routes>
+          <Route path="/admin" element={<div>Login screen</div>} />
+          <Route path="/admin_portal" element={<AdminPortal />} />
+        </Routes>
+      </AuthContext.Provider>
+    </MemoryRouter>,
+  );
+  await screen.findByText('Pending message');
+  fireEvent.click(screen.getByRole('button', {name: /Log out/}));
+  expect(logout).toHaveBeenCalledTimes(1);
+  expect(await screen.findByText('Login screen')).toBeInTheDocument();
 });
 
 test('separates auto moderation failures and clears selection when switching queues', async () => {

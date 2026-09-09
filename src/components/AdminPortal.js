@@ -4,14 +4,19 @@ import Lottie from 'react-lottie-player';
 import locked from '../lotties/locked.json';
 import logo from '../lotties/ltc_logo_1.webp';
 import axios from 'axios';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
 import '../styles/AdminPortal.css';
 import {getOptimizedPhotoUrl} from '../data/cloudinary';
-import {IoAddCircleOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoMailUnreadOutline, IoSearchOutline, IoShieldCheckmarkOutline, IoStarOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
+import {IoAddCircleOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoLogOutOutline, IoMailUnreadOutline, IoSearchOutline, IoShieldCheckmarkOutline, IoStarOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
 
 function AdminPortal() {
   const {isLoggedIn, adminName, sessionToken, logout} = useContext(AuthContext);
+  const navigate = useNavigate();
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate('/admin', {replace: true});
+  }, [logout, navigate]);
   const canManageFeatured = adminName.toLowerCase() === 'didsirwynreyes';
   const canFinalizeLetters = adminName.toLowerCase() === 'didsirwynreyes';
 
@@ -466,6 +471,9 @@ function AdminPortal() {
               <strong>{adminName || 'Admin'}</strong>
             </span>
           </span>
+          <button type="button" className="admin-logout-button" onClick={handleLogout}>
+            <IoLogOutOutline /> Log out
+          </button>
         </div>
         <div className="admin-portal-header__intro">
           <div><span>Letter review</span><h1>Pending letters</h1><p>Review the queue and decide what joins the collection.</p></div>
