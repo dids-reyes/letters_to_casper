@@ -6296,3 +6296,6 @@ html.night-shift .letter-count-popover__number { color: #8ab4ff; }
 
 /* Provider alternation uses one banner per slot, without stacked-ad spacing. */
 .letter-ad-slot > .letter-native-ad { margin-top: 0; }
+
+.letter-share-dialog__options > button:nth-child(3) { grid-column: 1 / -1; }
+.letter-share-dialog__options > button:disabled { opacity: .65; cursor: wait; }

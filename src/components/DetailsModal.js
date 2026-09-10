@@ -583,6 +583,24 @@ function DetailsModal({
 
   const [showQrCode, setShowQrCode] = useState(false);
   const [isDownloadingQr, setIsDownloadingQr] = useState(false);
+  const [isDownloadingImage, setIsDownloadingImage] = useState(false);
+  const letterPaperRef = useRef(null);
+  const handleDownloadImage = async () => {
+    if (isDownloadingImage || !letterPaperRef.current) return;
+    setIsDownloadingImage(true);
+    try {
+      const {default: downloadLetterImage} = await import('../utils/downloadLetterImage');
+      await downloadLetterImage(letterPaperRef.current, {
+        id: selectedLetter._id, from: selectedLetter.from, to: selectedLetter.to,
+        message: showTranslation ? translatedMessage : message,
+        date: formatTimestamp(selectedLetter.timestamp),
+      });
+    } catch {
+      toast.error("Couldn’t download the letter image. Please try again.", {position: "top-center"});
+    } finally {
+      setIsDownloadingImage(false);
+    }
+  };
 
   const letterShareUrl =
     selectedLetter?._id && !selectedLetter.preview
@@ -763,7 +781,7 @@ function DetailsModal({
               <span className="letter-envelope__hint">opening a letter…</span>
             </div>
           ) : (
-            <div className="letter-paper">
+            <div className="letter-paper" ref={letterPaperRef}>
               <div className="letter-paper__head">
                 <div className="letter-info" style={{ marginBottom: "4px" }}>
                   <Typewriter
@@ -1125,6 +1143,10 @@ function DetailsModal({
                     <strong>Share as QR</strong>
                     <small>Let someone scan it</small>
                   </span>
+                </button>
+                <button type="button" onClick={handleDownloadImage} disabled={isDownloadingImage}>
+                  <span className="letter-share-dialog__option-icon"><IoDownloadOutline /></span>
+                  <span><strong>{isDownloadingImage ? "Preparing image…" : "Download image"}</strong><small>Save the letter as a PNG</small></span>
                 </button>
               </div>
 
