@@ -6285,3 +6285,14 @@ html.night-shift .letter-count-popover__number { color: #8ab4ff; }
     gap: 11px;
   }
 }
+
+
+.letter-native-ad {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-top: 18px;
+}
+
+/* Provider alternation uses one banner per slot, without stacked-ad spacing. */
+.letter-ad-slot > .letter-native-ad { margin-top: 0; }
