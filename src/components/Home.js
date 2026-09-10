@@ -5,6 +5,7 @@ import Footer from "./Footer";
 import AddModal from "./AddModal";
 import Letter from "./Letter";
 import AdComponent from "./AdComponent";
+import AdsterraNativeBanner from "./AdsterraNativeBanner";
 import DetailsModal from "./DetailsModal";
 import Firefly3D from "./Firefly3D";
 import { AiFillMessage } from "react-icons/ai";
@@ -813,7 +814,9 @@ function Home() {
           key={`letter-ad-${letterNumber}`}
           aria-label="Advertisement"
         >
-          <AdComponent />
+          {(letterNumber - firstAdAfter) / followingAdInterval % 2 === 0
+            ? <AdComponent />
+            : <AdsterraNativeBanner />}
         </div>,
       ];
     });
