@@ -263,3 +263,24 @@
   .letter-auto-moderation > p { font-size: 12px; }
   .letter-auto-moderation > small { font-size: 10.5px; }
 }
+
+/* Mobile header: keep the logo + log-out button on one row and drop the
+   "signed in as" chip onto its own full-width row so nothing clips. */
+@media (max-width: 720px) {
+  .admin-portal-header__brand { flex-wrap: wrap; gap: 12px 10px; }
+  .admin-portal-logo { order: 1; width: min(160px, 44vw); }
+  .admin-logout-button { order: 2; margin-left: auto; padding: 8px 12px; }
+  .admin-portal-header__brand .admin-identity {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: none;
+    width: 100%;
+  }
+  .admin-identity__copy strong { font-size: 11px; overflow-wrap: anywhere; }
+}
+
+@media (max-width: 420px) {
+  .admin-portal-header__brand { gap: 10px; }
+  .admin-logout-button { padding: 8px 10px; font-size: 10.5px; }
+  .admin-logout-button svg { font-size: 14px; }
+}
