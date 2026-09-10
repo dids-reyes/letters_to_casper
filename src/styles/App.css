@@ -6299,3 +6299,18 @@ html.night-shift .letter-count-popover__number { color: #8ab4ff; }
 
 .letter-share-dialog__options > button:nth-child(3) { grid-column: 1 / -1; }
 .letter-share-dialog__options > button:disabled { opacity: .65; cursor: wait; }
+
+.letter-image-options { display: grid; gap: 8px; margin-top: 14px; }
+.letter-image-options button { display: grid; gap: 3px; padding: 11px 13px; border: 1px solid #e0d6bd; border-radius: 10px; background: #fffdf5; color: #39352b; text-align: left; cursor: pointer; }
+.letter-image-options button strong { font-size: 12px; }
+.letter-image-options button small, .letter-image-options > span { font-size: 11px; color: #817763; }
+.letter-image-options button:disabled { opacity: .55; cursor: default; }
+html.night-shift .letter-image-options button { background: #292d26; border-color: #474c40; color: #eee9dc; }
+html.night-shift .letter-image-options button small, html.night-shift .letter-image-options > span { color: #b3ae9f; }
+
+
+.letter-image-progress { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 0; }
+.letter-image-spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(55,114,255,.2); border-top-color: #3772ff; border-radius: 50%; animation: letter-image-spin .8s linear infinite; flex-shrink: 0; }
+@keyframes letter-image-spin { to { transform: rotate(360deg); } }
+html.night-shift .letter-image-spinner { border-color: rgba(138,180,255,.25); border-top-color: #8ab4ff; }
+@media (prefers-reduced-motion: reduce) { .letter-image-spinner { animation: none; } }

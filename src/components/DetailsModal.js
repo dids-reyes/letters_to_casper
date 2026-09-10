@@ -584,8 +584,9 @@ function DetailsModal({
   const [showQrCode, setShowQrCode] = useState(false);
   const [isDownloadingQr, setIsDownloadingQr] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
+  const [showImageOptions, setShowImageOptions] = useState(false);
   const letterPaperRef = useRef(null);
-  const handleDownloadImage = async () => {
+  const handleDownloadImage = async (includeAttachments = false) => {
     if (isDownloadingImage || !letterPaperRef.current) return;
     setIsDownloadingImage(true);
     try {
@@ -594,9 +595,17 @@ function DetailsModal({
         id: selectedLetter._id, from: selectedLetter.from, to: selectedLetter.to,
         message: showTranslation ? translatedMessage : message,
         date: formatTimestamp(selectedLetter.timestamp),
+        includeAttachments,
+        photoUrl: selectedLetter.photo?.url ? getOptimizedPhotoUrl(selectedLetter.photo.url) : null,
+        media: linkId ? (spotifyLink?.id ? {
+          provider: 'Spotify', url: `https://open.spotify.com/${linkId}`,
+        } : {
+          provider: 'YouTube', url: `https://youtu.be/${linkId}`,
+          thumbnail: `https://i.ytimg.com/vi/${encodeURIComponent(linkId)}/hqdefault.jpg`,
+        }) : null,
       });
     } catch {
-      toast.error("Couldn’t download the letter image. Please try again.", {position: "top-center"});
+      toast.error("Image preparation failed or timed out. Please try again, or choose Letter only if the attachment won’t load.", {position: "top-center"});
     } finally {
       setIsDownloadingImage(false);
     }
@@ -1134,7 +1143,7 @@ function DetailsModal({
                 <button
                   type="button"
                   className={showQrCode ? "is-selected" : ""}
-                  onClick={() => setShowQrCode(true)}
+                  onClick={() => {setShowQrCode(true); setShowImageOptions(false);}}
                 >
                   <span className="letter-share-dialog__option-icon">
                     <IoQrCodeOutline />
@@ -1144,11 +1153,19 @@ function DetailsModal({
                     <small>Let someone scan it</small>
                   </span>
                 </button>
-                <button type="button" onClick={handleDownloadImage} disabled={isDownloadingImage}>
+                <button type="button" onClick={() => {setShowImageOptions(value => !value); setShowQrCode(false);}} disabled={isDownloadingImage} aria-expanded={showImageOptions} aria-controls="letter-image-options">
                   <span className="letter-share-dialog__option-icon"><IoDownloadOutline /></span>
                   <span><strong>{isDownloadingImage ? "Preparing image…" : "Download image"}</strong><small>Save the letter as a PNG</small></span>
                 </button>
               </div>
+
+              {showImageOptions && (
+                <div id="letter-image-options" className="letter-image-options" role="group" aria-label="Choose image contents">
+                  <button type="button" onClick={() => handleDownloadImage(false)} disabled={isDownloadingImage}><strong>Letter only</strong><small>Paper, message, and footer</small></button>
+                  <button type="button" onClick={() => handleDownloadImage(true)} disabled={isDownloadingImage || !hasLetterAttachment}><strong>With attachments</strong><small>{hasLetterAttachment ? 'Include photo and link previews' : 'This letter has no attachments'}</small></button>
+                  {isDownloadingImage && <span className="letter-image-progress" role="status"><span className="letter-image-spinner" aria-hidden="true" />Preparing your image…</span>}
+                </div>
+              )}
 
               {showQrCode && (
                 <div className="letter-share-dialog__qr">
