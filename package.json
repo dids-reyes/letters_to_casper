@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.6.8",
     "express": "^4.18.2",
+    "html2canvas": "^1.4.1",
     "js-ago": "^2.1.1",
     "languagedetect": "^2.0.0",
     "line-awesome": "^1.3.0",
