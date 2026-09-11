@@ -73,12 +73,12 @@ test('rebuilds both names with explicit dark text even if the source heading is 
 });
 
 
-test('Spotify exports a compact player-style preview with artwork and title but no raw URL', async () => {
+test('Spotify exports a compact player-style preview with artwork, title, and author but no raw URL', async () => {
   const originalFetch = global.fetch;
   const originalImage = global.Image;
   const originalCreateUrl = URL.createObjectURL;
   global.fetch = jest.fn(async url => url.includes('/oembed?')
-    ? {ok:true,json:async()=>({title:'My song',thumbnail_url:'https://i.scdn.co/image/artwork'})}
+    ? {ok:true,json:async()=>({title:'My song',author_name:'Artist Name',thumbnail_url:'https://i.scdn.co/image/artwork'})}
     : {ok:true,blob:async()=>new Blob(['image'])});
   URL.createObjectURL = jest.fn(() => 'blob:artwork');
   global.Image = function () {
@@ -95,6 +95,8 @@ test('Spotify exports a compact player-style preview with artwork and title but 
     await addExportAttachments(copy,{...data,includeAttachments:true},[]);
     const preview = copy.querySelector('.letter-export-spotify');
     expect(preview).toHaveTextContent('My song');
+    expect(preview).toHaveTextContent('Artist Name');
+    expect(preview.querySelector('.letter-export-spotify__author')).toHaveTextContent('Artist Name');
     expect(preview.querySelector('img')).toHaveAttribute('src','blob:artwork');
     expect(preview).not.toHaveTextContent(data.media.url);
     expect(preview.style.height).toBe('152px');
@@ -102,6 +104,32 @@ test('Spotify exports a compact player-style preview with artwork and title but 
     expect(preview.querySelectorAll('svg')).toHaveLength(2);
     expect(copy.lastElementChild).toHaveClass('letter-paper__meta');
     expect(global.fetch.mock.calls[0][0]).toBe('https://open.spotify.com/oembed?url=' + encodeURIComponent(data.media.url));
+  } finally {
+    global.fetch = originalFetch;
+    global.Image = originalImage;
+    URL.createObjectURL = originalCreateUrl;
+  }
+});
+
+test('Spotify exports gracefully when author metadata is absent', async () => {
+  const originalFetch = global.fetch;
+  const originalImage = global.Image;
+  const originalCreateUrl = URL.createObjectURL;
+  global.fetch = jest.fn(async url => url.includes('/oembed?')
+    ? {ok:true,json:async()=>({title:'Solo Track',thumbnail_url:'https://i.scdn.co/image/artwork'})}
+    : {ok:true,blob:async()=>new Blob(['image'])});
+  URL.createObjectURL = jest.fn(() => 'blob:artwork');
+  global.Image = function () {
+    const image = document.createElement('img');
+    image.decode = async () => {};
+    return image;
+  };
+  try {
+    const copy = document.createElement('div');
+    await addExportAttachments(copy, {includeAttachments:true, media:{provider:'Spotify',url:'https://open.spotify.com/track/example'}}, []);
+    const preview = copy.querySelector('.letter-export-spotify');
+    expect(preview).toHaveTextContent('Solo Track');
+    expect(preview.querySelector('.letter-export-spotify__author')).toBeNull();
   } finally {
     global.fetch = originalFetch;
     global.Image = originalImage;

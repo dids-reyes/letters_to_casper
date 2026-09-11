@@ -103,12 +103,10 @@ test('celebration close button counts down from 5 to 1 then enables Close', asyn
   const confirmButton = container.querySelector('.submit-confirm-send');
   fireEvent.click(confirmButton);
 
-  // Await submission notice dialog
   await waitFor(() => {
     expect(screen.getByText(/Letter received/i)).toBeInTheDocument();
   });
 
-  // Switch to fake timers before transitioning to celebration dialog
   jest.useFakeTimers();
 
   const skipButton = screen.getByRole('button', { name: /I Won’t Need It/i });
@@ -158,3 +156,79 @@ test('celebration close button counts down from 5 to 1 then enables Close', asyn
 
   jest.useRealTimers();
 });
+
+test('celebration close countdown pauses when user is redirected away and resumes upon return', async () => {
+  const dummyLetter = { from: 'Alice', to: 'Bob', message: 'Hello this is a test letter for Casper.' };
+  const mockHandleAddLetter = jest.fn().mockResolvedValue({ burnKey: 'test-burn-key', letterId: 'letter-123' });
+
+  const { container } = render(
+    <AddModal
+      showAddModal={true}
+      toggleAddModal={jest.fn()}
+      newLetter={dummyLetter}
+      handleAddLetter={mockHandleAddLetter}
+      setNewLetter={jest.fn()}
+    />
+  );
+
+  const submitButton = container.querySelector('.submit-button');
+  fireEvent.click(submitButton);
+  fireEvent.click(submitButton);
+
+  const retentionCheckbox = screen.getByRole('checkbox');
+  fireEvent.click(retentionCheckbox);
+
+  const confirmButton = container.querySelector('.submit-confirm-send');
+  fireEvent.click(confirmButton);
+
+  await waitFor(() => {
+    expect(screen.getByText(/Letter received/i)).toBeInTheDocument();
+  });
+
+  jest.useFakeTimers();
+
+  const skipButton = screen.getByRole('button', { name: /I Won’t Need It/i });
+  act(() => {
+    fireEvent.click(skipButton);
+  });
+
+  const closeButton = screen.getByRole('button', { name: /Close \(5\)/i });
+  expect(closeButton).toHaveTextContent('Close (5)');
+  expect(closeButton).toBeDisabled();
+
+  // Simulate auto popup redirecting user away (blur)
+  act(() => {
+    window.dispatchEvent(new Event('blur'));
+  });
+
+  // Advance time by 5 seconds while user is on another screen
+  act(() => {
+    jest.advanceTimersByTime(5000);
+  });
+
+  // Countdown should still be paused at 5 and disabled!
+  expect(closeButton).toHaveTextContent('Close (5)');
+  expect(closeButton).toBeDisabled();
+
+  // Simulate user returning to screen (focus)
+  act(() => {
+    window.dispatchEvent(new Event('focus'));
+  });
+
+  // 1 second on screen
+  act(() => {
+    jest.advanceTimersByTime(1000);
+  });
+  expect(closeButton).toHaveTextContent('Close (4)');
+  expect(closeButton).toBeDisabled();
+
+  // 4 more seconds on screen
+  act(() => {
+    jest.advanceTimersByTime(4000);
+  });
+  expect(closeButton).toHaveTextContent('Close');
+  expect(closeButton).not.toBeDisabled();
+
+  jest.useRealTimers();
+});
+

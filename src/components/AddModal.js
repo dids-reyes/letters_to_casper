@@ -188,19 +188,87 @@ useEffect(() => {
   setCloseCountdown(5);
   setCloseEnabled(false);
 
-  const interval = window.setInterval(() => {
-    setCloseCountdown((current) => {
-      if (current <= 1) {
-        window.clearInterval(interval);
-        setCloseEnabled(true);
-        return 0;
+  let remaining = 5;
+  let timerId = null;
+  let isWindowFocused = true;
+
+  const isUserActive = () => {
+    if (typeof document !== 'undefined') {
+      if (document.hidden || document.visibilityState === 'hidden') {
+        return false;
+      }
+    }
+    return isWindowFocused;
+  };
+
+  const stopTimer = () => {
+    if (timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+  };
+
+  const startTimer = () => {
+    if (timerId !== null || remaining <= 0) return;
+    if (!isUserActive()) return;
+
+    timerId = window.setInterval(() => {
+      if (!isUserActive()) {
+        stopTimer();
+        return;
       }
 
-      return current - 1;
-    });
-  }, 1000);
+      remaining -= 1;
+      if (remaining <= 0) {
+        stopTimer();
+        setCloseCountdown(0);
+        setCloseEnabled(true);
+      } else {
+        setCloseCountdown(remaining);
+      }
+    }, 1000);
+  };
 
-  return () => window.clearInterval(interval);
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      isWindowFocused = true;
+      startTimer();
+    } else {
+      isWindowFocused = false;
+      stopTimer();
+    }
+  };
+
+  const handleBlur = () => {
+    isWindowFocused = false;
+    stopTimer();
+  };
+
+  const handleFocus = () => {
+    isWindowFocused = true;
+    if (isUserActive()) {
+      startTimer();
+    }
+  };
+
+  if (isUserActive()) {
+    startTimer();
+  }
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('focus', handleFocus);
+  window.addEventListener('blur', handleBlur);
+  window.addEventListener('pointerdown', handleFocus);
+  window.addEventListener('touchstart', handleFocus);
+
+  return () => {
+    stopTimer();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('focus', handleFocus);
+    window.removeEventListener('blur', handleBlur);
+    window.removeEventListener('pointerdown', handleFocus);
+    window.removeEventListener('touchstart', handleFocus);
+  };
 }, [showShareCelebration]);
 
   const openLinkGuide = () => {

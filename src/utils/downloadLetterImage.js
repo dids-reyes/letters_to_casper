@@ -149,18 +149,33 @@ export async function addExportAttachments(copy, data, objectUrls) {
       Object.assign(preview.style, {display:'flex', alignItems:'center', gap:'16px', position:'relative', height:'152px', boxSizing:'border-box', padding:'20px', borderRadius:'12px', background:'#282828', color:'#fff', fontFamily:'Arial, sans-serif'});
       const details = document.createElement('div');
       Object.assign(details.style, {minWidth:'0', flex:'1', alignSelf:'stretch', display:'flex', flexDirection:'column', justifyContent:'center', paddingRight:'36px'});
+      const authorText =
+        metadata.author_name ||
+        metadata.author ||
+        metadata.artist ||
+        data.media?.author ||
+        data.media?.author_name ||
+        data.media?.artist;
       const title = document.createElement('strong');
       title.textContent = metadata.title;
-      Object.assign(title.style, {display:'block', fontSize:'17px', lineHeight:'1.35', color:'#fff', overflowWrap:'anywhere'});
+      Object.assign(title.style, {display:'block', fontSize:'16px', lineHeight:'1.3', color:'#fff', overflowWrap:'anywhere'});
+      details.appendChild(title);
+      if (authorText) {
+        const author = document.createElement('span');
+        author.className = 'letter-export-spotify__author';
+        author.textContent = authorText;
+        Object.assign(author.style, {display:'block', marginTop:'3px', fontSize:'13px', color:'#b3b3b3', overflowWrap:'anywhere'});
+        details.appendChild(author);
+      }
       const provider = document.createElement('span');
       provider.textContent = 'Spotify';
-      Object.assign(provider.style, {display:'block', marginTop:'6px', fontSize:'12px', color:'#b3b3b3'});
-      details.append(title, provider);
+      Object.assign(provider.style, {display:'block', marginTop:'3px', fontSize:'12px', color:'#b3b3b3'});
+      details.appendChild(provider);
       const logo = document.createElement('span');
       logo.innerHTML = renderToStaticMarkup(createElement(FaSpotify, {size:22, color:'#fff'}));
       Object.assign(logo.style, {position:'absolute', top:'14px', right:'16px', color:'#fff'});
       const controls = document.createElement('div');
-      Object.assign(controls.style, {display:'flex', alignItems:'center', gap:'12px', marginTop:'14px'});
+      Object.assign(controls.style, {display:'flex', alignItems:'center', gap:'12px', marginTop: authorText ? '10px' : '14px'});
       const progress = document.createElement('span');
       Object.assign(progress.style, {height:'4px', flex:'1', background:'#727272', borderRadius:'2px'});
       const play = document.createElement('span');

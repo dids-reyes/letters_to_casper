@@ -6,7 +6,7 @@
 .origins-view__header { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr) 36px; align-items: center; gap: 12px 16px; padding: 16px max(20px, calc((100% - 1000px) / 2)); background: #fffdf5; border-bottom: 1px solid #e3dac6; }
 .origins-view__header span { display: block; font-size: 11px; line-height: 1.5; letter-spacing: .02em; color: #8b8069; }
 .origins-view__header h1 { margin: 0 0 4px; font: 600 30px/1.1 Georgia, serif; }
-.origins-view__header button { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; line-height: 1; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 28px; cursor: pointer; }
+.origins-view__back { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; line-height: 1; border: 1px solid #e3dac6; border-radius: 50%; background: transparent; color: inherit; font-size: 18px; cursor: pointer; transition: border-color .2s ease, color .2s ease, transform .2s ease, background-color .2s ease; }
 .origins-view__content { max-width: 1000px; margin: auto; padding: 22px 20px 35px; text-align: center; }
 .origins-view__tabs { display: flex; justify-content: center; gap: 6px; }
 .origins-view__tabs button { border: 1px solid #ddd4be; background: transparent; color: #756c59; border-radius: 18px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 11px; line-height: 1.4; }
@@ -15,8 +15,9 @@
 .origins-view__pages { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; touch-action: pan-x pan-y; }
 .origins-view__pages::-webkit-scrollbar { display: none; }
 .origins-view__page { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
-.origins-map { display: block; width: 100%; height: min(58dvh, 530px); min-height: 280px; margin: auto; background: radial-gradient(ellipse, #eaf2ff 0, transparent 72%); }
+.origins-map { display: block; width: 100%; height: min(58dvh, 530px); min-height: 280px; margin: 0 auto; background: radial-gradient(ellipse, #eaf2ff 0, transparent 72%); }
 .origins-map path { fill: #e7e1d1; stroke: #b5ae98; stroke-width: .5; stroke-linejoin: round; }
+.origins-map.is-local { margin-top: -10px; }
 .origins-map.is-local path { fill: #e4edee; stroke: #92a9b4; stroke-width: 1; }
 .origins-map path.has-letters { fill: #3772ff; cursor: pointer; }
 .origins-map path.has-letters:hover, .origins-map path.has-letters:focus { fill: #1646bc; fill-opacity: 1 !important; stroke: #193f8d; }
@@ -28,7 +29,13 @@
 .origins-view__rankings { border-top: 1px solid #e3dac6; margin-top: 24px; padding-top: 24px; text-align: left; }
 .origins-view__rankings h2 { margin: 0 0 12px; font: 600 23px Georgia, serif; }
 .origins-view__rankings .origins-list { max-height: none; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.origins-view__rankings .international-origins ul { max-height: none; }
+.origins-view__rankings .international-origins ul {
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+  padding-right: 4px;
+}
 .origins-view__country-list { text-align: left; margin: 20px 0; font-size: 13px; }
 .origins-view__country-list summary { cursor: pointer; }
 .origins-view__country-list ul { list-style: none; padding: 0; }
@@ -54,9 +61,12 @@ html.night-shift .origins-view__rankings { border-color: #3c424c; }
  .origins-view__branding { min-width: 0; }
 .origins-view__branding img { display: block; width: 190px; max-width: 100%; height: auto; object-fit: contain; }
 .origins-view__heading { grid-column: 1 / -1; text-align: left; }
-.origins-view__header > button:hover { background: rgba(128,117,85,.1); }
-.origins-view__header > button:focus-visible { outline: 2px solid #3772ff; outline-offset: 2px; }
+.origins-view__back:hover { border-color: rgba(55,114,255,.35); color: #3772ff; background: rgba(55,114,255,.06); transform: translateX(-1px); }
+.origins-view__back:focus-visible { outline: 2px solid #3772ff; outline-offset: 2px; }
+html.night-shift .origins-view__back { border-color: #3c424c; color: #ecebdd; }
+html.night-shift .origins-view__back:hover { border-color: #8ab4ff; color: #8ab4ff; background: rgba(80,130,240,.12); }
 html.night-shift .origins-view__branding img { filter: brightness(1.6); }
+
 @media (max-width: 600px) {
   .origins-view__header { gap: 10px 12px; padding: 12px 16px 14px; }
   .origins-view__branding img { width: 168px; }
@@ -108,7 +118,7 @@ html.night-shift .island-swatch--mindanao { background: #674c43; }
 .origins-view__selection-copy > span { display: block; margin-top: 2px; color: #817763; font-size: 10px; line-height: 1.5; }
 .origins-view__selection-count { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 5px; max-width: 35%; padding: 4px 6px; border-radius: 8px; background: #edf2ff; color: #315fc7; font-size: 11px; font-variant-numeric: tabular-nums; }
 .origins-view__selection-count svg { flex-shrink: 0; font-size: 14px; }
-.origins-view__map-summary { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; margin: 0 0 16px; font-size: 11px; line-height: 1.6; color: #817763; }
+.origins-view__map-summary { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; margin: 0 0 2px; font-size: 11px; line-height: 1.6; color: #817763; }
 .origins-view__map-summary > span:first-child { color: #5a7392; font-weight: 600; }
 .origins-view__map-summary > span { display: inline-flex; align-items: center; gap: 6px; }
 .origins-view__map-summary i { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: #3772ff; }

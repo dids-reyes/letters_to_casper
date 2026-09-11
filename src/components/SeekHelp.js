@@ -11,18 +11,43 @@ import neilRaagas from '../data/advocates/neil_regner.jpg';
 import keith from '../data/advocates/keith.jpg';
 import '../styles/SeekHelp.css';
 
-const sayaLogo =
-  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFlJGfUNyQcRFgpLtNq0WMUp7wGltGnHxXXQ&s';
+import sayaLogo from '../assets/saya_logo.png';
+import sayaLogoDark from '../assets/saya_logo_dark.png';
+
 
 function SeekHelp() {
+  const [isNightShift, setIsNightShift] = React.useState(() => {
+    return typeof document !== 'undefined' && document.documentElement.classList.contains('night-shift');
+  });
+
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    const observer = new MutationObserver(() => {
+      const isDark = document.documentElement.classList.contains('night-shift');
+      setIsNightShift(prev => (prev !== isDark ? isDark : prev));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://embed.reddit.com/widgets.js';
     script.async = true;
     document.body.appendChild(script);
-    return () => document.body.contains(script) && document.body.removeChild(script);
-  }, []);
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, [isNightShift]);
 
   const advocates = [
     {name:'Thea Leonen',tiktok:'thealeonen',instagram:'iamthealeonen',image:theaLeonen},
@@ -53,13 +78,13 @@ function SeekHelp() {
 
       <section className="help-crisis" aria-labelledby="crisis-title"><span><IoShieldCheckmarkOutline /></span><div><small>Need immediate support?</small><h2 id="crisis-title">The NCMH Crisis Hotline is available 24/7.</h2><p>If you are in immediate danger, contact local emergency services or go to the nearest emergency room.</p></div><a href="tel:1553"><FaPhone /> Call 1553</a></section>
 
-      <section className="help-featured"><div><span>Online therapy</span><h2>A trusted option for Filipino care.</h2><p>Saya connects people with licensed Filipino psychologists and counselors through an accessible online platform.</p><a href="https://www.talksaya.com/" target="_blank" rel="noopener noreferrer">Visit Saya / Book a session <FaExternalLinkAlt /></a></div><div className="help-featured__mark"><img src={sayaLogo} alt="Saya" /><span>Support that understands your context.</span></div></section>
+      <section className="help-featured"><div><span>Online therapy</span><h2>A trusted option for Filipino care.</h2><p>Saya connects people with licensed Filipino psychologists and counselors through an accessible online platform.</p><a href="https://www.talksaya.com/" target="_blank" rel="noopener noreferrer">Visit Saya / Book a session <FaExternalLinkAlt /></a></div><div className="help-featured__mark"><img src={sayaLogo} alt="Saya" className="help-saya-logo help-saya-logo--light" /><img src={sayaLogoDark} alt="Saya" className="help-saya-logo help-saya-logo--dark" /><span>Support that understands your context.</span></div></section>
 
       <section className="help-section" aria-labelledby="organizations-title"><div className="help-section__heading"><div><span>Professional support</span><h2 id="organizations-title">Government and private resources</h2></div><p>Call, email, or visit the organization that feels right for you.</p></div><div className="help-organizations">{organizations.map(org=><article className="help-organization" key={org.name}><a className="help-organization__head" href={org.website} target="_blank" rel="noopener noreferrer"><span><img src={org.logo} alt="" loading="lazy" /></span><div><h3>{org.name}</h3><small>Visit website <FaExternalLinkAlt /></small></div></a><p>{org.description}</p><div className="help-contacts">{org.contacts.map((contact,index)=><a key={`${contact.value}-${index}`} href={contactHref(contact)}>{contact.type==='phone'?<FaPhone />:<FaEnvelope />}<span>{contact.label||contact.value}</span></a>)}</div></article>)}</div></section>
 
       <section className="help-section help-advocates" aria-labelledby="advocates-title"><div className="help-section__heading"><div><span>Voices that help</span><h2 id="advocates-title">Breaking barriers and ending stigma</h2></div><p>Follow advocates encouraging healthier conversations around mental well-being.</p></div><div className="help-advocate-grid">{advocates.map(advocate=><article key={advocate.name}><img src={advocate.image} alt={advocate.name} loading="lazy" /><div><h3>{advocate.name}</h3><span>{advocate.tiktok&&<a href={`https://www.tiktok.com/@${advocate.tiktok}`} target="_blank" rel="noopener noreferrer" aria-label={`${advocate.name} on TikTok`}><FaTiktok /></a>}{advocate.instagram&&<a href={`https://www.instagram.com/${advocate.instagram}`} target="_blank" rel="noopener noreferrer" aria-label={`${advocate.name} on Instagram`}><FaInstagram /></a>}{advocate.youtube&&<a href={`https://www.youtube.com/@${advocate.youtube}`} target="_blank" rel="noopener noreferrer" aria-label={`${advocate.name} on YouTube`}><FaYoutube /></a>}</span></div></article>)}</div><p className="help-disclaimer"><strong>Note:</strong> These advocates gave permission to feature their accounts for mental health awareness. They are not affiliated with or sponsored by Letters to Casper.</p></section>
 
-      <section className="help-community"><span>Community</span><h2>Connect with others who understand.</h2><div className="help-reddit"><blockquote className="reddit-embed-bq" data-embed-height="502">Posts from the <a href="https://www.reddit.com/r/MentalHealthPH/">mentalhealthph</a> community on Reddit</blockquote></div></section>
+      <section className="help-community"><span>Community</span><h2>Connect with others who understand.</h2><div className="help-reddit"><blockquote key={isNightShift ? 'dark' : 'light'} className="reddit-embed-bq" data-embed-height="502" data-embed-theme={isNightShift ? 'dark' : undefined}>Posts from the <a href="https://www.reddit.com/r/MentalHealthPH/">mentalhealthph</a> community on Reddit</blockquote></div></section>
 
       <footer className="help-footer"><IoHeartOutline /><h2>Seeking help is a sign of strength.</h2><p>You do not have to face mental health challenges alone.</p><Link to="/">Return to Letters to Casper</Link></footer>
     </main>
