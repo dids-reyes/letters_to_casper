@@ -95,3 +95,20 @@ test('separates auto moderation failures and clears selection when switching que
   expect(screen.queryByText('Pending message')).not.toBeInTheDocument();
   expect(screen.getByRole('button', {name: /^Publish/})).toBeDisabled();
 });
+
+test('displays precheck badge and specific heading for precheck flagged letters in manual review', async () => {
+  const precheckLetter = {
+    ...pending,
+    _id: 'precheck-letter',
+    message: 'asdfghjklqwerty',
+    autoModeration: {status: 'flagged', tag: 'precheck', tags: ['precheck'], reason: '[Precheck] Keyboard mash or nonsense sequence detected'},
+  };
+  global.fetch.mockImplementation(async url => ({ok: true, json: async () => ({messages: url.endsWith('/unapproved') ? [pending, burned, precheckLetter] : []})}));
+  await openPortal();
+  expect(screen.queryByText('asdfghjklqwerty')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', {name: /Manual Review 1/}));
+  expect(screen.getByText('asdfghjklqwerty')).toBeInTheDocument();
+  expect(screen.getByText('Flagged by precheck')).toBeInTheDocument();
+  expect(screen.getByText('Precheck')).toBeInTheDocument();
+  expect(screen.getByText('[Precheck] Keyboard mash or nonsense sequence detected')).toBeInTheDocument();
+});

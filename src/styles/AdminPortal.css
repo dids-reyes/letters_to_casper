@@ -119,9 +119,11 @@
 .letter-item > input:checked + label .letter-review-box { border-color:rgba(79,133,255,.75); background:rgba(27,45,78,.9); transform:translateY(-2px); }
 .letter-item > input:checked + label .letter-review-box::after { border-color:#3772ff; background:#3772ff; box-shadow:inset 0 0 0 4px #233c6a; }
 .letter-review-box__head { display:flex; align-items:center; gap:14px; padding-right:28px; }
-.letter-review-box__head > span:not(.letter-photo-badge):not(.letter-burn-badge) { display:grid; min-width:0; color:#dce5f5; font-size:12px; overflow-wrap:anywhere; }
+.letter-review-box__head > span:not(.letter-photo-badge):not(.letter-burn-badge):not(.letter-precheck-badge) { display:grid; min-width:0; color:#dce5f5; font-size:12px; overflow-wrap:anywhere; }
 .letter-review-box__head strong { margin-bottom:2px; color:#71809a; font-size:8px; letter-spacing:.11em; text-transform:uppercase; }
 .letter-photo-badge { display:inline-flex; align-items:center; gap:4px; margin-left:auto; padding:5px 7px; border-radius:999px; background:rgba(55,114,255,.12); color:#8eb0ff; font-size:9px; }
+.letter-precheck-badge { display:inline-flex; align-items:center; gap:4px; margin-left:auto; padding:5px 8px; border-radius:999px; background:rgba(235,169,75,.15); border:1px solid rgba(235,169,75,.3); color:#f5ca75; font-size:9px; font-weight:750; letter-spacing:.06em; text-transform:uppercase; }
+.letter-photo-badge + .letter-precheck-badge { margin-left:0; }
 .letter-review-box__meta { display:flex; flex-wrap:wrap; gap:7px 13px; margin-top:14px; color:#7889a4; font-size:9px; }
 .letter-review-box__meta span { display:inline-flex; align-items:center; gap:5px; }
 .letter-review-box__meta svg { flex:0 0 auto; color:#638ce7; font-size:12px; }
@@ -209,10 +211,11 @@
   .featured-letter-card footer button { font-size:9.5px; }
   .featured-letter-row .managed-letter-status { font-size:8px; }
   .managed-letter-row small { font-size:9px; line-height:1.4; }
-  .letter-review-box__head > span:not(.letter-photo-badge):not(.letter-burn-badge) { font-size:13px; }
+  .letter-review-box__head > span:not(.letter-photo-badge):not(.letter-burn-badge):not(.letter-precheck-badge) { font-size:13px; }
   .letter-review-box__head strong { font-size:9px; }
   .letter-photo-badge,
-  .letter-burn-badge { font-size:10px; }
+  .letter-burn-badge,
+  .letter-precheck-badge { font-size:10px; }
   .letter-review-box__meta { font-size:10.5px; }
   .letter-review-box > p { font-size:12.5px; }
   .letter-moderation-decisions > div { font-size:10.5px; }

@@ -27,7 +27,11 @@ function AdminPortal() {
   }), [sessionToken]);
 
   const [letters, setLetters] = useState([]);
-  const needsManualReview = letter => ['flagged', 'error'].includes(letter.autoModeration?.status);
+  const needsManualReview = letter =>
+    ['flagged', 'error'].includes(letter.autoModeration?.status) ||
+    letter.autoModeration?.tag === 'precheck' ||
+    letter.tag === 'precheck' ||
+    letter.autoModeration?.model === 'precheck';
   const reviewLetters = letters.filter(letter => !letter.burnRequested && !needsManualReview(letter));
   const manualLetters = letters.filter(letter => !letter.burnRequested && needsManualReview(letter));
   const burnedLetters = letters.filter(letter => letter.burnRequested);
@@ -538,6 +542,9 @@ function AdminPortal() {
                     <span><strong>From</strong>{letter.from}</span>
                     <span><strong>To</strong>{letter.to}</span>
                     {letter.photo?.url && <span className="letter-photo-badge"><IoImageOutline /> Photo</span>}
+                    {(letter.autoModeration?.tag === 'precheck' || letter.autoModeration?.model === 'precheck' || letter.autoModeration?.tags?.includes('precheck')) && (
+                      <span className="letter-precheck-badge"><IoWarningOutline /> Precheck</span>
+                    )}
                   </div>
                   <div className="letter-review-box__meta">
                     <span><IoCalendarOutline />{formatReviewTimestamp(letter.timestamp)}</span>
@@ -548,7 +555,9 @@ function AdminPortal() {
                   <p>{letter.message}</p>
                   {needsManualReview(letter) && (
                     <div className="letter-auto-moderation">
-                      <strong><IoWarningOutline /> Not approved by auto mod</strong>
+                      <strong>
+                        <IoWarningOutline /> {letter.autoModeration?.tag === 'precheck' || letter.autoModeration?.model === 'precheck' ? 'Flagged by precheck' : 'Not approved by auto mod'}
+                      </strong>
                       <p>{letter.autoModeration.reason || 'Automatic moderation could not approve this letter.'}</p>
                       {letter.autoModeration.retryAt && <small>One timeout retry scheduled for {formatReviewTimestamp(letter.autoModeration.retryAt)}. You can review this letter now.</small>}
                     </div>
