@@ -32,6 +32,8 @@ import {
   IoMoonOutline,
   IoLocationOutline,
   IoSunnyOutline,
+  IoShieldCheckmarkOutline,
+  IoServerOutline,
 } from "react-icons/io5";
 import { CiLocationOn } from "react-icons/ci";
 import { TbChristmasTree } from "react-icons/tb";
@@ -208,8 +210,10 @@ function Home() {
       }
 
       scrollFrame.current = window.requestAnimationFrame(() => {
+        const isDesktop = typeof window !== "undefined" && window.innerWidth > 768;
+        const exitCompactThreshold = isDesktop ? 25 : 60;
         setIsHeaderCompact((isCompact) =>
-          isCompact ? window.scrollY > 60 : window.scrollY > 160
+          isCompact ? window.scrollY > exitCompactThreshold : window.scrollY > 160
         );
         scrollFrame.current = null;
       });
@@ -823,7 +827,7 @@ function Home() {
   };
 
   const goToFeedPage = page => {
-    const nextPage = Math.max(0, Math.min(3, page));
+    const nextPage = Math.max(0, Math.min(4, page));
     setFeedPage(nextPage);
     feedPagesRef.current?.scrollTo({
       left: feedPagesRef.current.clientWidth * nextPage,
@@ -834,7 +838,7 @@ function Home() {
   const handleFeedScroll = event => {
     const pageWidth = event.currentTarget.clientWidth;
     if (!pageWidth) return;
-    setFeedPage(Math.max(0, Math.min(3, Math.round(event.currentTarget.scrollLeft / pageWidth))));
+    setFeedPage(Math.max(0, Math.min(4, Math.round(event.currentTarget.scrollLeft / pageWidth))));
   };
 
   const christmasCountdownMatch = typeof daysLeftXmas === "string"
@@ -1042,7 +1046,41 @@ function Home() {
               </header>
 
               <div className="feed-report__pages" ref={feedPagesRef} onScroll={handleFeedScroll}>
-                <section className="feed-report__page" aria-label="Recent updates, page 1 of 4">
+                <section className="feed-report__page" aria-label="About our advertisements, page 1 of 5">
+                  <div className="feed-report__lead">
+                    <span>Important Notice</span>
+                    <h3>A note about our advertisements.</h3>
+                    <p>Transparency matters to us. Here is what you should know about the ads shown across Letters to Casper, our stance on gambling, and why advertisements are present.</p>
+                  </div>
+                  <div className="feed-report__updates">
+                    <article className="feed-report__story is-featured">
+                      <IoShieldCheckmarkOutline aria-hidden="true" />
+                      <div>
+                        <span className="feed-report__kicker">Zero endorsement</span>
+                        <h4>We do not promote gambling</h4>
+                        <p>We explicitly do not promote, endorse, or encourage gambling in any form. Letters to Casper does not partner with or recommend any betting, casino, or gambling services.</p>
+                      </div>
+                    </article>
+                    <article className="feed-report__story">
+                      <RiAdvertisementLine aria-hidden="true" />
+                      <div>
+                        <span className="feed-report__kicker">Third-party networks</span>
+                        <h4>Ads shown are not controlled by us</h4>
+                        <p>Advertisements are delivered automatically by external third-party ad networks. Because they are automated, we do not directly control or select which specific ads appear.</p>
+                      </div>
+                    </article>
+                    <article className="feed-report__story">
+                      <IoServerOutline aria-hidden="true" />
+                      <div>
+                        <span className="feed-report__kicker">Site sustenance</span>
+                        <h4>Why ads are present</h4>
+                        <p>We don't endorse the ads on your screen. They are only here to keep our servers running and our platform free for the community.</p>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section className="feed-report__page" aria-label="Recent updates, page 2 of 5">
                   <div className="feed-report__lead">
                     <span>From the desk</span>
                     <h3>A gentler way to read, feel, and let go.</h3>
@@ -1059,12 +1097,13 @@ function Home() {
                     </article>
                     <article className="feed-report__story">
                       <IoInformationCircleOutline aria-hidden="true" />
-                      <div><span className="feed-report__kicker">Design note</span><h4>Letters that quietly glow</h4><p>Borders respond to their warmth: amber for reads, pink for Love, and blue for Sad.</p></div>
+                      <div><span className="feed-report__kicker">Design note</span><h4>Letters that quietly glow</h4><p>Borders respond to their warmth: gold for reads, pink for Love, and blue for Sad.</p></div>
                     </article>
+
                   </div>
                 </section>
 
-                <section className="feed-report__page" aria-label="Recent updates, page 2 of 4">
+                <section className="feed-report__page" aria-label="Recent updates, page 3 of 5">
                   <div className="feed-report__lead">
                     <span>More ways to share</span>
                     <h3>Give your words a place and a picture.</h3>
@@ -1082,7 +1121,7 @@ function Home() {
                   </div>
                 </section>
 
-                <section className="feed-report__page feed-report__page--care" aria-label="Community care and support, page 3 of 4">
+                <section className="feed-report__page feed-report__page--care" aria-label="Community care and support, page 4 of 5">
                   <div className="feed-report__lead">
                     <span>Community care</span>
                     <h3>A little support can make the page feel lighter.</h3>
@@ -1100,7 +1139,7 @@ function Home() {
                   </div>
                 </section>
 
-                <section className="feed-report__page feed-report__page--christmas" aria-label="Christmas countdown, page 4 of 4">
+                <section className="feed-report__page feed-report__page--christmas" aria-label="Christmas countdown, page 5 of 5">
                   <div className="feed-report__snow" aria-hidden="true">
                     {CHRISTMAS_SNOWFLAKES.map((flake, index) => (
                       <i
@@ -1139,8 +1178,8 @@ function Home() {
 
               <nav className="feed-report__pagination" aria-label="Feed pages">
                 <button type="button" onClick={() => goToFeedPage(feedPage - 1)} disabled={feedPage === 0} aria-label="Previous update page"><IoChevronBackOutline /></button>
-                <div>{[0, 1, 2, 3].map(page => <button key={page} type="button" className={feedPage === page ? "is-active" : ""} onClick={() => goToFeedPage(page)} aria-label={`Go to update page ${page + 1}`} aria-current={feedPage === page ? "page" : undefined} />)}</div>
-                <button type="button" onClick={() => goToFeedPage(feedPage + 1)} disabled={feedPage === 3} aria-label="Next update page"><IoChevronForwardOutline /></button>
+                <div>{[0, 1, 2, 3, 4].map(page => <button key={page} type="button" className={feedPage === page ? "is-active" : ""} onClick={() => goToFeedPage(page)} aria-label={`Go to update page ${page + 1}`} aria-current={feedPage === page ? "page" : undefined} />)}</div>
+                <button type="button" onClick={() => goToFeedPage(feedPage + 1)} disabled={feedPage === 4} aria-label="Next update page"><IoChevronForwardOutline /></button>
               </nav>
             </div>
           )}

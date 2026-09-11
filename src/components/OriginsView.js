@@ -2,7 +2,8 @@ import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'reac
 import {createPortal} from 'react-dom';
 import {render_url, api_key} from '../data/keys';
 import '../styles/OriginsView.css';
-import {IoLocationOutline, IoMailOpenOutline} from 'react-icons/io5';
+import {IoArrowBackOutline, IoLocationOutline, IoMailOpenOutline} from 'react-icons/io5';
+
 import logo from '../lotties/ltc_logo_1.webp';
 
 const letterCount = count => `${count.toLocaleString()} ${count === 1 ? 'Letter' : 'Letters'}`;
@@ -117,7 +118,8 @@ export default function OriginsView({onClose, children}) {
   return createPortal(<section id="origins-panel" className="origins-view" role="dialog" aria-modal="true" aria-label="Origins" ref={dialog}>
     <header className="origins-view__header">
       <div className="origins-view__branding"><img src={logo} alt="Letters to Casper" /></div>
-      <button type="button" onClick={onClose} aria-label="Close letter origins">×</button>
+      <button type="button" onClick={onClose} aria-label="Back to letters" className="origins-view__back"><IoArrowBackOutline aria-hidden="true" /></button>
+
       <div className="origins-view__heading">
         <span>Every letter begins somewhere</span>
       </div>

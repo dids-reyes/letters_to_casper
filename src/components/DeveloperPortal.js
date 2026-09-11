@@ -133,9 +133,9 @@ function DeveloperPortal() {
           <span className="developers-eyebrow"><IoRocketOutline /> Who we are</span>
           <h2>Built with purpose, open to fresh perspectives.</h2>
           <p>
-            We are a passionate team dedicated to giving Filipinos—and anyone
-            who finds us—a platform to express their emotions. The project is
-            closed-source, but we welcome contributors who share our commitment
+            We are a passionate team dedicated to giving Filipinos and anyone
+            who finds us a platform to express their emotions. The project is
+            now open source, and we welcome contributors who share our commitment
             to thoughtful, creative work.
           </p>
           <p>

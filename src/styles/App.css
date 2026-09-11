@@ -1,5 +1,7 @@
+html,
 body {
   background-color: #fff;
+  overflow-anchor: none;
 }
 
 /* About */
@@ -31,8 +33,8 @@ body {
 .about-definition { align-self:center; padding:34px; border:1px solid #dfe6f2; border-radius:20px; background:#f7f9fd; }
 .about-definition > span { color:#202b3d; font-family:Georgia,"Times New Roman",serif; font-size:28px; }.about-definition > p { margin:5px 0 20px; color:#8992a0; font-size:11px; }.about-definition > strong { color:#3772ff; font-size:9px; letter-spacing:.12em; text-transform:uppercase; }
 .about-definition blockquote { margin:12px 0 0; color:#566171; font-family:Georgia,"Times New Roman",serif; font-size:16px; line-height:1.65; }
-.about-purpose { box-sizing:border-box; padding:85px clamp(30px,7vw,90px); border-radius:26px; background:#172238; }
-.about-purpose h2 { max-width:720px; color:#f7f9ff; }.about-purpose__columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(25px,6vw,75px); }.about-purpose__columns p { margin:0; color:#aeb9cc; font-size:12px; line-height:1.85; }
+.about-purpose { box-sizing:border-box; padding:85px clamp(30px,7vw,90px); border-radius:26px; background:#f8fafd; border:1px solid #e2e8f2; box-shadow:0 14px 40px rgba(28,43,70,.04); }
+.about-purpose h2 { max-width:720px; color:#172033; }.about-purpose__columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(25px,6vw,75px); }.about-purpose__columns p { margin:0; color:#5d6778; font-size:12px; line-height:1.85; }
 .about-closing { padding:115px 20px 85px; box-sizing:border-box; text-align:center; }.about-closing > svg { color:#3772ff; font-size:25px; }.about-closing h2 { margin-bottom:13px; }.about-closing p { max-width:560px; margin:0 auto 25px; color:#747e8c; font-size:13px; line-height:1.75; }.about-closing a { display:inline-flex; padding:12px 18px; border-radius:12px; background:#3772ff; box-shadow:0 7px 20px rgba(55,114,255,.22); color:#fff; font-size:11px; font-weight:700; text-decoration:none; }.about-ad { overflow:hidden; }
 
 @media (max-width:760px) {
@@ -49,6 +51,9 @@ html.night-shift .about-back,html.night-shift .about-values { border-color:#343a
 html.night-shift .about-values strong { color:#e8e6da; }html.night-shift .about-values article > span { background:rgba(80,130,240,.13); color:#8ab4ff; }
 html.night-shift .about-hero__letter { border-color:#3e3b2e; background:#22231b; color:#ded9c7; box-shadow:0 25px 60px rgba(0,0,0,.35); }html.night-shift .about-hero__letter::after { background:linear-gradient(135deg,#353529 0 49%,#151912 51%); }
 html.night-shift .about-definition { border-color:#393f37; background:#20241d; }html.night-shift .about-definition > span { color:#f0ecdf; }html.night-shift .about-definition blockquote { color:#c1beb0; }
+html.night-shift .about-purpose { background:#20241d; border-color:#393f37; box-shadow:none; }
+html.night-shift .about-purpose h2 { color:#f1eee1; }
+html.night-shift .about-purpose__columns p { color:#aaa99f; }
 
 .submission-error-details {
   margin-top: 5px;
@@ -100,6 +105,7 @@ html.night-shift .about-definition { border-color:#393f37; background:#20241d; }
   position: sticky;
   top: 0;
   z-index: 100;
+  overflow-anchor: none;
   background: rgba(255, 255, 255, 0.96);
   transition: padding 0.45s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.45s ease;
@@ -1382,7 +1388,7 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
 .letter-card {
   --letter-card-rule-space: 19px;
   --letter-warmth: 0.08;
-  --letter-warmth-rgb: 210 160 90;
+  --letter-warmth-rgb: 218 165 32;
   --letter-surface: #fdfaef;
   /* Keep the outline neutral; reaction color belongs to the traveling segment. */
   --letter-border-track: #e7ddc4;
@@ -1464,7 +1470,7 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
 }
 
 .letter-card--mood-neutral {
-  --letter-warmth-rgb: 210 160 90;
+  --letter-warmth-rgb: 218 165 32;
 }
 
 .letter-card__top {
@@ -1502,7 +1508,7 @@ html.night-shift .easter-firefly { filter:drop-shadow(0 0 9px rgba(255,226,137,.
   min-width: 0;
   margin: 0;
   font-family: "Courier New", Courier, monospace;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: #2f2b20;
   white-space: nowrap;
@@ -1887,14 +1893,23 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   margin: 0 auto;
 }
 
-.footer p,
-.footer-nav {
+.footer p {
   margin: 0px 0;
   font-size: 13px;
 }
 
+.footer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(20px, 2.5vw, 32px);
+  margin: 0;
+  font-size: 13px;
+}
+
 .footer-nav a {
-  margin: 0 5px;
+  margin: 0;
 }
 
 .fab {

@@ -37,7 +37,7 @@ function AboutUs() {
             Letters to Casper is a sanctuary where heartfelt sentiments find
             expression in the embrace of anonymity. Created with Filipinos in
             mind and open to everyone, it is a safe space for letters to someone
-            special—or someone from the past.
+            special or someone from the past.
           </p>
         </div>
         <div className="about-hero__letter" aria-hidden="true">
@@ -59,7 +59,7 @@ function AboutUs() {
           <p>
             The inspiration behind our platform comes from Casper, the friendly
             ghost. Created by Seymour Reit and Joe Oriolo, Casper embodies
-            gentleness and compassion—an ideal symbol for connection and
+            gentleness and compassion, an ideal symbol for connection and
             understanding.
           </p>
           <p>
@@ -71,7 +71,7 @@ function AboutUs() {
         <aside className="about-definition">
           <span>cas·per</span><p>/ˈkas-pər/</p><strong>noun</strong>
           <blockquote>
-            The intended recipient of a letter—someone who may have faded from
+            The intended recipient of a letter, someone who may have faded from
             your life, leaving unresolved emotions and unspoken words behind.
           </blockquote>
         </aside>
@@ -83,7 +83,7 @@ function AboutUs() {
         <div className="about-purpose__columns">
           <p>
             Just as Casper moves between worlds, our users move between past and
-            present—seeking closure, reconciliation, gratitude, or simply a way
+            present, seeking closure, reconciliation, gratitude, or simply a way
             to finally put a feeling into words.
           </p>
           <p>
