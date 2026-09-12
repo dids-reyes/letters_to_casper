@@ -191,6 +191,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   useEffect(() => {
     try {
       localStorage.removeItem("readMode");
+      localStorage.removeItem("readModeTipDismissed");
     } catch (e) {
       /* storage unavailable */
     }
@@ -199,22 +200,14 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const [showReadModeModal, setShowReadModeModal] = useState(false);
   const isReadModeActive = Boolean(readModeEnabled && showDetailsModal && readMode);
 
-  const [readModeTipDismissed, setReadModeTipDismissed] = useState(() => {
-    try {
-      return localStorage.getItem("readModeTipDismissed") === "true";
-    } catch (e) {
-      return false;
+  useEffect(() => {
+    if (!showDetailsModal) {
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute("content", nightShift ? "#14161a" : "#ffffff");
+      }
     }
-  });
-
-  const dismissReadModeTip = useCallback(() => {
-    setReadModeTipDismissed(true);
-    try {
-      localStorage.setItem("readModeTipDismissed", "true");
-    } catch (e) {
-      /* storage unavailable */
-    }
-  }, []);
+  }, [nightShift, showDetailsModal]);
 
   useEffect(() => {
     if (!showReadModeModal) return undefined;
@@ -917,7 +910,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     : null;
 
   return (
-    <div className="app">
+    <div className={`app${isReadModeActive ? " is-read-mode-active" : ""}`}>
       <div
         className={`home-toolbar${isHeaderCompact ? " is-compact" : ""}`}
       >
@@ -1592,7 +1585,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                 type="button"
                 className={`read-mode-dialog-toggle${readMode ? " is-active" : ""}`}
                 onClick={() => {
-                  dismissReadModeTip();
                   setReadMode((prev) => !prev);
                 }}
               >
@@ -1610,37 +1602,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         </div>
       )}
 
-      {readModeEnabled && !isHeaderCompact && !readMode && !readModeTipDismissed && (
-        <aside className="read-mode-suggestion" role="status" aria-label="Read Mode introduction">
-          <button
-            type="button"
-            className="read-mode-suggestion__close"
-            onClick={dismissReadModeTip}
-            aria-label="Dismiss Read Mode suggestion"
-          >
-            ×
-          </button>
-          <strong>Read Mode</strong>
-          <span>Disable typing delays and swipe through letters smoothly.</span>
-          <button
-            type="button"
-            className="read-mode-suggestion__action"
-            onClick={() => {
-              dismissReadModeTip();
-              setShowReadModeModal(true);
-            }}
-          >
-            Try Read Mode
-          </button>
-        </aside>
-      )}
-
       {readModeEnabled && (
         <button
           type="button"
           className={`fab read-mode-fab${!isHeaderCompact ? " is-visible" : ""}${readMode ? " is-active" : ""}`}
           onClick={() => {
-            dismissReadModeTip();
             setShowReadModeModal(true);
           }}
           aria-pressed={readMode}

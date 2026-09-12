@@ -111,6 +111,186 @@ describe('Read Mode in DetailsModal', () => {
     expect(screen.queryByLabelText(/Previous letter/i)).toBeNull();
   });
 
+  test('in readMode, overlay has is-read-mode class to render focused warm dim theater backdrop', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[0]}
+          readMode={true}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    const overlay = container.querySelector('.letter-modal-overlay');
+    expect(overlay).not.toBeNull();
+    expect(overlay).toHaveClass('is-read-mode');
+  });
+
+  test('in readMode, mobile status bar / theme-color adapts to dim color and restores on exit', () => {
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      meta.setAttribute('content', '#ffffff');
+      document.head.appendChild(meta);
+    } else {
+      meta.setAttribute('content', '#ffffff');
+    }
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[0]}
+          readMode={true}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    expect(document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe('#4e4c4a');
+
+    unmount();
+
+    expect(document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe('#ffffff');
+  });
+
+  test('in readMode with night shift active, theme-color adapts to deep night dim color and restores', () => {
+    document.documentElement.classList.add('night-shift');
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      meta.setAttribute('content', '#14161a');
+      document.head.appendChild(meta);
+    } else {
+      meta.setAttribute('content', '#14161a');
+    }
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[0]}
+          readMode={true}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    expect(document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe('#08090a');
+
+    unmount();
+    document.documentElement.classList.remove('night-shift');
+  });
+
+  test('in normal mode (readMode=false), mobile status bar adapts to dim color (#82807f) and restores on exit', () => {
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      meta.setAttribute('content', '#ffffff');
+      document.head.appendChild(meta);
+    } else {
+      meta.setAttribute('content', '#ffffff');
+    }
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[0]}
+          readMode={false}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    expect(document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe('#82807f');
+
+    unmount();
+
+    expect(document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe('#ffffff');
+  });
+
+  test('in normal mode with night shift active, theme-color adapts to dim night color (#060607) and restores', () => {
+    document.documentElement.classList.add('night-shift');
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      meta.setAttribute('content', '#14161a');
+      document.head.appendChild(meta);
+    } else {
+      meta.setAttribute('content', '#14161a');
+    }
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[0]}
+          readMode={false}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    expect(document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe('#060607');
+
+    unmount();
+    document.documentElement.classList.remove('night-shift');
+  });
+
+  test('in readMode, clicking/tapping background does not close modal, only close button closes it', () => {
+    const handleClose = jest.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={handleClose}
+          selectedLetter={sampleLetters[0]}
+          readMode={true}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    const overlay = container.querySelector('.letter-modal-overlay');
+    fireEvent.click(overlay);
+    expect(handleClose).not.toHaveBeenCalled();
+
+    const closeButton = container.querySelector('.letter-modal__close');
+    fireEvent.click(closeButton);
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
+  test('in normal mode (readMode=false), clicking background closes modal', () => {
+    const handleClose = jest.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={handleClose}
+          selectedLetter={sampleLetters[0]}
+          readMode={false}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    const overlay = container.querySelector('.letter-modal-overlay');
+    fireEvent.click(overlay);
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
   test('in readMode, first-timer tip is shown and dismisses on click', () => {
     const { container } = render(
       <MemoryRouter>
@@ -416,6 +596,121 @@ describe('Read Mode in DetailsModal', () => {
     jest.useRealTimers();
   });
 
+  test('net-new downward scroll tracking: scrolling back up and down over explored letters does not trigger ad early', () => {
+    jest.useFakeTimers();
+    let currentIdx = 0;
+    const mockSetSelectedLetter = jest.fn((letter) => {
+      currentIdx = sampleLetters.findIndex(l => l._id === letter._id);
+    });
+
+    const { container, rerender } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[currentIdx]}
+          readMode={true}
+          letters={sampleLetters}
+          setSelectedLetter={mockSetSelectedLetter}
+        />
+      </MemoryRouter>
+    );
+
+    // Scroll down 8 letters (indices 0 to 8: 9 letters uncovered so far)
+    for (let i = 0; i < 8; i++) {
+      fireEvent.keyDown(document, { key: 'ArrowDown' });
+      act(() => {
+        jest.advanceTimersByTime(550);
+      });
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetters[currentIdx]}
+            readMode={true}
+            letters={sampleLetters}
+            setSelectedLetter={mockSetSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+    }
+    expect(currentIdx).toBe(8);
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+
+    // Scroll back up 5 letters (indices 8 -> 7 -> 6 -> 5 -> 4 -> 3)
+    for (let i = 0; i < 5; i++) {
+      fireEvent.keyDown(document, { key: 'ArrowUp' });
+      act(() => {
+        jest.advanceTimersByTime(550);
+      });
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetters[currentIdx]}
+            readMode={true}
+            letters={sampleLetters}
+            setSelectedLetter={mockSetSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+    }
+    expect(currentIdx).toBe(3);
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+
+    // Now re-scroll down 5 letters over the already explored range (indices 3 -> 4 -> 5 -> 6 -> 7 -> 8)
+    for (let i = 0; i < 5; i++) {
+      fireEvent.keyDown(document, { key: 'ArrowDown' });
+      act(() => {
+        jest.advanceTimersByTime(550);
+      });
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetters[currentIdx]}
+            readMode={true}
+            letters={sampleLetters}
+            setSelectedLetter={mockSetSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+    }
+    expect(currentIdx).toBe(8);
+    // Crucial check: Ad lock MUST NOT appear because we did not uncover any net-new letters!
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+
+    // Now scroll down 1 net-new letter to index 9 (now 10 letters uncovered: 0 through 9)
+    fireEvent.keyDown(document, { key: 'ArrowDown' });
+    act(() => {
+      jest.advanceTimersByTime(550);
+    });
+    rerender(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[currentIdx]}
+          readMode={true}
+          letters={sampleLetters}
+          setSelectedLetter={mockSetSelectedLetter}
+        />
+      </MemoryRouter>
+    );
+    expect(currentIdx).toBe(9);
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+
+    // Now attempting to scroll to the 11th net-new letter (index 10): Ad MUST trigger!
+    fireEvent.keyDown(document, { key: 'ArrowDown' });
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).not.toBeNull();
+    expect(screen.getByText(/You’ve read 10 letters/i)).toBeInTheDocument();
+
+    jest.useRealTimers();
+  });
+
   test('increments reads when viewing and navigating letters in Read Mode', async () => {
     let currentIdx = 0;
     const mockSetSelectedLetter = jest.fn((letter) => {
@@ -613,7 +908,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
     expect(screen.queryByRole('dialog', { name: /Read Mode/i })).toBeNull();
   });
 
-  test('new visitor sees the Read Mode introduction tooltip pointing to the FAB button without "New"', () => {
+  test('introductory tooltip for Read Mode is completely removed so visitors can explore the site on their own', () => {
     localStorage.removeItem('readModeTipDismissed');
     localStorage.removeItem('readMode');
 
@@ -623,58 +918,8 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       </MemoryRouter>
     );
 
-    const tooltip = screen.getByRole('status', { name: /Read Mode introduction/i });
-    expect(tooltip).toBeInTheDocument();
-    expect(tooltip).toHaveTextContent('Read Mode');
-    expect(tooltip).not.toHaveTextContent('New:');
-    expect(screen.getByRole('button', { name: /Try Read Mode/i })).toBeInTheDocument();
-  });
-
-  test('clicking "Try Read Mode" in the tooltip opens the dialog and permanently dismisses the tooltip', () => {
-    localStorage.removeItem('readModeTipDismissed');
-    localStorage.removeItem('readMode');
-
-    render(
-      <MemoryRouter>
-        <Home readModeEnabled={true} />
-      </MemoryRouter>
-    );
-
-    const tryBtn = screen.getByRole('button', { name: /Try Read Mode/i });
-    fireEvent.click(tryBtn);
-
-    expect(localStorage.getItem('readModeTipDismissed')).toBe('true');
     expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
-    expect(screen.getByRole('dialog', { name: /Read Mode/i })).toBeInTheDocument();
-  });
-
-  test('clicking close "×" on the tooltip dismisses it and stores state in localStorage', () => {
-    localStorage.removeItem('readModeTipDismissed');
-    localStorage.removeItem('readMode');
-
-    render(
-      <MemoryRouter>
-        <Home readModeEnabled={true} />
-      </MemoryRouter>
-    );
-
-    const closeBtn = screen.getByRole('button', { name: /Dismiss Read Mode suggestion/i });
-    fireEvent.click(closeBtn);
-
-    expect(localStorage.getItem('readModeTipDismissed')).toBe('true');
-    expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
-  });
-
-  test('if readModeTipDismissed is already set, tooltip is not shown for returning visitors', () => {
-    localStorage.setItem('readModeTipDismissed', 'true');
-
-    render(
-      <MemoryRouter>
-        <Home readModeEnabled={true} />
-      </MemoryRouter>
-    );
-
-    expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Try Read Mode/i })).toBeNull();
   });
 
   test('Page 2 of the Feed features the newest addition: Read Mode', async () => {
@@ -951,6 +1196,8 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
         const feedContainer = container.querySelector('.feed-main-container');
         expect(feedContainer).not.toBeNull();
         expect(feedContainer).toHaveClass('feed-main-container--suspended');
+        const app = container.querySelector('.app');
+        expect(app).toHaveClass('is-read-mode-active');
       });
     });
 

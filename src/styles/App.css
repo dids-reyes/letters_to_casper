@@ -478,110 +478,6 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
   .night-mode-suggestion { animation: none; }
 }
 
-.read-mode-suggestion {
-  position: fixed;
-  right: 24px;
-  bottom: 128px;
-  z-index: 95;
-  width: min(245px, calc(100vw - 32px));
-  box-sizing: border-box;
-  padding: 14px 38px 13px 15px;
-  border: 1px solid rgba(126, 164, 255, 0.3);
-  border-radius: 14px;
-  background: #172238;
-  box-shadow: 0 14px 34px rgba(15, 27, 50, 0.28);
-  color: #fff;
-  text-align: left;
-  animation: read-tip-in 0.35s ease both;
-}
-
-.read-mode-suggestion::before {
-  position: absolute;
-  bottom: -7px;
-  right: 17px;
-  width: 13px;
-  height: 13px;
-  border-bottom: 1px solid rgba(126, 164, 255, 0.3);
-  border-right: 1px solid rgba(126, 164, 255, 0.3);
-  background: #172238;
-  content: "";
-  transform: rotate(45deg);
-}
-
-.read-mode-suggestion strong,
-.read-mode-suggestion span {
-  display: block;
-}
-
-.read-mode-suggestion strong {
-  font-size: 12px;
-}
-
-.read-mode-suggestion span {
-  margin-top: 4px;
-  color: #bdc9dc;
-  font-size: 10px;
-  line-height: 1.5;
-}
-
-.read-mode-suggestion__close {
-  position: absolute;
-  top: 7px;
-  right: 8px;
-  width: 25px;
-  height: 25px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #aebbd0;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.read-mode-suggestion__close:hover {
-  color: #fff;
-}
-
-.read-mode-suggestion__action {
-  margin-top: 10px;
-  padding: 7px 10px;
-  border: 0;
-  border-radius: 8px;
-  background: #3772ff;
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.18s ease;
-}
-
-.read-mode-suggestion__action:hover {
-  background: #2352e6;
-}
-
-@keyframes read-tip-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.98); }
-  to { opacity: 1; transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .read-mode-suggestion { animation: none; }
-}
-
-html.night-shift .read-mode-suggestion {
-  background: #1e261f;
-  border-color: rgba(138, 180, 255, 0.3);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
-}
-
-html.night-shift .read-mode-suggestion::before {
-  background: #1e261f;
-  border-bottom-color: rgba(138, 180, 255, 0.3);
-  border-right-color: rgba(138, 180, 255, 0.3);
-}
-
 .messages-count {
   display: inline-flex;
   align-items: center;
@@ -2643,15 +2539,6 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     font-size: 18px;
   }
 
-  .read-mode-suggestion {
-    right: 12px;
-    bottom: 108px;
-  }
-
-  .read-mode-suggestion::before {
-    right: 14px;
-  }
-
   .ui-announcement-overlay {
     padding: 14px;
   }
@@ -4507,8 +4394,27 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
 
 /* ---- Read Mode Stage & TikTok/Reels vertical slide transitions ---- */
 .letter-modal-overlay.is-read-mode {
+  background: #4e4c4a !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   overflow: hidden;
   touch-action: pan-y;
+}
+
+html.night-shift .letter-modal-overlay.is-read-mode {
+  background: #08090a !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.app.is-read-mode-active .home-toolbar,
+.app.is-read-mode-active .header,
+.app.is-read-mode-active .content,
+.app.is-read-mode-active .letters-container,
+.app.is-read-mode-active .fab,
+.app.is-read-mode-active .footer {
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .read-mode-stage {
