@@ -494,7 +494,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
     localStorage.removeItem('readModeTipDismissed');
     render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={false} />
       </MemoryRouter>
     );
 

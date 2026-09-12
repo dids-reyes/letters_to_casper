@@ -164,6 +164,59 @@ const getLetterId = (letter) => {
   return String(letter._id || "");
 };
 
+export const extractMediaLinks = (rawMessage) => {
+  if (!rawMessage || typeof rawMessage !== "string") {
+    return {
+      spotifyLink: null,
+      youtubeLink: null,
+      newMessage: rawMessage || "",
+    };
+  }
+
+  const spotifyLinkRegex =
+    /https?:\/\/open\.spotify\.com\/(?:(?:[a-zA-Z-]+)\/)?(?:embed\/)?(?:track\/)?([A-Za-z0-9]{22})(?:\?[^\s\n\r"']*)?|https?:\/\/open\.spotify\.com\/(?:[a-zA-Z-]+\/)?(?:embed\/)?track\/([A-Za-z0-9]+)(?:\?[^\s\n\r"']*)?/i;
+
+  const youtubeLinkRegex =
+    /https?:\/\/(?:www\.|m\.)?(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^\s\n\r"']*[?&])?v=|shorts\/|embed\/))([A-Za-z0-9_-]{11})(?:\S*)?/i;
+
+  const spotifyMatch = rawMessage.match(spotifyLinkRegex);
+  const youtubeMatch = rawMessage.match(youtubeLinkRegex);
+
+  let spotifyId = null;
+  let youtubeId = null;
+
+  if (spotifyMatch) {
+    spotifyId = (spotifyMatch[1] || spotifyMatch[2] || "").trim();
+  }
+  if (youtubeMatch) {
+    youtubeId = (youtubeMatch[1] || "").trim();
+  }
+
+  // Mutual exclusivity: if only spotify is added, only spotify is shown.
+  // If only youtube is added, only youtube is shown.
+  // If both exist, prioritize whichever appears first.
+  if (spotifyId && youtubeId) {
+    if (rawMessage.indexOf(spotifyMatch[0]) < rawMessage.indexOf(youtubeMatch[0])) {
+      youtubeId = null;
+    } else {
+      spotifyId = null;
+    }
+  }
+
+  let cleanedMessage = rawMessage;
+  if (spotifyId && spotifyMatch) {
+    cleanedMessage = cleanedMessage.replace(spotifyMatch[0], "").trimEnd();
+  } else if (youtubeId && youtubeMatch) {
+    cleanedMessage = cleanedMessage.replace(youtubeMatch[0], "").trimEnd();
+  }
+
+  return {
+    spotifyLink: spotifyId ? { id: spotifyId, newMessage: cleanedMessage } : null,
+    youtubeLink: youtubeId ? { id: youtubeId, newMessage: cleanedMessage } : null,
+    newMessage: cleanedMessage,
+  };
+};
+
 function DetailsModal({
   showDetailsModal,
   toggleDetailsModal,
@@ -384,76 +437,22 @@ function DetailsModal({
     return new Date(timestamp).toLocaleString("en-US", options);
   };
 
-  const extractMediaLinks = (message) => {
-    if (!message) {
-      // Return null if message is null or undefined
-      return null;
-    }
+  const media = useMemo(() => {
+    return extractMediaLinks(selectedLetter?.message);
+  }, [selectedLetter?.message]);
 
-    // Regular expression to find the Spotify link
-    const spotifyLinkRegex = /https:\/\/open\.spotify\.com\/(.*)/;
+  const spotifyTrackId = media?.spotifyLink?.id || null;
+  const youtubeVideoId = media?.youtubeLink?.id || null;
+  const message = media?.newMessage || selectedLetter?.message || "";
 
-    // Regular expression to find the YouTube video link
-    const youtubeLinkRegex = /https:\/\/youtu\.be\/(.*)/;
-
-    // Execute the regex to find the links in the message
-    const spotifyMatch = message.match(spotifyLinkRegex);
-    const youtubeMatch = message.match(youtubeLinkRegex);
-
-    const extractedMedia = {};
-
-    if (spotifyMatch && spotifyMatch[1]) {
-      // Extract the Spotify track ID from the match
-      const trackId = spotifyMatch[1];
-      const newMessage = message
-        .replace(spotifyLinkRegex, "")
-        .replace(/\s*$/, "");
-
-      extractedMedia.spotifyLink = { id: trackId, newMessage };
-    }
-
-    if (youtubeMatch && youtubeMatch[1]) {
-      // Extract the YouTube video ID from the match
-      const videoId = youtubeMatch[1].split(/[?&]/)[0];
-      const newMessage = message
-        .replace(youtubeLinkRegex, "")
-        .replace(/\s*$/, "");
-
-      extractedMedia.youtubeLink = { id: videoId, newMessage };
-    }
-
-    if (Object.keys(extractedMedia).length === 0) {
-      // If no match found, return the original message
-      return {
-        spotifyLink: { id: null, newMessage: message },
-        youtubeLink: { id: null, newMessage: message },
-      };
-    }
-
-    return extractedMedia;
-  };
-
-  const { spotifyLink, youtubeLink } =
-    selectedLetter && selectedLetter.message
-      ? extractMediaLinks(selectedLetter.message)
-      : {
-          spotifyLink: { id: null, newMessage: null },
-          youtubeLink: { id: null, newMessage: null },
-          originalMessage: null,
-        };
-
-  const extracted_data = spotifyLink != null ? spotifyLink : youtubeLink;
-
-  const { id: linkId, newMessage: message } = extracted_data;
-
-  const [showSpotify, setShowSpotify] = useState(false);
-  const [showYoutube, setShowYoutube] = useState(false);
-  const [showPhoto, setShowPhoto] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [translatedMessage, setTranslatedMessage] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
-  const hasLetterAttachment = Boolean(linkId || selectedLetter?.photo?.url);
+  const hasLetterAttachment = Boolean(
+    spotifyTrackId || youtubeVideoId || selectedLetter?.photo?.url
+  );
   const messageBodyRef = useRef(null);
   useEffect(() => {
     const body = messageBodyRef.current;
@@ -573,17 +572,18 @@ function DetailsModal({
     return () => clearTimeout(timer);
   }, [showDetailsModal, selectedLetter, readMode]);
 
-  // Read mode: reveal attachments immediately
+  // Attachment reveal state synchronization
   useEffect(() => {
-    if (readMode && selectedLetter) {
-      setShowPhoto(Boolean(selectedLetter.photo?.url));
-      if (spotifyLink == null) {
-        setShowYoutube(true);
-      } else {
-        setShowSpotify(true);
-      }
+    if (!showDetailsModal || !selectedLetter) {
+      setShowAttachments(false);
+      return;
     }
-  }, [readMode, selectedLetter, spotifyLink]);
+    if (readMode) {
+      setShowAttachments(true);
+    } else {
+      setShowAttachments(false);
+    }
+  }, [showDetailsModal, selectedLetter, readMode]);
 
   const navigate = useNavigate();
   const approvedLetters = useMemo(() => (Array.isArray(letters) ? letters : []), [letters]);
@@ -941,12 +941,14 @@ function DetailsModal({
         date: formatTimestamp(selectedLetter.timestamp),
         includeAttachments,
         photoUrl: selectedLetter.photo?.url ? getOptimizedPhotoUrl(selectedLetter.photo.url) : null,
-        media: linkId ? (spotifyLink?.id ? {
-          provider: 'Spotify', url: `https://open.spotify.com/${linkId}`,
-        } : {
-          provider: 'YouTube', url: `https://youtu.be/${linkId}`,
-          thumbnail: `https://i.ytimg.com/vi/${encodeURIComponent(linkId)}/hqdefault.jpg`,
-        }) : null,
+        media: spotifyTrackId ? {
+          provider: 'Spotify',
+          url: `https://open.spotify.com/track/${spotifyTrackId}`,
+        } : (youtubeVideoId ? {
+          provider: 'YouTube',
+          url: `https://youtu.be/${youtubeVideoId}`,
+          thumbnail: `https://i.ytimg.com/vi/${encodeURIComponent(youtubeVideoId)}/hqdefault.jpg`,
+        } : null),
       });
     } catch {
       toast.error("Image preparation failed or timed out. Please try again, or choose Letter only if the attachment won’t load.", {position: "top-center"});
@@ -1057,9 +1059,7 @@ function DetailsModal({
 
   const handleCloseModal = () => {
     toggleDetailsModal();
-    setShowSpotify(false);
-    setShowYoutube(false);
-    setShowPhoto(false);
+    setShowAttachments(false);
     setShowPhotoViewer(false);
     setOpened(false);
     setIsRevealed(false);
@@ -1145,14 +1145,11 @@ function DetailsModal({
       else if (hours === 0 && minutes === 51) isTwelve = true;
     }
     const lHasBadge = isEarly || lId === adminId || isEleven || isTwelve;
-    const lMedia = extractMediaLinks(letter.message || "") || {
-      youtubeLink: { id: null, newMessage: null },
-      spotifyLink: { id: null, newMessage: null },
-    };
-    const lData = lMedia.spotifyLink != null ? lMedia.spotifyLink : lMedia.youtubeLink;
-    const lMessage = lData?.newMessage || letter.message;
-    const lLinkId = lData?.id;
-    const lHasAttachment = Boolean(lLinkId || letter.photo?.url);
+    const lMedia = extractMediaLinks(letter.message || "");
+    const lSpotifyTrackId = lMedia.spotifyLink?.id || null;
+    const lYoutubeVideoId = lMedia.youtubeLink?.id || null;
+    const lMessage = lMedia.newMessage || letter.message;
+    const lHasAttachment = Boolean(lSpotifyTrackId || lYoutubeVideoId || letter.photo?.url);
     const lCity = letter.loc?.city || "";
     const lHasLoc = Boolean(lCity) && lCity !== "Unknown";
     const lReads = parseInt(letter.reads, 10) || 0;
@@ -1182,12 +1179,12 @@ function DetailsModal({
           <span>{lMessage}</span>
         </div>
 
-        {lMedia.spotifyLink?.id && (
+        {lSpotifyTrackId && (
           <div className="letter-paper__media">
             <iframe
               title="spotify-preview-outgoing"
               style={{ border: "12px" }}
-              src={`https://open.spotify.com/embed/${lMedia.spotifyLink.id}?utm_source=generator&theme=1`}
+              src={`https://open.spotify.com/embed/track/${lSpotifyTrackId}?utm_source=generator&theme=1`}
               width="100%"
               height="152"
               frameBorder="0"
@@ -1196,10 +1193,10 @@ function DetailsModal({
             ></iframe>
           </div>
         )}
-        {!lMedia.spotifyLink?.id && lMedia.youtubeLink?.id && (
+        {!lSpotifyTrackId && lYoutubeVideoId && (
           <div className="letter-paper__media letter-paper__media--youtube">
             <iframe
-              src={`https://www.youtube-nocookie.com/embed/${lMedia.youtubeLink.id}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0`}
+              src={`https://www.youtube-nocookie.com/embed/${lYoutubeVideoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0`}
               title="YouTube video player outgoing"
               frameBorder="0"
               allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -1395,12 +1392,7 @@ function DetailsModal({
                 .typeString(message)
                 .pauseFor(500)
                 .callFunction(() => {
-                  setShowPhoto(Boolean(selectedLetter.photo?.url));
-                  if (spotifyLink == null) {
-                    setShowYoutube(true);
-                  } else {
-                    setShowSpotify(true);
-                  }
+                  setShowAttachments(true);
                 })
                 .start();
             }}
@@ -1408,12 +1400,12 @@ function DetailsModal({
         )}
       </div>
 
-      {showSpotify && linkId && (
+      {showAttachments && spotifyTrackId && (
         <div className="letter-paper__media">
           <iframe
             title="spotify-preview"
             style={{ border: "12px" }}
-            src={`https://open.spotify.com/embed/${linkId}?utm_source=generator&theme=1`}
+            src={`https://open.spotify.com/embed/track/${spotifyTrackId}?utm_source=generator&theme=1`}
             width="100%"
             height="152"
             frameBorder="0"
@@ -1422,10 +1414,10 @@ function DetailsModal({
           ></iframe>
         </div>
       )}
-      {showYoutube && linkId && (
+      {showAttachments && !spotifyTrackId && youtubeVideoId && (
         <div className="letter-paper__media letter-paper__media--youtube">
           <iframe
-            src={`https://www.youtube-nocookie.com/embed/${linkId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
+            src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
             title="YouTube video player"
             frameBorder="0"
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -1433,7 +1425,7 @@ function DetailsModal({
           ></iframe>
         </div>
       )}
-      {showPhoto && selectedLetter.photo?.url && (
+      {showAttachments && selectedLetter.photo?.url && (
         <figure className="letter-paper__photo">
           <img
             src={getOptimizedPhotoUrl(selectedLetter.photo.url)}
