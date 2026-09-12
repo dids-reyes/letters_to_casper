@@ -67,7 +67,9 @@ const formatCountry = (country) => {
   }
 };
 
-function Home({ initialReadMode = false } = {}) {
+export const READ_MODE_ENABLED = false;
+
+function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } = {}) {
   const navigate = useNavigate();
   const { messageId } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
@@ -184,7 +186,7 @@ function Home({ initialReadMode = false } = {}) {
     }
   }, [nightShift]);
 
-  const [readMode, setReadMode] = useState(() => Boolean(initialReadMode));
+  const [readMode, setReadMode] = useState(() => Boolean(readModeEnabled && initialReadMode));
 
   useEffect(() => {
     try {
@@ -195,7 +197,7 @@ function Home({ initialReadMode = false } = {}) {
   }, []);
 
   const [showReadModeModal, setShowReadModeModal] = useState(false);
-  const isReadModeActive = Boolean(showDetailsModal && readMode);
+  const isReadModeActive = Boolean(readModeEnabled && showDetailsModal && readMode);
 
   const [readModeTipDismissed, setReadModeTipDismissed] = useState(() => {
     try {
@@ -1148,14 +1150,16 @@ function Home({ initialReadMode = false } = {}) {
                     <p>We’re moving into a fresh phase. Every letter can now carry a little more life while keeping the experience quiet and personal.</p>
                   </div>
                   <div className="feed-report__updates">
-                    <article className="feed-report__story is-featured">
-                      <IoReaderOutline aria-hidden="true" />
-                      <div>
-                        <span className="feed-report__kicker">Newest addition · Read Mode</span>
-                        <h4>A calmer way to browse</h4>
-                        <p>Turn on Read Mode to view letters immediately without typing delays, and swipe or scroll up and down to browse continuously.</p>
-                      </div>
-                    </article>
+                    {readModeEnabled && (
+                      <article className="feed-report__story is-featured">
+                        <IoReaderOutline aria-hidden="true" />
+                        <div>
+                          <span className="feed-report__kicker">Newest addition · Read Mode</span>
+                          <h4>A calmer way to browse</h4>
+                          <p>Turn on Read Mode to view letters immediately without typing delays, and swipe or scroll up and down to browse continuously.</p>
+                        </div>
+                      </article>
+                    )}
                     <article className="feed-report__story">
                       <IoHeartOutline aria-hidden="true" />
                       <div><span className="feed-report__kicker">New · Reactions</span><h4>Leave a feeling behind</h4><p>Respond with Love or Sad. Your choice is remembered.</p></div>
@@ -1504,7 +1508,7 @@ function Home({ initialReadMode = false } = {}) {
         showDetailsModal={showDetailsModal}
         toggleDetailsModal={toggleDetailsModal}
         selectedLetter={selectedLetter}
-        readMode={readMode}
+        readMode={readModeEnabled && readMode}
         letters={activeLetters}
         setSelectedLetter={setSelectedLetter}
         onFetchMore={
@@ -1557,7 +1561,7 @@ function Home({ initialReadMode = false } = {}) {
           </section>
         </div>
       )}
-      {showReadModeModal && (
+      {readModeEnabled && showReadModeModal && (
         <div
           className="ui-announcement-overlay read-mode-dialog-overlay"
           onClick={() => setShowReadModeModal(false)}
@@ -1606,7 +1610,7 @@ function Home({ initialReadMode = false } = {}) {
         </div>
       )}
 
-      {!isHeaderCompact && !readMode && !readModeTipDismissed && (
+      {readModeEnabled && !isHeaderCompact && !readMode && !readModeTipDismissed && (
         <aside className="read-mode-suggestion" role="status" aria-label="Read Mode introduction">
           <button
             type="button"
@@ -1631,19 +1635,21 @@ function Home({ initialReadMode = false } = {}) {
         </aside>
       )}
 
-      <button
-        type="button"
-        className={`fab read-mode-fab${!isHeaderCompact ? " is-visible" : ""}${readMode ? " is-active" : ""}`}
-        onClick={() => {
-          dismissReadModeTip();
-          setShowReadModeModal(true);
-        }}
-        aria-pressed={readMode}
-        aria-label={`Read mode info and settings (${readMode ? "on" : "off"})`}
-        title={`Read mode: ${readMode ? "On" : "Off"} (Click to learn more)`}
-      >
-        <IoReaderOutline aria-hidden="true" />
-      </button>
+      {readModeEnabled && (
+        <button
+          type="button"
+          className={`fab read-mode-fab${!isHeaderCompact ? " is-visible" : ""}${readMode ? " is-active" : ""}`}
+          onClick={() => {
+            dismissReadModeTip();
+            setShowReadModeModal(true);
+          }}
+          aria-pressed={readMode}
+          aria-label={`Read mode info and settings (${readMode ? "on" : "off"})`}
+          title={`Read mode: ${readMode ? "On" : "Off"} (Click to learn more)`}
+        >
+          <IoReaderOutline aria-hidden="true" />
+        </button>
+      )}
       <button
         type="button"
         className={`fab${isHeaderCompact ? " is-visible" : ""}`}
