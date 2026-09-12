@@ -490,10 +490,32 @@ describe('Read Mode in DetailsModal', () => {
 });
 
 describe('Read Mode FAB and Explanatory Dialog in Home', () => {
-  test('clicking the Read Mode FAB opens the explanatory dialog describing the feature', async () => {
+  test('when Read Mode is disabled (default in production), FAB, tooltip, dialog, and Feed Page 2 banner are completely hidden', () => {
+    localStorage.removeItem('readModeTipDismissed');
     render(
       <MemoryRouter>
         <Home />
+      </MemoryRouter>
+    );
+
+    // No FAB button
+    expect(screen.queryByRole('button', { name: /Read mode info and settings/i })).toBeNull();
+    // No suggestion tooltip
+    expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
+    // No dialog
+    expect(screen.queryByRole('dialog', { name: /Read Mode/i })).toBeNull();
+
+    // Open Feed to check Page 2
+    const feedBtn = screen.getByRole('button', { name: /Open updates feed/i });
+    fireEvent.click(feedBtn);
+    const page2 = screen.getByRole('region', { name: /Recent updates, page 2 of 5/i });
+    expect(page2).not.toHaveTextContent(/Newest addition · Read Mode/i);
+  });
+
+  test('clicking the Read Mode FAB opens the explanatory dialog describing the feature', async () => {
+    render(
+      <MemoryRouter>
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -523,7 +545,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
   test('toggling Read Mode in the dialog updates status and toggles active state', async () => {
     render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -549,7 +571,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
     const { unmount } = render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -569,7 +591,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
     // Fresh visit / reload must default to OFF
     render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
     const reloadedFab = screen.getByRole('button', { name: /Read mode info and settings/i });
@@ -579,7 +601,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
   test('pressing Escape closes the Read Mode dialog', async () => {
     render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -597,7 +619,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
     render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -614,7 +636,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
     render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -632,7 +654,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
     render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -648,7 +670,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
     render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -658,7 +680,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
   test('Page 2 of the Feed features the newest addition: Read Mode', async () => {
     const { container } = render(
       <MemoryRouter>
-        <Home />
+        <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
@@ -918,8 +940,8 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       const { container } = render(
         <MemoryRouter initialEntries={['/letters/letter-1']}>
           <Routes>
-            <Route path="/letters/:messageId" element={<Home initialReadMode={true} />} />
-            <Route path="/" element={<Home initialReadMode={true} />} />
+            <Route path="/letters/:messageId" element={<Home initialReadMode={true} readModeEnabled={true} />} />
+            <Route path="/" element={<Home initialReadMode={true} readModeEnabled={true} />} />
           </Routes>
         </MemoryRouter>
       );
@@ -955,8 +977,8 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       const { container } = render(
         <MemoryRouter initialEntries={['/letters/letter-1']}>
           <Routes>
-            <Route path="/letters/:messageId" element={<Home initialReadMode={true} />} />
-            <Route path="/" element={<Home initialReadMode={true} />} />
+            <Route path="/letters/:messageId" element={<Home initialReadMode={true} readModeEnabled={true} />} />
+            <Route path="/" element={<Home initialReadMode={true} readModeEnabled={true} />} />
           </Routes>
         </MemoryRouter>
       );
@@ -1004,8 +1026,8 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       const { container } = render(
         <MemoryRouter initialEntries={['/letters/letter-1']}>
           <Routes>
-            <Route path="/letters/:messageId" element={<Home initialReadMode={true} />} />
-            <Route path="/" element={<Home initialReadMode={true} />} />
+            <Route path="/letters/:messageId" element={<Home initialReadMode={true} readModeEnabled={true} />} />
+            <Route path="/" element={<Home initialReadMode={true} readModeEnabled={true} />} />
           </Routes>
         </MemoryRouter>
       );
