@@ -45,27 +45,27 @@ export function createLetterImageCopy(source, {from, to, message, date}) {
     value.textContent = String(name ?? '');
     value.style.setProperty('color', '#332f24', 'important');
     row.append(label, value);
-    Object.assign(row.style, {display:'block', visibility:'visible', opacity:'1', height:'auto', overflow:'visible', fontFamily:'"Courier New", monospace', fontSize:'20px', lineHeight:'1.6', margin:'0 0 10px', whiteSpace:'pre-wrap', overflowWrap:'anywhere', color:'#332f24'});
+    Object.assign(row.style, {display:'block', visibility:'visible', opacity:'1', height:'auto', overflow:'visible', fontFamily:'"Courier New", monospace', fontSize:'21px', lineHeight:'1.6', margin:'0 0 10px', whiteSpace:'pre-wrap', overflowWrap:'anywhere', color:'#332f24'});
     heading.appendChild(row);
   });
   const oldHeading = copy.querySelector('.letter-paper__head');
   if (oldHeading) oldHeading.replaceWith(heading);
   else copy.prepend(heading);
   const timestamp = copy.querySelector('.timestamp-text');
-  if (timestamp) {timestamp.textContent = date; timestamp.style.fontSize = '13px';}
+  if (timestamp) {timestamp.textContent = date; timestamp.style.fontSize = '14px';}
   const body = copy.querySelector('.letter-paper__body');
   if (body) {
     body.textContent = message;
     Object.assign(body.style, {
       height:'auto', maxHeight:'none', overflow:'visible', scrollbarGutter:'auto',
       whiteSpace:'pre-wrap', overflowWrap:'anywhere', fontFamily:'"Courier New", monospace',
-      fontSize:'20px', lineHeight:'36px', margin:'24px 0 0', padding:'0 2px 2px',
+      fontSize:'21px', lineHeight:'36px', margin:'24px 0 0', padding:'0 2px 2px',
       backgroundImage:'none',
       backgroundPosition:'0 -5px',
     });
   }
   const footer = copy.querySelector('.letter-paper__meta');
-  if (footer) Object.assign(footer.style, {fontSize:'12px', marginTop:'24px', color:'#8a8264', flexWrap:'nowrap'});
+  if (footer) Object.assign(footer.style, {fontSize:'13px', marginTop:'24px', color:'#8a8264', flexWrap:'nowrap'});
   return copy;
 }
 
@@ -158,18 +158,18 @@ export async function addExportAttachments(copy, data, objectUrls) {
         data.media?.artist;
       const title = document.createElement('strong');
       title.textContent = metadata.title;
-      Object.assign(title.style, {display:'block', fontSize:'16px', lineHeight:'1.3', color:'#fff', overflowWrap:'anywhere'});
+      Object.assign(title.style, {display:'block', fontSize:'17px', lineHeight:'1.3', color:'#fff', overflowWrap:'anywhere'});
       details.appendChild(title);
       if (authorText) {
         const author = document.createElement('span');
         author.className = 'letter-export-spotify__author';
         author.textContent = authorText;
-        Object.assign(author.style, {display:'block', marginTop:'3px', fontSize:'13px', color:'#b3b3b3', overflowWrap:'anywhere'});
+        Object.assign(author.style, {display:'block', marginTop:'3px', fontSize:'14px', color:'#b3b3b3', overflowWrap:'anywhere'});
         details.appendChild(author);
       }
       const provider = document.createElement('span');
       provider.textContent = 'Spotify';
-      Object.assign(provider.style, {display:'block', marginTop:'3px', fontSize:'12px', color:'#b3b3b3'});
+      Object.assign(provider.style, {display:'block', marginTop:'3px', fontSize:'13px', color:'#b3b3b3'});
       details.appendChild(provider);
       const logo = document.createElement('span');
       logo.innerHTML = renderToStaticMarkup(createElement(FaSpotify, {size:22, color:'#fff'}));
