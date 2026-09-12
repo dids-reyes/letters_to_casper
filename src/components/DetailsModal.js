@@ -613,7 +613,18 @@ function DetailsModal({
   const [showAdLock, setShowAdLock] = useState(false);
   const [adCountdown, setAdCountdown] = useState(5);
   const [pendingNavDirection, setPendingNavDirection] = useState(null);
-  const lettersReadCountRef = useRef(1);
+  const maxScrollIndexRef = useRef(-1);
+  const newItemsScrolledRef = useRef(1);
+
+  useEffect(() => {
+    if (!showDetailsModal) {
+      maxScrollIndexRef.current = -1;
+      newItemsScrolledRef.current = 1;
+    } else if (maxScrollIndexRef.current === -1 && currentIndex >= 0) {
+      maxScrollIndexRef.current = currentIndex;
+      newItemsScrolledRef.current = 1;
+    }
+  }, [showDetailsModal, currentIndex]);
 
   const [showReadTip, setShowReadTip] = useState(() => {
     try {
@@ -647,6 +658,31 @@ function DetailsModal({
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
       document.body.style.touchAction = originalBodyTouchAction;
+    };
+  }, [showDetailsModal, readMode]);
+
+  // Adapt mobile status bar / notification area theme-color to the dim overlay
+  useEffect(() => {
+    if (!showDetailsModal) return undefined;
+
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement("meta");
+      metaThemeColor.setAttribute("name", "theme-color");
+      document.head.appendChild(metaThemeColor);
+    }
+    const previousThemeColor = metaThemeColor.getAttribute("content") || "#ffffff";
+    const isNightShift = document.documentElement.classList.contains("night-shift");
+    const dimThemeColor = readMode
+      ? (isNightShift ? "#08090a" : "#4e4c4a")
+      : (isNightShift ? "#060607" : "#82807f");
+
+    metaThemeColor.setAttribute("content", dimThemeColor);
+
+    return () => {
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute("content", previousThemeColor);
+      }
     };
   }, [showDetailsModal, readMode]);
 
@@ -725,16 +761,22 @@ function DetailsModal({
       dismissReadTip();
     }
 
-    if (lettersReadCountRef.current >= AD_INTERVAL) {
-      lettersReadCountRef.current = 0;
-      setPendingNavDirection("next");
-      setShowAdLock(true);
-      return;
+    const nextIndex = currentIndex + 1;
+    const currentMax = maxScrollIndexRef.current === -1 ? currentIndex : maxScrollIndexRef.current;
+    const isNetNew = nextIndex > currentMax;
+
+    if (isNetNew) {
+      if (newItemsScrolledRef.current >= AD_INTERVAL) {
+        newItemsScrolledRef.current = 0;
+        setPendingNavDirection("next");
+        setShowAdLock(true);
+        return;
+      }
+      maxScrollIndexRef.current = nextIndex;
+      newItemsScrolledRef.current += 1;
     }
 
-    lettersReadCountRef.current += 1;
-
-    const nextLetter = letterList[currentIndex + 1];
+    const nextLetter = letterList[nextIndex];
     if (!nextLetter) return;
 
     isTransitioningRef.current = true;
@@ -1076,7 +1118,8 @@ function DetailsModal({
     setShowAdLock(false);
     setAdCountdown(5);
     setPendingNavDirection(null);
-    lettersReadCountRef.current = 1;
+    maxScrollIndexRef.current = -1;
+    newItemsScrolledRef.current = 1;
   };
 
   const closeShareDialog = () => {
@@ -1614,7 +1657,7 @@ function DetailsModal({
     selectedLetter && (
       <div
         className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}`}
-        onClick={handleCloseModal}
+        onClick={readMode ? undefined : handleCloseModal}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
