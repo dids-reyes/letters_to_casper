@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import OriginsView from "./OriginsView";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -31,6 +31,7 @@ import {
   IoNewspaperOutline,
   IoMoonOutline,
   IoLocationOutline,
+  IoReaderOutline,
   IoSunnyOutline,
   IoShieldCheckmarkOutline,
   IoServerOutline,
@@ -40,7 +41,7 @@ import { TbChristmasTree } from "react-icons/tb";
 import { RiAdvertisementLine } from "react-icons/ri";
 import { render_url, api_key } from "../data/keys";
 import tc from "thousands-counter";
-import InfiniteScroll from "react-infinite-scroll-component";
+import { useFeedVirtualizer } from "../hooks/useFeedVirtualizer";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
@@ -66,7 +67,7 @@ const formatCountry = (country) => {
   }
 };
 
-function Home() {
+function Home({ initialReadMode = false } = {}) {
   const navigate = useNavigate();
   const { messageId } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
@@ -183,6 +184,47 @@ function Home() {
     }
   }, [nightShift]);
 
+  const [readMode, setReadMode] = useState(() => Boolean(initialReadMode));
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem("readMode");
+    } catch (e) {
+      /* storage unavailable */
+    }
+  }, []);
+
+  const [showReadModeModal, setShowReadModeModal] = useState(false);
+  const isReadModeActive = Boolean(showDetailsModal && readMode);
+
+  const [readModeTipDismissed, setReadModeTipDismissed] = useState(() => {
+    try {
+      return localStorage.getItem("readModeTipDismissed") === "true";
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const dismissReadModeTip = useCallback(() => {
+    setReadModeTipDismissed(true);
+    try {
+      localStorage.setItem("readModeTipDismissed", "true");
+    } catch (e) {
+      /* storage unavailable */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!showReadModeModal) return undefined;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowReadModeModal(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [showReadModeModal]);
+
   useEffect(() => {
     const updateLateNight = () => {
       const hour = new Date().getHours();
@@ -231,7 +273,7 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    if (!FIREFLY_ENABLED || loading !== 0) return undefined;
+    if (!FIREFLY_ENABLED || loading !== 0 || isReadModeActive) return undefined;
 
     let scheduleTimer;
     let visitTimer;
@@ -292,7 +334,7 @@ function Home() {
       window.clearTimeout(scheduleTimer);
       window.clearTimeout(visitTimer);
     };
-  }, [loading]);
+  }, [loading, isReadModeActive]);
 
   useEffect(() => {
     const updateLetterGridColumns = () => {
@@ -353,6 +395,7 @@ function Home() {
   };
 
   const fetchMoreData = async () => {
+    if (isReadModeActive) return;
     try {
       const response = await fetch(
         `${render_url}?offset=${letters.messages.length}&limit=50`,
@@ -617,6 +660,16 @@ function Home() {
       return;
     }
 
+    const currentSelectedId =
+      typeof selectedLetter?._id === "string"
+        ? selectedLetter._id
+        : selectedLetter?._id?.$oid
+        ? selectedLetter._id.$oid
+        : String(selectedLetter?._id || "");
+    if (selectedLetter && currentSelectedId === String(messageId)) {
+      return;
+    }
+
     const fetchLinkedLetter = async () => {
       try {
         const response = await fetch(
@@ -644,6 +697,7 @@ function Home() {
     };
 
     fetchLinkedLetter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messageId]);
 
   const scrollToTop = () => {
@@ -754,36 +808,31 @@ function Home() {
     );
   });
 
-  const [filteredLetters, setFilteredLetters] = useState([]);
+  const isSearchActive = searchTerm.trim() !== "";
+  const activeLetters = useMemo(() => {
+    const source = isSearchActive ? searchedResults : letters.messages;
+    return source.filter((letter) => letter.approve);
+  }, [isSearchActive, searchedResults, letters.messages]);
 
-  useEffect(() => {
-    const filteredData =
-      searchTerm === ""
-        ? letters.messages
-        : letters.messages.filter((letter) => {
-            const { from, to, message } = letter;
-            const lowerCasedSearchTerm = searchTerm.toLowerCase();
-            return (
-              from.toLowerCase().includes(lowerCasedSearchTerm) ||
-              to.toLowerCase().includes(lowerCasedSearchTerm) ||
-              message.toLowerCase().includes(lowerCasedSearchTerm)
-            );
-          });
-    setFilteredLetters(filteredData);
-  }, [letters.messages, searchTerm]);
+  const feedItems = useMemo(() => {
+    if (activeLetters.length === 0) return [];
 
-  const renderLettersWithAds = (items) => {
-    const approvedLetters = items.filter((letter) => letter.approve);
-    const warmthScores = approvedLetters.map(letter => {
+    const warmthScores = activeLetters.map((letter) => {
       const reads = Math.max(0, Number(letter.reads) || 0);
       const reactions = ["love", "sad"].reduce(
         (total, key) => total + Math.max(0, Number(letter.echoes?.[key]) || 0),
-        0,
+        0
       );
       return Math.log2(reads + 1) + reactions * 3;
     });
     const maxWarmthScore = Math.max(0, ...warmthScores);
-    const leadingCards = searchTerm === "" ? 1 : 0;
+
+    const items = [];
+    if (!isSearchActive) {
+      items.push({ type: "featured", key: "featured-card" });
+    }
+
+    const leadingCards = isSearchActive ? 0 : 1;
     const firstAdAfter =
       Math.round((60 + leadingCards) / letterGridColumns) *
         letterGridColumns -
@@ -791,40 +840,52 @@ function Home() {
     const followingAdInterval =
       Math.round(60 / letterGridColumns) * letterGridColumns;
 
-    return approvedLetters.flatMap((letter, index) => {
+    activeLetters.forEach((letter, index) => {
       const letterNumber = index + 1;
-      const letterCard = (
-        <Letter
-          key={letter._id || `letter-${index}`}
-          letter={letter}
-          toggleDetailsModal={toggleDetailsModal}
-          setSelectedLetter={setSelectedLetter}
-          maxWarmthScore={maxWarmthScore}
-        />
-      );
+      items.push({
+        type: "letter",
+        key: letter._id || `letter-${index}`,
+        letter,
+        maxWarmthScore,
+      });
 
       const shouldInsertAd =
         letterNumber >= firstAdAfter &&
         (letterNumber - firstAdAfter) % followingAdInterval === 0;
 
-      if (!shouldInsertAd) {
-        return [letterCard];
+      if (shouldInsertAd) {
+        const adIntervalIndex =
+          (letterNumber - firstAdAfter) / followingAdInterval;
+        items.push({
+          type: "ad",
+          key: `letter-ad-${letterNumber}`,
+          variant: adIntervalIndex % 2 === 0 ? "adcomponent" : "adsterra",
+        });
       }
-
-      return [
-        letterCard,
-        <div
-          className="letter-ad-slot"
-          key={`letter-ad-${letterNumber}`}
-          aria-label="Advertisement"
-        >
-          {(letterNumber - firstAdAfter) / followingAdInterval % 2 === 0
-            ? <AdComponent />
-            : <AdsterraNativeBanner />}
-        </div>,
-      ];
     });
-  };
+
+    return items;
+  }, [activeLetters, isSearchActive, letterGridColumns]);
+
+  const feedContainerRef = useRef(null);
+  const hasMoreLetters =
+    !isFeatured &&
+    !isSearchActive &&
+    letters.messages.length < letters.counts.approved;
+
+  const {
+    virtualItems,
+    topSpacerHeight,
+    bottomSpacerHeight,
+  } = useFeedVirtualizer({
+    items: feedItems,
+    columns: letterGridColumns,
+    isSuspended: isReadModeActive,
+    containerRef: feedContainerRef,
+    onNearEnd: fetchMoreData,
+    hasMore: hasMoreLetters,
+    overscanRows: 2,
+  });
 
   const goToFeedPage = page => {
     const nextPage = Math.max(0, Math.min(4, page));
@@ -1088,6 +1149,14 @@ function Home() {
                   </div>
                   <div className="feed-report__updates">
                     <article className="feed-report__story is-featured">
+                      <IoReaderOutline aria-hidden="true" />
+                      <div>
+                        <span className="feed-report__kicker">Newest addition · Read Mode</span>
+                        <h4>A calmer way to browse</h4>
+                        <p>Turn on Read Mode to view letters immediately without typing delays, and swipe or scroll up and down to browse continuously.</p>
+                      </div>
+                    </article>
+                    <article className="feed-report__story">
                       <IoHeartOutline aria-hidden="true" />
                       <div><span className="feed-report__kicker">New · Reactions</span><h4>Leave a feeling behind</h4><p>Respond with Love or Sad. Your choice is remembered.</p></div>
                     </article>
@@ -1095,11 +1164,10 @@ function Home() {
                       <IoFlameOutline aria-hidden="true" />
                       <div><span className="feed-report__kicker">New · Burn keys</span><h4>Your letter, your choice</h4><p>New letters receive a private key you can use to remove your letter after approval whenever you’re ready to let it go.</p></div>
                     </article>
-                    <article className="feed-report__story">
+                    <article className="feed-report__story is-wide">
                       <IoInformationCircleOutline aria-hidden="true" />
                       <div><span className="feed-report__kicker">Design note</span><h4>Letters that quietly glow</h4><p>Borders respond to their warmth: gold for reads, pink for Love, and blue for Sad.</p></div>
                     </article>
-
                   </div>
                 </section>
 
@@ -1311,48 +1379,19 @@ function Home() {
           </p>
         </>
       ) : loading === 0 ? (
-        <div>
-          <div className="letters-container">
-            {searchTerm !== "" ? null : (
-              <div
-                className={`letter-card letter-card--featured${
-                  isFeatured ? " is-active" : ""
-                }`}
-                onClick={fetchFeatured}
-              >
-                <span className="letter-card__featured-badge">★ Featured</span>
-                <p className="letter-card__featured-text">
-                  {isFeatured
-                    ? "Showing featured letters — tap to go back"
-                    : "Tap to read the featured letters"}
-                </p>
-              </div>
-            )}
+        <div
+          className={`feed-main-container${
+            isReadModeActive ? " feed-main-container--suspended" : ""
+          }`}
+        >
+          <div className="letters-container" ref={feedContainerRef}>
             {isSearching ? (
               <div className="letter-search-loading" role="status" aria-live="polite">
                 <span className="letter-search-spinner" aria-hidden="true" />
                 <strong>Searching letters…</strong>
                 <p>Waiting for the closest matches.</p>
               </div>
-            ) : searchedResults.length > 0 && searchTerm !== "" ? (
-              renderLettersWithAds(searchedResults)
-            ) : searchTerm === "" ? (
-              letters.messages.length > 0 ? (
-                renderLettersWithAds(letters.messages)
-              ) : (
-                <div>
-                  <p>No Letters Found</p>
-                  <center>
-                    <Lottie
-                      loop
-                      animationData={empty}
-                      play
-                      style={{ width: 300, height: 300 }}
-                    />
-                  </center>
-                </div>
-              )
-            ) : (
+            ) : isSearchActive && feedItems.length === 0 ? (
               <div>
                 <p>
                   <br />
@@ -1371,32 +1410,92 @@ function Home() {
                   />
                 </center>
               </div>
-            )}
-            <InfiniteScroll
-              style={{ overflow: "hidden" }}
-              dataLength={filteredLetters.length}
-              next={isFeatured ? null : fetchMoreData}
-              hasMore={
-                filteredLetters.length === letters.counts.approved - 1
-                  ? false
-                  : true
-              }
-              loader={
-                searchTerm === "" &&
-                !isFeatured && (
-                  <center>
-                    <Lottie
-                      loop
-                      animationData={ghost1}
-                      play
-                      style={{ width: 150, height: 150 }}
+            ) : !isSearchActive && feedItems.length === 0 ? (
+              <div>
+                <p>No Letters Found</p>
+                <center>
+                  <Lottie
+                    loop
+                    animationData={empty}
+                    play
+                    style={{ width: 300, height: 300 }}
+                  />
+                </center>
+              </div>
+            ) : (
+              <>
+                {topSpacerHeight > 0 && (
+                  <div
+                    className="letters-virtual-spacer"
+                    style={{ height: topSpacerHeight }}
+                    aria-hidden="true"
+                  />
+                )}
+                {virtualItems.map((item) => {
+                  if (item.type === "featured") {
+                    return (
+                      <div
+                        key={item.key}
+                        className={`letter-card letter-card--featured${
+                          isFeatured ? " is-active" : ""
+                        }`}
+                        onClick={fetchFeatured}
+                      >
+                        <span className="letter-card__featured-badge">★ Featured</span>
+                        <p className="letter-card__featured-text">
+                          {isFeatured
+                            ? "Showing featured letters — tap to go back"
+                            : "Tap to read the featured letters"}
+                        </p>
+                      </div>
+                    );
+                  }
+                  if (item.type === "ad") {
+                    return (
+                      <div
+                        className="letter-ad-slot"
+                        key={item.key}
+                        aria-label="Advertisement"
+                      >
+                        {item.variant === "adcomponent" ? (
+                          <AdComponent />
+                        ) : (
+                          <AdsterraNativeBanner />
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <Letter
+                      key={item.key}
+                      letter={item.letter}
+                      toggleDetailsModal={toggleDetailsModal}
+                      setSelectedLetter={setSelectedLetter}
+                      maxWarmthScore={item.maxWarmthScore}
                     />
-                  </center>
-                )
-              }
-              endMessage={<p style={{ textAlign: "center" }}>‎ </p>}
-              scrollThreshold={1}
-            />
+                  );
+                })}
+                {bottomSpacerHeight > 0 && (
+                  <div
+                    className="letters-virtual-spacer"
+                    style={{ height: bottomSpacerHeight }}
+                    aria-hidden="true"
+                  />
+                )}
+                {hasMoreLetters && (
+                  <div className="feed-infinite-loader" aria-hidden="true">
+                    <center>
+                      <Lottie
+                        loop
+                        animationData={ghost1}
+                        play
+                        style={{ width: 150, height: 150 }}
+                      />
+                    </center>
+                  </div>
+                )}
+              </>
+            )}
           </div>
           <h4>‎ </h4>
         </div>
@@ -1405,6 +1504,14 @@ function Home() {
         showDetailsModal={showDetailsModal}
         toggleDetailsModal={toggleDetailsModal}
         selectedLetter={selectedLetter}
+        readMode={readMode}
+        letters={activeLetters}
+        setSelectedLetter={setSelectedLetter}
+        onFetchMore={
+          isFeatured || isSearchActive || isReadModeActive
+            ? null
+            : fetchMoreData
+        }
       />
       {showUiAnnouncement && (
         <div
@@ -1450,6 +1557,93 @@ function Home() {
           </section>
         </div>
       )}
+      {showReadModeModal && (
+        <div
+          className="ui-announcement-overlay read-mode-dialog-overlay"
+          onClick={() => setShowReadModeModal(false)}
+        >
+          <section
+            className="ui-announcement-dialog read-mode-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="read-mode-dialog-title"
+            aria-describedby="read-mode-dialog-description"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="ui-announcement-icon" aria-hidden="true">
+              <IoReaderOutline size={20} />
+            </span>
+            <span className="ui-announcement-eyebrow">Reading Experience</span>
+            <h2 id="read-mode-dialog-title">Read Mode</h2>
+            <p id="read-mode-dialog-description">
+              When Read Mode is enabled, typing effects are disabled and letters are displayed immediately. You can also swipe or scroll down to browse through letters.
+            </p>
+            <div className="read-mode-dialog-status">
+              <span className={`read-mode-dialog-badge${readMode ? " is-active" : ""}`}>
+                {readMode ? "● Read Mode is ON" : "○ Read Mode is OFF"}
+              </span>
+            </div>
+            <div className="read-mode-dialog-actions">
+              <button
+                type="button"
+                className={`read-mode-dialog-toggle${readMode ? " is-active" : ""}`}
+                onClick={() => {
+                  dismissReadModeTip();
+                  setReadMode((prev) => !prev);
+                }}
+              >
+                {readMode ? "Turn Off Read Mode" : "Turn On Read Mode"}
+              </button>
+              <button
+                type="button"
+                className="read-mode-dialog-close"
+                onClick={() => setShowReadModeModal(false)}
+              >
+                Done
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {!isHeaderCompact && !readMode && !readModeTipDismissed && (
+        <aside className="read-mode-suggestion" role="status" aria-label="Read Mode introduction">
+          <button
+            type="button"
+            className="read-mode-suggestion__close"
+            onClick={dismissReadModeTip}
+            aria-label="Dismiss Read Mode suggestion"
+          >
+            ×
+          </button>
+          <strong>Read Mode</strong>
+          <span>Disable typing delays and swipe through letters smoothly.</span>
+          <button
+            type="button"
+            className="read-mode-suggestion__action"
+            onClick={() => {
+              dismissReadModeTip();
+              setShowReadModeModal(true);
+            }}
+          >
+            Try Read Mode
+          </button>
+        </aside>
+      )}
+
+      <button
+        type="button"
+        className={`fab read-mode-fab${!isHeaderCompact ? " is-visible" : ""}${readMode ? " is-active" : ""}`}
+        onClick={() => {
+          dismissReadModeTip();
+          setShowReadModeModal(true);
+        }}
+        aria-pressed={readMode}
+        aria-label={`Read mode info and settings (${readMode ? "on" : "off"})`}
+        title={`Read mode: ${readMode ? "On" : "Off"} (Click to learn more)`}
+      >
+        <IoReaderOutline aria-hidden="true" />
+      </button>
       <button
         type="button"
         className={`fab${isHeaderCompact ? " is-visible" : ""}`}

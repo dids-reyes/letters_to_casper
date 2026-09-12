@@ -1,5 +1,5 @@
 import React from "react";
-import {useLocation} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { BsX } from "react-icons/bs";
 import { BsMailboxFlag } from "react-icons/bs";
 import Typewriter from "typewriter-effect";
@@ -23,7 +23,8 @@ import {
   IoQrCodeOutline,
   IoShareSocialOutline,
 } from "react-icons/io5";
-import { useState, useEffect, useRef } from "react";
+import AdsterraBanner from "./AdsterraBanner";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
 import stringSplitter from "../data/splitLetterCharacters";
@@ -156,10 +157,21 @@ const normalizeEchoes = echoes => echoOptions.reduce((totals, option) => ({
   [option.id]: Math.max(0, Number(echoes?.[option.id]) || 0),
 }), {});
 
+const getLetterId = (letter) => {
+  if (!letter) return "";
+  if (typeof letter._id === "string") return letter._id;
+  if (letter._id?.$oid) return letter._id.$oid;
+  return String(letter._id || "");
+};
+
 function DetailsModal({
   showDetailsModal,
   toggleDetailsModal,
   selectedLetter,
+  readMode = false,
+  letters = [],
+  setSelectedLetter = () => {},
+  onFetchMore = () => {},
 }) {
   let letterId;
   let letterDate;
@@ -172,7 +184,7 @@ function DetailsModal({
   if (selectedLetter) {
     letterDate = new Date(selectedLetter.timestamp);
     letterTime = new Date(selectedLetter.timestamp);
-    letterId = selectedLetter._id;
+    letterId = getLetterId(selectedLetter);
     if (letterDate < targetDate && letterId !== adminId) {
       early_bird = true;
     }
@@ -446,7 +458,10 @@ function DetailsModal({
   useEffect(() => {
     const body = messageBodyRef.current;
     if (!body || !showDetailsModal || !opened) return undefined;
-    const mobile = window.matchMedia('(max-width: 600px)');
+    const mobile =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia('(max-width: 600px)')
+        : { matches: false };
     let followTyping = true;
     body.scrollTop = 0;
     const onScroll = () => {
@@ -541,6 +556,10 @@ function DetailsModal({
       setOpened(false);
       return;
     }
+    if (readMode) {
+      setOpened(true);
+      return;
+    }
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
@@ -552,7 +571,332 @@ function DetailsModal({
     setOpened(false);
     const timer = setTimeout(() => setOpened(true), 1450);
     return () => clearTimeout(timer);
-  }, [showDetailsModal, selectedLetter]);
+  }, [showDetailsModal, selectedLetter, readMode]);
+
+  // Read mode: reveal attachments immediately
+  useEffect(() => {
+    if (readMode && selectedLetter) {
+      setShowPhoto(Boolean(selectedLetter.photo?.url));
+      if (spotifyLink == null) {
+        setShowYoutube(true);
+      } else {
+        setShowSpotify(true);
+      }
+    }
+  }, [readMode, selectedLetter, spotifyLink]);
+
+  const navigate = useNavigate();
+  const approvedLetters = useMemo(() => (Array.isArray(letters) ? letters : []), [letters]);
+  const letterList = useMemo(() => {
+    if (!selectedLetter) return approvedLetters;
+    const targetId = getLetterId(selectedLetter);
+    const exists = approvedLetters.some((l) => getLetterId(l) === targetId);
+    if (!exists) {
+      return [selectedLetter, ...approvedLetters];
+    }
+    return approvedLetters;
+  }, [approvedLetters, selectedLetter]);
+
+  const targetId = getLetterId(selectedLetter);
+  const currentIndex = letterList.findIndex((l) => getLetterId(l) === targetId);
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex >= 0 && currentIndex < letterList.length - 1;
+
+  const AD_INTERVAL = 10;
+  const [outgoingLetter, setOutgoingLetter] = useState(null);
+  const [slideDirection, setSlideDirection] = useState(null);
+  const isTransitioningRef = useRef(false);
+  const lastWheelNavTime = useRef(0);
+  const goToNextRef = useRef(null);
+  const goToPrevRef = useRef(null);
+
+  const [showAdLock, setShowAdLock] = useState(false);
+  const [adCountdown, setAdCountdown] = useState(5);
+  const [pendingNavDirection, setPendingNavDirection] = useState(null);
+  const lettersReadCountRef = useRef(1);
+
+  const [showReadTip, setShowReadTip] = useState(() => {
+    try {
+      return localStorage.getItem("hasSeenReadModeTip") !== "true";
+    } catch (e) {
+      return true;
+    }
+  });
+
+  const dismissReadTip = useCallback(() => {
+    setShowReadTip(false);
+    try {
+      localStorage.setItem("hasSeenReadModeTip", "true");
+    } catch (e) {
+      /* storage unavailable */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!showDetailsModal || !readMode) return undefined;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.touchAction = originalBodyTouchAction;
+    };
+  }, [showDetailsModal, readMode]);
+
+  useEffect(() => {
+    if (!showAdLock) {
+      setAdCountdown(5);
+      return undefined;
+    }
+
+    setAdCountdown(5);
+    let remaining = 5;
+    let timerId = null;
+
+    const isUserActive = () => {
+      if (
+        typeof document !== "undefined" &&
+        (document.hidden || document.visibilityState === "hidden")
+      ) {
+        return false;
+      }
+      return true;
+    };
+
+    const stopTimer = () => {
+      if (timerId !== null) {
+        window.clearInterval(timerId);
+        timerId = null;
+      }
+    };
+
+    const startTimer = () => {
+      if (timerId !== null || remaining <= 0) return;
+      if (!isUserActive()) return;
+
+      timerId = window.setInterval(() => {
+        if (!isUserActive()) {
+          stopTimer();
+          return;
+        }
+
+        remaining -= 1;
+        if (remaining <= 0) {
+          stopTimer();
+          setAdCountdown(0);
+        } else {
+          setAdCountdown(remaining);
+        }
+      }, 1000);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        startTimer();
+      } else {
+        stopTimer();
+      }
+    };
+
+    startTimer();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", startTimer);
+    window.addEventListener("blur", stopTimer);
+
+    return () => {
+      stopTimer();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", startTimer);
+      window.removeEventListener("blur", stopTimer);
+    };
+  }, [showAdLock]);
+
+  const goToNext = useCallback(() => {
+    if (showAdLock || isTransitioningRef.current || !canGoNext) return;
+
+    if (showReadTip) {
+      dismissReadTip();
+    }
+
+    if (lettersReadCountRef.current >= AD_INTERVAL) {
+      lettersReadCountRef.current = 0;
+      setPendingNavDirection("next");
+      setShowAdLock(true);
+      return;
+    }
+
+    lettersReadCountRef.current += 1;
+
+    const nextLetter = letterList[currentIndex + 1];
+    if (!nextLetter) return;
+
+    isTransitioningRef.current = true;
+    setOutgoingLetter(selectedLetter);
+    setSlideDirection("next");
+
+    setSelectedLetter(nextLetter);
+    navigate(`/letters/${getLetterId(nextLetter)}`, { replace: true });
+
+    setShowTranslation(false);
+    setTranslatedMessage("");
+    setIsRevealed(false);
+    setHasClickedAd(false);
+
+    if (currentIndex + 1 >= letterList.length - 4 && onFetchMore) {
+      onFetchMore();
+    }
+
+    setTimeout(() => {
+      setOutgoingLetter(null);
+      setSlideDirection(null);
+      isTransitioningRef.current = false;
+    }, 520);
+  }, [showAdLock, showReadTip, dismissReadTip, canGoNext, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, onFetchMore]);
+
+  const goToPrev = useCallback(() => {
+    if (showAdLock || isTransitioningRef.current || !canGoPrev) return;
+
+    if (showReadTip) {
+      dismissReadTip();
+    }
+
+    const prevLetter = letterList[currentIndex - 1];
+    if (!prevLetter) return;
+
+    isTransitioningRef.current = true;
+    setOutgoingLetter(selectedLetter);
+    setSlideDirection("prev");
+
+    setSelectedLetter(prevLetter);
+    navigate(`/letters/${getLetterId(prevLetter)}`, { replace: true });
+
+    setShowTranslation(false);
+    setTranslatedMessage("");
+    setIsRevealed(false);
+    setHasClickedAd(false);
+
+    setTimeout(() => {
+      setOutgoingLetter(null);
+      setSlideDirection(null);
+      isTransitioningRef.current = false;
+    }, 520);
+  }, [showAdLock, showReadTip, dismissReadTip, canGoPrev, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate]);
+
+  goToNextRef.current = goToNext;
+  goToPrevRef.current = goToPrev;
+
+  const handleContinueReading = useCallback(() => {
+    setShowAdLock(false);
+    if (pendingNavDirection === "next") {
+      setPendingNavDirection(null);
+      goToNext();
+    } else if (pendingNavDirection === "prev") {
+      setPendingNavDirection(null);
+      goToPrev();
+    }
+  }, [pendingNavDirection, goToNext, goToPrev]);
+
+  const touchStartY = useRef(null);
+  const touchStartX = useRef(null);
+  const touchInsideScrollable = useRef(false);
+
+  const handleTouchStart = (e) => {
+    if (!readMode || showAdLock) return;
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+    touchInsideScrollable.current = Boolean(e.target.closest(".letter-paper__body--scrollable"));
+  };
+
+  const handleTouchMove = (e) => {
+    if (!readMode) return;
+    if (showAdLock) {
+      if (e.cancelable) e.preventDefault();
+      return;
+    }
+    if (!touchInsideScrollable.current) {
+      if (e.cancelable) e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!readMode || showAdLock || touchStartY.current === null) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartY.current = null;
+
+    if (Math.abs(deltaY) < 45 || Math.abs(deltaY) < Math.abs(deltaX) * 1.2) {
+      return;
+    }
+
+    if (touchInsideScrollable.current && messageBodyRef.current) {
+      const scrollEl = messageBodyRef.current;
+      const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 5;
+      const atTop = scrollEl.scrollTop <= 5;
+      if (deltaY < 0 && !atBottom) return;
+      if (deltaY > 0 && !atTop) return;
+    }
+
+    if (deltaY < -45) {
+      goToNext();
+    } else if (deltaY > 45) {
+      goToPrev();
+    }
+  };
+
+  useEffect(() => {
+    if (!showDetailsModal || !readMode) return undefined;
+
+    const onWheel = (e) => {
+      if (e.cancelable) e.preventDefault();
+      if (showAdLock) return;
+
+      const targetEl =
+        e.target && typeof e.target.closest === "function" ? e.target : null;
+      const scrollable = targetEl
+        ? targetEl.closest(".letter-paper__body--scrollable, .letter-paper")
+        : null;
+      if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 4) {
+        const atBottom =
+          scrollable.scrollTop + scrollable.clientHeight >=
+          scrollable.scrollHeight - 6;
+        const atTop = scrollable.scrollTop <= 6;
+
+        if (e.deltaY > 0 && !atBottom) {
+          scrollable.scrollTop += e.deltaY;
+          return;
+        }
+        if (e.deltaY < 0 && !atTop) {
+          scrollable.scrollTop += e.deltaY;
+          return;
+        }
+      }
+
+      if (Math.abs(e.deltaY) < 30) return;
+
+      const now = Date.now();
+      if (isTransitioningRef.current || now - lastWheelNavTime.current < 550) return;
+
+      if (e.deltaY > 0) {
+        lastWheelNavTime.current = now;
+        if (goToNextRef.current) goToNextRef.current();
+      } else if (e.deltaY < 0) {
+        lastWheelNavTime.current = now;
+        if (goToPrevRef.current) goToPrevRef.current();
+      }
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [showDetailsModal, readMode, showAdLock]);
 
 
   const letterCity = selectedLetter?.loc?.city || "";
@@ -726,6 +1070,13 @@ function DetailsModal({
     setTranslatedMessage("");
     setIsTranslating(false);
     setShowTranslation(false);
+    setOutgoingLetter(null);
+    setSlideDirection(null);
+    isTransitioningRef.current = false;
+    setShowAdLock(false);
+    setAdCountdown(5);
+    setPendingNavDirection(null);
+    lettersReadCountRef.current = 1;
   };
 
   const closeShareDialog = () => {
@@ -737,21 +1088,36 @@ function DetailsModal({
   useEffect(() => {
     if (!showDetailsModal) return;
     const onKeyDown = (event) => {
-      if (event.key !== "Escape") return;
-      if (showPhotoViewer) {
-        setShowPhotoViewer(false);
+      if (event.key === "Escape") {
+        if (showPhotoViewer) {
+          setShowPhotoViewer(false);
+          return;
+        }
+        if (showShareDialog) {
+          closeShareDialog();
+          return;
+        }
+        if (showAdLock) {
+          return;
+        }
+        handleCloseModal();
         return;
       }
-      if (showShareDialog) {
-        closeShareDialog();
-        return;
+      if (readMode && !showPhotoViewer && !showShareDialog) {
+        if (showAdLock) return;
+        if (event.key === "ArrowDown" || event.key === "PageDown") {
+          event.preventDefault();
+          goToNext();
+        } else if (event.key === "ArrowUp" || event.key === "PageUp") {
+          event.preventDefault();
+          goToPrev();
+        }
       }
-      handleCloseModal();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDetailsModal, showPhotoViewer, showShareDialog]);
+  }, [showDetailsModal, showPhotoViewer, showShareDialog, readMode, showAdLock, goToNext, goToPrev]);
 
   const formatReadsCount = (readsCount) => {
     const parsed = parseInt(readsCount) || 0;
@@ -764,343 +1130,622 @@ function DetailsModal({
     eleven_eleven ||
     twelve_fifty_one;
 
+  const renderOutgoingPaper = (letter) => {
+    if (!letter) return null;
+    const lDate = new Date(letter.timestamp);
+    const lTime = new Date(letter.timestamp);
+    const lId = letter._id;
+    const isEarly = lDate < targetDate && lId !== adminId;
+    let isEleven = false;
+    let isTwelve = false;
+    if (lTime != null) {
+      const hours = lTime.getHours();
+      const minutes = lTime.getMinutes();
+      if (hours === 23 && minutes === 11) isEleven = true;
+      else if (hours === 0 && minutes === 51) isTwelve = true;
+    }
+    const lHasBadge = isEarly || lId === adminId || isEleven || isTwelve;
+    const lMedia = extractMediaLinks(letter.message || "") || {
+      youtubeLink: { id: null, newMessage: null },
+      spotifyLink: { id: null, newMessage: null },
+    };
+    const lData = lMedia.spotifyLink != null ? lMedia.spotifyLink : lMedia.youtubeLink;
+    const lMessage = lData?.newMessage || letter.message;
+    const lLinkId = lData?.id;
+    const lHasAttachment = Boolean(lLinkId || letter.photo?.url);
+    const lCity = letter.loc?.city || "";
+    const lHasLoc = Boolean(lCity) && lCity !== "Unknown";
+    const lReads = parseInt(letter.reads, 10) || 0;
+    const lEchoes = normalizeEchoes(letter.echoes);
+    const lEchoTotal = Object.values(lEchoes).reduce((a, b) => a + b, 0);
+    const LDominantIcon = lEchoes.sad > lEchoes.love ? TbMoodSad : IoHeartOutline;
+
+    return (
+      <div className="letter-paper" aria-hidden="true">
+        <div className="letter-paper__head">
+          <div className="letter-info" style={{ marginBottom: "4px" }}>
+            <span><strong>From:</strong> {letter.from}</span>
+          </div>
+          <div className="letter-info">
+            <span><strong>To:</strong> {letter.to}</span>
+          </div>
+        </div>
+
+        <div className="letter-paper__date">
+          <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
+          <span className="timestamp-text">
+            <span>{formatTimestamp(letter.timestamp)}</span>
+          </span>
+        </div>
+
+        <div className={`letter-paper__body letter-text${lHasAttachment ? " letter-paper__body--scrollable" : ""}`}>
+          <span>{lMessage}</span>
+        </div>
+
+        {lMedia.spotifyLink?.id && (
+          <div className="letter-paper__media">
+            <iframe
+              title="spotify-preview-outgoing"
+              style={{ border: "12px" }}
+              src={`https://open.spotify.com/embed/${lMedia.spotifyLink.id}?utm_source=generator&theme=1`}
+              width="100%"
+              height="152"
+              frameBorder="0"
+              allowFullScreen=""
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            ></iframe>
+          </div>
+        )}
+        {!lMedia.spotifyLink?.id && lMedia.youtubeLink?.id && (
+          <div className="letter-paper__media letter-paper__media--youtube">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${lMedia.youtubeLink.id}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0`}
+              title="YouTube video player outgoing"
+              frameBorder="0"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+            ></iframe>
+          </div>
+        )}
+        {letter.photo?.url && (
+          <figure className="letter-paper__photo">
+            <img
+              src={getOptimizedPhotoUrl(letter.photo.url)}
+              alt=""
+              loading="lazy"
+            />
+          </figure>
+        )}
+
+        <div className="letter-paper__meta">
+          {lHasBadge && (
+            <>
+              <span className="letter-paper__badges">
+                {isEarly && (
+                  <>
+                    <FaEarlybirds size="15px" />
+                    <BsBookmarkHeartFill size="15px" />
+                  </>
+                )}
+                {lId === adminId && <FaUserTie size="15px" />}
+                {isEleven && <PiShootingStarFill size="15px" />}
+                {isTwelve && <PiHeartBreakFill size="15px" />}
+              </span>
+              <span className="letter-meta-sep">·</span>
+            </>
+          )}
+
+          <span className="letter-paper__age">
+            {shortLetterAge(letter.timestamp)}
+          </span>
+          <span className="letter-meta-sep">·</span>
+          <span className="letter-paper__reads">
+            <IoEyeOutline className="letter-paper__reads-eye" />
+            {formatReadsCount(lReads)}
+          </span>
+
+          {(lHasLoc || (!letter.preview && letter._id)) && (
+            <>
+              <span className="letter-meta-sep">·</span>
+              <span className="letter-paper__actions">
+                {lHasLoc && (
+                  <span className="letter-paper__locate">
+                    <IoLocationOutline size="12px" />
+                    <span>Locate</span>
+                  </span>
+                )}
+                {lHasLoc && !letter.preview && letter._id && (
+                  <span className="letter-meta-sep">·</span>
+                )}
+                {!letter.preview && letter._id && (
+                  <span className="letter-paper__share">
+                    <IoShareSocialOutline size="12px" />
+                    <span>Share</span>
+                  </span>
+                )}
+                {!letter.preview && letter._id && (
+                  <>
+                    <span className="letter-meta-sep">·</span>
+                    <span className="letter-reaction-cluster">
+                      {lEchoTotal > 0 && (
+                        <span className="letter-echo-summary">
+                          <span>{lEchoTotal}</span>
+                        </span>
+                      )}
+                      <span className="letter-echo-control">
+                        <span className="letter-paper__echo">
+                          <LDominantIcon />
+                        </span>
+                      </span>
+                    </span>
+                  </>
+                )}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderActivePaper = () => (
+    <div className="letter-paper" ref={letterPaperRef}>
+      <div className="letter-paper__head">
+        <div className="letter-info" style={{ marginBottom: "4px" }}>
+          {readMode ? (
+            <span>
+              <strong>From:</strong> {selectedLetter.from}
+            </span>
+          ) : (
+            <Typewriter
+              options={{ delay: 50, loop: false, stringSplitter }}
+              onInit={(typewriter) => {
+                typewriter
+                  .typeString(
+                    `<strong>From:</strong> ${selectedLetter.from}`
+                  )
+                  .callFunction((state) => {
+                    state.elements.cursor.remove();
+                  })
+                  .start();
+              }}
+            />
+          )}
+        </div>
+        <div className="letter-info">
+          {readMode ? (
+            <span>
+              <strong>To:</strong> {selectedLetter.to}
+            </span>
+          ) : (
+            <Typewriter
+              options={{ delay: 50, loop: false, stringSplitter }}
+              onInit={(typewriter) => {
+                typewriter
+                  .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
+                  .callFunction((state) => {
+                    state.elements.cursor.remove();
+                  })
+                  .start();
+              }}
+            />
+          )}
+        </div>
+      </div>
+
+      <div
+        className="letter-paper__date"
+        data-tooltip-id="timezone_tooltip"
+        data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
+        data-tooltip-place="top"
+        data-tooltip-variant="info"
+      >
+        <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
+        <span className="timestamp-text">
+          {readMode ? (
+            <span>{formatTimestamp(selectedLetter.timestamp)}</span>
+          ) : (
+            <Typewriter
+              options={{ delay: 70, loop: false }}
+              onInit={(typewriter) => {
+                typewriter
+                  .typeString(formatTimestamp(selectedLetter.timestamp))
+                  .callFunction((state) => {
+                    state.elements.cursor.remove();
+                  })
+                  .start();
+              }}
+            />
+          )}
+        </span>
+      </div>
+      <Tooltip id="timezone_tooltip" />
+
+      {detectedLanguage && (
+        <div className="letter-paper__translation-control">
+          <button
+            type="button"
+            onClick={handleTranslate}
+            disabled={isTranslating}
+            aria-pressed={showTranslation}
+          >
+            <IoLanguageOutline aria-hidden="true" />
+            <span>
+              {isTranslating
+                ? "Translating…"
+                : showTranslation
+                  ? "Show original"
+                  : "Translate to English"}
+            </span>
+          </button>
+          <small>{detectedLanguage.name}</small>
+        </div>
+      )}
+
+      <div ref={messageBodyRef} className={`letter-paper__body letter-text${hasLetterAttachment ? " letter-paper__body--scrollable" : ""}`} tabIndex={0} role="region" aria-label="Letter message">
+        {showTranslation ? (
+          <span>{translatedMessage}</span>
+        ) : readMode ? (
+          <span>{message}</span>
+        ) : (
+          <Typewriter
+            options={{ delay: 40, loop: false, stringSplitter }}
+            onInit={(typewriter) => {
+              typewriter
+                .typeString(message)
+                .pauseFor(500)
+                .callFunction(() => {
+                  setShowPhoto(Boolean(selectedLetter.photo?.url));
+                  if (spotifyLink == null) {
+                    setShowYoutube(true);
+                  } else {
+                    setShowSpotify(true);
+                  }
+                })
+                .start();
+            }}
+          />
+        )}
+      </div>
+
+      {showSpotify && linkId && (
+        <div className="letter-paper__media">
+          <iframe
+            title="spotify-preview"
+            style={{ border: "12px" }}
+            src={`https://open.spotify.com/embed/${linkId}?utm_source=generator&theme=1`}
+            width="100%"
+            height="152"
+            frameBorder="0"
+            allowFullScreen=""
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          ></iframe>
+        </div>
+      )}
+      {showYoutube && linkId && (
+        <div className="letter-paper__media letter-paper__media--youtube">
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${linkId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
+            title="YouTube video player"
+            frameBorder="0"
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+          ></iframe>
+        </div>
+      )}
+      {showPhoto && selectedLetter.photo?.url && (
+        <figure className="letter-paper__photo">
+          <img
+            src={getOptimizedPhotoUrl(selectedLetter.photo.url)}
+            alt={`Attached to the letter from ${selectedLetter.from} to ${selectedLetter.to}`}
+            loading="lazy"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPhotoViewer(true)}
+            aria-label="View attached photo full screen"
+          >
+            <IoExpandOutline />
+            <span>View full screen</span>
+          </button>
+        </figure>
+      )}
+
+      <div className="letter-paper__meta">
+        {hasBadge && (
+          <>
+            <span
+              className="letter-paper__badges"
+              data-tooltip-id="badges"
+              data-tooltip-html={`${
+                early_bird
+                  ? "<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>"
+                  : ""
+              } ${letterId === adminId ? "Admin" : ""} ${
+                eleven_eleven ? "<strong>11:11 PM</strong>" : ""
+              } ${twelve_fifty_one ? "<strong>12:51 AM</strong>" : ""}
+              `}
+              data-tooltip-place="bottom"
+            >
+              {early_bird && (
+                <>
+                  <FaEarlybirds size="15px" />
+                  <BsBookmarkHeartFill size="15px" />
+                </>
+              )}
+              {letterId === adminId && (
+                <>
+                  <FaUserTie size="15px" />
+                </>
+              )}
+              {eleven_eleven && (
+                <>
+                  <PiShootingStarFill size="15px" />
+                </>
+              )}
+              {twelve_fifty_one && (
+                <>
+                  <PiHeartBreakFill size="15px" />
+                </>
+              )}
+            </span>
+            <Tooltip id="badges" arrowColor="transparent" />
+            <span className="letter-meta-sep">·</span>
+          </>
+        )}
+
+        <span className="letter-paper__age" title={js_ago(new Date(selectedLetter.timestamp), {format: "long"})}>
+          {shortLetterAge(selectedLetter.timestamp)}
+        </span>
+        <span className="letter-meta-sep">·</span>
+        <span className="letter-paper__reads">
+          <IoEyeOutline className="letter-paper__reads-eye" />
+          {formatReadsCount(displayedReads)}
+        </span>
+
+        {(hasLocation ||
+          (!selectedLetter.preview && selectedLetter._id)) && (
+          <>
+            <span className="letter-meta-sep">·</span>
+            <span className="letter-paper__actions">
+              {hasLocation && (
+                <a
+                  className={`letter-paper__locate${
+                    isRevealed ? " is-revealed" : ""
+                  }`}
+                  href={isRevealed ? letterLocationMap : adLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleLocateClick}
+                >
+                  <IoLocationOutline size="12px" />
+                  <span>{isRevealed ? "View on Map" : "Locate"}</span>
+                </a>
+              )}
+              {hasLocation &&
+                !selectedLetter.preview &&
+                selectedLetter._id && (
+                  <span className="letter-meta-sep">·</span>
+                )}
+              {!selectedLetter.preview && selectedLetter._id && (
+                <button
+                  type="button"
+                  className="letter-paper__share"
+                  onClick={() => setShowShareDialog(true)}
+                  aria-label="Share this letter"
+                  title="Share letter"
+                >
+                  <IoShareSocialOutline size="12px" />
+                  <span>Share</span>
+                </button>
+              )}
+              {!selectedLetter.preview && selectedLetter._id && (
+                <>
+                  <span className="letter-meta-sep">·</span>
+                  <span className="letter-reaction-cluster">
+                    {echoTotal > 0 && (
+                      <span className="letter-echo-summary">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowEchoPicker(false);
+                            setShowEchoBreakdown(current => !current);
+                          }}
+                          aria-expanded={showEchoBreakdown}
+                          aria-label={`${echoTotal} ${echoTotal === 1 ? "reaction" : "reactions"}; show breakdown`}
+                        >
+                          {echoTotal}
+                        </button>
+                        {showEchoBreakdown && (
+                          <div className="letter-echo-breakdown" role="tooltip">
+                            {echoOptions.filter(option => echoes[option.id] > 0).map(option => {
+                              const EchoIcon = option.icon;
+                              return (
+                                <span key={option.id}>
+                                  <EchoIcon />
+                                  <span>{option.label}</span>
+                                  <strong>{echoes[option.id]}</strong>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </span>
+                    )}
+                    <span className="letter-echo-control">
+                      <button
+                        type="button"
+                        className={`letter-paper__echo${selectedEcho ? " is-reacted" : ""}`}
+                        onClick={toggleEchoPicker}
+                        aria-expanded={showEchoPicker}
+                        aria-pressed={Boolean(selectedEcho)}
+                        aria-label={selectedEcho
+                          ? `Your ${selectedEcho} reaction is selected. Change or remove reaction`
+                          : "React to this letter"}
+                      >
+                        <DominantReactionIcon />
+                      </button>
+                      {showEchoPicker && (
+                        <div className="letter-echo-picker" role="menu" aria-label="Choose a reaction">
+                          {echoOptions.map(option => {
+                            const ReactionIcon = option.icon;
+                            return (
+                              <button
+                                key={option.id}
+                                type="button"
+                                role="menuitem"
+                                aria-label={option.label}
+                                className={selectedEcho === option.id ? "is-selected" : ""}
+                                disabled={savingEcho}
+                                onClick={() => requestEcho(option.id)}
+                              >
+                                <ReactionIcon />
+                                <span>{option.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </span>
+                  </span>
+                </>
+              )}
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     showDetailsModal &&
     selectedLetter && (
-      <div className="letter-modal-overlay" onClick={handleCloseModal}>
-        <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
-          {opened && (
+      <div
+        className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}`}
+        onClick={handleCloseModal}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {readMode ? (
+          <div className="read-mode-stage">
+            {outgoingLetter && (
+              <div
+                className={`read-mode-card-wrapper is-exiting-${slideDirection}`}
+                aria-hidden="true"
+              >
+                <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="letter-modal__close"
+                    aria-hidden="true"
+                    tabIndex={-1}
+                  >
+                    <BsX className="close-icon" />
+                  </button>
+                  {renderOutgoingPaper(outgoingLetter)}
+                </div>
+              </div>
+            )}
+            <div
+              className={`read-mode-card-wrapper${slideDirection ? ` is-entering-${slideDirection}` : ""}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="letter-modal">
+                <button
+                  type="button"
+                  className="letter-modal__close"
+                  onClick={handleCloseModal}
+                  aria-label="Close letter"
+                >
+                  <BsX className="close-icon" />
+                </button>
+                {renderActivePaper()}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
+            {opened && (
+              <button
+                type="button"
+                className="letter-modal__close"
+                onClick={handleCloseModal}
+                aria-label="Close letter"
+              >
+                <BsX className="close-icon" />
+              </button>
+            )}
+
+            {!opened ? (
+              <div className="letter-envelope" aria-hidden="true">
+                <div className="letter-envelope__back" />
+                <div className="letter-envelope__note" />
+                <div className="letter-envelope__front" />
+                <div className="letter-envelope__flap" />
+                <span className="letter-envelope__seal">♥</span>
+                <span className="letter-envelope__hint">opening a letter…</span>
+              </div>
+            ) : (
+              renderActivePaper()
+            )}
+          </div>
+        )}
+
+        {readMode && showReadTip && (
+          <div
+            className="read-mode-tip"
+            role="status"
+            onClick={dismissReadTip}
+          >
+            <div className="read-mode-tip__content">
+              <span className="read-mode-tip__arrow" aria-hidden="true">↓</span>
+              <span>Scroll or swipe down to read more letters</span>
+            </div>
             <button
               type="button"
-              className="letter-modal__close"
-              onClick={handleCloseModal}
-              aria-label="Close letter"
+              className="read-mode-tip__close"
+              onClick={(e) => {
+                e.stopPropagation();
+                dismissReadTip();
+              }}
+              aria-label="Dismiss tip"
             >
-              <BsX className="close-icon" />
+              ✕
             </button>
-          )}
+          </div>
+        )}
 
-          {!opened ? (
-            <div className="letter-envelope" aria-hidden="true">
-              <div className="letter-envelope__back" />
-              <div className="letter-envelope__note" />
-              <div className="letter-envelope__front" />
-              <div className="letter-envelope__flap" />
-              <span className="letter-envelope__seal">♥</span>
-              <span className="letter-envelope__hint">opening a letter…</span>
+        {readMode && showAdLock && (
+          <div
+            className="read-mode-ad-lock-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Reading break"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="read-mode-ad-lock-dialog">
+              <div className="read-mode-ad-lock-header">
+                <span className="read-mode-ad-lock-eyebrow">Reading intermission</span>
+                <h3>Take a brief pause</h3>
+                <p>You’ve read {AD_INTERVAL} letters. Take a short breath while keeping Letters to Casper supported.</p>
+              </div>
+              <div className="read-mode-ad-lock-banner">
+                <AdsterraBanner width={300} height={250} />
+              </div>
+              <div className="read-mode-ad-lock-footer">
+                <button
+                  type="button"
+                  className="read-mode-ad-lock-btn"
+                  disabled={adCountdown > 0}
+                  onClick={handleContinueReading}
+                >
+                  {adCountdown > 0 ? `Resuming in ${adCountdown}s…` : "Continue reading"}
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="letter-paper" ref={letterPaperRef}>
-              <div className="letter-paper__head">
-                <div className="letter-info" style={{ marginBottom: "4px" }}>
-                  <Typewriter
-                    options={{ delay: 50, loop: false, stringSplitter }}
-                    onInit={(typewriter) => {
-                      typewriter
-                        .typeString(
-                          `<strong>From:</strong> ${selectedLetter.from}`
-                        )
-                        .callFunction((state) => {
-                          state.elements.cursor.remove();
-                        })
-                        .start();
-                    }}
-                  />
-                </div>
-                <div className="letter-info">
-                  <Typewriter
-                    options={{ delay: 50, loop: false, stringSplitter }}
-                    onInit={(typewriter) => {
-                      typewriter
-                        .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
-                        .callFunction((state) => {
-                          state.elements.cursor.remove();
-                        })
-                        .start();
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div
-                className="letter-paper__date"
-                data-tooltip-id="timezone_tooltip"
-                data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
-                data-tooltip-place="top"
-                data-tooltip-variant="info"
-              >
-                <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
-                <span className="timestamp-text">
-                  <Typewriter
-                    options={{ delay: 70, loop: false }}
-                    onInit={(typewriter) => {
-                      typewriter
-                        .typeString(formatTimestamp(selectedLetter.timestamp))
-                        .callFunction((state) => {
-                          state.elements.cursor.remove();
-                        })
-                        .start();
-                    }}
-                  />
-                </span>
-              </div>
-              <Tooltip id="timezone_tooltip" />
-
-              {detectedLanguage && (
-                <div className="letter-paper__translation-control">
-                  <button
-                    type="button"
-                    onClick={handleTranslate}
-                    disabled={isTranslating}
-                    aria-pressed={showTranslation}
-                  >
-                    <IoLanguageOutline aria-hidden="true" />
-                    <span>
-                      {isTranslating
-                        ? "Translating…"
-                        : showTranslation
-                          ? "Show original"
-                          : "Translate to English"}
-                    </span>
-                  </button>
-                  <small>{detectedLanguage.name}</small>
-                </div>
-              )}
-
-              <div ref={messageBodyRef} className={`letter-paper__body letter-text${hasLetterAttachment ? " letter-paper__body--scrollable" : ""}`} tabIndex={0} role="region" aria-label="Letter message">
-                {showTranslation ? (
-                  <span>{translatedMessage}</span>
-                ) : (
-                  <Typewriter
-                    options={{ delay: 40, loop: false, stringSplitter }}
-                    onInit={(typewriter) => {
-                      typewriter
-                        .typeString(message)
-                        .pauseFor(500)
-                        .callFunction(() => {
-                          setShowPhoto(Boolean(selectedLetter.photo?.url));
-                          if (spotifyLink == null) {
-                            setShowYoutube(true);
-                          } else {
-                            setShowSpotify(true);
-                          }
-                        })
-                        .start();
-                    }}
-                  />
-                )}
-              </div>
-
-              {showSpotify && linkId && (
-                <div className="letter-paper__media">
-                  <iframe
-                    title="spotify-preview"
-                    style={{ border: "12px" }}
-                    src={`https://open.spotify.com/embed/${linkId}?utm_source=generator&theme=1`}
-                    width="100%"
-                    height="152"
-                    frameBorder="0"
-                    allowFullScreen=""
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  ></iframe>
-                </div>
-              )}
-              {showYoutube && linkId && (
-                <div className="letter-paper__media letter-paper__media--youtube">
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${linkId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
-                    title="YouTube video player"
-                    frameBorder="0"
-                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                    allowFullScreen
-                  ></iframe>
-                </div>
-              )}
-              {showPhoto && selectedLetter.photo?.url && (
-                <figure className="letter-paper__photo">
-                  <img
-                    src={getOptimizedPhotoUrl(selectedLetter.photo.url)}
-                    alt={`Attached to the letter from ${selectedLetter.from} to ${selectedLetter.to}`}
-                    loading="lazy"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPhotoViewer(true)}
-                    aria-label="View attached photo full screen"
-                  >
-                    <IoExpandOutline />
-                    <span>View full screen</span>
-                  </button>
-                </figure>
-              )}
-
-              <div className="letter-paper__meta">
-                {hasBadge && (
-                  <>
-                    <span
-                      className="letter-paper__badges"
-                      data-tooltip-id="badges"
-                      data-tooltip-html={`${
-                        early_bird
-                          ? "<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>"
-                          : ""
-                      } ${letterId === adminId ? "Admin" : ""} ${
-                        eleven_eleven ? "<strong>11:11 PM</strong>" : ""
-                      } ${twelve_fifty_one ? "<strong>12:51 AM</strong>" : ""}
-                      `}
-                      data-tooltip-place="bottom"
-                    >
-                      {early_bird && (
-                        <>
-                          <FaEarlybirds size="15px" />
-                          <BsBookmarkHeartFill size="15px" />
-                        </>
-                      )}
-                      {letterId === adminId && (
-                        <>
-                          <FaUserTie size="15px" />
-                        </>
-                      )}
-                      {eleven_eleven && (
-                        <>
-                          <PiShootingStarFill size="15px" />
-                        </>
-                      )}
-                      {twelve_fifty_one && (
-                        <>
-                          <PiHeartBreakFill size="15px" />
-                        </>
-                      )}
-                    </span>
-                    <Tooltip id="badges" arrowColor="transparent" />
-                    <span className="letter-meta-sep">·</span>
-                  </>
-                )}
-
-                <span className="letter-paper__age" title={js_ago(new Date(selectedLetter.timestamp), {format: "long"})}>
-                  {shortLetterAge(selectedLetter.timestamp)}
-                </span>
-                <span className="letter-meta-sep">·</span>
-                <span className="letter-paper__reads">
-                  <IoEyeOutline className="letter-paper__reads-eye" />
-                  {formatReadsCount(displayedReads)}
-                </span>
-
-                {(hasLocation ||
-                  (!selectedLetter.preview && selectedLetter._id)) && (
-                  <>
-                    <span className="letter-meta-sep">·</span>
-                    <span className="letter-paper__actions">
-                      {hasLocation && (
-                        <a
-                          className={`letter-paper__locate${
-                            isRevealed ? " is-revealed" : ""
-                          }`}
-                          href={isRevealed ? letterLocationMap : adLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={handleLocateClick}
-                        >
-                          <IoLocationOutline size="12px" />
-                          <span>{isRevealed ? "View on Map" : "Locate"}</span>
-                        </a>
-                      )}
-                      {hasLocation &&
-                        !selectedLetter.preview &&
-                        selectedLetter._id && (
-                          <span className="letter-meta-sep">·</span>
-                        )}
-                      {!selectedLetter.preview && selectedLetter._id && (
-                        <button
-                          type="button"
-                          className="letter-paper__share"
-                          onClick={() => setShowShareDialog(true)}
-                          aria-label="Share this letter"
-                          title="Share letter"
-                        >
-                          <IoShareSocialOutline size="12px" />
-                          <span>Share</span>
-                        </button>
-                      )}
-                      {!selectedLetter.preview && selectedLetter._id && (
-                        <>
-                          <span className="letter-meta-sep">·</span>
-                          <span className="letter-reaction-cluster">
-                            {echoTotal > 0 && (
-                              <span className="letter-echo-summary">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setShowEchoPicker(false);
-                                    setShowEchoBreakdown(current => !current);
-                                  }}
-                                  aria-expanded={showEchoBreakdown}
-                                  aria-label={`${echoTotal} ${echoTotal === 1 ? "reaction" : "reactions"}; show breakdown`}
-                                >
-                                  {echoTotal}
-                                </button>
-                                {showEchoBreakdown && (
-                                  <div className="letter-echo-breakdown" role="tooltip">
-                                    {echoOptions.filter(option => echoes[option.id] > 0).map(option => {
-                                      const EchoIcon = option.icon;
-                                      return (
-                                        <span key={option.id}>
-                                          <EchoIcon />
-                                          <span>{option.label}</span>
-                                          <strong>{echoes[option.id]}</strong>
-                                        </span>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </span>
-                            )}
-                            <span className="letter-echo-control">
-                              <button
-                                type="button"
-                                className={`letter-paper__echo${selectedEcho ? " is-reacted" : ""}`}
-                                onClick={toggleEchoPicker}
-                                aria-expanded={showEchoPicker}
-                                aria-pressed={Boolean(selectedEcho)}
-                                aria-label={selectedEcho
-                                  ? `Your ${selectedEcho} reaction is selected. Change or remove reaction`
-                                  : "React to this letter"}
-                              >
-                                <DominantReactionIcon />
-                              </button>
-                              {showEchoPicker && (
-                                <div className="letter-echo-picker" role="menu" aria-label="Choose a reaction">
-                                  {echoOptions.map(option => {
-                                    const ReactionIcon = option.icon;
-                                    return (
-                                      <button
-                                        key={option.id}
-                                        type="button"
-                                        role="menuitem"
-                                        aria-label={option.label}
-                                        className={selectedEcho === option.id ? "is-selected" : ""}
-                                        disabled={savingEcho}
-                                        onClick={() => requestEcho(option.id)}
-                                      >
-                                        <ReactionIcon />
-                                        <span>{option.label}</span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </span>
-                          </span>
-                        </>
-                      )}
-                    </span>
-                  </>
-                )}
-              </div>
-
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {showShareDialog && (
           <div
