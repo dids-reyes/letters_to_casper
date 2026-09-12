@@ -67,7 +67,7 @@ const formatCountry = (country) => {
   }
 };
 
-export const READ_MODE_ENABLED = false;
+export const READ_MODE_ENABLED = true;
 
 function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } = {}) {
   const navigate = useNavigate();
