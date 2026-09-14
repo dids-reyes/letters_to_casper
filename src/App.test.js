@@ -6,7 +6,6 @@ import App from './App';
 jest.mock('react-lottie-player', () => () => null);
 jest.mock('./components/AdComponent', () => () => null);
 jest.mock('./components/AdsterraNativeBanner', () => () => null);
-jest.mock('./components/Firefly3D', () => () => null);
 
 beforeAll(() => {
   HTMLCanvasElement.prototype.getContext = jest.fn();

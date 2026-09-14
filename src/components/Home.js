@@ -3,11 +3,11 @@ import OriginsView from "./OriginsView";
 import Header from "./Header";
 import Footer from "./Footer";
 import AddModal from "./AddModal";
+import BugReportModal from "./BugReportModal";
 import Letter from "./Letter";
 import AdComponent from "./AdComponent";
 import AdsterraNativeBanner from "./AdsterraNativeBanner";
 import DetailsModal from "./DetailsModal";
-import Firefly3D from "./Firefly3D";
 import { AiFillMessage } from "react-icons/ai";
 import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
@@ -49,7 +49,6 @@ import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
 const READ_MODE_TOOLTIP_KEY = "hasSeenReadModeTooltip";
-const FIREFLY_ENABLED = false;
 const CHRISTMAS_SNOWFLAKES = Array.from({length: 30}, (_, index) => ({
   left: (index * 37 + 11) % 101,
   size: 2.4 + ((index * 13) % 36) / 10,
@@ -80,6 +79,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     counts: { approved: 0, unapproved: 0 },
   });
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [feedPage, setFeedPage] = useState(0);
   const [showOrigins, setShowOrigins] = useState(false);
@@ -138,7 +138,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(1);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
-  const [fireflyVisit, setFireflyVisit] = useState(null);
   const [showBurnLetter, setShowBurnLetter] = useState(false);
   const [burnKey, setBurnKey] = useState("");
   const [burnStatus, setBurnStatus] = useState({type: "idle", message: ""});
@@ -321,70 +320,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!FIREFLY_ENABLED || loading !== 0 || isReadModeActive) return undefined;
-
-    let scheduleTimer;
-    let visitTimer;
-    let cancelled = false;
-    const isTestingLocally = process.env.NODE_ENV !== "production";
-
-    const scheduleVisit = (firstVisit = false) => {
-      const delay = isTestingLocally
-        ? firstVisit ? 1200 : 3500
-        : firstVisit
-          ? 12000 + Math.random() * 18000
-          : 45000 + Math.random() * 50000;
-      scheduleTimer = window.setTimeout(beginVisit, delay);
-    };
-
-    const beginVisit = () => {
-      if (cancelled) return;
-      const visibleCards = Array.from(
-        document.querySelectorAll(".letters-container .letter-card")
-      ).map((card) => card.getBoundingClientRect()).filter(
-        (rect) => rect.bottom > 80 && rect.top < window.innerHeight - 55
-      );
-
-      if (visibleCards.length === 0) {
-        scheduleVisit(false);
-        return;
-      }
-
-      const card = visibleCards[Math.floor(Math.random() * visibleCards.length)];
-      const entersFromLeft = Math.random() > 0.5;
-      const startX = entersFromLeft ? -36 : window.innerWidth + 36;
-      const startY = 80 + Math.random() * Math.max(100, window.innerHeight - 180);
-      const restX = card.left + (Math.random() > 0.5 ? card.width * 0.18 : card.width * 0.78);
-      const restY = card.top + 5;
-      const exitX = entersFromLeft ? window.innerWidth + 40 : -40;
-      const exitY = 55 + Math.random() * Math.max(100, window.innerHeight - 140);
-      const duration = isTestingLocally ? 8200 : 9800;
-
-      setFireflyVisit({
-        id: Date.now(), startX, startY, restX, restY, exitX, exitY,
-        direction: entersFromLeft ? 1 : -1,
-        curveOneX: window.innerWidth * (entersFromLeft ? 0.24 : 0.76),
-        curveOneY: Math.max(50, restY - 85 - Math.random() * 70),
-        curveTwoX: restX + (entersFromLeft ? -45 : 45),
-        curveTwoY: restY + 35 + Math.random() * 40,
-        duration,
-      });
-
-      visitTimer = window.setTimeout(() => {
-        setFireflyVisit(null);
-        scheduleVisit(false);
-      }, duration);
-    };
-
-    scheduleVisit(true);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(scheduleTimer);
-      window.clearTimeout(visitTimer);
-    };
-  }, [loading, isReadModeActive]);
 
   useEffect(() => {
     const updateLetterGridColumns = () => {
@@ -1388,28 +1323,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         handleAddLetter={handleAddLetter}
         setNewLetter={setNewLetter}
       />
-      {FIREFLY_ENABLED && loading === 0 && fireflyVisit && (
-        <div
-          key={fireflyVisit.id}
-          className="easter-firefly"
-          aria-hidden="true"
-          style={{
-            "--firefly-start-x": `${fireflyVisit.startX}px`,
-            "--firefly-start-y": `${fireflyVisit.startY}px`,
-            "--firefly-curve-one-x": `${fireflyVisit.curveOneX}px`,
-            "--firefly-curve-one-y": `${fireflyVisit.curveOneY}px`,
-            "--firefly-curve-two-x": `${fireflyVisit.curveTwoX}px`,
-            "--firefly-curve-two-y": `${fireflyVisit.curveTwoY}px`,
-            "--firefly-rest-x": `${fireflyVisit.restX}px`,
-            "--firefly-rest-y": `${fireflyVisit.restY}px`,
-            "--firefly-exit-x": `${fireflyVisit.exitX}px`,
-            "--firefly-exit-y": `${fireflyVisit.exitY}px`,
-            "--firefly-duration": `${fireflyVisit.duration}ms`,
-          }}
-        >
-          <Firefly3D duration={fireflyVisit.duration} direction={fireflyVisit.direction} />
-        </div>
-      )}
       {loading === 1 ? (
         <MailboxLoading />
       ) : loading === 2 ? (
@@ -1657,6 +1570,8 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         </div>
       )}
 
+      {showBugReport && <BugReportModal onClose={() => setShowBugReport(false)} />}
+
       <div className="fab-stack" role="region" aria-label="Quick actions">
         {/* 1. Scroll Up */}
         <button
@@ -1712,15 +1627,13 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           </div>
         )}
 
-        {/* 3. Bug Report (Disabled preview) */}
+        {/* 3. Bug Report */}
         <button
           type="button"
-          className={`fab bug-report-fab is-disabled${isHeaderCompact ? " is-visible" : ""}`}
-          disabled
-          aria-disabled="true"
-          aria-label="Report a bug (Coming soon)"
-          title="Report a bug (Coming soon)"
-          onClick={(e) => e.preventDefault()}
+          className={`fab bug-report-fab${isHeaderCompact ? " is-visible" : ""}`}
+          aria-label="Report a bug"
+          title="Report a bug"
+          onClick={() => setShowBugReport(true)}
         >
           <IoBugOutline aria-hidden="true" />
         </button>

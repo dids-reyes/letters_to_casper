@@ -1,0 +1,25 @@
+.bug-report-overlay { z-index: 1500; }
+.bug-report-dialog { box-sizing: border-box; }
+.bug-report-dialog form { margin-top: 22px; }
+.bug-report-dialog label { display: block; margin-bottom: 8px; font-size: .85rem; }
+.bug-report-dialog textarea {
+  box-sizing: border-box; width: 100%; resize: vertical; min-height: 150px;
+  padding: 12px 14px; border: 1px solid rgba(55, 114, 255, .25); border-radius: 14px;
+  background: rgba(55, 114, 255, .04); color: inherit; font: inherit; font-size: .9rem; line-height: 1.6;
+  margin-bottom: 14px;
+}
+.bug-report-dialog textarea::placeholder { color: #717681; }
+.bug-report-dialog textarea:focus-visible { outline: 2px solid #3772ff; outline-offset: 2px; }
+.bug-report-error { color: #b63e48; font-size: .85rem; margin: 0 0 14px; }
+html.night-shift .bug-report-dialog textarea { background: #292d26; border-color: #41483f; }
+html.night-shift .bug-report-dialog textarea::placeholder { color: #aaa99f; }
+html.night-shift .bug-report-error { color: #f4a6ad; }
+.bug-report-overlay.is-closing { animation: bug-report-fade-out .18s ease-in forwards; }
+.bug-report-overlay.is-closing .bug-report-dialog { animation: bug-report-drop-out .18s ease-in forwards; }
+.bug-report-spinner { width: 12px; height: 12px; border: 2px solid #ffffff55; border-top-color: white; border-radius: 50%; animation: bug-report-spin .7s linear infinite; }
+@keyframes bug-report-spin { to { transform: rotate(360deg); } }
+@keyframes bug-report-fade-out { to { opacity: 0; } }
+@keyframes bug-report-drop-out { to { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) {
+  .bug-report-overlay, .bug-report-overlay .bug-report-dialog, .bug-report-spinner { animation-duration: .01ms; }
+}
