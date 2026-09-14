@@ -18,6 +18,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import MailboxLoading from "./MailboxLoading";
 import {
+  IoAddOutline,
   IoArrowUpOutline,
   IoBugOutline,
   IoChevronBackOutline,
@@ -206,6 +207,59 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const wasDetailsModalOpenRef = useRef(false);
   const tooltipTimerRef = useRef(null);
   const tooltipFadeTimerRef = useRef(null);
+  const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(() =>
+    typeof window !== "undefined" ? window.scrollY === 0 : true
+  );
+  const speedDialTimerRef = useRef(null);
+
+  const clearSpeedDialTimer = useCallback(() => {
+    if (speedDialTimerRef.current) {
+      clearTimeout(speedDialTimerRef.current);
+      speedDialTimerRef.current = null;
+    }
+  }, []);
+
+  const closeSpeedDial = useCallback(() => {
+    clearSpeedDialTimer();
+    setIsSpeedDialOpen(false);
+  }, [clearSpeedDialTimer]);
+
+  const toggleSpeedDial = useCallback(() => {
+    if (showReadModeTooltip) {
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+      setShowReadModeTooltip(false);
+      setIsTooltipFading(false);
+    }
+    setIsSpeedDialOpen((prev) => {
+      const next = !prev;
+      clearSpeedDialTimer();
+      if (next) {
+        speedDialTimerRef.current = setTimeout(() => {
+          setIsSpeedDialOpen(false);
+        }, 15000);
+      }
+      return next;
+    });
+  }, [showReadModeTooltip, clearSpeedDialTimer]);
+
+  useEffect(() => {
+    return () => {
+      clearSpeedDialTimer();
+    };
+  }, [clearSpeedDialTimer]);
+
+  useEffect(() => {
+    if (!isSpeedDialOpen) return undefined;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        closeSpeedDial();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isSpeedDialOpen, closeSpeedDial]);
 
   useEffect(() => {
     if (!readModeEnabled) {
@@ -306,6 +360,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         setIsHeaderCompact((isCompact) =>
           isCompact ? window.scrollY > exitCompactThreshold : window.scrollY > 160
         );
+        setIsAtTop(window.scrollY === 0);
         scrollFrame.current = null;
       });
     };
@@ -1572,71 +1627,101 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
       {showBugReport && <BugReportModal onClose={() => setShowBugReport(false)} />}
 
-      <div className="fab-stack" role="region" aria-label="Quick actions">
-        {/* 1. Scroll Up */}
+      <div
+        className={`fab-stack speed-dial-container${isSpeedDialOpen ? " is-open" : ""}`}
+        role="region"
+        aria-label="Quick actions"
+      >
+        {/* Sub-action 1: Scroll to Top (Positioned directly above main trigger) */}
         <button
           type="button"
-          className={`fab scroll-top-fab${isHeaderCompact ? " is-visible" : ""}`}
-          onClick={scrollToTop}
+          className={`fab speed-dial-action scroll-top-fab scroll-top-action${isAtTop ? " is-disabled" : ""}`}
+          onClick={() => {
+            if (isAtTop) return;
+            closeSpeedDial();
+            scrollToTop();
+          }}
+          disabled={isAtTop}
+          aria-disabled={isAtTop ? "true" : undefined}
           aria-label="Back to top"
-          title="Back to top"
+          title={isAtTop ? "Already at top" : "Back to top"}
+          tabIndex={isSpeedDialOpen ? 0 : -1}
         >
           <IoArrowUpOutline aria-hidden="true" />
         </button>
 
-        {/* 2. Read Mode */}
+        {/* Sub-action 2: Read Mode (Radial spread: diagonally up-left) */}
         {readModeEnabled && (
-          <div className="fab-item-wrapper">
-            <button
-              type="button"
-              className={`fab read-mode-fab is-visible${readMode ? " is-active" : ""}`}
-              onClick={() => {
-                if (showReadModeTooltip) {
-                  if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
-                  if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
-                  setShowReadModeTooltip(false);
-                  setIsTooltipFading(false);
-                }
-                setShowReadModeModal(true);
-              }}
-              aria-pressed={readMode}
-              aria-label={`Read mode info and settings (${readMode ? "on" : "off"})`}
-              title={`Read mode: ${readMode ? "On" : "Off"} (Click to learn more)`}
-            >
-              <IoReaderOutline aria-hidden="true" />
-            </button>
-            {showReadModeTooltip && (
-              <aside
-                className={`read-mode-onboarding-tooltip${isTooltipFading ? " is-fading-out" : ""}`}
-                role="status"
-                aria-label="Read Mode introduction"
-                onClick={() => {
-                  if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
-                  if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
-                  setShowReadModeTooltip(false);
-                  setIsTooltipFading(false);
-                  setShowReadModeModal(true);
-                }}
-              >
-                <span className="read-mode-tooltip-title">Try Read Mode</span>
-                <p className="read-mode-tooltip-text">
-                  Browse letters smoothly without typing delays.
-                </p>
-              </aside>
-            )}
-          </div>
+          <button
+            type="button"
+            className={`fab speed-dial-action read-mode-fab read-mode-action${readMode ? " is-active" : ""}`}
+            onClick={() => {
+              closeSpeedDial();
+              if (showReadModeTooltip) {
+                if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+                if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+                setShowReadModeTooltip(false);
+                setIsTooltipFading(false);
+              }
+              setShowReadModeModal(true);
+            }}
+            aria-pressed={readMode}
+            aria-label={`Read mode info and settings (${readMode ? "on" : "off"})`}
+            title={`Read mode: ${readMode ? "On" : "Off"} (Click to learn more)`}
+            tabIndex={isSpeedDialOpen ? 0 : -1}
+          >
+            <IoReaderOutline aria-hidden="true" />
+          </button>
         )}
 
-        {/* 3. Bug Report */}
+        {/* Sub-action 3: Bug Report (Radial spread: to the left) */}
         <button
           type="button"
-          className={`fab bug-report-fab${isHeaderCompact ? " is-visible" : ""}`}
+          className="fab speed-dial-action bug-report-fab bug-report-action"
           aria-label="Report a bug"
           title="Report a bug"
-          onClick={() => setShowBugReport(true)}
+          onClick={() => {
+            closeSpeedDial();
+            setShowBugReport(true);
+          }}
+          tabIndex={isSpeedDialOpen ? 0 : -1}
         >
           <IoBugOutline aria-hidden="true" />
         </button>
+
+        {/* Main Trigger Button Wrapper with Relocated Onboarding Tooltip */}
+        <div className="speed-dial-trigger-wrapper">
+          <button
+            type="button"
+            className={`fab speed-dial-trigger${isSpeedDialOpen ? " is-open" : ""}`}
+            onClick={toggleSpeedDial}
+            aria-expanded={isSpeedDialOpen}
+            aria-label={isSpeedDialOpen ? "Close quick actions menu" : "Open quick actions menu"}
+            title={isSpeedDialOpen ? "Close quick actions" : "Quick actions"}
+          >
+            <IoAddOutline className="speed-dial-trigger-icon" aria-hidden="true" />
+          </button>
+
+          {showReadModeTooltip && (
+            <aside
+              className={`read-mode-onboarding-tooltip${isTooltipFading ? " is-fading-out" : ""}`}
+              role="status"
+              aria-label="Read Mode introduction"
+              onClick={() => {
+                if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+                if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+                setShowReadModeTooltip(false);
+                setIsTooltipFading(false);
+                toggleSpeedDial();
+              }}
+            >
+              <span className="read-mode-tooltip-title">Quick Actions</span>
+              <p className="read-mode-tooltip-text">
+                Access Read Mode, scroll to top, and more right here.
+              </p>
+            </aside>
+          )}
+        </div>
       </div>
 
       <Footer />

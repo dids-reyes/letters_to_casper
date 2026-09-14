@@ -1125,40 +1125,61 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       localStorage.removeItem('readMode');
     });
 
-    test('FAB stack renders in exact top-to-bottom order: Scroll Up, Read Mode, Bug Report', () => {
+    test('Speed Dial FAB menu renders, expands sub-actions, auto-collapses after 15s, and disables Scroll to Top at scrollY 0', () => {
+      jest.useFakeTimers();
       const { container } = render(
         <MemoryRouter>
           <Home readModeEnabled={true} />
         </MemoryRouter>
       );
 
-      const fabStack = container.querySelector('.fab-stack');
-      expect(fabStack).toBeInTheDocument();
+      const speedDialContainer = container.querySelector('.speed-dial-container');
+      expect(speedDialContainer).toBeInTheDocument();
+      expect(speedDialContainer).not.toHaveClass('is-open');
 
+      const triggerBtn = screen.getByRole('button', { name: /Open quick actions menu/i });
       const scrollUpBtn = screen.getByRole('button', { name: /Back to top/i });
       const readModeBtn = screen.getByRole('button', { name: /Read mode info and settings/i });
       const bugReportBtn = screen.getByRole('button', { name: /Report a bug/i });
 
+      expect(triggerBtn).toBeInTheDocument();
+      expect(triggerBtn).toHaveAttribute('aria-expanded', 'false');
       expect(scrollUpBtn).toBeInTheDocument();
       expect(readModeBtn).toBeInTheDocument();
       expect(bugReportBtn).toBeInTheDocument();
 
-      // Check order in the DOM inside .fab-stack
-      const buttons = fabStack.querySelectorAll('button.fab');
-      expect(buttons[0]).toBe(scrollUpBtn);
-      expect(buttons[1]).toBe(readModeBtn);
-      expect(buttons[2]).toBe(bugReportBtn);
+      // Scroll to Top is disabled when at top of page (scrollY === 0)
+      expect(scrollUpBtn).toBeDisabled();
+      expect(scrollUpBtn).toHaveAttribute('aria-disabled', 'true');
+      expect(scrollUpBtn).toHaveClass('is-disabled');
 
-      // Read Mode button is already visible on site load
-      expect(readModeBtn).toHaveClass('is-visible');
+      // Click trigger to expand Speed Dial
+      act(() => {
+        fireEvent.click(triggerBtn);
+      });
+      expect(triggerBtn).toHaveAttribute('aria-expanded', 'true');
+      expect(speedDialContainer).toHaveClass('is-open');
 
-      // Bug report button is enabled and opens Bug Report modal
-      expect(bugReportBtn).not.toBeDisabled();
-      expect(bugReportBtn).not.toHaveAttribute('aria-disabled', 'true');
-      expect(bugReportBtn).not.toHaveClass('is-disabled');
+      // Auto-collapse after 15 seconds of inactivity
+      act(() => {
+        jest.advanceTimersByTime(15000);
+      });
+      expect(speedDialContainer).not.toHaveClass('is-open');
+      expect(triggerBtn).toHaveAttribute('aria-expanded', 'false');
 
-      fireEvent.click(bugReportBtn);
+      // Re-open and select a sub-action (Bug Report): closes speed dial and opens modal
+      act(() => {
+        fireEvent.click(triggerBtn);
+      });
+      expect(speedDialContainer).toHaveClass('is-open');
+
+      act(() => {
+        fireEvent.click(bugReportBtn);
+      });
+      expect(speedDialContainer).not.toHaveClass('is-open');
       expect(screen.getByRole('dialog', { name: /Bug Report/i })).toBeInTheDocument();
+
+      jest.useRealTimers();
     });
 
     test('Read Mode onboarding tooltip triggers exclusively after closing the first letter and auto-dismisses after 5 seconds', async () => {
@@ -1209,12 +1230,13 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
         fireEvent.click(overlay);
       });
 
-      // 3. Tooltip now triggers immediately upon letter closure
+      // 3. Tooltip now triggers immediately upon letter closure anchored to main FAB
       const tooltip = screen.getByRole('status', { name: /Read Mode introduction/i });
       expect(tooltip).toBeInTheDocument();
-      expect(screen.getByText(/Try Read Mode/i)).toBeInTheDocument();
+      expect(container.querySelector('.speed-dial-trigger-wrapper .read-mode-onboarding-tooltip')).toBeInTheDocument();
+      expect(screen.getByText(/Quick Actions/i)).toBeInTheDocument();
       expect(tooltip).not.toHaveTextContent('💡');
-      expect(screen.getByText(/Browse letters smoothly without typing delays/i)).toBeInTheDocument();
+      expect(screen.getByText(/Access Read Mode, scroll to top, and more right here/i)).toBeInTheDocument();
 
       // Visitor tracking flag persisted immediately in localStorage
       expect(localStorage.getItem('hasSeenReadModeTooltip')).toBe('true');

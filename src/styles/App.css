@@ -1918,11 +1918,26 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   pointer-events: none;
 }
 
-.fab-item-wrapper {
+.fab-stack.speed-dial-container {
+  position: fixed;
+  right: 24px;
+  bottom: 72px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  width: 45px;
+  height: 45px;
+}
+
+.speed-dial-trigger-wrapper {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: auto;
+  z-index: 95;
 }
 
 .fab {
@@ -1950,7 +1965,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     box-shadow 0.2s ease, color 0.2s ease;
 }
 
-.fab:not(.is-visible) {
+.fab:not(.speed-dial-trigger):not(.speed-dial-action):not(.is-visible) {
   display: none !important;
 }
 
@@ -1961,20 +1976,164 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   transform: translateY(0) scale(1);
 }
 
-.fab:hover {
-  background: #2352e6;
-  box-shadow: 0 9px 24px rgba(55, 114, 255, 0.38);
-  transform: translateY(-2px) scale(1.03);
-}
-
 .fab:focus-visible {
   outline: 3px solid rgba(55, 114, 255, 0.3);
   outline-offset: 3px;
 }
 
+/* Speed Dial Main Trigger */
+.fab.speed-dial-trigger {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: translateY(0) scale(1);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background-color 0.2s ease,
+              box-shadow 0.2s ease,
+              border-color 0.2s ease,
+              color 0.2s ease;
+  z-index: 95;
+}
+
+.fab.speed-dial-trigger:hover {
+  background: #f8fafc;
+  color: #2563eb;
+  box-shadow: 0 9px 24px rgba(37, 99, 235, 0.22);
+  transform: translateY(-2px) scale(1.04);
+}
+
+.speed-dial-trigger-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fab.speed-dial-trigger.is-open {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.14);
+}
+
+.fab.speed-dial-trigger.is-open:hover {
+  background: #f8fafc;
+  color: #2563eb;
+  box-shadow: 0 9px 24px rgba(37, 99, 235, 0.22);
+}
+
+.fab.speed-dial-trigger.is-open .speed-dial-trigger-icon {
+  transform: rotate(45deg);
+}
+
+/* Speed Dial Sub-actions (Radial/Flower Bloom) */
+.fab.speed-dial-action {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 18px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  transform: translate(0, 0) scale(0.3);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.2s ease,
+              visibility 0.2s ease,
+              box-shadow 0.2s ease,
+              background-color 0.2s ease,
+              color 0.2s ease;
+  z-index: 88;
+}
+
+/* Expanded state: Flower / Radial menu blooming out */
+.speed-dial-container.is-open .fab.speed-dial-action {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* 1. Scroll to Top: Directly above main trigger button */
+.speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action {
+  transform: translate(0, -60px) scale(1);
+  transition-delay: 0.08s;
+}
+
+.speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action:not(:disabled):hover {
+  transform: translate(0, -62px) scale(1.08);
+  background: #f8fafc;
+  color: #2563eb;
+  box-shadow: 0 9px 24px rgba(37, 99, 235, 0.22);
+}
+
+/* Scroll to top disabled state when scrollY === 0 */
+.fab.speed-dial-action.scroll-top-action:disabled,
+.fab.speed-dial-action.scroll-top-action.is-disabled {
+  opacity: 0.38 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+}
+
+.speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action:disabled,
+.speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action.is-disabled {
+  transform: translate(0, -60px) scale(0.96);
+}
+
+/* 2. Read Mode: Radially up-left */
+.speed-dial-container.is-open .fab.speed-dial-action.read-mode-action {
+  transform: translate(-42px, -42px) scale(1);
+  transition-delay: 0.04s;
+}
+
+.speed-dial-container.is-open .fab.speed-dial-action.read-mode-action:hover {
+  transform: translate(-44px, -44px) scale(1.08);
+  background: #f8fafc;
+  color: #2563eb;
+  box-shadow: 0 9px 24px rgba(37, 99, 235, 0.25);
+}
+
+/* 3. Bug Report: Radially to the left */
+.speed-dial-container.is-open .fab.speed-dial-action.bug-report-action {
+  transform: translate(-60px, 0) scale(1);
+  transition-delay: 0s;
+}
+
+.speed-dial-container.is-open .fab.speed-dial-action.bug-report-action:hover {
+  transform: translate(-62px, 0) scale(1.08);
+  background: #f8fafc;
+  color: #e11d48;
+  border-color: rgba(225, 29, 72, 0.3);
+  box-shadow: 0 9px 24px rgba(225, 29, 72, 0.22);
+}
+
 .fab.scroll-top-fab {
-  background: rgba(55, 114, 255, 0.92);
-  color: #ffffff;
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.14);
 }
 
 .fab.read-mode-fab {
@@ -2629,10 +2788,62 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     gap: 10px;
   }
 
+  .fab-stack.speed-dial-container {
+    right: 12px;
+    bottom: 58px;
+    width: 43px;
+    height: 43px;
+  }
+
   .fab {
     width: 44px;
     height: 44px;
     font-size: 19px;
+  }
+
+  .fab.speed-dial-trigger {
+    width: 43px;
+    height: 43px;
+    font-size: 18px;
+  }
+
+  .speed-dial-trigger-icon {
+    font-size: 18px;
+  }
+
+  .fab.speed-dial-action {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+
+  .speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action {
+    transform: translate(0, -54px) scale(1);
+  }
+
+  .speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action:not(:disabled):hover {
+    transform: translate(0, -56px) scale(1.06);
+  }
+
+  .speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action:disabled,
+  .speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action.is-disabled {
+    transform: translate(0, -54px) scale(0.96);
+  }
+
+  .speed-dial-container.is-open .fab.speed-dial-action.read-mode-action {
+    transform: translate(-38px, -38px) scale(1);
+  }
+
+  .speed-dial-container.is-open .fab.speed-dial-action.read-mode-action:hover {
+    transform: translate(-40px, -40px) scale(1.06);
+  }
+
+  .speed-dial-container.is-open .fab.speed-dial-action.bug-report-action {
+    transform: translate(-54px, 0) scale(1);
+  }
+
+  .speed-dial-container.is-open .fab.speed-dial-action.bug-report-action:hover {
+    transform: translate(-56px, 0) scale(1.06);
   }
 
   .read-mode-onboarding-tooltip {
@@ -6030,9 +6241,51 @@ html.night-shift .message-stat:hover {
   color: #f2eee2;
 }
 
+html.night-shift .fab.speed-dial-trigger {
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+}
+
+html.night-shift .fab.speed-dial-trigger:hover {
+  background: #334155;
+  color: #93c5fd;
+  box-shadow: 0 9px 24px rgba(0, 0, 0, 0.5);
+}
+
+html.night-shift .fab.speed-dial-trigger.is-open {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+}
+
+html.night-shift .fab.speed-dial-trigger.is-open:hover {
+  background: #334155;
+  color: #93c5fd;
+}
+
+html.night-shift .speed-dial-container.is-open .fab.speed-dial-action.read-mode-action:hover {
+  background: #334155;
+  color: #93c5fd;
+}
+
+html.night-shift .speed-dial-container.is-open .fab.speed-dial-action.bug-report-action:hover {
+  background: #334155;
+  color: #fb7185;
+}
+
 html.night-shift .fab.scroll-top-fab {
-  background: rgba(37, 99, 235, 0.85);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+}
+
+html.night-shift .speed-dial-container.is-open .fab.speed-dial-action.scroll-top-action:not(:disabled):hover {
+  background: #334155;
+  color: #93c5fd;
 }
 
 html.night-shift .fab.read-mode-fab {
