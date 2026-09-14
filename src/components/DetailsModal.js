@@ -30,6 +30,8 @@ import { adminId, targetDate } from "../data/target_letters";
 import stringSplitter from "../data/splitLetterCharacters";
 import { toast } from "react-toastify";
 import { getOptimizedPhotoUrl } from "../data/cloudinary";
+
+const ENABLE_TRANSLATION = false;
 const languageCodes = {
   albanian: "sq", arabic: "ar", azeri: "az", bengali: "bn",
   bulgarian: "bg", cebuano: "ceb", croatian: "hr", czech: "cs",
@@ -503,7 +505,7 @@ function DetailsModal({
     setShowTranslation(false);
     setDetectedLanguage(null);
 
-    if (message) {
+    if (ENABLE_TRANSLATION && message) {
       import("languagedetect")
         .then(({ default: LanguageDetect }) => {
           if (!isCurrentLetter) return;
@@ -1427,7 +1429,7 @@ function DetailsModal({
       </div>
       <Tooltip id="timezone_tooltip" />
 
-      {detectedLanguage && (
+      {ENABLE_TRANSLATION && detectedLanguage && (
         <div className="letter-paper__translation-control">
           <button
             type="button"
@@ -1636,7 +1638,7 @@ function DetailsModal({
                     <span className="letter-echo-control">
                       <button
                         type="button"
-                        className={`letter-paper__echo${selectedEcho ? " is-reacted" : ""}`}
+                        className={`letter-paper__echo${selectedEcho ? ` is-reacted is-reacted--${selectedEcho}` : ""}`}
                         onClick={toggleEchoPicker}
                         aria-expanded={showEchoPicker}
                         aria-pressed={Boolean(selectedEcho)}
@@ -1656,7 +1658,7 @@ function DetailsModal({
                                 type="button"
                                 role="menuitem"
                                 aria-label={option.label}
-                                className={selectedEcho === option.id ? "is-selected" : ""}
+                                className={`letter-echo-picker__btn letter-echo-picker__btn--${option.id}${selectedEcho === option.id ? " is-selected" : ""}`}
                                 disabled={savingEcho}
                                 onClick={() => requestEcho(option.id)}
                               >
@@ -1909,24 +1911,49 @@ function DetailsModal({
             }}
           >
             <section
-              className="letter-share-dialog letter-reaction-confirm-dialog"
+              className={`letter-share-dialog letter-reaction-confirm-dialog letter-reaction-confirm-dialog--${pendingEcho}${pendingEcho === selectedEcho ? " is-undo" : ""}`}
               role="alertdialog"
               aria-modal="true"
               aria-labelledby="reaction-confirm-title"
               onClick={event => event.stopPropagation()}
             >
-              <span className="letter-share-dialog__eyebrow">Change reaction</span>
-              <div className="letter-reaction-confirm-dialog__icon" aria-hidden="true">
+              <span className="letter-share-dialog__eyebrow">
+                {pendingEcho === selectedEcho ? "Remove reaction" : "Change reaction"}
+              </span>
+              <div
+                className={`letter-reaction-confirm-dialog__icon letter-reaction-confirm-dialog__icon--${pendingEcho}`}
+                aria-hidden="true"
+              >
                 {pendingEcho === "sad" ? <TbMoodSad /> : <TbHeart />}
               </div>
-              <h2 id="reaction-confirm-title">{pendingEcho === selectedEcho ? "Undo your reaction?" : "Switch your reaction?"}</h2>
-              <p>{pendingEcho === selectedEcho
-                ? `Your ${pendingEcho === "sad" ? "Sad" : "Love"} reaction will be removed from this letter.`
-                : `Your previous reaction will be replaced with ${pendingEcho === "sad" ? "Sad" : "Love"}.`}</p>
+              <h2 id="reaction-confirm-title">
+                {pendingEcho === selectedEcho ? "Undo your reaction?" : "Switch your reaction?"}
+              </h2>
+              <p>
+                {pendingEcho === selectedEcho
+                  ? `Your ${pendingEcho === "sad" ? "Sad" : "Love"} reaction will be removed from this letter.`
+                  : `Your previous reaction will be replaced with ${pendingEcho === "sad" ? "Sad" : "Love"}.`}
+              </p>
               <div className="letter-reaction-confirm-dialog__actions">
-                <button type="button" className="is-cancel" onClick={() => setPendingEcho("")} disabled={savingEcho}>Keep current</button>
-                <button type="button" className="is-confirm" onClick={confirmEchoSwitch} disabled={savingEcho}>
-                  {savingEcho ? "Saving…" : pendingEcho === selectedEcho ? "Undo reaction" : "Switch reaction"}
+                <button
+                  type="button"
+                  className="is-cancel"
+                  onClick={() => setPendingEcho("")}
+                  disabled={savingEcho}
+                >
+                  Keep current
+                </button>
+                <button
+                  type="button"
+                  className={`is-confirm is-confirm--${pendingEcho}`}
+                  onClick={confirmEchoSwitch}
+                  disabled={savingEcho}
+                >
+                  {savingEcho
+                    ? "Saving…"
+                    : pendingEcho === selectedEcho
+                    ? "Undo reaction"
+                    : "Switch reaction"}
                 </button>
               </div>
             </section>
