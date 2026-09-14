@@ -35,3 +35,11 @@ See: https://github.com/dids-reyes/letters_to_casper/discussions/117
 New Letters are sent from the NodeJS Server to Discord channel `#letters` since this data contains sensitive info. (e.g, Loc) only selected members can view this channel.
 
 ![](https://dcbadge.limes.pink/api/server/pQf2mAHe4u)
+
+## Bug reports (Brevo)
+
+The Bug Report FAB submits to `/api/messages/report-bug` on the existing
+`ltc-service` backend. It reuses the mail notification Brevo service and its
+configured sender (`notif@letterstocasper.com`), sending reports to
+`letters2casper@gmail.com`. No additional Brevo configuration is required.
+Deploy the backend route along with the frontend update.

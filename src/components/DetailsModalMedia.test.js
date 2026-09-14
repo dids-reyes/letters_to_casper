@@ -6,7 +6,6 @@ import DetailsModal, { extractMediaLinks } from './DetailsModal';
 jest.mock('react-lottie-player', () => () => null);
 jest.mock('./AdComponent', () => () => null);
 jest.mock('./AdsterraNativeBanner', () => () => null);
-jest.mock('./Firefly3D', () => () => null);
 jest.mock('../data/keys', () => ({
   render_url: 'https://example.test/api/messages',
   api_key: 'test',

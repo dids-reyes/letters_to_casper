@@ -7,7 +7,6 @@ import Home from './Home';
 jest.mock('react-lottie-player', () => () => null);
 jest.mock('./AdComponent', () => () => null);
 jest.mock('./AdsterraNativeBanner', () => () => null);
-jest.mock('./Firefly3D', () => () => null);
 jest.mock('../data/keys', () => ({
   render_url: 'https://example.test/api/messages',
   api_key: 'test',
@@ -1153,10 +1152,13 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       // Read Mode button is already visible on site load
       expect(readModeBtn).toHaveClass('is-visible');
 
-      // Bug report button is disabled
-      expect(bugReportBtn).toBeDisabled();
-      expect(bugReportBtn).toHaveAttribute('aria-disabled', 'true');
-      expect(bugReportBtn).toHaveClass('is-disabled');
+      // Bug report button is enabled and opens Bug Report modal
+      expect(bugReportBtn).not.toBeDisabled();
+      expect(bugReportBtn).not.toHaveAttribute('aria-disabled', 'true');
+      expect(bugReportBtn).not.toHaveClass('is-disabled');
+
+      fireEvent.click(bugReportBtn);
+      expect(screen.getByRole('dialog', { name: /Bug Report/i })).toBeInTheDocument();
     });
 
     test('Read Mode onboarding tooltip triggers exclusively after closing the first letter and auto-dismisses after 5 seconds', async () => {
