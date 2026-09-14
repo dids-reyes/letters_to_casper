@@ -499,6 +499,7 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 7px 12px;
   color: #4b5563;
@@ -1948,12 +1949,28 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   margin: 0;
 }
 
-.fab {
-  -webkit-tap-highlight-color: transparent;
+.fab-stack {
   position: fixed;
   right: 24px;
   bottom: 72px;
   z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.fab-item-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab {
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1973,7 +1990,11 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   transform: translateY(12px) scale(0.92);
   transition: opacity 0.25s ease, visibility 0.25s ease,
     transform 0.25s ease, background-color 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.fab:not(.is-visible) {
+  display: none !important;
 }
 
 .fab.is-visible {
@@ -1992,6 +2013,11 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 .fab:focus-visible {
   outline: 3px solid rgba(55, 114, 255, 0.3);
   outline-offset: 3px;
+}
+
+.fab.scroll-top-fab {
+  background: rgba(55, 114, 255, 0.92);
+  color: #ffffff;
 }
 
 .fab.read-mode-fab {
@@ -2017,6 +2043,94 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 .fab.read-mode-fab.is-active:hover {
   background: #1d4ed8;
   box-shadow: 0 9px 26px rgba(29, 78, 216, 0.5);
+}
+
+.fab.bug-report-fab {
+  background: #f8fafc;
+  color: #94a3b8;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.fab.bug-report-fab.is-disabled,
+.fab.bug-report-fab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.fab.bug-report-fab.is-disabled:hover,
+.fab.bug-report-fab:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* Read Mode Onboarding Tooltip */
+.read-mode-onboarding-tooltip {
+  position: absolute;
+  right: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.18), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: max-content;
+  max-width: 220px;
+  cursor: pointer;
+  z-index: 100;
+  pointer-events: auto;
+  animation: tooltipSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.read-mode-onboarding-tooltip.is-fading-out {
+  opacity: 0;
+  transform: translateY(-50%) translateX(10px);
+  pointer-events: none;
+}
+
+.read-mode-onboarding-tooltip::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background: inherit;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.read-mode-tooltip-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: -0.01em;
+}
+
+.read-mode-tooltip-text {
+  font-size: 11.5px;
+  color: #475569;
+  line-height: 1.4;
+  margin: 0;
+}
+
+@keyframes tooltipSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 
 .ui-announcement-overlay {
@@ -2298,26 +2412,39 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   }
 
   .home-toolbar:not(.is-compact) .messages-count {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1.15fr 1.35fr 1.15fr 1.15fr 1fr 0.85fr;
     width: 100%;
     max-width: 430px;
     box-sizing: border-box;
-    justify-content: space-evenly;
-    padding: 4px 3px;
+    padding: 4px;
     overflow: visible;
   }
 
   .home-toolbar:not(.is-compact) .message-stat {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 6px 2px;
     gap: 3px;
-    padding: 6px 5px;
     font-size: 10px;
+    line-height: 1;
   }
 
   .home-toolbar:not(.is-compact) .message-stat svg {
+    display: block;
     width: 18px;
     height: 18px;
     flex: 0 0 18px;
+    align-self: center;
+  }
+
+  .home-toolbar:not(.is-compact) .message-stat--count {
+    gap: 4px;
   }
 
   .home-toolbar.is-compact {
@@ -2531,12 +2658,30 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   /*   box-sizing: border-box; /1* Include padding and border in the width calculation *1/ */
   /* } */
 
-  .fab {
+  .fab-stack {
     right: 12px;
     bottom: 58px;
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
+    gap: 10px;
+  }
+
+  .fab {
+    width: 44px;
+    height: 44px;
+    font-size: 19px;
+  }
+
+  .read-mode-onboarding-tooltip {
+    right: calc(100% + 10px);
+    max-width: min(200px, calc(100vw - 80px));
+    padding: 8px 12px;
+  }
+
+  .read-mode-tooltip-title {
+    font-size: 12px;
+  }
+
+  .read-mode-tooltip-text {
+    font-size: 11px;
   }
 
   .ui-announcement-overlay {
@@ -2748,6 +2893,22 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     min-width: 0;
     padding-inline: 5px;
     font-size: 12px;
+  }
+
+  .home-toolbar:not(.is-compact) .message-stat {
+    padding: 5px 1px;
+    gap: 2px;
+    font-size: 9px;
+  }
+
+  .home-toolbar:not(.is-compact) .message-stat svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+  }
+
+  .home-toolbar:not(.is-compact) .message-stat--count {
+    gap: 2px;
   }
 }
 
@@ -4411,6 +4572,7 @@ html.night-shift .letter-modal-overlay.is-read-mode {
 .app.is-read-mode-active .header,
 .app.is-read-mode-active .content,
 .app.is-read-mode-active .letters-container,
+.app.is-read-mode-active .fab-stack,
 .app.is-read-mode-active .fab,
 .app.is-read-mode-active .footer {
   visibility: hidden !important;
@@ -5903,6 +6065,11 @@ html.night-shift .message-stat:hover {
   color: #f2eee2;
 }
 
+html.night-shift .fab.scroll-top-fab {
+  background: rgba(37, 99, 235, 0.85);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 html.night-shift .fab.read-mode-fab {
   background: #1e293b;
   color: #cbd5e1;
@@ -5920,6 +6087,38 @@ html.night-shift .fab.read-mode-fab.is-active {
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 0 7px 22px rgba(59, 130, 246, 0.45);
+}
+
+html.night-shift .fab.bug-report-fab {
+  background: #1e293b;
+  color: #64748b;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+html.night-shift .fab.bug-report-fab.is-disabled,
+html.night-shift .fab.bug-report-fab:disabled {
+  opacity: 0.4;
+}
+
+html.night-shift .read-mode-onboarding-tooltip {
+  background: #1e293b;
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+}
+
+html.night-shift .read-mode-onboarding-tooltip::after {
+  border-right-color: rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.15);
+}
+
+html.night-shift .read-mode-tooltip-title {
+  color: #60a5fa;
+}
+
+html.night-shift .read-mode-tooltip-text {
+  color: #cbd5e1;
 }
 
 html.night-shift .read-mode-tip {
@@ -6545,8 +6744,8 @@ html.night-shift .submit-retention-details summary { color:#a0b2ce; }
   .home-toolbar.is-compact .toolbar-trigger > span { display:none; }
 }
 
-.home-toolbar.is-compact .message-stat--count { align-items:center; justify-content:center; }
-.home-toolbar.is-compact .message-stat__count {
+.message-stat--count { align-items:center; justify-content:center; }
+.message-stat__count {
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -6556,7 +6755,7 @@ html.night-shift .submit-retention-details summary { color:#a0b2ce; }
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
 }
-.home-toolbar.is-compact .message-stat--count > svg { display:block; align-self:center; }
+.message-stat--count > svg { display:block; align-self:center; }
 @media (max-width: 480px) {
   .home-toolbar.is-compact .messages-count { grid-template-columns:1.3fr repeat(3,minmax(0,1fr)) 1.15fr 1fr; }
   .home-toolbar.is-compact .message-stat--count { gap:4px; }

@@ -19,6 +19,7 @@ import "react-toastify/dist/ReactToastify.css";
 import MailboxLoading from "./MailboxLoading";
 import {
   IoArrowUpOutline,
+  IoBugOutline,
   IoChevronBackOutline,
   IoChevronForwardOutline,
   IoHelpCircleOutline,
@@ -47,6 +48,7 @@ import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
+const READ_MODE_TOOLTIP_KEY = "hasSeenReadModeTooltip";
 const FIREFLY_ENABLED = false;
 const CHRISTMAS_SNOWFLAKES = Array.from({length: 30}, (_, index) => ({
   left: (index * 37 + 11) % 101,
@@ -199,6 +201,59 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
   const [showReadModeModal, setShowReadModeModal] = useState(false);
   const isReadModeActive = Boolean(readModeEnabled && showDetailsModal && readMode);
+
+  const [showReadModeTooltip, setShowReadModeTooltip] = useState(false);
+  const [isTooltipFading, setIsTooltipFading] = useState(false);
+  const wasDetailsModalOpenRef = useRef(false);
+  const tooltipTimerRef = useRef(null);
+  const tooltipFadeTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (!readModeEnabled) {
+      wasDetailsModalOpenRef.current = showDetailsModal;
+      return;
+    }
+
+    if (showDetailsModal) {
+      // If modal opens while tooltip was showing, dismiss immediately
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+      setShowReadModeTooltip(false);
+      setIsTooltipFading(false);
+    } else if (wasDetailsModalOpenRef.current && !showDetailsModal) {
+      // First-time visitor closed their first letter
+      try {
+        const hasSeen = localStorage.getItem(READ_MODE_TOOLTIP_KEY);
+        if (!hasSeen) {
+          localStorage.setItem(READ_MODE_TOOLTIP_KEY, "true");
+          setShowReadModeTooltip(true);
+          setIsTooltipFading(false);
+
+          if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+          if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+
+          tooltipTimerRef.current = setTimeout(() => {
+            setIsTooltipFading(true);
+            tooltipFadeTimerRef.current = setTimeout(() => {
+              setShowReadModeTooltip(false);
+              setIsTooltipFading(false);
+            }, 400);
+          }, 5000);
+        }
+      } catch (e) {
+        /* storage unavailable */
+      }
+    }
+
+    wasDetailsModalOpenRef.current = showDetailsModal;
+  }, [showDetailsModal, readModeEnabled]);
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!showDetailsModal) {
@@ -1602,29 +1657,74 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         </div>
       )}
 
-      {readModeEnabled && (
+      <div className="fab-stack" role="region" aria-label="Quick actions">
+        {/* 1. Scroll Up */}
         <button
           type="button"
-          className={`fab read-mode-fab${!isHeaderCompact ? " is-visible" : ""}${readMode ? " is-active" : ""}`}
-          onClick={() => {
-            setShowReadModeModal(true);
-          }}
-          aria-pressed={readMode}
-          aria-label={`Read mode info and settings (${readMode ? "on" : "off"})`}
-          title={`Read mode: ${readMode ? "On" : "Off"} (Click to learn more)`}
+          className={`fab scroll-top-fab${isHeaderCompact ? " is-visible" : ""}`}
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          title="Back to top"
         >
-          <IoReaderOutline aria-hidden="true" />
+          <IoArrowUpOutline aria-hidden="true" />
         </button>
-      )}
-      <button
-        type="button"
-        className={`fab${isHeaderCompact ? " is-visible" : ""}`}
-        onClick={scrollToTop}
-        aria-label="Back to top"
-        title="Back to top"
-      >
-        <IoArrowUpOutline aria-hidden="true" />
-      </button>
+
+        {/* 2. Read Mode */}
+        {readModeEnabled && (
+          <div className="fab-item-wrapper">
+            <button
+              type="button"
+              className={`fab read-mode-fab is-visible${readMode ? " is-active" : ""}`}
+              onClick={() => {
+                if (showReadModeTooltip) {
+                  if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+                  if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+                  setShowReadModeTooltip(false);
+                  setIsTooltipFading(false);
+                }
+                setShowReadModeModal(true);
+              }}
+              aria-pressed={readMode}
+              aria-label={`Read mode info and settings (${readMode ? "on" : "off"})`}
+              title={`Read mode: ${readMode ? "On" : "Off"} (Click to learn more)`}
+            >
+              <IoReaderOutline aria-hidden="true" />
+            </button>
+            {showReadModeTooltip && (
+              <aside
+                className={`read-mode-onboarding-tooltip${isTooltipFading ? " is-fading-out" : ""}`}
+                role="status"
+                aria-label="Read Mode introduction"
+                onClick={() => {
+                  if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+                  if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+                  setShowReadModeTooltip(false);
+                  setIsTooltipFading(false);
+                  setShowReadModeModal(true);
+                }}
+              >
+                <span className="read-mode-tooltip-title">Try Read Mode</span>
+                <p className="read-mode-tooltip-text">
+                  Browse letters smoothly without typing delays.
+                </p>
+              </aside>
+            )}
+          </div>
+        )}
+
+        {/* 3. Bug Report (Disabled preview) */}
+        <button
+          type="button"
+          className={`fab bug-report-fab is-disabled${isHeaderCompact ? " is-visible" : ""}`}
+          disabled
+          aria-disabled="true"
+          aria-label="Report a bug (Coming soon)"
+          title="Report a bug (Coming soon)"
+          onClick={(e) => e.preventDefault()}
+        >
+          <IoBugOutline aria-hidden="true" />
+        </button>
+      </div>
 
       <Footer />
     </div>

@@ -23,6 +23,7 @@ import DetailsModal from './DetailsModal';
 import AdsterraBanner from './AdsterraBanner';
 import { displayDirectLinkAds } from '../data/direct_link';
 import {render_url, api_key} from '../data/keys';
+import {useCrisisSupport} from '../context/CrisisSupportContext';
 
 const validateSongLink = rawLink => {
   const value = String(rawLink || '').trim();
@@ -73,6 +74,7 @@ function AddModal({
   handleAddLetter,
   setNewLetter,
 }) {
+  const {triggerBackgroundCrisisCheck} = useCrisisSupport();
   const fromInputRef = useRef(null);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
@@ -317,6 +319,7 @@ useEffect(() => {
     });
 
     if (submitted) {
+      triggerBackgroundCrisisCheck(updatedLetter.message);
       setSubmittedBurnKey(submitted.burnKey || '');
       setSubmittedLetterId(submitted.letterId || '');
       setNotificationEmail('');
