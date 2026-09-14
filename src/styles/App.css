@@ -5403,9 +5403,9 @@ html.night-shift .letter-modal-overlay.is-read-mode {
 }
 
 .letter-paper__translation-control {
+  display: none !important;
   position: relative;
   z-index: 2;
-  display: flex;
   align-items: center;
   gap: 8px;
   margin: -5px 0 14px;
@@ -5729,6 +5729,11 @@ html.night-shift .letter-paper__translation-control small {
   color: #3772ff;
 }
 
+.letter-paper__echo.is-reacted--love,
+.letter-paper__echo.is-reacted--sad {
+  color: #3772ff;
+}
+
 .letter-echo-summary > button {
   color: inherit;
   min-width: 20px;
@@ -5768,10 +5773,8 @@ html.night-shift .letter-paper__translation-control small {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: #6e6653;
+  color: #78716c;
   font: inherit;
-  font-size: 9px;
-  white-space: normal;
   cursor: pointer;
   box-shadow: none;
   outline: none;
@@ -5819,6 +5822,7 @@ html.night-shift .letter-paper__translation-control small {
   box-shadow: none;
 }
 
+.letter-echo-picker > button:hover svg,
 .letter-echo-picker > button.is-selected svg {
   border: none;
   background: transparent;
@@ -6127,8 +6131,8 @@ html.night-shift .letter-paper__translation-control small {
 }
 
 .letter-reaction-confirm-dialog__actions button:disabled {
-  opacity: 0.55;
-  cursor: wait;
+  opacity: 0.55 !important;
+  cursor: wait !important;
 }
 
 @keyframes letter-share-fade-in {
@@ -6161,6 +6165,11 @@ html.night-shift .letter-paper__translation-control small {
   .letter-share-dialog {
     padding: 24px 18px 20px;
     border-radius: 19px;
+  }
+
+  .letter-reaction-confirm-dialog {
+    width: min(320px, calc(100vw - 32px)) !important;
+    padding: 20px 18px 18px !important;
   }
 
   .letter-share-dialog__options > button {
@@ -6253,8 +6262,8 @@ html.night-shift .letter-paper__translation-control small {
 
   .letter-echo-picker {
     justify-content: center;
-    gap: 1px;
-    padding: 4px 6px;
+    gap: 3px;
+    padding: 3px 6px;
     border-radius: 999px;
   }
 
@@ -6924,6 +6933,7 @@ html.night-shift .letter-echo-picker > button:hover svg {
   transform: none !important;
 }
 
+html.night-shift .letter-echo-picker > button:hover,
 html.night-shift .letter-echo-picker > button.is-selected {
   border: none;
   background: transparent;
@@ -6931,12 +6941,28 @@ html.night-shift .letter-echo-picker > button.is-selected {
   box-shadow: none;
 }
 
+html.night-shift .letter-echo-picker > button svg,
+html.night-shift .letter-echo-picker > button:hover svg,
 html.night-shift .letter-echo-picker > button.is-selected svg {
   border: none;
   background: transparent;
   box-shadow: none;
   color: #82aaff;
   transform: none !important;
+}
+
+html.night-shift .letter-echo-picker > button.letter-echo-picker__btn--love:hover,
+html.night-shift .letter-echo-picker > button.letter-echo-picker__btn--love.is-selected,
+html.night-shift .letter-echo-picker > button.letter-echo-picker__btn--sad:hover,
+html.night-shift .letter-echo-picker > button.letter-echo-picker__btn--sad.is-selected {
+  color: #60a5fa;
+}
+
+html.night-shift .letter-echo-picker > button.letter-echo-picker__btn--love:hover svg,
+html.night-shift .letter-echo-picker > button.letter-echo-picker__btn--love.is-selected svg,
+html.night-shift .letter-echo-picker > button.letter-echo-picker__btn--sad:hover svg,
+html.night-shift .letter-echo-picker > button.letter-echo-picker__btn--sad.is-selected svg {
+  color: #60a5fa;
 }
 
 html.night-shift .letter-echo-breakdown strong {
