@@ -30,6 +30,8 @@ import { adminId, targetDate } from "../data/target_letters";
 import stringSplitter from "../data/splitLetterCharacters";
 import { toast } from "react-toastify";
 import { getOptimizedPhotoUrl } from "../data/cloudinary";
+
+const ENABLE_TRANSLATION = false;
 const languageCodes = {
   albanian: "sq", arabic: "ar", azeri: "az", bengali: "bn",
   bulgarian: "bg", cebuano: "ceb", croatian: "hr", czech: "cs",
@@ -503,7 +505,7 @@ function DetailsModal({
     setShowTranslation(false);
     setDetectedLanguage(null);
 
-    if (message) {
+    if (ENABLE_TRANSLATION && message) {
       import("languagedetect")
         .then(({ default: LanguageDetect }) => {
           if (!isCurrentLetter) return;
@@ -1427,7 +1429,7 @@ function DetailsModal({
       </div>
       <Tooltip id="timezone_tooltip" />
 
-      {detectedLanguage && (
+      {ENABLE_TRANSLATION && detectedLanguage && (
         <div className="letter-paper__translation-control">
           <button
             type="button"

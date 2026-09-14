@@ -5303,9 +5303,9 @@ html.night-shift .letter-modal-overlay.is-read-mode {
 }
 
 .letter-paper__translation-control {
+  display: none !important;
   position: relative;
   z-index: 2;
-  display: flex;
   align-items: center;
   gap: 8px;
   margin: -5px 0 14px;
