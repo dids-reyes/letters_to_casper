@@ -1,8 +1,14 @@
 import React from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import DetailsModal, { resetSessionViewedLetters } from './DetailsModal';
+import DetailsModal, { resetSessionViewedLetters, viewedLetterIds } from './DetailsModal';
 import Home from './Home';
+
+const finishFold = element => {
+  const event = new Event('animationend', {bubbles: true});
+  Object.defineProperty(event, 'animationName', {value: 'letter-close-fade'});
+  fireEvent(element, event);
+};
 
 jest.mock('react-lottie-player', () => () => null);
 jest.mock('./AdComponent', () => () => null);
@@ -69,8 +75,9 @@ afterEach(() => {
 
 describe('Read Mode in DetailsModal', () => {
 
-  test('in readMode, envelope is bypassed and letter is immediately displayed', () => {
-    const { container } = render(
+  test('in readMode, envelope opening animation is shown when enabled or toggled', () => {
+    jest.useFakeTimers();
+    const { container, rerender } = render(
       <MemoryRouter>
         <DetailsModal
           showDetailsModal={true}
@@ -82,10 +89,16 @@ describe('Read Mode in DetailsModal', () => {
       </MemoryRouter>
     );
 
-    // Envelope is not displayed
-    expect(container.querySelector('.letter-envelope')).toBeNull();
+    // Envelope is initially displayed
+    expect(container.querySelector('.letter-envelope')).not.toBeNull();
+    expect(container.querySelector('.letter-paper')).toBeNull();
 
-    // Letter paper is immediately displayed
+    // After animation completes, letter paper is displayed
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
+
+    expect(container.querySelector('.letter-envelope')).toBeNull();
     expect(container.querySelector('.letter-paper')).not.toBeNull();
 
     // Text is immediately displayed
@@ -93,6 +106,22 @@ describe('Read Mode in DetailsModal', () => {
     expect(infoBlocks[0]).toHaveTextContent('Sender 1');
     expect(infoBlocks[1]).toHaveTextContent('Recipient 1');
     expect(container.querySelector('.letter-paper__body')).toHaveTextContent('Message content for letter 1');
+
+    // Toggling readMode also shows opening animation
+    rerender(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[0]}
+          readMode={false}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector('.letter-envelope')).not.toBeNull();
+    jest.useRealTimers();
   });
 
   test('in readMode, no navigation buttons (.read-mode-nav) are rendered on the letter', () => {
@@ -261,6 +290,7 @@ describe('Read Mode in DetailsModal', () => {
           toggleDetailsModal={handleClose}
           selectedLetter={sampleLetters[0]}
           readMode={true}
+          initialOpened={true}
           letters={sampleLetters}
         />
       </MemoryRouter>
@@ -272,6 +302,7 @@ describe('Read Mode in DetailsModal', () => {
 
     const closeButton = container.querySelector('.letter-modal__close');
     fireEvent.click(closeButton);
+      finishFold(container.querySelector('.letter-modal-overlay'));
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
@@ -291,6 +322,7 @@ describe('Read Mode in DetailsModal', () => {
 
     const overlay = container.querySelector('.letter-modal-overlay');
     fireEvent.click(overlay);
+    finishFold(overlay);
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
@@ -302,6 +334,7 @@ describe('Read Mode in DetailsModal', () => {
           toggleDetailsModal={jest.fn()}
           selectedLetter={sampleLetters[0]}
           readMode={true}
+          initialOpened={true}
           letters={sampleLetters}
         />
       </MemoryRouter>
@@ -921,6 +954,7 @@ describe('Read Mode in DetailsModal', () => {
           toggleDetailsModal={jest.fn()}
           selectedLetter={sampleLetters[currentIdx]}
           readMode={true}
+          initialOpened={true}
           letters={sampleLetters}
           setSelectedLetter={mockSetSelectedLetter}
         />
@@ -1182,7 +1216,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       jest.useRealTimers();
     });
 
-    test('Read Mode onboarding tooltip triggers exclusively after closing the first letter and auto-dismisses after 5 seconds', async () => {
+    test('Read Mode onboarding tooltip triggers after closing a letter and auto-dismisses after 30 seconds', async () => {
       const mockFetch = jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
         if (typeof url === 'string' && url.includes('/public/letter-1')) {
           return {
@@ -1211,7 +1245,6 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
       // 1. Initially while letter is open, tooltip is NOT shown
       expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
-      expect(localStorage.getItem('hasSeenReadModeTooltip')).toBeNull();
 
       // Wait for modal to open
       await waitFor(() => {
@@ -1221,7 +1254,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       // Still not shown while letter is open
       expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
 
-      // Switch to fake timers to test 5-second auto-dismiss
+      // Switch to fake timers to test 30-second auto-dismiss
       jest.useFakeTimers();
 
       // 2. Close the letter by clicking the overlay backdrop
@@ -1229,21 +1262,19 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       act(() => {
         fireEvent.click(overlay);
       });
+      finishFold(overlay);
 
       // 3. Tooltip now triggers immediately upon letter closure anchored to main FAB
       const tooltip = screen.getByRole('status', { name: /Read Mode introduction/i });
       expect(tooltip).toBeInTheDocument();
       expect(container.querySelector('.speed-dial-trigger-wrapper .read-mode-onboarding-tooltip')).toBeInTheDocument();
-      expect(screen.getByText(/Quick Actions/i)).toBeInTheDocument();
+      expect(screen.getByText(/Access Read Mode here/i)).toBeInTheDocument();
       expect(tooltip).not.toHaveTextContent('💡');
-      expect(screen.getByText(/Access Read Mode, scroll to top, and more right here/i)).toBeInTheDocument();
+      expect(screen.getByText(/Disable typing effects and scroll down to browse through letters/i)).toBeInTheDocument();
 
-      // Visitor tracking flag persisted immediately in localStorage
-      expect(localStorage.getItem('hasSeenReadModeTooltip')).toBe('true');
-
-      // 4. Advance time by 5 seconds (5000ms): starts fade out
+      // 4. Advance time by 10 seconds (10000ms): starts fade out
       act(() => {
-        jest.advanceTimersByTime(5000);
+        jest.advanceTimersByTime(10000);
       });
       expect(screen.getByRole('status', { name: /Read Mode introduction/i })).toHaveClass('is-fading-out');
 
@@ -1257,9 +1288,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       jest.useRealTimers();
     });
 
-    test('returning visitor with hasSeenReadModeTooltip flag does not see tooltip upon closing a letter', async () => {
-      localStorage.setItem('hasSeenReadModeTooltip', 'true');
-
+    test('shows tooltip for every user and clicking Main FAB highlights Read Mode with glowing blue circle', async () => {
       const mockFetch = jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
         if (typeof url === 'string' && url.includes('/public/letter-1')) {
           return {
@@ -1292,9 +1321,77 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
       const overlay = container.querySelector('.letter-modal-overlay');
       fireEvent.click(overlay);
+      finishFold(overlay);
 
-      // Tooltip must NOT appear
+      // Tooltip appears for user
+      const tooltip = screen.getByRole('status', { name: /Read Mode introduction/i });
+      expect(tooltip).toBeInTheDocument();
+
+      // Clicking Main FAB because of the tooltip opens speed dial and highlights Read Mode button
+      const mainFab = container.querySelector('.speed-dial-trigger');
+      fireEvent.click(mainFab);
+
+      // Tooltip is dismissed
       expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
+
+      // Speed dial is open and Read Mode floating button has glowing circle highlight
+      expect(container.querySelector('.speed-dial-container')).toHaveClass('is-open');
+      const readModeBtn = container.querySelector('.read-mode-fab');
+      expect(readModeBtn).toHaveClass('is-highlighted');
+
+      // Clicking the highlighted Read Mode button dismisses the highlight and opens modal
+      fireEvent.click(readModeBtn);
+      expect(readModeBtn).not.toHaveClass('is-highlighted');
+      expect(screen.getByRole('dialog', { name: /Read Mode/i })).toBeInTheDocument();
+
+      // Close modal and verify regular speed dial click does NOT highlight when tooltip wasn't active
+      fireEvent.click(screen.getByRole('button', { name: /Done/i }));
+      fireEvent.click(mainFab);
+      expect(readModeBtn).not.toHaveClass('is-highlighted');
+
+      mockFetch.mockRestore();
+    });
+
+    test('does NOT show tooltip when user exits from a letter that was opened with Read Mode toggled on', async () => {
+      const mockFetch = jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
+        if (typeof url === 'string' && url.includes('/public/letter-1')) {
+          return {
+            ok: true,
+            json: async () => ({ message: sampleLetters[0] }),
+          };
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            messages: sampleLetters,
+            counts: { approved: sampleLetters.length, unapproved: 0 },
+            featured: null,
+          }),
+        };
+      });
+
+      const { container } = render(
+        <MemoryRouter initialEntries={['/letters/letter-1']}>
+          <Routes>
+            <Route path="/letters/:messageId" element={<Home readModeEnabled={true} initialReadMode={true} />} />
+            <Route path="/" element={<Home readModeEnabled={true} />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      // Letter opens in Read Mode
+      await waitFor(() => {
+        expect(container.querySelector('.letter-modal-overlay.is-read-mode')).toBeInTheDocument();
+      });
+
+      // Exit the letter via corner close
+      const closeBtn = await screen.findByLabelText('Close letter', {}, { timeout: 3000 });
+      fireEvent.click(closeBtn);
+      finishFold(container.querySelector('.letter-modal-overlay'));
+
+      // Tooltip should NOT show because user was already in Read Mode
+      expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
+      expect(container.querySelector('.read-mode-onboarding-tooltip')).toBeNull();
 
       mockFetch.mockRestore();
     });
@@ -1663,13 +1760,13 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
         expect(feedContainer).toHaveClass('feed-main-container--suspended');
       });
 
-      const countBeforeExit = apiCallCount;
-
       // Close DetailsModal by clicking close button
-      const closeButton = screen.getByLabelText('Close letter');
+      const closeButton = await screen.findByLabelText('Close letter', {}, { timeout: 3000 });
+      const countBeforeExit = apiCallCount;
       fireEvent.click(closeButton);
+      finishFold(container.querySelector('.letter-modal-overlay'));
 
-      // Feed container is immediately unsuspended
+      // Feed container is unsuspended once folding finishes
       await waitFor(() => {
         const feedContainer = container.querySelector('.feed-main-container');
         expect(feedContainer).not.toHaveClass('feed-main-container--suspended');
@@ -1677,6 +1774,341 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
       // No new API calls dispatched on exit
       expect(apiCallCount).toBe(countBeforeExit);
+    });
+  });
+});
+
+
+
+
+describe('Letter folding dismissal', () => {
+  test.each(['corner', 'Escape'])('%s waits for the exit and dismisses only once', trigger => {
+    const close = jest.fn();
+    const select = jest.fn();
+    const {container} = render(
+      <MemoryRouter><DetailsModal showDetailsModal={true} toggleDetailsModal={close}
+        selectedLetter={sampleLetters[0]} readMode={true} initialOpened={true} letters={sampleLetters}
+        setSelectedLetter={select} /></MemoryRouter>
+    );
+    if (trigger === 'corner') fireEvent.click(screen.getByLabelText('Close letter'));
+    else fireEvent.keyDown(document, {key: 'Escape'});
+    const overlay = container.querySelector('.letter-modal-overlay');
+    expect(overlay).toHaveClass('is-folding-closed');
+    expect(close).not.toHaveBeenCalled();
+    fireEvent.keyDown(document, {key: 'ArrowDown'});
+    expect(select).not.toHaveBeenCalled();
+    fireEvent.animationEnd(container.querySelector('.letter-envelope--closing .letter-envelope__note'), {animationName: 'letter-env-note-close'});
+    expect(container.querySelector('.letter-envelope--closing .letter-envelope__seal')).toBeNull();
+    expect(close).not.toHaveBeenCalled();
+    finishFold(overlay);
+    finishFold(overlay);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  test('reduced motion completes with the short fade fallback', () => {
+    jest.useFakeTimers();
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = jest.fn(query => ({matches: query.includes('prefers-reduced-motion')}));
+    try {
+      const close = jest.fn();
+      render(<MemoryRouter><DetailsModal showDetailsModal={true} toggleDetailsModal={close}
+        selectedLetter={sampleLetters[0]} readMode={true} initialOpened={true} /></MemoryRouter>);
+      fireEvent.click(screen.getByLabelText('Close letter'));
+      expect(close).not.toHaveBeenCalled();
+      act(() => jest.advanceTimersByTime(120));
+      expect(close).toHaveBeenCalledTimes(1);
+    } finally {
+      window.matchMedia = originalMatchMedia;
+      jest.useRealTimers();
+    }
+  });
+});
+
+describe('Read Mode background tap fold tooltip', () => {
+  test('tapping background in read mode shows tooltip for 2 seconds directing user to folded corner', () => {
+    jest.useFakeTimers();
+    const close = jest.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={close}
+          selectedLetter={sampleLetters[0]}
+          readMode={true}
+          initialOpened={true}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    // Initially tooltip is not present
+    expect(screen.queryByRole('status', { name: /Close letter hint/i })).toBeNull();
+    const overlay = container.querySelector('.letter-modal-overlay');
+
+    // Tap/click the background
+    fireEvent.click(overlay);
+
+    // Modal does not close
+    expect(close).not.toHaveBeenCalled();
+
+    // Tooltip is shown and corner has hint animation
+    const tip = screen.getByRole('status', { name: /Close letter hint/i });
+    expect(tip).toBeInTheDocument();
+    expect(tip).toHaveTextContent(/folded corner to close/i);
+    expect(container.querySelector('.letter-modal__close')).toHaveClass('is-hinted');
+
+    // Advance by 1s: still visible
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole('status', { name: /Close letter hint/i })).toBeInTheDocument();
+
+    // Tapping background again resets the 2-second timer
+    fireEvent.click(overlay);
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole('status', { name: /Close letter hint/i })).toBeInTheDocument();
+
+    // Advance another 1s (total 2s from last tap) -> fading out
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(tip).toHaveClass('is-fading-out');
+
+    // Advance remaining 400ms fade transition -> unmounts
+    act(() => {
+      jest.advanceTimersByTime(400);
+    });
+    expect(screen.queryByRole('status', { name: /Close letter hint/i })).toBeNull();
+    expect(container.querySelector('.letter-modal__close')).not.toHaveClass('is-hinted');
+
+    jest.useRealTimers();
+  });
+
+  test('tapping the fold tooltip itself triggers letter close', () => {
+    const close = jest.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={close}
+          selectedLetter={sampleLetters[0]}
+          readMode={true}
+          initialOpened={true}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    const overlay = container.querySelector('.letter-modal-overlay');
+    fireEvent.click(overlay);
+
+    const tip = screen.getByRole('status', { name: /Close letter hint/i });
+    expect(tip).toBeInTheDocument();
+
+    // Clicking tooltip closes the letter
+    fireEvent.click(tip);
+    expect(overlay).toHaveClass('is-folding-closed');
+  });
+
+  test('in normal mode (readMode=false), tapping background closes modal directly without showing fold tooltip', () => {
+    const close = jest.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={close}
+          selectedLetter={sampleLetters[0]}
+          readMode={false}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    const overlay = container.querySelector('.letter-modal-overlay');
+    fireEvent.click(overlay);
+
+    expect(screen.queryByRole('status', { name: /Close letter hint/i })).toBeNull();
+    expect(overlay).toHaveClass('is-folding-closed');
+  });
+
+  describe('Background pre-rendering of next unread letter in Read Mode', () => {
+    const lettersWithMedia = [
+      {
+        _id: 'letter-1',
+        from: 'Alice',
+        to: 'Bob',
+        message: 'First letter',
+        timestamp: '2024-01-01T12:00:00.000Z',
+        approve: true,
+        reads: 10,
+        echoes: { love: 1, sad: 0 },
+      },
+      {
+        _id: 'letter-2',
+        from: 'Charlie',
+        to: 'David',
+        message: 'Second letter with Spotify\n\nhttps://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT',
+        timestamp: '2024-01-01T13:00:00.000Z',
+        approve: true,
+        reads: 20,
+        echoes: { love: 2, sad: 0 },
+      },
+      {
+        _id: 'letter-3',
+        from: 'Eve',
+        to: 'Frank',
+        message: 'Third letter with YouTube\n\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        timestamp: '2024-01-01T14:00:00.000Z',
+        approve: true,
+        reads: 30,
+        echoes: { love: 3, sad: 0 },
+      },
+    ];
+
+    test('pre-renders the single next unread letter in the background with eager media in readMode', () => {
+      const { container } = render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={lettersWithMedia[0]}
+            readMode={true}
+            initialOpened={true}
+            letters={lettersWithMedia}
+          />
+        </MemoryRouter>
+      );
+
+      const prerenderWrapper = container.querySelector('.read-mode-prerender-wrapper');
+      expect(prerenderWrapper).not.toBeNull();
+      expect(prerenderWrapper).toHaveAttribute('aria-hidden', 'true');
+      expect(prerenderWrapper).toHaveAttribute('tabindex', '-1');
+
+      // The pre-rendered letter is letter-2
+      const prerenderBody = prerenderWrapper.querySelector('.letter-paper__body');
+      expect(prerenderBody).toHaveTextContent('Second letter with Spotify');
+
+      // Spotify preview is rendered eagerly
+      const spotifyIframe = prerenderWrapper.querySelector('iframe[title="spotify-preview-prerender"]');
+      expect(spotifyIframe).not.toBeNull();
+      expect(spotifyIframe).toHaveAttribute('loading', 'eager');
+      expect(spotifyIframe.src).toContain('https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT');
+
+      // Exactly ONE prerender wrapper exists (only the single next letter)
+      expect(container.querySelectorAll('.read-mode-prerender-wrapper')).toHaveLength(1);
+    });
+
+    test('does NOT pre-render next letter if it has already been viewed in the session', () => {
+      // Mark letter-2 as already viewed in this session
+      viewedLetterIds.add('letter-2');
+
+      const { container } = render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={lettersWithMedia[0]}
+            readMode={true}
+            initialOpened={true}
+            letters={lettersWithMedia}
+          />
+        </MemoryRouter>
+      );
+
+      // Since letter-2 is already viewed and letter-1 has no prev letter, prerenderWrapper should be null
+      const prerenderWrapper = container.querySelector('.read-mode-prerender-wrapper');
+      expect(prerenderWrapper).toBeNull();
+    });
+
+    test('pre-renders previous unread letter when scrolling upward', () => {
+      // User is on letter-2, letter-1 is unread
+      const { container } = render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={lettersWithMedia[1]}
+            readMode={true}
+            initialOpened={true}
+            letters={lettersWithMedia}
+          />
+        </MemoryRouter>
+      );
+
+      // Simulate scrolling up (wheel with negative deltaY)
+      act(() => {
+        const wheelEvent = new Event('wheel', { bubbles: true, cancelable: true });
+        Object.defineProperty(wheelEvent, 'deltaY', { value: -20 });
+        window.dispatchEvent(wheelEvent);
+      });
+
+      const prerenderWrapper = container.querySelector('.read-mode-prerender-wrapper');
+      expect(prerenderWrapper).not.toBeNull();
+      // Should pre-render letter-1 (the upward unread letter)
+      const prerenderBody = prerenderWrapper.querySelector('.letter-paper__body');
+      expect(prerenderBody).toHaveTextContent('First letter');
+    });
+
+    test('never renders background pre-renderer when readMode is false', () => {
+      const { container } = render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={lettersWithMedia[0]}
+            readMode={false}
+            initialOpened={true}
+            letters={lettersWithMedia}
+          />
+        </MemoryRouter>
+      );
+
+      expect(container.querySelector('.read-mode-prerender-wrapper')).toBeNull();
+    });
+
+    test('pre-rendered YouTube embed has mute=1 and autoplay=0', () => {
+      const { container } = render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={lettersWithMedia[1]}
+            readMode={true}
+            initialOpened={true}
+            letters={lettersWithMedia}
+          />
+        </MemoryRouter>
+      );
+
+      const prerenderWrapper = container.querySelector('.read-mode-prerender-wrapper');
+      expect(prerenderWrapper).not.toBeNull();
+
+      const ytIframe = prerenderWrapper.querySelector('iframe[title="YouTube video player prerender"]');
+      expect(ytIframe).not.toBeNull();
+      expect(ytIframe.src).toContain('autoplay=0');
+      expect(ytIframe.src).toContain('mute=1');
+      expect(ytIframe).toHaveAttribute('loading', 'eager');
+    });
+
+    test('does not render any seal or heart element in the envelope opening animation', () => {
+      const { container } = render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={lettersWithMedia[0]}
+            readMode={true}
+            initialOpened={false}
+            letters={lettersWithMedia}
+          />
+        </MemoryRouter>
+      );
+
+      expect(container.querySelector('.letter-envelope')).not.toBeNull();
+      expect(container.querySelector('.letter-envelope__seal')).toBeNull();
+      expect(container.textContent).not.toContain('♥');
     });
   });
 });

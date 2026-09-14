@@ -24,14 +24,15 @@ import {
   IoShareSocialOutline,
 } from "react-icons/io5";
 import AdsterraBanner from "./AdsterraBanner";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
 import stringSplitter from "../data/splitLetterCharacters";
 import { toast } from "react-toastify";
 import { getOptimizedPhotoUrl } from "../data/cloudinary";
+// Translation remains disabled until explicitly re-enabled.
+const TRANSLATION_ENABLED = false;
 
-const ENABLE_TRANSLATION = false;
 const languageCodes = {
   albanian: "sq", arabic: "ar", azeri: "az", bengali: "bn",
   bulgarian: "bg", cebuano: "ceb", croatian: "hr", czech: "cs",
@@ -242,6 +243,7 @@ function DetailsModal({
   letters = [],
   setSelectedLetter = () => {},
   onFetchMore = () => {},
+  initialOpened = false,
 }) {
   let letterId;
   let letterDate;
@@ -279,7 +281,16 @@ function DetailsModal({
   const [showEchoPicker, setShowEchoPicker] = useState(false);
   const [showEchoBreakdown, setShowEchoBreakdown] = useState(false);
   const [savingEcho, setSavingEcho] = useState(false);
-  const [opened, setOpened] = useState(false);
+  const [opened, setOpened] = useState(() => Boolean(initialOpened));
+  const [isClosing, setIsClosing] = useState(false);
+  const closingRef = useRef(false);
+  const closeCompletedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    closingRef.current = false;
+    closeCompletedRef.current = false;
+    setIsClosing(false);
+  }, [showDetailsModal, selectedLetter?._id]);
 
   useEffect(() => {
     setDisplayedReads(parseInt(selectedLetter?.reads, 10) || 0);
@@ -435,7 +446,7 @@ function DetailsModal({
   };
 
   useEffect(() => {
-    if (showDetailsModal && opened && selectedLetter?._id) {
+    if (showDetailsModal && opened && selectedLetter?._id && !closingRef.current) {
       incrementReads();
     }
     // eslint-disable-next-line
@@ -505,7 +516,7 @@ function DetailsModal({
     setShowTranslation(false);
     setDetectedLanguage(null);
 
-    if (ENABLE_TRANSLATION && message) {
+    if (TRANSLATION_ENABLED && message) {
       import("languagedetect")
         .then(({ default: LanguageDetect }) => {
           if (!isCurrentLetter) return;
@@ -531,7 +542,7 @@ function DetailsModal({
       setShowTranslation(true);
       return;
     }
-    if (!detectedLanguage || isTranslating) return;
+    if (!TRANSLATION_ENABLED || !detectedLanguage || isTranslating) return;
 
     setIsTranslating(true);
     try {
@@ -572,7 +583,11 @@ function DetailsModal({
       setOpened(false);
       return;
     }
-    if (readMode) {
+    if (initialOpened) {
+      setOpened(true);
+      return;
+    }
+    if (isTransitioningRef.current) {
       setOpened(true);
       return;
     }
@@ -587,7 +602,7 @@ function DetailsModal({
     setOpened(false);
     const timer = setTimeout(() => setOpened(true), 1450);
     return () => clearTimeout(timer);
-  }, [showDetailsModal, selectedLetter, readMode]);
+  }, [showDetailsModal, selectedLetter, readMode, initialOpened]);
 
   // Attachment reveal state synchronization
   useEffect(() => {
@@ -618,6 +633,34 @@ function DetailsModal({
   const currentIndex = letterList.findIndex((l) => getLetterId(l) === targetId);
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex >= 0 && currentIndex < letterList.length - 1;
+
+  const [navDirection, setNavDirection] = useState("next");
+
+  const nextCandidate = canGoNext ? letterList[currentIndex + 1] : null;
+  const prevCandidate = canGoPrev ? letterList[currentIndex - 1] : null;
+
+  const nextKey = nextCandidate ? getLetterKey(nextCandidate, currentIndex + 1) : null;
+  const prevKey = prevCandidate ? getLetterKey(prevCandidate, currentIndex - 1) : null;
+
+  const isNextUnread = Boolean(nextCandidate && nextKey && !viewedLetterIds.has(nextKey));
+  const isPrevUnread = Boolean(prevCandidate && prevKey && !viewedLetterIds.has(prevKey));
+
+  let prerenderLetter = null;
+  if (readMode) {
+    if (navDirection === "prev") {
+      if (isPrevUnread) {
+        prerenderLetter = prevCandidate;
+      } else if (isNextUnread) {
+        prerenderLetter = nextCandidate;
+      }
+    } else {
+      if (isNextUnread) {
+        prerenderLetter = nextCandidate;
+      } else if (isPrevUnread) {
+        prerenderLetter = prevCandidate;
+      }
+    }
+  }
 
   const AD_INTERVAL = 10;
   const [outgoingLetter, setOutgoingLetter] = useState(null);
@@ -657,6 +700,54 @@ function DetailsModal({
       /* storage unavailable */
     }
   }, []);
+
+  const [showFoldTip, setShowFoldTip] = useState(false);
+  const [isFoldTipFading, setIsFoldTipFading] = useState(false);
+  const foldTipTimerRef = useRef(null);
+  const foldTipFadeTimerRef = useRef(null);
+
+  const isTouchDevice = useMemo(() => {
+    return (
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(pointer: coarse)").matches
+    );
+  }, []);
+
+  const dismissFoldTip = useCallback(() => {
+    if (foldTipTimerRef.current) clearTimeout(foldTipTimerRef.current);
+    if (foldTipFadeTimerRef.current) clearTimeout(foldTipFadeTimerRef.current);
+    setShowFoldTip(false);
+    setIsFoldTipFading(false);
+  }, []);
+
+  const triggerFoldTip = useCallback(() => {
+    if (closingRef.current) return;
+    setShowFoldTip(true);
+    setIsFoldTipFading(false);
+
+    if (foldTipTimerRef.current) clearTimeout(foldTipTimerRef.current);
+    if (foldTipFadeTimerRef.current) clearTimeout(foldTipFadeTimerRef.current);
+
+    foldTipTimerRef.current = setTimeout(() => {
+      setIsFoldTipFading(true);
+      foldTipFadeTimerRef.current = setTimeout(() => {
+        setShowFoldTip(false);
+        setIsFoldTipFading(false);
+      }, 400);
+    }, 2000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (foldTipTimerRef.current) clearTimeout(foldTipTimerRef.current);
+      if (foldTipFadeTimerRef.current) clearTimeout(foldTipFadeTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    dismissFoldTip();
+  }, [selectedLetter?._id, dismissFoldTip]);
 
   useEffect(() => {
     if (!showDetailsModal || !readMode) return undefined;
@@ -770,7 +861,8 @@ function DetailsModal({
   }, [showAdLock]);
 
   const goToNext = useCallback((fromAdLock = false) => {
-    if ((showAdLock && !fromAdLock) || isTransitioningRef.current || !canGoNext) return;
+    setNavDirection("next");
+    if (closingRef.current || (showAdLock && !fromAdLock) || isTransitioningRef.current || !canGoNext) return;
 
     if (showReadTip) {
       dismissReadTip();
@@ -818,7 +910,8 @@ function DetailsModal({
   }, [showAdLock, showReadTip, dismissReadTip, canGoNext, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, onFetchMore]);
 
   const goToPrev = useCallback((fromAdLock = false) => {
-    if ((showAdLock && !fromAdLock) || isTransitioningRef.current || !canGoPrev) return;
+    setNavDirection("prev");
+    if (closingRef.current || (showAdLock && !fromAdLock) || isTransitioningRef.current || !canGoPrev) return;
 
     if (showReadTip) {
       dismissReadTip();
@@ -892,6 +985,14 @@ function DetailsModal({
       if (e.cancelable) e.preventDefault();
       return;
     }
+    if (touchStartY.current !== null && e.touches && e.touches[0]) {
+      const diffY = e.touches[0].clientY - touchStartY.current;
+      if (diffY < -15) {
+        setNavDirection("next");
+      } else if (diffY > 15) {
+        setNavDirection("prev");
+      }
+    }
     if (!touchInsideScrollable.current) {
       if (e.cancelable) e.preventDefault();
     }
@@ -902,6 +1003,17 @@ function DetailsModal({
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     touchStartY.current = null;
+
+    if (Math.abs(deltaY) < 15 && Math.abs(deltaX) < 15) {
+      if (
+        !e.target.closest(".letter-modal") &&
+        !e.target.closest(".read-mode-tip") &&
+        !e.target.closest(".read-mode-ad-lock-overlay")
+      ) {
+        triggerFoldTip();
+        return;
+      }
+    }
 
     if (Math.abs(deltaY) < 45 || Math.abs(deltaY) < Math.abs(deltaX) * 1.2) {
       return;
@@ -928,6 +1040,12 @@ function DetailsModal({
     const onWheel = (e) => {
       if (e.cancelable) e.preventDefault();
       if (showAdLock) return;
+
+      if (e.deltaY > 0) {
+        setNavDirection("next");
+      } else if (e.deltaY < 0) {
+        setNavDirection("prev");
+      }
 
       const targetEl =
         e.target && typeof e.target.closest === "function" ? e.target : null;
@@ -1130,6 +1248,26 @@ function DetailsModal({
   };
 
   const handleCloseModal = () => {
+    if (closingRef.current) return;
+    dismissFoldTip();
+    closingRef.current = true;
+    setIsClosing(true);
+  };
+
+  const handleOverlayClick = () => {
+    if (!readMode) {
+      handleCloseModal();
+      return;
+    }
+    if (opened) {
+      triggerFoldTip();
+    }
+  };
+
+  const finishCloseModal = () => {
+    if (!closingRef.current || closeCompletedRef.current) return;
+    dismissFoldTip();
+    closeCompletedRef.current = true;
     toggleDetailsModal();
     setShowAttachments(false);
     setShowPhotoViewer(false);
@@ -1150,6 +1288,15 @@ function DetailsModal({
     setPendingNavDirection(null);
   };
 
+  // A bounded fallback also cleans up if the browser cancels the animation.
+  useEffect(() => {
+    if (!isClosing) return undefined;
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const timer = setTimeout(finishCloseModal, reduced ? 120 : 1380);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClosing]);
+
   const closeShareDialog = () => {
     setShowShareDialog(false);
     setShowQrCode(false);
@@ -1159,6 +1306,7 @@ function DetailsModal({
   useEffect(() => {
     if (!showDetailsModal) return;
     const onKeyDown = (event) => {
+      if (closingRef.current) return;
       if (event.key === "Escape") {
         if (showPhotoViewer) {
           setShowPhotoViewer(false);
@@ -1356,6 +1504,166 @@ function DetailsModal({
     );
   };
 
+  const renderPrerenderPaper = (letter) => {
+    if (!letter) return null;
+    const lDate = new Date(letter.timestamp);
+    const lTime = new Date(letter.timestamp);
+    const lId = letter._id;
+    const isEarly = lDate < targetDate && lId !== adminId;
+    let isEleven = false;
+    let isTwelve = false;
+    if (lTime != null) {
+      const hours = lTime.getHours();
+      const minutes = lTime.getMinutes();
+      if (hours === 23 && minutes === 11) isEleven = true;
+      else if (hours === 0 && minutes === 51) isTwelve = true;
+    }
+    const lHasBadge = isEarly || lId === adminId || isEleven || isTwelve;
+    const lMedia = extractMediaLinks(letter.message || "");
+    const lSpotifyTrackId = lMedia.spotifyLink?.id || null;
+    const lYoutubeVideoId = lMedia.youtubeLink?.id || null;
+    const lMessage = lMedia.newMessage || letter.message;
+    const lHasAttachment = Boolean(lSpotifyTrackId || lYoutubeVideoId || letter.photo?.url);
+    const lCity = letter.loc?.city || "";
+    const lHasLoc = Boolean(lCity) && lCity !== "Unknown";
+    const lReads = parseInt(letter.reads, 10) || 0;
+    const lEchoes = normalizeEchoes(letter.echoes);
+    const lEchoTotal = Object.values(lEchoes).reduce((a, b) => a + b, 0);
+    const LDominantIcon = lEchoes.sad > lEchoes.love ? TbMoodSad : IoHeartOutline;
+
+    return (
+      <div className="letter-paper letter-paper--prerender" aria-hidden="true" tabIndex={-1}>
+        <div className="letter-paper__head">
+          <div className="letter-info" style={{ marginBottom: "4px" }}>
+            <span><strong>From:</strong> {letter.from}</span>
+          </div>
+          <div className="letter-info">
+            <span><strong>To:</strong> {letter.to}</span>
+          </div>
+        </div>
+
+        <div className="letter-paper__date">
+          <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
+          <span className="timestamp-text">
+            <span>{formatTimestamp(letter.timestamp)}</span>
+          </span>
+        </div>
+
+        <div className={`letter-paper__body letter-text${lHasAttachment ? " letter-paper__body--scrollable" : ""}`}>
+          <span>{lMessage}</span>
+        </div>
+
+        {lSpotifyTrackId && (
+          <div className="letter-paper__media">
+            <iframe
+              title="spotify-preview-prerender"
+              tabIndex={-1}
+              style={{ border: "12px" }}
+              src={`https://open.spotify.com/embed/track/${lSpotifyTrackId}?utm_source=generator&theme=1`}
+              width="100%"
+              height="152"
+              frameBorder="0"
+              allowFullScreen=""
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="eager"
+            ></iframe>
+          </div>
+        )}
+        {!lSpotifyTrackId && lYoutubeVideoId && (
+          <div className="letter-paper__media letter-paper__media--youtube">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${lYoutubeVideoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0`}
+              title="YouTube video player prerender"
+              tabIndex={-1}
+              frameBorder="0"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+              loading="eager"
+            ></iframe>
+          </div>
+        )}
+        {letter.photo?.url && (
+          <figure className="letter-paper__photo">
+            <img
+              src={getOptimizedPhotoUrl(letter.photo.url)}
+              alt=""
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
+        )}
+
+        <div className="letter-paper__meta">
+          {lHasBadge && (
+            <>
+              <span className="letter-paper__badges">
+                {isEarly && (
+                  <>
+                    <FaEarlybirds size="15px" />
+                    <BsBookmarkHeartFill size="15px" />
+                  </>
+                )}
+                {lId === adminId && <FaUserTie size="15px" />}
+                {isEleven && <PiShootingStarFill size="15px" />}
+                {isTwelve && <PiHeartBreakFill size="15px" />}
+              </span>
+              <span className="letter-meta-sep">·</span>
+            </>
+          )}
+
+          <span className="letter-paper__age">
+            {shortLetterAge(letter.timestamp)}
+          </span>
+          <span className="letter-meta-sep">·</span>
+          <span className="letter-paper__reads">
+            <IoEyeOutline className="letter-paper__reads-eye" />
+            {formatReadsCount(lReads)}
+          </span>
+
+          {(lHasLoc || (!letter.preview && letter._id)) && (
+            <>
+              <span className="letter-meta-sep">·</span>
+              <span className="letter-paper__actions">
+                {lHasLoc && (
+                  <span className="letter-paper__locate">
+                    <IoLocationOutline size="12px" />
+                    <span>Locate</span>
+                  </span>
+                )}
+                {lHasLoc && !letter.preview && letter._id && (
+                  <span className="letter-meta-sep">·</span>
+                )}
+                {!letter.preview && letter._id && (
+                  <span className="letter-paper__share">
+                    <IoShareSocialOutline size="12px" />
+                    <span>Share</span>
+                  </span>
+                )}
+                {!letter.preview && letter._id && (
+                  <>
+                    <span className="letter-meta-sep">·</span>
+                    <span className="letter-reaction-cluster">
+                      {lEchoTotal > 0 && (
+                        <span className="letter-echo-summary">
+                          <span>{lEchoTotal}</span>
+                        </span>
+                      )}
+                      <span className="letter-echo-control">
+                        <span className="letter-paper__echo">
+                          <LDominantIcon />
+                        </span>
+                      </span>
+                    </span>
+                  </>
+                )}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderActivePaper = () => (
     <div className="letter-paper" ref={letterPaperRef}>
       <div className="letter-paper__head">
@@ -1429,7 +1737,7 @@ function DetailsModal({
       </div>
       <Tooltip id="timezone_tooltip" />
 
-      {ENABLE_TRANSLATION && detectedLanguage && (
+      {TRANSLATION_ENABLED && detectedLanguage && (
         <div className="letter-paper__translation-control">
           <button
             type="button"
@@ -1680,12 +1988,36 @@ function DetailsModal({
     </div>
   );
 
+  const renderEnvelope = (closing = false) => (
+    <div className={`letter-envelope${closing ? " letter-envelope--closing" : ""}`} aria-hidden="true">
+      <div className="letter-envelope__back" />
+      <div className="letter-envelope__pocket">
+        <div className="letter-envelope__note" />
+      </div>
+      <div className="letter-envelope__front" />
+      <div className="letter-envelope__flap" />
+      {!closing && <span className="letter-envelope__hint">opening a letter…</span>}
+    </div>
+  );
+
+  const closingEnvelope = isClosing && (
+    <div className="letter-close-scene" aria-hidden="true">
+      {renderEnvelope(true)}
+    </div>
+  );
+
   return (
     showDetailsModal &&
     selectedLetter && (
       <div
-        className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}`}
-        onClick={readMode ? undefined : handleCloseModal}
+        className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}${isClosing ? " is-folding-closed" : ""}`}
+        onAnimationEnd={(event) => {
+          if (event.target === event.currentTarget &&
+              ["letter-close-fade", "letter-close-reduced"].includes(event.animationName)) {
+            finishCloseModal();
+          }
+        }}
+        onClick={handleOverlayClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -1704,7 +2036,9 @@ function DetailsModal({
                     aria-hidden="true"
                     tabIndex={-1}
                   >
-                    <BsX className="close-icon" />
+                    <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                    </svg>
                   </button>
                   {renderOutgoingPaper(outgoingLetter)}
                 </div>
@@ -1715,17 +2049,49 @@ function DetailsModal({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="letter-modal">
-                <button
-                  type="button"
-                  className="letter-modal__close"
-                  onClick={handleCloseModal}
-                  aria-label="Close letter"
-                >
-                  <BsX className="close-icon" />
-                </button>
-                {renderActivePaper()}
+                {opened && (
+                  <button
+                    type="button"
+                    className={`letter-modal__close${showFoldTip ? " is-hinted" : ""}`}
+                    onClick={handleCloseModal}
+                    aria-label="Close letter"
+                    title="Fold and close letter"
+                    disabled={isClosing}
+                  >
+                    <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                    </svg>
+                  </button>
+                )}
+                {readMode && opened && showFoldTip && (
+                  <aside
+                    className={`read-mode-fold-tip${isFoldTipFading ? " is-fading-out" : ""}`}
+                    role="status"
+                    aria-label="Close letter hint"
+                    onClick={handleCloseModal}
+                  >
+                    <span className="read-mode-fold-tip__text">
+                      {isTouchDevice ? "Tap the folded corner to close" : "Click the folded corner to close"}
+                    </span>
+                  </aside>
+                )}
+                {!opened ? (
+                  renderEnvelope()
+                ) : (
+                  renderActivePaper()
+                )}
+                {closingEnvelope}
               </div>
             </div>
+            {opened && prerenderLetter && (
+              <div
+                className="read-mode-prerender-wrapper"
+                aria-hidden="true"
+                tabIndex={-1}
+              >
+                {renderPrerenderPaper(prerenderLetter)}
+              </div>
+            )}
           </div>
         ) : (
           <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
@@ -1735,31 +2101,32 @@ function DetailsModal({
                 className="letter-modal__close"
                 onClick={handleCloseModal}
                 aria-label="Close letter"
+                  title="Fold and close letter"
+                  disabled={isClosing}
               >
-                <BsX className="close-icon" />
+                <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                    </svg>
               </button>
             )}
 
             {!opened ? (
-              <div className="letter-envelope" aria-hidden="true">
-                <div className="letter-envelope__back" />
-                <div className="letter-envelope__note" />
-                <div className="letter-envelope__front" />
-                <div className="letter-envelope__flap" />
-                <span className="letter-envelope__seal">♥</span>
-                <span className="letter-envelope__hint">opening a letter…</span>
-              </div>
+              renderEnvelope()
             ) : (
               renderActivePaper()
             )}
+            {closingEnvelope}
           </div>
         )}
 
-        {readMode && showReadTip && (
+        {readMode && opened && showReadTip && (
           <div
             className="read-mode-tip"
             role="status"
-            onClick={dismissReadTip}
+            onClick={(e) => {
+              e.stopPropagation();
+              dismissReadTip();
+            }}
           >
             <div className="read-mode-tip__content">
               <span className="read-mode-tip__arrow" aria-hidden="true">↓</span>

@@ -49,7 +49,6 @@ import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
-const READ_MODE_TOOLTIP_KEY = "hasSeenReadModeTooltip";
 const CHRISTMAS_SNOWFLAKES = Array.from({length: 30}, (_, index) => ({
   left: (index * 37 + 11) % 101,
   size: 2.4 + ((index * 13) % 36) / 10,
@@ -204,7 +203,9 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
   const [showReadModeTooltip, setShowReadModeTooltip] = useState(false);
   const [isTooltipFading, setIsTooltipFading] = useState(false);
+  const [highlightReadMode, setHighlightReadMode] = useState(false);
   const wasDetailsModalOpenRef = useRef(false);
+  const wasLetterInReadModeRef = useRef(false);
   const tooltipTimerRef = useRef(null);
   const tooltipFadeTimerRef = useRef(null);
   const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false);
@@ -223,9 +224,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const closeSpeedDial = useCallback(() => {
     clearSpeedDialTimer();
     setIsSpeedDialOpen(false);
+    setHighlightReadMode(false);
   }, [clearSpeedDialTimer]);
 
   const toggleSpeedDial = useCallback(() => {
+    const wasTriggeredByTooltip = showReadModeTooltip;
     if (showReadModeTooltip) {
       if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
       if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
@@ -236,9 +239,17 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       const next = !prev;
       clearSpeedDialTimer();
       if (next) {
+        if (wasTriggeredByTooltip) {
+          setHighlightReadMode(true);
+        } else {
+          setHighlightReadMode(false);
+        }
         speedDialTimerRef.current = setTimeout(() => {
           setIsSpeedDialOpen(false);
+          setHighlightReadMode(false);
         }, 15000);
+      } else {
+        setHighlightReadMode(false);
       }
       return next;
     });
@@ -264,6 +275,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   useEffect(() => {
     if (!readModeEnabled) {
       wasDetailsModalOpenRef.current = showDetailsModal;
+      wasLetterInReadModeRef.current = Boolean(readMode);
       return;
     }
 
@@ -273,33 +285,41 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
       setShowReadModeTooltip(false);
       setIsTooltipFading(false);
+      setHighlightReadMode(false);
+      wasLetterInReadModeRef.current = Boolean(readMode);
     } else if (wasDetailsModalOpenRef.current && !showDetailsModal) {
-      // First-time visitor closed their first letter
-      try {
-        const hasSeen = localStorage.getItem(READ_MODE_TOOLTIP_KEY);
-        if (!hasSeen) {
-          localStorage.setItem(READ_MODE_TOOLTIP_KEY, "true");
-          setShowReadModeTooltip(true);
-          setIsTooltipFading(false);
+      // Show tooltip only if user exited from a letter showing normally with typing effects
+      if (!wasLetterInReadModeRef.current && !readMode) {
+        setShowReadModeTooltip(true);
+        setIsTooltipFading(false);
 
-          if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
-          if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+        if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+        if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
 
-          tooltipTimerRef.current = setTimeout(() => {
-            setIsTooltipFading(true);
-            tooltipFadeTimerRef.current = setTimeout(() => {
-              setShowReadModeTooltip(false);
-              setIsTooltipFading(false);
-            }, 400);
-          }, 5000);
-        }
-      } catch (e) {
-        /* storage unavailable */
+        tooltipTimerRef.current = setTimeout(() => {
+          setIsTooltipFading(true);
+          tooltipFadeTimerRef.current = setTimeout(() => {
+            setShowReadModeTooltip(false);
+            setIsTooltipFading(false);
+          }, 400);
+        }, 10000);
       }
     }
 
     wasDetailsModalOpenRef.current = showDetailsModal;
-  }, [showDetailsModal, readModeEnabled]);
+    if (!showDetailsModal) {
+      wasLetterInReadModeRef.current = false;
+    }
+  }, [showDetailsModal, readModeEnabled, readMode]);
+
+  useEffect(() => {
+    if (readMode && showReadModeTooltip) {
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
+      setShowReadModeTooltip(false);
+      setIsTooltipFading(false);
+    }
+  }, [readMode, showReadModeTooltip]);
 
   useEffect(() => {
     return () => {
@@ -1654,8 +1674,9 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         {readModeEnabled && (
           <button
             type="button"
-            className={`fab speed-dial-action read-mode-fab read-mode-action${readMode ? " is-active" : ""}`}
+            className={`fab speed-dial-action read-mode-fab read-mode-action${readMode ? " is-active" : ""}${highlightReadMode ? " is-highlighted" : ""}`}
             onClick={() => {
+              setHighlightReadMode(false);
               closeSpeedDial();
               if (showReadModeTooltip) {
                 if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
@@ -1712,12 +1733,18 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                 if (tooltipFadeTimerRef.current) clearTimeout(tooltipFadeTimerRef.current);
                 setShowReadModeTooltip(false);
                 setIsTooltipFading(false);
-                toggleSpeedDial();
+                setHighlightReadMode(true);
+                clearSpeedDialTimer();
+                setIsSpeedDialOpen(true);
+                speedDialTimerRef.current = setTimeout(() => {
+                  setIsSpeedDialOpen(false);
+                  setHighlightReadMode(false);
+                }, 15000);
               }}
             >
-              <span className="read-mode-tooltip-title">Quick Actions</span>
+              <span className="read-mode-tooltip-title">Access Read Mode here</span>
               <p className="read-mode-tooltip-text">
-                Access Read Mode, scroll to top, and more right here.
+                Disable typing effects and scroll down to browse through letters.
               </p>
             </aside>
           )}

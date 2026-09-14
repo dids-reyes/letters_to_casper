@@ -143,6 +143,7 @@ describe('DetailsModal media preview rendering & isolation', () => {
           toggleDetailsModal={jest.fn()}
           selectedLetter={spotifyLetter}
           readMode={true}
+          initialOpened={true}
           letters={[spotifyLetter]}
         />
       </MemoryRouter>
@@ -164,6 +165,7 @@ describe('DetailsModal media preview rendering & isolation', () => {
           toggleDetailsModal={jest.fn()}
           selectedLetter={youtubeLetter}
           readMode={true}
+          initialOpened={true}
           letters={[youtubeLetter]}
         />
       </MemoryRouter>
@@ -185,6 +187,7 @@ describe('DetailsModal media preview rendering & isolation', () => {
           toggleDetailsModal={jest.fn()}
           selectedLetter={plainLetter}
           readMode={true}
+          initialOpened={true}
           letters={[plainLetter]}
         />
       </MemoryRouter>
@@ -204,6 +207,7 @@ describe('DetailsModal media preview rendering & isolation', () => {
           toggleDetailsModal={jest.fn()}
           selectedLetter={spotifyLetter}
           readMode={true}
+          initialOpened={true}
           letters={letters}
         />
       </MemoryRouter>
@@ -221,6 +225,7 @@ describe('DetailsModal media preview rendering & isolation', () => {
           toggleDetailsModal={jest.fn()}
           selectedLetter={youtubeLetter}
           readMode={true}
+          initialOpened={true}
           letters={letters}
         />
       </MemoryRouter>
