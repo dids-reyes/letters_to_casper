@@ -2161,6 +2161,38 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   box-shadow: 0 9px 24px rgba(55, 114, 255, 0.38);
 }
 
+/* Blue circling indicator like in the letters */
+.fab.read-mode-fab.is-highlighted {
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+}
+
+.fab.read-mode-fab.is-highlighted::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  border-radius: 50%;
+  border: 2px solid rgba(55, 114, 255, 0.2);
+  border-top-color: #3772ff;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  animation: read-mode-circling 0.85s linear infinite;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+@keyframes read-mode-circling {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
 .fab.bug-report-fab {
   background: #ffffff;
   color: #1e293b;
@@ -4801,6 +4833,23 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   animation: readModeEnterPrev 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Background pre-renderer for seamless transitions in Read Mode */
+.read-mode-prerender-wrapper {
+  position: absolute;
+  top: 0;
+  left: -9999px;
+  width: 100%;
+  max-width: 580px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: -999;
+}
+
+.read-mode-prerender-wrapper .letter-paper {
+  animation: none !important;
+}
+
 @keyframes readModeExitNext {
   0% {
     transform: translateY(0);
@@ -5096,17 +5145,25 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
 }
 
+.letter-envelope__pocket {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  clip-path: inset(-140px 0 0 0 round 0 0 12px 12px);
+}
+
 .letter-envelope__note {
   position: absolute;
   left: 9%;
-  top: 12%;
+  top: 14px;
   width: 82%;
-  height: 76%;
+  height: 74%;
   border-radius: 5px;
   background: #fffdf5;
   border: 1px solid #e6ddc4;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
-  transform: translateY(24px);
+  transform: translateY(8px);
   opacity: 0;
   animation: letter-env-note 0.75s cubic-bezier(0.2, 0.7, 0.3, 1) 0.5s forwards;
 }
@@ -5136,7 +5193,29 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   z-index: 2;
   border-radius: 12px;
   background: #f0e7ca;
-  clip-path: polygon(0 0, 50% 42%, 100% 0, 100% 100%, 0 100%);
+  clip-path: polygon(
+    0% 12px,
+    2px 5px,
+    5px 2px,
+    12px 0%,
+    46% 39.5%,
+    48.5% 41.5%,
+    50% 42%,
+    51.5% 41.5%,
+    54% 39.5%,
+    calc(100% - 12px) 0%,
+    calc(100% - 5px) 2px,
+    calc(100% - 2px) 5px,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 2px) calc(100% - 5px),
+    calc(100% - 5px) calc(100% - 2px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    5px calc(100% - 2px),
+    2px calc(100% - 5px),
+    0% calc(100% - 12px)
+  );
 }
 
 .letter-envelope__flap {
@@ -5148,7 +5227,21 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   height: 52%;
   transform-origin: top center;
   background: #e6dcbc;
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  clip-path: polygon(
+    0% 12px,
+    2px 5px,
+    5px 2px,
+    12px 0%,
+    calc(100% - 12px) 0%,
+    calc(100% - 5px) 2px,
+    calc(100% - 2px) 5px,
+    100% 12px,
+    calc(50% + 14px) 93%,
+    calc(50% + 7px) 98%,
+    50% 100%,
+    calc(50% - 7px) 98%,
+    calc(50% - 14px) 93%
+  );
   animation: letter-env-flap 0.6s ease 0.15s forwards;
 }
 
@@ -5190,8 +5283,15 @@ html.night-shift .letter-modal-overlay.is-read-mode {
 }
 
 @keyframes letter-env-note {
-  to {
-    transform: translateY(-38px);
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px);
     opacity: 1;
   }
 }
@@ -5654,6 +5754,7 @@ html.night-shift .letter-paper__translation-control small {
 
 .letter-echo-picker {
   display: flex;
+  align-items: center;
   gap: 2px;
   padding: 5px 7px;
   border-radius: 999px;
@@ -5662,30 +5763,34 @@ html.night-shift .letter-paper__translation-control small {
 .letter-echo-picker > button {
   display: grid;
   justify-items: center;
-  min-width: 40px;
-  padding: 5px;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  min-width: 32px;
+  padding: 4px;
+  border: none;
+  border-radius: 0;
   background: transparent;
   color: #6e6653;
   font: inherit;
   font-size: 9px;
   white-space: normal;
   cursor: pointer;
+  box-shadow: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .letter-echo-picker > button svg {
   box-sizing: border-box;
-  width: 29px;
-  height: 29px;
-  padding: 6px;
-  border-radius: 50%;
-  border: 1px solid rgba(55, 114, 255, 0.18);
-  background: #edf3ff;
-  color: #3772ff;
-  font-size: 17px;
-  box-shadow: 0 4px 10px rgba(55, 114, 255, 0.1);
-  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1.25);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  box-shadow: none;
+  transform: none !important;
+  transition: color 0.15s ease;
 }
 
 .letter-echo-picker > button > span {
@@ -5693,27 +5798,33 @@ html.night-shift .letter-paper__translation-control small {
 }
 
 .letter-echo-picker > button:hover {
-  border-color: rgba(55, 114, 255, 0.42);
-  background: rgba(55, 114, 255, 0.16);
+  border: none;
+  background: transparent;
   color: #245eea;
+  box-shadow: none;
 }
 
 .letter-echo-picker > button:hover svg {
-  transform: translateY(-3px) scale(1.12);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: #245eea;
+  transform: none !important;
 }
 
 .letter-echo-picker > button.is-selected {
-  border-color: transparent;
+  border: none;
   background: transparent;
   color: #0d398f;
+  box-shadow: none;
 }
 
 .letter-echo-picker > button.is-selected svg {
-  color: #0d398f;
-  border-color: rgba(13, 57, 143, 0.58);
-  background: #d5e2fb;
+  border: none;
+  background: transparent;
   box-shadow: none;
-  transform: none;
+  color: #0d398f;
+  transform: none !important;
 }
 
 .letter-echo-breakdown {
@@ -5929,51 +6040,90 @@ html.night-shift .letter-paper__translation-control small {
 }
 
 .letter-reaction-confirm-dialog {
-  width: min(390px, 100%);
+  width: min(310px, calc(100vw - 36px));
+  padding: 22px 20px 18px;
+  border-radius: 20px;
   text-align: center;
+  box-sizing: border-box;
+}
+
+.letter-reaction-confirm-dialog .letter-share-dialog__eyebrow {
+  display: block;
+  margin: 0 auto 10px;
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
 }
 
 .letter-reaction-confirm-dialog__icon {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   margin: 0 auto 12px;
-  border: 1px solid rgba(55, 114, 255, 0.22);
+  border: 1px solid rgba(55, 114, 255, 0.2);
   border-radius: 50%;
   background: #edf3ff;
-  color: #174fbd;
-  font-size: 23px;
+  color: #2563eb;
+  font-size: 20px;
+}
+
+.letter-reaction-confirm-dialog h2 {
+  margin: 0 auto 6px !important;
+  padding: 0;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.letter-reaction-confirm-dialog > p {
+  margin: 0 auto 16px !important;
+  text-align: center;
+  font-size: 0.84rem;
+  line-height: 1.42;
+  color: #64748b;
+  max-width: 250px;
 }
 
 .letter-reaction-confirm-dialog__actions {
   display: flex;
-  gap: 9px;
-  margin-top: 20px;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .letter-reaction-confirm-dialog__actions button {
   flex: 1;
-  min-height: 42px;
-  padding: 10px 13px;
-  border-radius: 11px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 10px;
   font: inherit;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
 }
 
 .letter-reaction-confirm-dialog__actions .is-cancel {
   border: 1px solid #d9deea;
-  background: #f7f8fb;
-  color: #596273;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.letter-reaction-confirm-dialog__actions .is-cancel:hover {
+  background: #e2e8f0;
 }
 
 .letter-reaction-confirm-dialog__actions .is-confirm {
-  border: 1px solid #245fdd;
+  border: 1px solid #2563eb;
   background: #3772ff;
   color: #fff;
-  box-shadow: 0 7px 18px rgba(55, 114, 255, 0.22);
+  box-shadow: 0 4px 14px rgba(55, 114, 255, 0.22);
+}
+
+.letter-reaction-confirm-dialog__actions .is-confirm:hover {
+  background: #2563eb;
 }
 
 .letter-reaction-confirm-dialog__actions button:disabled {
@@ -6110,15 +6260,22 @@ html.night-shift .letter-paper__translation-control small {
 
   .letter-echo-picker > button {
     position: relative;
-    min-width: 34px;
-    padding: 3px;
-    border-radius: 999px;
+    min-width: 28px;
+    padding: 2px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
   }
 
   .letter-echo-picker > button svg {
-    width: 26px;
-    height: 26px;
-    padding: 5px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none !important;
   }
 
   .letter-echo-picker > button > span {
@@ -6310,6 +6467,11 @@ html.night-shift .fab.read-mode-fab.is-active {
 html.night-shift .fab.read-mode-fab.is-active:hover {
   background: rgba(37, 99, 235, 0.95);
   box-shadow: 0 9px 24px rgba(37, 99, 235, 0.45);
+}
+
+html.night-shift .fab.read-mode-fab.is-highlighted::before {
+  border-color: rgba(138, 180, 255, 0.25);
+  border-top-color: #8ab4ff;
 }
 
 html.night-shift .fab.bug-report-fab {
@@ -6678,16 +6840,50 @@ html.night-shift .letter-share-dialog__qr {
   background: rgba(94, 139, 232, 0.12);
 }
 
+html.night-shift .letter-reaction-confirm-dialog {
+  border-color: rgba(138, 180, 255, 0.22);
+  background: #1c2027;
+  color: #eee9dc;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+html.night-shift .letter-reaction-confirm-dialog .letter-share-dialog__eyebrow {
+  color: #82aaff;
+}
+
 html.night-shift .letter-reaction-confirm-dialog__icon {
   border-color: rgba(130, 170, 255, 0.28);
   background: rgba(72, 112, 202, 0.16);
-  color: #8cb0ff;
+  color: #82aaff;
+}
+
+html.night-shift .letter-reaction-confirm-dialog h2 {
+  color: #f1f5f9;
+}
+
+html.night-shift .letter-reaction-confirm-dialog > p {
+  color: #94a3b8;
 }
 
 html.night-shift .letter-reaction-confirm-dialog__actions .is-cancel {
-  border-color: #424955;
-  background: #292d33;
-  color: #c6cad2;
+  border-color: #3b4252;
+  background: #282e3a;
+  color: #cbd5e1;
+}
+
+html.night-shift .letter-reaction-confirm-dialog__actions .is-cancel:hover {
+  background: #333b4a;
+}
+
+html.night-shift .letter-reaction-confirm-dialog__actions .is-confirm {
+  border-color: #3b82f6;
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+html.night-shift .letter-reaction-confirm-dialog__actions .is-confirm:hover {
+  background: #1d4ed8;
 }
 
 html.night-shift .letter-modal__close {
@@ -6703,28 +6899,44 @@ html.night-shift .letter-echo-breakdown {
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
 }
 
+html.night-shift .letter-paper__echo.is-reacted {
+  color: #82aaff;
+}
+
 html.night-shift .letter-echo-picker > button {
+  border: none;
+  background: transparent;
   color: #c6cad7;
 }
 
-html.night-shift .letter-echo-picker > button:hover,
-html.night-shift .letter-echo-picker > button.is-selected {
-  background: rgba(111, 151, 242, 0.14);
-  color: #dce6ff;
+html.night-shift .letter-echo-picker > button:hover {
+  border: none;
+  background: transparent;
+  color: #82aaff;
+  box-shadow: none;
+}
+
+html.night-shift .letter-echo-picker > button:hover svg {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: #82aaff;
+  transform: none !important;
 }
 
 html.night-shift .letter-echo-picker > button.is-selected {
-  border-color: transparent;
+  border: none;
   background: transparent;
   color: #82aaff;
+  box-shadow: none;
 }
 
 html.night-shift .letter-echo-picker > button.is-selected svg {
-  border-color: rgba(130, 170, 255, 0.42);
-  background: rgba(75, 119, 211, 0.2);
-  color: #82aaff;
+  border: none;
+  background: transparent;
   box-shadow: none;
-  transform: none;
+  color: #82aaff;
+  transform: none !important;
 }
 
 html.night-shift .letter-echo-breakdown strong {
@@ -7386,3 +7598,213 @@ html.night-shift .letter-image-options button small, html.night-shift .letter-im
 @keyframes letter-image-spin { to { transform: rotate(360deg); } }
 html.night-shift .letter-image-spinner { border-color: rgba(138,180,255,.25); border-top-color: #8ab4ff; }
 @media (prefers-reduced-motion: reduce) { .letter-image-spinner { animation: none; } }
+
+/* Fold the reading sheet back into its envelope. */
+.letter-modal .letter-modal__close {
+  top: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 0 10px 0 0;
+  background: transparent;
+  box-shadow: none;
+  perspective: 250px;
+}
+/* Cut away the original corner so the turned underside has a real silhouette. */
+.letter-modal > .letter-paper {
+  clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 24px, 100% 100%, 0 100%);
+}
+.letter-fold-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  overflow: visible;
+  fill: #e4d7b6;
+  filter: drop-shadow(-2px 3px 2px #463d2959);
+  transform-origin: center;
+  transform: rotate3d(1, -1, 0, 8deg);
+  transition: transform 160ms ease, filter 160ms ease;
+}
+.letter-fold-corner path { stroke: #baa982; stroke-width: 0.6px; }
+.letter-modal .letter-modal__close:hover { transform: none; box-shadow: none; }
+.letter-modal__close:hover .letter-fold-corner {
+  transform: rotate3d(1, -1, 0, 24deg);
+  filter: drop-shadow(-3px 4px 2px #463d2966);
+}
+.letter-modal .letter-modal__close {
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  outline: none;
+}
+.letter-modal .letter-modal__close:active,
+.letter-modal .letter-modal__close:focus { background: transparent; box-shadow: none; }
+/* Keyboard focus follows the folded tip instead of drawing a button rectangle. */
+.letter-modal__close:focus-visible .letter-fold-corner path {
+  stroke: #a66b42;
+  stroke-width: 3px;
+}
+.letter-modal__close:disabled { cursor: default; }
+html.night-shift .letter-modal .letter-modal__close { background: transparent; }
+html.night-shift .letter-fold-corner { fill: #505143; filter: drop-shadow(-2px 3px 2px #0009); }
+html.night-shift .letter-fold-corner path { stroke: #77765d; }
+.letter-close-scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+/* Close the envelope: tuck note into pocket by 560ms, fold flap by 860ms, then hold before fading. */
+.letter-envelope--closing {
+  margin: 0;
+  animation: letter-env-out 180ms cubic-bezier(0.4, 0, 0.2, 1) 70ms reverse both;
+}
+.letter-envelope--closing .letter-envelope__note {
+  opacity: 1;
+  animation: letter-env-note-close 360ms cubic-bezier(0.4, 0, 0.2, 1) 200ms both;
+}
+.letter-envelope--closing .letter-envelope__flap {
+  animation: letter-env-flap 260ms cubic-bezier(0.4, 0, 0.2, 1) 600ms reverse both;
+}
+.letter-envelope--closing .letter-envelope__seal {
+  display: none;
+}
+@keyframes letter-env-note-close {
+  from {
+    transform: translateY(-40px);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+.letter-modal-overlay.is-folding-closed { animation: letter-close-fade 1300ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+.is-folding-closed .letter-modal { pointer-events: none; }
+.is-folding-closed .letter-paper { animation: letter-paper-in 160ms cubic-bezier(0.4, 0, 0.2, 1) reverse both; }
+.is-folding-closed .letter-modal__close,
+.is-folding-closed .read-mode-tip,
+.is-folding-closed .read-mode-fold-tip,
+.is-folding-closed .letter-modal > .letter-envelope,
+.is-folding-closed .read-mode-card-wrapper[aria-hidden="true"] { visibility: hidden; }
+.is-folding-closed .read-mode-card-wrapper { animation: none; }
+@keyframes letter-close-fade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes letter-close-reduced { from { opacity: 1; } to { opacity: 0; } }
+
+/* Read Mode Fold Tip (displayed when user taps background to exit) */
+.read-mode-fold-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  padding: 7px 16px;
+  background: rgba(15, 23, 42, 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: foldTipIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
+/* Tooltip beak pointing down directly into the folded corner */
+.read-mode-fold-tip::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  right: 18px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(15, 23, 42, 0.9);
+}
+
+.read-mode-fold-tip.is-fading-out {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.96);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+@keyframes foldTipIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.letter-modal__close.is-hinted .letter-fold-corner {
+  animation: fold-corner-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes fold-corner-pulse {
+  from {
+    transform: rotate3d(1, -1, 0, 10deg) scale(1);
+    filter: drop-shadow(-2px 3px 2px #463d2959);
+  }
+  to {
+    transform: rotate3d(1, -1, 0, 24deg) scale(1.15);
+    filter: drop-shadow(-3px 5px 6px rgba(55, 114, 255, 0.45));
+  }
+}
+
+html.night-shift .read-mode-fold-tip {
+  background: rgba(20, 24, 33, 0.94);
+  border-color: rgba(138, 180, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+html.night-shift .read-mode-fold-tip::after {
+  border-top-color: rgba(20, 24, 33, 0.94);
+}
+
+html.night-shift .letter-modal__close.is-hinted .letter-fold-corner {
+  filter: drop-shadow(-3px 5px 6px rgba(138, 180, 255, 0.4));
+}
+
+@media (max-width: 480px) {
+  .read-mode-fold-tip {
+    bottom: calc(100% + 8px);
+    right: 0;
+    padding: 6px 14px;
+    font-size: 12px;
+    max-width: 100%;
+  }
+
+  .read-mode-fold-tip::after {
+    right: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter-fold-corner { transition: none; }
+  .letter-modal__close:hover .letter-fold-corner { transform: none; }
+  .letter-modal-overlay.is-folding-closed { animation: letter-close-reduced 80ms ease-out both; }
+  .is-folding-closed .letter-close-scene { display: none; }
+  .is-folding-closed .letter-paper { animation: none; }
+  .fab.read-mode-fab.is-highlighted::before {
+    animation: none;
+  }
+  .read-mode-fold-tip {
+    animation: none;
+  }
+  .letter-modal__close.is-hinted .letter-fold-corner {
+    animation: none;
+  }
+}
