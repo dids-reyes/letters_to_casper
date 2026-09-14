@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import DetailsModal from './DetailsModal';
+import DetailsModal, { resetSessionViewedLetters } from './DetailsModal';
 import Home from './Home';
 
 jest.mock('react-lottie-player', () => () => null);
@@ -28,6 +28,10 @@ beforeAll(() => {
       removeEventListener: function() {},
     };
   };
+});
+
+beforeEach(() => {
+  resetSessionViewedLetters();
 });
 
 const sampleLetters = Array.from({ length: 25 }, (_, i) => ({
@@ -711,6 +715,200 @@ describe('Read Mode in DetailsModal', () => {
     jest.useRealTimers();
   });
 
+  test('session-unique upward traversal: navigating upward across 10 unseen letters triggers ad lock intermission', () => {
+    jest.useFakeTimers();
+    let currentIdx = 15;
+    const mockSetSelectedLetter = jest.fn((letter) => {
+      currentIdx = sampleLetters.findIndex(l => l._id === letter._id);
+    });
+
+    const { container, rerender } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[currentIdx]}
+          readMode={true}
+          letters={sampleLetters}
+          setSelectedLetter={mockSetSelectedLetter}
+        />
+      </MemoryRouter>
+    );
+
+    // Initial letter is sampleLetters[15] (1 unseen letter)
+    // Navigate upward 9 times (indices 15 -> 14 -> 13 -> 12 -> 11 -> 10 -> 9 -> 8 -> 7 -> 6)
+    for (let i = 0; i < 9; i++) {
+      fireEvent.keyDown(document, { key: 'ArrowUp' });
+      act(() => {
+        jest.advanceTimersByTime(550);
+      });
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetters[currentIdx]}
+            readMode={true}
+            letters={sampleLetters}
+            setSelectedLetter={mockSetSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+    }
+    expect(currentIdx).toBe(6);
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+
+    // Now on letter 10 of this session (index 6). Attempting to navigate upward to index 5 (the 11th unseen letter):
+    fireEvent.keyDown(document, { key: 'ArrowUp' });
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).not.toBeNull();
+    expect(screen.getByText(/Reading intermission/i)).toBeInTheDocument();
+    expect(screen.getByText(/Take a brief pause/i)).toBeInTheDocument();
+    expect(screen.getByText(/You’ve read 10 letters/i)).toBeInTheDocument();
+
+    const adBtn = container.querySelector('.read-mode-ad-lock-btn');
+    expect(adBtn).toBeDisabled();
+
+    // Advance 5s countdown
+    act(() => {
+      jest.advanceTimersByTime(5000);
+    });
+    expect(adBtn).not.toBeDisabled();
+    expect(adBtn).toHaveTextContent(/Continue reading/i);
+
+    // Click continue reading -> proceeds upward to index 5
+    fireEvent.click(adBtn);
+    act(() => {
+      jest.advanceTimersByTime(550);
+    });
+    rerender(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[currentIdx]}
+          readMode={true}
+          letters={sampleLetters}
+          setSelectedLetter={mockSetSelectedLetter}
+        />
+      </MemoryRouter>
+    );
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+    expect(currentIdx).toBe(5);
+
+    jest.useRealTimers();
+  });
+
+  test('session-unique traversal: flinging/skipping to bottom leaves intermediate letters unrecorded until encountered', () => {
+    jest.useFakeTimers();
+    let currentIdx = 0;
+    const mockSetSelectedLetter = jest.fn((letter) => {
+      currentIdx = sampleLetters.findIndex(l => l._id === letter._id);
+    });
+
+    const { container, rerender } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[currentIdx]}
+          readMode={true}
+          letters={sampleLetters}
+          setSelectedLetter={mockSetSelectedLetter}
+        />
+      </MemoryRouter>
+    );
+
+    // Initial letter viewed: sampleLetters[0] (count = 1)
+    // User flings/jumps straight to the bottom letter: index 20 (skipping 1..19)
+    currentIdx = 20;
+    rerender(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[currentIdx]}
+          readMode={true}
+          letters={sampleLetters}
+          setSelectedLetter={mockSetSelectedLetter}
+        />
+      </MemoryRouter>
+    );
+
+    // Now 2 unique letters seen: index 0 and index 20. Intermediate letters 1..19 remain unseen.
+    // User reads upward 8 times: indices 20 -> 19 -> 18 -> 17 -> 16 -> 15 -> 14 -> 13 -> 12
+    for (let i = 0; i < 8; i++) {
+      fireEvent.keyDown(document, { key: 'ArrowUp' });
+      act(() => {
+        jest.advanceTimersByTime(550);
+      });
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetters[currentIdx]}
+            readMode={true}
+            letters={sampleLetters}
+            setSelectedLetter={mockSetSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+    }
+    expect(currentIdx).toBe(12);
+    // Total unseen letters encountered = 1 (index 0) + 1 (index 20) + 8 (indices 19..12) = 10 letters.
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+
+    // Re-reading already seen letters downward (12 -> 13 -> 14) and back upward (14 -> 13 -> 12) does NOT trigger ad
+    for (let i = 0; i < 2; i++) {
+      fireEvent.keyDown(document, { key: 'ArrowDown' });
+      act(() => {
+        jest.advanceTimersByTime(550);
+      });
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetters[currentIdx]}
+            readMode={true}
+            letters={sampleLetters}
+            setSelectedLetter={mockSetSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+    }
+    expect(currentIdx).toBe(14);
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+
+    for (let i = 0; i < 2; i++) {
+      fireEvent.keyDown(document, { key: 'ArrowUp' });
+      act(() => {
+        jest.advanceTimersByTime(550);
+      });
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetters[currentIdx]}
+            readMode={true}
+            letters={sampleLetters}
+            setSelectedLetter={mockSetSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+    }
+    expect(currentIdx).toBe(12);
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
+
+    // Now navigating upward to index 11 (the 11th unseen letter): Ad MUST trigger!
+    fireEvent.keyDown(document, { key: 'ArrowUp' });
+    expect(container.querySelector('.read-mode-ad-lock-overlay')).not.toBeNull();
+    expect(screen.getByText(/You’ve read 10 letters/i)).toBeInTheDocument();
+
+    jest.useRealTimers();
+  });
+
   test('increments reads when viewing and navigating letters in Read Mode', async () => {
     let currentIdx = 0;
     const mockSetSelectedLetter = jest.fn((letter) => {
@@ -920,6 +1118,162 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
     expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /Try Read Mode/i })).toBeNull();
+  });
+
+  describe('FAB Stack Ordering, Visibility, and Read Mode Onboarding Tooltip', () => {
+    beforeEach(() => {
+      localStorage.removeItem('hasSeenReadModeTooltip');
+      localStorage.removeItem('readMode');
+    });
+
+    test('FAB stack renders in exact top-to-bottom order: Scroll Up, Read Mode, Bug Report', () => {
+      const { container } = render(
+        <MemoryRouter>
+          <Home readModeEnabled={true} />
+        </MemoryRouter>
+      );
+
+      const fabStack = container.querySelector('.fab-stack');
+      expect(fabStack).toBeInTheDocument();
+
+      const scrollUpBtn = screen.getByRole('button', { name: /Back to top/i });
+      const readModeBtn = screen.getByRole('button', { name: /Read mode info and settings/i });
+      const bugReportBtn = screen.getByRole('button', { name: /Report a bug/i });
+
+      expect(scrollUpBtn).toBeInTheDocument();
+      expect(readModeBtn).toBeInTheDocument();
+      expect(bugReportBtn).toBeInTheDocument();
+
+      // Check order in the DOM inside .fab-stack
+      const buttons = fabStack.querySelectorAll('button.fab');
+      expect(buttons[0]).toBe(scrollUpBtn);
+      expect(buttons[1]).toBe(readModeBtn);
+      expect(buttons[2]).toBe(bugReportBtn);
+
+      // Read Mode button is already visible on site load
+      expect(readModeBtn).toHaveClass('is-visible');
+
+      // Bug report button is disabled
+      expect(bugReportBtn).toBeDisabled();
+      expect(bugReportBtn).toHaveAttribute('aria-disabled', 'true');
+      expect(bugReportBtn).toHaveClass('is-disabled');
+    });
+
+    test('Read Mode onboarding tooltip triggers exclusively after closing the first letter and auto-dismisses after 5 seconds', async () => {
+      const mockFetch = jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
+        if (typeof url === 'string' && url.includes('/public/letter-1')) {
+          return {
+            ok: true,
+            json: async () => ({ message: sampleLetters[0] }),
+          };
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            messages: sampleLetters,
+            counts: { approved: sampleLetters.length, unapproved: 0 },
+            featured: null,
+          }),
+        };
+      });
+
+      const { container } = render(
+        <MemoryRouter initialEntries={['/letters/letter-1']}>
+          <Routes>
+            <Route path="/letters/:messageId" element={<Home readModeEnabled={true} />} />
+            <Route path="/" element={<Home readModeEnabled={true} />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      // 1. Initially while letter is open, tooltip is NOT shown
+      expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
+      expect(localStorage.getItem('hasSeenReadModeTooltip')).toBeNull();
+
+      // Wait for modal to open
+      await waitFor(() => {
+        expect(container.querySelector('.letter-modal-overlay')).toBeInTheDocument();
+      });
+
+      // Still not shown while letter is open
+      expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
+
+      // Switch to fake timers to test 5-second auto-dismiss
+      jest.useFakeTimers();
+
+      // 2. Close the letter by clicking the overlay backdrop
+      const overlay = container.querySelector('.letter-modal-overlay');
+      act(() => {
+        fireEvent.click(overlay);
+      });
+
+      // 3. Tooltip now triggers immediately upon letter closure
+      const tooltip = screen.getByRole('status', { name: /Read Mode introduction/i });
+      expect(tooltip).toBeInTheDocument();
+      expect(screen.getByText(/Try Read Mode/i)).toBeInTheDocument();
+      expect(tooltip).not.toHaveTextContent('💡');
+      expect(screen.getByText(/Browse letters smoothly without typing delays/i)).toBeInTheDocument();
+
+      // Visitor tracking flag persisted immediately in localStorage
+      expect(localStorage.getItem('hasSeenReadModeTooltip')).toBe('true');
+
+      // 4. Advance time by 5 seconds (5000ms): starts fade out
+      act(() => {
+        jest.advanceTimersByTime(5000);
+      });
+      expect(screen.getByRole('status', { name: /Read Mode introduction/i })).toHaveClass('is-fading-out');
+
+      // Advance by remaining 400ms: tooltip unmounts
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+      expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
+
+      mockFetch.mockRestore();
+      jest.useRealTimers();
+    });
+
+    test('returning visitor with hasSeenReadModeTooltip flag does not see tooltip upon closing a letter', async () => {
+      localStorage.setItem('hasSeenReadModeTooltip', 'true');
+
+      const mockFetch = jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
+        if (typeof url === 'string' && url.includes('/public/letter-1')) {
+          return {
+            ok: true,
+            json: async () => ({ message: sampleLetters[0] }),
+          };
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            messages: sampleLetters,
+            counts: { approved: sampleLetters.length, unapproved: 0 },
+            featured: null,
+          }),
+        };
+      });
+
+      const { container } = render(
+        <MemoryRouter initialEntries={['/letters/letter-1']}>
+          <Routes>
+            <Route path="/letters/:messageId" element={<Home readModeEnabled={true} />} />
+            <Route path="/" element={<Home readModeEnabled={true} />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(container.querySelector('.letter-modal-overlay')).toBeInTheDocument();
+      });
+
+      const overlay = container.querySelector('.letter-modal-overlay');
+      fireEvent.click(overlay);
+
+      // Tooltip must NOT appear
+      expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
+
+      mockFetch.mockRestore();
+    });
   });
 
   test('Page 2 of the Feed features the newest addition: Read Mode', async () => {

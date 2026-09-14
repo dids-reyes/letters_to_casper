@@ -1,0 +1,587 @@
+/* Crisis Support Dialog Styles */
+.crisis-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 99999;
+  animation: crisisFadeIn 0.25s ease-out;
+}
+
+.crisis-modal {
+  background: #ffffff;
+  color: #1e293b;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #f1f5f9;
+  position: relative;
+  padding: 28px 24px;
+  box-sizing: border-box;
+  animation: crisisSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.crisis-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.crisis-brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.crisis-logo {
+  width: min(170px, 45vw);
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.crisis-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.crisis-badge svg {
+  font-size: 14px;
+}
+
+.crisis-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 10px;
+  line-height: 1.25;
+}
+
+.crisis-desc {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0 8px;
+}
+
+/* Exercise Tabs */
+.crisis-tabs {
+  display: flex;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 4px;
+  border-radius: 12px;
+  margin: 20px 0 16px;
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.crisis-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: clamp(11.5px, 2.8vw, 13px);
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.crisis-tab.active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Breathing Pacer */
+.crisis-breathing-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.crisis-breathing-visual {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crisis-breathing-circle {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #86efac 0%, #4ade80 100%);
+  opacity: 0.85;
+  transition: transform 1s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #14532d;
+  box-shadow: 0 8px 24px rgba(74, 222, 128, 0.3);
+}
+
+.crisis-breathing-circle.inhale {
+  transform: scale(1.15);
+}
+
+.crisis-breathing-circle.hold {
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+}
+
+.crisis-breathing-circle.exhale {
+  transform: scale(0.85);
+}
+
+.crisis-breathing-phase {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.crisis-breathing-count {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 4px;
+}
+
+.crisis-breathing-instruction {
+  font-size: 13px;
+  color: #166534;
+  margin: 0 0 14px;
+  font-weight: 500;
+}
+
+.crisis-breathing-toggle-btn {
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.crisis-breathing-toggle-btn:hover {
+  background: #15803d;
+}
+
+/* Grounding Guide */
+.crisis-grounding-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.crisis-grounding-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.crisis-grounding-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.crisis-grounding-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.crisis-grounding-text strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.crisis-grounding-text p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Hotline Section */
+.crisis-hotlines-section {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 18px;
+}
+
+.crisis-section-subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 12px;
+}
+
+.crisis-hotlines-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.crisis-hotline-box {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: left;
+}
+
+.crisis-hotline-box h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #991b1b;
+}
+
+.crisis-hotline-box p {
+  margin: 0 0 8px;
+  font-size: 10px;
+  color: #7f1d1d;
+  line-height: 1.3;
+}
+
+.crisis-hotline-links {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.crisis-hotline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #dc2626;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(220, 38, 38, 0.08);
+  transition: background 0.2s ease;
+  width: fit-content;
+}
+
+.crisis-hotline-link:hover {
+  background: rgba(220, 38, 38, 0.16);
+}
+
+.crisis-intl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.crisis-intl-links {
+  display: flex;
+  gap: 10px;
+}
+
+.crisis-intl-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.crisis-intl-link:hover {
+  text-decoration: underline;
+}
+
+/* Modal Actions */
+.crisis-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.crisis-seekhelp-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.crisis-seekhelp-link:hover {
+  text-decoration: underline;
+}
+
+.crisis-dismiss-btn {
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.crisis-dismiss-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Animations */
+@keyframes crisisFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes crisisSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Night Shift / Dark Mode */
+html.night-shift .crisis-overlay {
+  background: rgba(0, 0, 0, 0.82);
+}
+
+html.night-shift .crisis-modal {
+  background: #181d16;
+  color: #f0eee2;
+  border-color: #353a33;
+}
+
+html.night-shift .crisis-logo {
+  filter: brightness(1.7);
+}
+
+html.night-shift .crisis-badge {
+  background: #3c1e20;
+  color: #f87171;
+  border-color: #55272a;
+}
+
+html.night-shift .crisis-title {
+  color: #f0eee2;
+}
+
+html.night-shift .crisis-desc {
+  color: #aaa99f;
+}
+
+html.night-shift .crisis-tabs {
+  background: #141712;
+  border-color: #2b3027;
+}
+
+html.night-shift .crisis-tab {
+  color: #8b8f87;
+}
+
+html.night-shift .crisis-tab.active {
+  background: #252a22;
+  color: #8ab4ff;
+}
+
+html.night-shift .crisis-breathing-card {
+  background: #152418;
+  border-color: #234228;
+}
+
+html.night-shift .crisis-breathing-circle {
+  background: radial-gradient(circle, #22c55e 0%, #15803d 100%);
+  color: #ffffff;
+}
+
+html.night-shift .crisis-breathing-instruction {
+  color: #86efac;
+}
+
+html.night-shift .crisis-grounding-card {
+  background: #1f241c;
+  border-color: #353a33;
+}
+
+html.night-shift .crisis-grounding-item {
+  border-color: #2e342a;
+}
+
+html.night-shift .crisis-grounding-text strong {
+  color: #f0eee2;
+}
+
+html.night-shift .crisis-grounding-text p {
+  color: #9e9e95;
+}
+
+html.night-shift .crisis-hotlines-section,
+html.night-shift .crisis-actions {
+  border-color: #2e342a;
+}
+
+html.night-shift .crisis-hotline-box {
+  background: #2a1b1c;
+  border-color: #482729;
+}
+
+html.night-shift .crisis-hotline-box h4 {
+  color: #fca5a5;
+}
+
+html.night-shift .crisis-hotline-box p {
+  color: #d19a9a;
+}
+
+html.night-shift .crisis-hotline-link {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.16);
+}
+
+html.night-shift .crisis-intl-row {
+  background: #1f241c;
+  color: #9e9e95;
+}
+
+html.night-shift .crisis-intl-link,
+html.night-shift .crisis-seekhelp-link {
+  color: #8ab4ff;
+}
+
+html.night-shift .crisis-dismiss-btn {
+  background: #252a22;
+  color: #d0cec5;
+}
+
+html.night-shift .crisis-dismiss-btn:hover {
+  background: #32392e;
+  color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .crisis-overlay {
+    padding: 12px;
+  }
+  .crisis-modal {
+    padding: 20px 14px;
+    border-radius: 16px;
+  }
+  .crisis-tabs {
+    gap: 4px;
+    padding: 3px;
+    margin: 16px 0 14px;
+  }
+  .crisis-tab {
+    padding: 7px 6px;
+    font-size: clamp(10px, 2.7vw, 12px);
+    letter-spacing: -0.01em;
+  }
+  .crisis-hotlines-grid {
+    grid-template-columns: 1fr;
+  }
+  .crisis-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+  .crisis-dismiss-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .crisis-overlay {
+    padding: 8px;
+  }
+  .crisis-modal {
+    padding: 18px 10px;
+  }
+  .crisis-tabs {
+    gap: 3px;
+    padding: 2px;
+    margin: 14px 0 12px;
+  }
+  .crisis-tab {
+    padding: 6px 3px;
+    font-size: clamp(9px, 2.6vw, 10.5px);
+    letter-spacing: -0.02em;
+  }
+}
+
+

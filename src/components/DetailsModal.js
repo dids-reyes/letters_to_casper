@@ -164,6 +164,21 @@ const getLetterId = (letter) => {
   return String(letter._id || "");
 };
 
+export const viewedLetterIds = new Set();
+export let unbilledNewLettersCount = 0;
+
+export const resetSessionViewedLetters = () => {
+  viewedLetterIds.clear();
+  unbilledNewLettersCount = 0;
+};
+
+export const getLetterKey = (letter, index) => {
+  const id = getLetterId(letter);
+  if (id) return id;
+  if (typeof index === "number" && index >= 0) return `letter-idx-${index}`;
+  return null;
+};
+
 export const extractMediaLinks = (rawMessage) => {
   if (!rawMessage || typeof rawMessage !== "string") {
     return {
@@ -613,18 +628,16 @@ function DetailsModal({
   const [showAdLock, setShowAdLock] = useState(false);
   const [adCountdown, setAdCountdown] = useState(5);
   const [pendingNavDirection, setPendingNavDirection] = useState(null);
-  const maxScrollIndexRef = useRef(-1);
-  const newItemsScrolledRef = useRef(1);
-
   useEffect(() => {
-    if (!showDetailsModal) {
-      maxScrollIndexRef.current = -1;
-      newItemsScrolledRef.current = 1;
-    } else if (maxScrollIndexRef.current === -1 && currentIndex >= 0) {
-      maxScrollIndexRef.current = currentIndex;
-      newItemsScrolledRef.current = 1;
+    if (!showDetailsModal || !selectedLetter) return;
+    const letterKey = getLetterKey(selectedLetter, currentIndex);
+    if (!letterKey) return;
+
+    if (!viewedLetterIds.has(letterKey)) {
+      viewedLetterIds.add(letterKey);
+      unbilledNewLettersCount += 1;
     }
-  }, [showDetailsModal, currentIndex]);
+  }, [showDetailsModal, selectedLetter, currentIndex]);
 
   const [showReadTip, setShowReadTip] = useState(() => {
     try {
@@ -754,30 +767,30 @@ function DetailsModal({
     };
   }, [showAdLock]);
 
-  const goToNext = useCallback(() => {
-    if (showAdLock || isTransitioningRef.current || !canGoNext) return;
+  const goToNext = useCallback((fromAdLock = false) => {
+    if ((showAdLock && !fromAdLock) || isTransitioningRef.current || !canGoNext) return;
 
     if (showReadTip) {
       dismissReadTip();
     }
 
     const nextIndex = currentIndex + 1;
-    const currentMax = maxScrollIndexRef.current === -1 ? currentIndex : maxScrollIndexRef.current;
-    const isNetNew = nextIndex > currentMax;
+    const nextLetter = letterList[nextIndex];
+    if (!nextLetter) return;
 
-    if (isNetNew) {
-      if (newItemsScrolledRef.current >= AD_INTERVAL) {
-        newItemsScrolledRef.current = 0;
+    const nextLetterKey = getLetterKey(nextLetter, nextIndex);
+    const isUnseen = nextLetterKey && !viewedLetterIds.has(nextLetterKey);
+
+    if (isUnseen) {
+      if (unbilledNewLettersCount >= AD_INTERVAL) {
+        unbilledNewLettersCount = 0;
         setPendingNavDirection("next");
         setShowAdLock(true);
         return;
       }
-      maxScrollIndexRef.current = nextIndex;
-      newItemsScrolledRef.current += 1;
+      viewedLetterIds.add(nextLetterKey);
+      unbilledNewLettersCount += 1;
     }
-
-    const nextLetter = letterList[nextIndex];
-    if (!nextLetter) return;
 
     isTransitioningRef.current = true;
     setOutgoingLetter(selectedLetter);
@@ -802,15 +815,30 @@ function DetailsModal({
     }, 520);
   }, [showAdLock, showReadTip, dismissReadTip, canGoNext, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, onFetchMore]);
 
-  const goToPrev = useCallback(() => {
-    if (showAdLock || isTransitioningRef.current || !canGoPrev) return;
+  const goToPrev = useCallback((fromAdLock = false) => {
+    if ((showAdLock && !fromAdLock) || isTransitioningRef.current || !canGoPrev) return;
 
     if (showReadTip) {
       dismissReadTip();
     }
 
-    const prevLetter = letterList[currentIndex - 1];
+    const prevIndex = currentIndex - 1;
+    const prevLetter = letterList[prevIndex];
     if (!prevLetter) return;
+
+    const prevLetterKey = getLetterKey(prevLetter, prevIndex);
+    const isUnseen = prevLetterKey && !viewedLetterIds.has(prevLetterKey);
+
+    if (isUnseen) {
+      if (unbilledNewLettersCount >= AD_INTERVAL) {
+        unbilledNewLettersCount = 0;
+        setPendingNavDirection("prev");
+        setShowAdLock(true);
+        return;
+      }
+      viewedLetterIds.add(prevLetterKey);
+      unbilledNewLettersCount += 1;
+    }
 
     isTransitioningRef.current = true;
     setOutgoingLetter(selectedLetter);
@@ -838,10 +866,10 @@ function DetailsModal({
     setShowAdLock(false);
     if (pendingNavDirection === "next") {
       setPendingNavDirection(null);
-      goToNext();
+      goToNext(true);
     } else if (pendingNavDirection === "prev") {
       setPendingNavDirection(null);
-      goToPrev();
+      goToPrev(true);
     }
   }, [pendingNavDirection, goToNext, goToPrev]);
 
@@ -1118,8 +1146,6 @@ function DetailsModal({
     setShowAdLock(false);
     setAdCountdown(5);
     setPendingNavDirection(null);
-    maxScrollIndexRef.current = -1;
-    newItemsScrolledRef.current = 1;
   };
 
   const closeShareDialog = () => {
