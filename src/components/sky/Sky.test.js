@@ -38,7 +38,7 @@ test('local time blends through dawn and dusk', () => {
 test('presence count, pulse cooldown, reconnect and route cleanup', () => {
   document.title = 'Letters';
   const { unmount } = render(<Sky />);
-  const button = screen.getByRole('button', { name: "I'm here" });
+  const button = screen.getByRole('button', { name: "Pulse" });
   expect(document.title).toBe('Sky');
   expect(document.documentElement).toHaveClass('sky-active');
   expect(button).toBeDisabled();
@@ -181,4 +181,47 @@ test('reopening an existing note offers one-click clearing', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Leave a little note' }));
   expect(screen.getByLabelText('A little note for the sky')).toHaveValue('');
   expect(screen.getByRole('button', { name: 'Save note' })).toBeInTheDocument();
+});
+
+test('departed note stars remain faded until expiry and activity stays compact', () => {
+  render(<Sky />);
+  act(() => handlers.sky_state({
+    selfId: 'a', activeCount: 1,
+    participants: [{ id: 'a', x: .2, y: .3, active: true }, { id: 'b', x: .8, y: .7, active: false, note: 'Still a little light' }],
+    activity: [{ id: 'event', soul: 'soul123', action: 'left a note', at: Date.now() }],
+  }));
+  expect(screen.getByText('0 quiet souls are looking at the sky with you right now.')).toBeInTheDocument();
+  const star = screen.getByRole('button', { name: 'Quiet soul 2, read note' });
+  expect(star).toHaveClass('sky-star--resting');
+  fireEvent.click(star);
+  expect(screen.getByText('Still a little light')).toBeInTheDocument();
+  expect(screen.getByText(/soul123 left a note/)).toBeInTheDocument();
+  act(() => handlers.presence_left('b'));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Pulse' }).closest('.sky-bottom')).not.toBeNull();
+  expect(screen.getByText('You don’t have to say a word. Leave a little light.')).toBeInTheDocument();
+});
+
+test('own-star introduction is anchored and disappears after three seconds', () => {
+  render(<Sky />);
+  enter();
+  const intro = screen.getByText('This is you');
+  expect(intro).toHaveAttribute('data-star-id', 'a');
+  expect(intro).toHaveClass('sky-note-card--anchored');
+  act(() => jest.advanceTimersByTime(2999));
+  expect(screen.getByText('This is you')).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(1));
+  expect(screen.queryByText('This is you')).not.toBeInTheDocument();
+});
+
+test('own star identifies you with and without a note', () => {
+  render(<Sky />);
+  enter();
+  fireEvent.click(screen.getByRole('button', { name: 'Your star, no note yet' }));
+  expect(screen.getByText('This is you.')).toBeInTheDocument();
+  expect(screen.queryByText('A quiet soul is here too.')).not.toBeInTheDocument();
+  act(() => handlers.note_updated({ id: 'a', note: 'My little light' }));
+  expect(screen.getByText('This is you')).toBeInTheDocument();
+  expect(screen.getByText('My little light')).toBeInTheDocument();
+  expect(screen.queryByText('A quiet soul left this here')).not.toBeInTheDocument();
 });
