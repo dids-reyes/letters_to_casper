@@ -40,7 +40,9 @@ test('presence count, pulse cooldown, reconnect and route cleanup', () => {
   const { unmount } = render(<Sky />);
   const button = screen.getByRole('button', { name: "I'm here" });
   expect(document.title).toBe('Sky');
+  expect(document.documentElement).toHaveClass('sky-active');
   expect(button).toBeDisabled();
+  expect(screen.getByAltText('Letters to Casper')).toHaveAttribute('src', '/ltc-preview.webp');
   enter();
   expect(screen.getByText('1 quiet soul is looking at the sky with you right now.')).toBeInTheDocument();
   fireEvent.click(button);
@@ -60,6 +62,7 @@ test('presence count, pulse cooldown, reconnect and route cleanup', () => {
   expect(socket.removeAllListeners).toHaveBeenCalled();
   expect(socket.disconnect).toHaveBeenCalled();
   expect(document.title).toBe('Letters');
+  expect(document.documentElement).not.toHaveClass('sky-active');
   expect(jest.getTimerCount()).toBe(0);
 });
 test('missing production endpoint does not connect to the frontend by accident', () => {
@@ -70,7 +73,7 @@ test('missing production endpoint does not connect to the frontend by accident',
   expect(screen.getByText('The shared sky is resting for a moment.')).toBeInTheDocument();
 });
 test('reduced motion rests between events and canvas pauses while hidden', () => {
-  const ctx = { clearRect: jest.fn(), beginPath: jest.fn(), arc: jest.fn(), fill: jest.fn(), stroke: jest.fn(), setTransform: jest.fn() };
+  const ctx = { clearRect: jest.fn(), beginPath: jest.fn(), arc: jest.fn(), fill: jest.fn(), stroke: jest.fn(), setTransform: jest.fn(), fillRect: jest.fn(), drawImage: jest.fn(), moveTo: jest.fn(), lineTo: jest.fn(), createRadialGradient: jest.fn(() => ({ addColorStop: jest.fn() })), createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })) };
   HTMLCanvasElement.prototype.getContext.mockReturnValue(ctx);
   const media = { matches: true, addEventListener: jest.fn(), removeEventListener: jest.fn() };
   window.matchMedia.mockReturnValue(media);
@@ -81,6 +84,7 @@ test('reduced motion rests between events and canvas pauses while hidden', () =>
   const { unmount } = render(<Sky />);
   act(() => nextFrame(20));
   expect(ctx.clearRect).toHaveBeenCalledTimes(1);
+  expect(ctx.lineTo).not.toHaveBeenCalled();
   request.mockClear();
   enter();
   expect(request).toHaveBeenCalledTimes(1);
@@ -90,6 +94,12 @@ test('reduced motion rests between events and canvas pauses while hidden', () =>
   act(() => media.addEventListener.mock.calls[0][1]());
   act(() => nextFrame(60));
   expect(request.mock.calls.length).toBeGreaterThan(1);
+  jest.setSystemTime(Date.now() + 30000);
+  act(() => nextFrame(80));
+  jest.setSystemTime(Date.now() + 500);
+  act(() => nextFrame(100));
+  expect(ctx.lineTo).toHaveBeenCalled();
+  expect(ctx.arc).not.toHaveBeenCalled();
   hidden.mockReturnValue(true);
   fireEvent(document, new Event('visibilitychange'));
   expect(cancel).toHaveBeenCalledWith(42);
@@ -104,4 +114,71 @@ test('reduced motion rests between events and canvas pauses while hidden', () =>
   request.mockRestore();
   cancel.mockRestore();
   hidden.mockRestore();
+});
+test('notes can be edited, read one at a time, and disappear on departure', () => {
+  render(<Sky />);
+  enter();
+  fireEvent.click(screen.getByRole('button', { name: 'Leave a little note' }));
+  fireEvent.change(screen.getByLabelText('A little note for the sky'), { target: { value: 'You are not alone.' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save note' }));
+  const call = socket.emit.mock.calls.find(([name]) => name === 'set_note');
+  expect(call[1]).toBe('You are not alone.');
+  act(() => call[2](null, { ok: true }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  act(() => handlers.note_updated({ id: 'b', note: '<b>Keep going</b>' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Quiet soul 2, read note' }));
+  expect(screen.getByText('<b>Keep going</b>')).toBeInTheDocument();
+  expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  expect(screen.getByRole('dialog')).toHaveClass('sky-note-card--anchored');
+  expect(screen.getByRole('dialog')).toHaveAttribute('data-star-id', 'b');
+  act(() => handlers.presence_left('b'));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+
+test('browser header color restores after Sky closes', () => {
+  const meta = document.createElement('meta');
+  meta.name = 'theme-color';
+  meta.content = '#ffffff';
+  document.head.appendChild(meta);
+  const { unmount } = render(<Sky />);
+  expect(meta.content).not.toBe('#ffffff');
+  unmount();
+  expect(meta.content).toBe('#ffffff');
+  meta.remove();
+});
+
+
+test('opening the editor after a star note discards the anchored position', () => {
+  render(<Sky />);
+  enter();
+  fireEvent.click(screen.getByRole('button', { name: 'Quiet soul 2, no note yet' }));
+  const tooltip = screen.getByRole('dialog', { name: 'A quiet note' });
+  expect(tooltip.style.left).not.toBe('');
+  expect(tooltip.style.top).not.toBe('');
+  fireEvent.click(screen.getByRole('button', { name: 'Leave a little note' }));
+  const editor = screen.getByRole('dialog', { name: 'Your sky note' });
+  expect(editor).not.toBe(tooltip);
+  expect(editor.style.left).toBe('');
+  expect(editor.style.top).toBe('');
+  expect(editor.style.getPropertyValue('--note-pointer-x')).toBe('');
+  expect(editor).not.toHaveClass('sky-note-card--anchored');
+  expect(screen.getByLabelText('A little note for the sky')).toHaveFocus();
+});
+
+test('reopening an existing note offers one-click clearing', () => {
+  render(<Sky />);
+  enter();
+  act(() => handlers.note_updated({ id: 'a', note: 'A small hello' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Leave a little note' }));
+  expect(screen.getByLabelText('A little note for the sky')).toHaveValue('A small hello');
+  fireEvent.click(screen.getByRole('button', { name: 'Clear note' }));
+  const call = socket.emit.mock.calls.find(([name]) => name === 'set_note');
+  expect(call[1]).toBe('');
+  act(() => {
+    handlers.note_updated({ id: 'a', note: '' });
+    call[2](null, { ok: true });
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Leave a little note' }));
+  expect(screen.getByLabelText('A little note for the sky')).toHaveValue('');
+  expect(screen.getByRole('button', { name: 'Save note' })).toBeInTheDocument();
 });

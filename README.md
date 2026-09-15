@@ -49,7 +49,8 @@ Deploy the backend route along with the frontend update.
 Open `/sky` directly. It is intentionally absent from navigation. Each open tab
 is one anonymous presence; the footer counts **other** connected tabs. Local
 device time blends dawn (05:00–07:00) and dusk (17:00–19:00). Reduced motion
-freezes drift and twinkle and uses a small, brief pulse. Hidden tabs stop painting.
+freezes drift and twinkle, omits meteors, and uses a gentle brightening.
+Stars glimmer when someone sends a pulse; occasional ambient meteors cross the sky. Hidden tabs stop painting.
 
 ### Local development
 
@@ -108,3 +109,12 @@ Validation:
 CI=true npm test -- --watchAll=false --runInBand
 npm run build
 ```
+
+Sky notes: each connected visitor can publish one public plain-text note of up
+to 80 Unicode characters using “Leave a little note”. Tap a visitor's star to
+open a single compact note card; Escape or its close button dismisses it. Clear
+and save to remove your note. Notes disappear on disconnect and are not stored.
+The backend validates length and limits note changes to once every three seconds.
+Deploy the updated `ltc-service` Sky module before the frontend to enable notes.
+Sky also adapts the mobile browser theme color and toast styling to its header
+palette, restoring the browser color when the route closes.
