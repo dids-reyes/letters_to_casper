@@ -93,3 +93,22 @@ html.sky-active .Toastify__progress-bar { background: #bfd5ec; }
 .sky-note-card--anchored p { font-size: 12px; line-height: 1.5; margin: 0; }
 .sky-note-card--anchored small { font-size: 9px; margin-bottom: 4px; }
 .sky-note-card--anchored .sky-note-close { width: 30px; height: 30px; font-size: 18px; }
+
+.sky-content { justify-content: flex-start; gap: 16px; }
+.sky-bottom { margin-top: auto; width: min(100%, 410px); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sky-bottom .sky-prompt { padding: 0; background: none; border-radius: 0; }
+.sky-bottom .sky-prompt p { font-size: 16px; line-height: 1.5; margin-bottom: 12px; }
+.sky-bottom .sky-feedback { min-height: 16px; margin-top: 6px; font-size: 10px; }
+.sky-bottom .sky-count { font-size: 10px; }
+.sky-activity { align-self: stretch; list-style: none; margin: 0 0 6px; padding: 4px 12px; text-align: left; font-size: 10px; line-height: 1.7; color: #d5e0ec; opacity: .5; mask-image: linear-gradient(transparent, #000 30%); }
+.sky-activity:empty { display: none; }
+.sky-activity span { opacity: .7; margin-left: 4px; }
+.sky-star--resting::before { inset: 12px; opacity: .35; }
+.sky-star--resting.sky-star--note::before { opacity: .35; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .sky-bottom { width: min(100%, 560px); gap: 2px; }
+  .sky-activity { display: none; }
+  .sky-bottom .sky-prompt p { font-size: 14px; margin-bottom: 6px; }
+}
+
+.sky-intro { padding: 9px 13px; font-size: 12px; pointer-events: none; }

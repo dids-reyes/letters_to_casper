@@ -112,8 +112,13 @@ npm run build
 
 Sky notes: each connected visitor can publish one public plain-text note of up
 to 80 Unicode characters using “Leave a little note”. Tap a visitor's star to
-open a single compact note card; Escape or its close button dismisses it. Clear
-and save to remove your note. Notes disappear on disconnect and are not stored.
+open a single compact note card; Escape or its close button dismisses it. Reopen
+your note and choose Clear note to remove it. Each saved note lasts one hour
+from its latest save. On disconnect, a note-bearing star stays smaller and faded
+until that deadline; stars without notes leave immediately. The live counter
+counts only connected visitors. Notes and the bounded activity log live in server
+memory, so server restarts clear them early. The latest three activity entries
+appear above the bottom controls; the center remains open sky.
 The backend validates length and limits note changes to once every three seconds.
 Deploy the updated `ltc-service` Sky module before the frontend to enable notes.
 Sky also adapts the mobile browser theme color and toast styling to its header

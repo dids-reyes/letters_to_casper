@@ -38,7 +38,11 @@ export default function Sky() {
   const deadline = useRef(0);
   const starButtons = useRef(new Map());
   const noteCard = useRef(null);
+  const introCard = useRef(null);
+  const [introId, setIntroId] = useState(null);
   const [people, setPeople] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [clock, setClock] = useState(Date.now());
   const [selected, setSelected] = useState(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -76,7 +80,7 @@ export default function Sky() {
 
   useEffect(() => {
     const escape = event => {
-      if (event.key === 'Escape') { setSelected(null); setEditing(false); }
+      if (event.key === 'Escape') { setIntroId(null); setSelected(null); setEditing(false); }
     };
     window.addEventListener('keydown', escape);
     return () => window.removeEventListener('keydown', escape);
@@ -87,6 +91,7 @@ export default function Sky() {
     document.title = 'Sky';
     document.documentElement.classList.add('sky-active');
     const timer = setInterval(() => {
+      setClock(Date.now());
       setDaylight(daylightAt(new Date()));
       setRemaining(Math.max(0, Math.ceil((deadline.current - Date.now()) / 1000)));
     }, 1000);
@@ -156,13 +161,16 @@ export default function Sky() {
         // Independent slow fades make the distant field breathe without flashing.
         const fade = reduced ? .55 : Math.pow(
           Math.max(0, Math.sin(time / (2200 + point.x * 2800) + point.y * 90)), 2);
-        const brightness = ambient ? point.brightness * fade * .75 : shimmer;
-        const size = ambient ? 4 + point.size * 3 : point.id === current.selfId ? 32 : 26;
+        const brightness = ambient ? point.brightness * fade * .75 : shimmer * (point.active === false ? .35 : 1);
+        const size = ambient ? 4 + point.size * 3 : point.active === false ? 16 : point.id === current.selfId ? 32 : 26;
         starlight(p.x * width, p.y * height, size, brightness);
         const button = !ambient && starButtons.current.get(point.id);
         if (button) {
           button.style.left = (p.x * 100) + '%';
           button.style.top = (p.y * 100) + '%';
+          if (introCard.current?.dataset.starId === point.id) {
+            anchorNote(introCard.current, p, width, height);
+          }
           if (noteCard.current?.dataset.starId === point.id) {
             anchorNote(noteCard.current, p, width, height);
           }
@@ -267,11 +275,13 @@ export default function Sky() {
     socketRef.current = socket;
     socket.on('sky_state', state => {
       current.selfId = state.selfId;
+      setIntroId(state.selfId);
       current.points = new Map(state.participants.map(point => [point.id, point]));
       current.pulses = [];
       setPeople(state.participants);
       setSelected(null);
-      setCount(state.participants.length);
+      setCount(state.activeCount ?? state.participants.length);
+      setActivity(state.activity || []);
       setStatus('connected');
       current.redraw();
     });
@@ -280,10 +290,16 @@ export default function Sky() {
       setPeople([...current.points.values()]);
       current.redraw();
     });
-    socket.on('note_updated', ({ id, note }) => {
+    socket.on('sky_activity', entry => setActivity(items => [...items.slice(-29), entry]));
+    socket.on('presence_resting', point => {
+      current.points.set(point.id, point);
+      setPeople([...current.points.values()]);
+      current.redraw();
+    });
+    socket.on('note_updated', ({ id, note, noteExpiresAt }) => {
       const point = current.points.get(id);
       if (!point) return;
-      current.points.set(id, { ...point, note });
+      current.points.set(id, { ...point, note, noteExpiresAt });
       setPeople([...current.points.values()]);
     });
     socket.on('presence_left', id => {
@@ -300,8 +316,10 @@ export default function Sky() {
       current.redraw();
     });
     const disconnected = () => {
+      setIntroId(null);
       setStatus('reconnecting');
       setPeople([]);
+      setActivity([]);
       setSelected(null);
       setEditing(false);
       setSaving(false);
@@ -369,6 +387,22 @@ export default function Sky() {
     return () => window.removeEventListener('resize', update);
   }, [selected, editing, people]);
 
+  useEffect(() => {
+    if (!introId) return undefined;
+    const place = () => {
+      const point = scene.current.points.get(introId);
+      const canvas = canvasRef.current;
+      if (point && canvas && introCard.current) {
+        anchorNote(introCard.current, position(point, Date.now(),
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches), canvas.clientWidth, canvas.clientHeight);
+      }
+    };
+    place();
+    const timeout = setTimeout(() => setIntroId(null), 3000);
+    window.addEventListener('resize', place);
+    return () => { clearTimeout(timeout); window.removeEventListener('resize', place); };
+  }, [introId]);
+
   const existingNote = people.find(person => person.id === scene.current.selfId)?.note || '';
   const clearExistingNote = Boolean(existingNote) && draft === existingNote;
 
@@ -399,12 +433,12 @@ export default function Sky() {
       <canvas className="sky-canvas" ref={canvasRef} aria-hidden="true" />
       <div className="sky-stars" aria-label="Quiet souls">
         {people.map((person, index) => (
-          <button key={person.id} className={"sky-star" + (person.note ? " sky-star--note" : "")}
+          <button key={person.id} className={"sky-star" + (person.note ? " sky-star--note" : "") + (person.active === false ? " sky-star--resting" : "")}
             ref={node => { if (node) starButtons.current.set(person.id, node); else starButtons.current.delete(person.id); }}
             style={{ left: (person.x * 100) + '%', top: (person.y * 100) + '%' }}
             aria-label={(person.id === scene.current.selfId ? 'Your star' : 'Quiet soul ' + (index + 1)) + (person.note ? ', read note' : ', no note yet')}
             aria-pressed={selected === person.id}
-            onClick={() => { setEditing(false); setSelected(value => value === person.id ? null : person.id); }} />
+            onClick={() => { setIntroId(null); setEditing(false); setSelected(value => value === person.id ? null : person.id); }} />
         ))}
       </div>
       <div className="sky-content">
@@ -414,15 +448,22 @@ export default function Sky() {
             <img className="sky-logo" src="/ltc-preview.webp" alt="Letters to Casper" />
           </a>
         </header>
+        <div className="sky-bottom">
+        <ol className="sky-activity" aria-label="Recent sky activity">
+          {activity.filter(item => clock - item.at < 3600000).slice(-3).map(item => (
+            <li key={item.id}>{item.soul} {item.action} <span>{clock - item.at < 60000 ? 'just now' : Math.floor((clock - item.at) / 60000) + 'm ago'}</span></li>
+          ))}
+        </ol>
         <section className="sky-prompt" aria-label="Leave a pulse">
-          <p>If you’re carrying a lot right now, leave a pulse so others know they aren’t alone.</p>
-          <button className="sky-pulse" onClick={sendPulse} disabled={status !== 'connected' || remaining > 0} aria-describedby="sky-feedback">I'm here</button>
+          <p>You don’t have to say a word. Leave a little light.</p>
+          <button className="sky-pulse" onClick={sendPulse} disabled={status !== 'connected' || remaining > 0} aria-describedby="sky-feedback">Pulse</button>
           <span className="sky-feedback" id="sky-feedback" role="status">
             {remaining > 0 ? 'Another pulse in ' + remaining + 's' : feedback}
           </span>
         </section>
         <footer className="sky-footer">
         <button className="sky-note-action" disabled={status !== 'connected'} onClick={() => {
+          setIntroId(null);
           setDraft(scene.current.points.get(scene.current.selfId)?.note || '');
           setNoteError(''); setSelected(null); setEditing(true);
         }}>Leave a little note</button>
@@ -434,21 +475,27 @@ export default function Sky() {
               : status === 'connecting' ? 'Finding our place in the sky…' : 'Reconnecting to the shared sky…'}
         </p>
         </footer>
+        </div>
       </div>
+      {introId && !editing && !selectedPerson && (
+        <div ref={introCard} data-star-id={introId} className="sky-note-card sky-note-card--anchored sky-intro" role="status">
+          This is you
+        </div>
+      )}
       {(editing || selectedPerson) && (
-        <section key={editing ? 'editor' : 'star-note'} ref={noteCard} data-star-id={editing ? undefined : selected} className={"sky-note-card" + (editing ? "" : " sky-note-card--anchored")} role="dialog" aria-label={editing ? 'Your sky note' : 'A quiet note'}>
+        <section key={editing ? 'editor' : 'star-note'} ref={noteCard} data-star-id={editing ? undefined : selected} className={"sky-note-card" + (editing ? "" : " sky-note-card--anchored")} role="dialog" aria-label={editing || selectedPerson?.id === scene.current.selfId ? 'Your sky note' : 'A quiet note'}>
           <button className="sky-note-close" aria-label="Close note" onClick={() => { setEditing(false); setSelected(null); }}>×</button>
           {editing ? <form onSubmit={saveNote}>
             <label htmlFor="sky-note">A little note for the sky</label>
             <textarea id="sky-note" autoFocus rows="2" value={draft}
               onChange={event => setDraft([...event.target.value].slice(0, 80).join(''))}
               aria-describedby="sky-note-help" />
-            <small id="sky-note-help">{[...draft].length}/80 · Public until you leave.</small>
+            <small id="sky-note-help">{[...draft].length}/80 · Public for 1 hour, even after you leave.</small>
             <button type="submit" disabled={saving || status !== 'connected'}>{saving ? 'Saving…' : clearExistingNote ? 'Clear note' : 'Save note'}</button>
             {noteError && <p role="alert">{noteError}</p>}
           </form> : <>
-            {selectedPerson.note && <small>A quiet soul left this here</small>}
-            <p>{selectedPerson.note || 'A quiet soul is here too.'}</p>
+            {selectedPerson.note && <small>{selectedPerson.id === scene.current.selfId ? 'This is you' : 'A quiet soul left this here'}</small>}
+            <p>{selectedPerson.note || (selectedPerson.id === scene.current.selfId ? 'This is you.' : 'A quiet soul is here too.')}</p>
           </>}
         </section>
       )}
