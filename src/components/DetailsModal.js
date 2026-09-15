@@ -1207,6 +1207,11 @@ function DetailsModal({
       });
       setShowShareDialog(false);
       setShowQrCode(false);
+
+      fetch(`${render_url}/${selectedLetter._id}/copy-link`, {
+        method: "POST",
+        headers: {"x-api-key": api_key},
+      }).catch(error => console.error("Error recording link copy:", error));
     } catch (error) {
       toast.error("Couldn’t copy the link. Please try again.", {
         position: "top-center",

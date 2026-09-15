@@ -3,28 +3,13 @@ import {createPortal} from 'react-dom';
 import {render_url, api_key} from '../data/keys';
 import '../styles/OriginsView.css';
 import {IoArrowBackOutline, IoLocationOutline, IoMailOpenOutline} from 'react-icons/io5';
+import {project, outline, countryName, letterCount} from '../utils/mapGeometry';
 
 import logo from '../lotties/ltc_logo_1.webp';
-
-const letterCount = count => `${count.toLocaleString()} ${count === 1 ? 'Letter' : 'Letters'}`;
 
 const originName = origin => {
   const parts = [origin.city, origin.region].filter(value => typeof value === 'string' && value.trim()).map(value => value.trim());
   return parts.filter((value, index) => parts.findIndex(part => part.toLowerCase() === value.toLowerCase()) === index).join(', ') || 'Philippines';
-};
-
-const project = ([lon, lat], local) => local
-  ? [(lon - 115) * 40, (22 - lat) * 40]
-  : [(lon + 180) * 2, (85 - lat) * 2];
-const outline = (geometry, local) => {
-  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
-  return polygons.map(polygon => polygon.map(ring => ring.map((point, i) => {
-    const [x, y] = project(point, local);
-    return `${i ? 'L' : 'M'}${x.toFixed(2)},${y.toFixed(2)}`;
-  }).join(' ') + 'Z').join(' ')).join(' ');
-};
-const countryName = code => {
-  try { return new Intl.DisplayNames(['en'], {type: 'region'}).of(code); } catch { return code; }
 };
 
 export default function OriginsView({onClose, children}) {
