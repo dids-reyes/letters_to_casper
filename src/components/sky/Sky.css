@@ -1,0 +1,23 @@
+.sky-page {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow: auto;
+  isolation: isolate;
+  color: #e1e7ed;
+  background: linear-gradient(180deg, #040914, #101e35 65%, #283044);
+  font-family: inherit;
+}
+.sky-daylight { position: absolute; inset: 0; z-index: -2; background: linear-gradient(180deg, #354d65, #657a8a 65%, #a49491); transition: opacity 60s linear; }
+.sky-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.sky-content { min-height: 100%; min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 48px; padding: max(40px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom)); text-align: center; }
+.sky-page h1 { margin: 0; color: inherit; font-family: Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: .18em; }
+.sky-prompt { width: min(100%, 410px); padding: 28px 12px; border-radius: 50%; background: radial-gradient(ellipse, rgba(10, 22, 38, .26), transparent 72%); }
+.sky-prompt p { margin: 0 0 28px; font-family: Georgia, serif; font-size: clamp(19px, 3vw, 25px); line-height: 1.7; text-wrap: balance; color: #edf0f1; text-shadow: 0 1px 12px #243448; }
+.sky-page .sky-pulse { min-width: 132px; min-height: 48px; padding: 12px 26px; border: 1px solid #b9cddd80; border-radius: 999px; background: #bcd3e514; color: #edf0f1; box-shadow: 0 0 24px #bfd5ec14; font: inherit; cursor: pointer; transition: background .3s, box-shadow .3s; }
+.sky-page .sky-pulse:hover:enabled { background: #bcd3e52b; box-shadow: 0 0 32px #bfd5ec30; }
+.sky-page .sky-pulse:focus-visible { outline: 2px solid #e1e7ed; outline-offset: 6px; }
+.sky-page .sky-pulse:disabled { cursor: default; opacity: .6; }
+.sky-feedback { display: block; min-height: 24px; margin-top: 16px; font-size: 12px; color: #d7e0e8; }
+.sky-count { margin: 0; max-width: 360px; font-size: 12px; line-height: 1.8; letter-spacing: .025em; color: #dae2e8; }
+@media (prefers-reduced-motion: reduce) { .sky-page *, .sky-page *::before { transition: none !important; } }
