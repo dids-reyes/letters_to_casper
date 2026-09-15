@@ -9,7 +9,10 @@ export default function BugReportModal({ onClose }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [closing, setClosing] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [viewportTop, setViewportTop] = useState(0);
   const dialog = useRef(null);
+  const overlayRef = useRef(null);
   const busy = useRef(false);
   const mounted = useRef(true);
 
@@ -18,11 +21,45 @@ export default function BugReportModal({ onClose }) {
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    dialog.current.querySelector('textarea').focus();
+    const textarea = dialog.current?.querySelector('textarea');
+    if (textarea) {
+      try {
+        textarea.focus({ preventScroll: true });
+      } catch {
+        textarea.focus();
+      }
+    }
     return () => {
       mounted.current = false;
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return undefined;
+    const vv = window.visualViewport;
+
+    const updateViewport = () => {
+      if (!mounted.current) return;
+      const offset = Math.max(0, window.innerHeight - vv.height);
+      const activeKeyboardOffset = offset > 60 ? offset : 0;
+      setKeyboardOffset(activeKeyboardOffset);
+      setViewportTop(vv.offsetTop || 0);
+
+      if (overlayRef.current) {
+        overlayRef.current.style.setProperty('--keyboard-offset', `${activeKeyboardOffset}px`);
+        overlayRef.current.style.setProperty('--viewport-top', `${vv.offsetTop || 0}px`);
+      }
+    };
+
+    vv.addEventListener('resize', updateViewport);
+    vv.addEventListener('scroll', updateViewport);
+    updateViewport();
+
+    return () => {
+      vv.removeEventListener('resize', updateViewport);
+      vv.removeEventListener('scroll', updateViewport);
     };
   }, []);
 
@@ -74,8 +111,16 @@ export default function BugReportModal({ onClose }) {
   };
 
   return createPortal(
-    <div className={`letter-share-dialog-overlay bug-report-overlay${closing ? ' is-closing' : ''}`}
-      onClick={(event) => { if (event.target === event.currentTarget) close(); }} onKeyDown={handleKeyDown}>
+    <div
+      ref={overlayRef}
+      className={`letter-share-dialog-overlay bug-report-overlay${closing ? ' is-closing' : ''}${keyboardOffset > 0 ? ' keyboard-active' : ''}`}
+      style={{
+        '--keyboard-offset': `${keyboardOffset}px`,
+        '--viewport-top': `${viewportTop}px`,
+      }}
+      onClick={(event) => { if (event.target === event.currentTarget) close(); }}
+      onKeyDown={handleKeyDown}
+    >
       <section ref={dialog} className="letter-share-dialog bug-report-dialog" role="dialog" aria-modal="true" aria-labelledby="bug-report-title">
         <button type="button" className="letter-share-dialog__close" aria-label="Close bug report" onClick={close}>×</button>
         <h2 id="bug-report-title">Bug Report</h2>

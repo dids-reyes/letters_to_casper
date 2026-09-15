@@ -55,8 +55,9 @@ export default function AdminOriginsMap() {
         </div>
         {status === 'ready' && (
           <div className="admin-map__summary">
-            <strong>{Object.keys(countries).length}</strong>
-            <span>{Object.keys(countries).length === 1 ? 'country' : 'countries'} &middot; {letterCount(totalLetters)}</span>
+            <span><strong>{Object.keys(countries).length.toLocaleString()}</strong> {Object.keys(countries).length === 1 ? 'country' : 'countries'}</span>
+            <span aria-hidden="true">&middot;</span>
+            <span><strong>{totalLetters.toLocaleString()}</strong> {totalLetters === 1 ? 'letter' : 'letters'}</span>
           </div>
         )}
       </header>

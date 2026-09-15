@@ -468,7 +468,9 @@ function AdminPortal() {
       <div className="admin-portal__letters" aria-hidden="true"><span /><span /><span /><span /><span /></div>
       <header className="admin-portal-header">
         <div className="admin-portal-header__brand">
-          <img className="admin-portal-logo" src={logo} alt="Letters to Casper" />
+          <a className="admin-portal-logo" href="https://letterstocasper.com">
+            <img src={logo} alt="Letters to Casper" style={{display: 'block', width: '100%', height: 'auto'}} />
+          </a>
           <span className="admin-identity">
             <IoShieldCheckmarkOutline />
             <span className="admin-identity__copy">
