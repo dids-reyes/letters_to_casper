@@ -351,6 +351,37 @@ describe('Read Mode in DetailsModal', () => {
     expect(localStorage.getItem('hasSeenReadModeTip')).toBe('true');
   });
 
+  test('in readMode, scroll tip appears after envelope opening animation completes', () => {
+    jest.useFakeTimers();
+    localStorage.removeItem('hasSeenReadModeTip');
+
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[0]}
+          readMode={true}
+          initialOpened={false}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector('.read-mode-tip')).toBeNull();
+
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
+
+    const tip = container.querySelector('.read-mode-tip');
+    expect(tip).not.toBeNull();
+    expect(tip).toHaveTextContent(/Scroll or swipe down to read more letters/i);
+
+    jest.useRealTimers();
+  });
+
+
   test('in readMode, document body overflow is locked to prevent background scrolling', () => {
     const { unmount } = render(
       <MemoryRouter>

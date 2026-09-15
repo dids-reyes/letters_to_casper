@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import {Routes, Route} from 'react-router-dom';
 import Home from './components/Home';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -13,6 +13,8 @@ import {CrisisSupportProvider} from './context/CrisisSupportContext';
 import CrisisSupportDialog from './components/CrisisSupportDialog';
 import './styles/App.css';
 
+const Sky = lazy(() => import('./components/sky/Sky'));
+
 function App() {
   return (
     <div className="container-fluid d-flex justify-content-center app-container">
@@ -20,6 +22,7 @@ function App() {
         <CrisisSupportProvider>
           <CrisisSupportDialog />
           <Routes>
+            <Route path="/sky" element={<Suspense fallback={<div role="status">Opening Sky…</div>}><Sky /></Suspense>} />
             <Route path="/" element={<Home />} />
             <Route path="/letters/:messageId" element={<Home />} />
             <Route path="/privacy_policy" element={<PrivacyPolicy />} />
