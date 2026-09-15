@@ -53,33 +53,37 @@ freezes drift and twinkle and uses a small, brief pulse. Hidden tabs stop painti
 
 ### Local development
 
-Use Node 20 or later:
+The Socket.io backend lives in the sibling **ltc-service** repository and shares
+its existing HTTP server (port 8000 by default).
 
-```sh
-npm ci --legacy-peer-deps
-npm ci --prefix sky-server
-SKY_ALLOWED_ORIGINS=http://localhost:3000 npm start --prefix sky-server
-```
+1. In `ltc-service`, run `npm ci`, configure its normal environment variables,
+   include `http://localhost:3000` in `SKY_ALLOWED_ORIGINS`, and run `npm start`.
+2. In this frontend repository, run `npm ci --legacy-peer-deps` and `npm start`.
+   Development defaults to `http://localhost:8000`; use
+   `REACT_APP_SKY_SOCKET_URL` to override it.
 
-In a second terminal, run `npm start`. Development defaults to
-`http://localhost:3001`; set `REACT_APP_SKY_SOCKET_URL` to override it.
+### Deployment: Render backend + Netlify frontend
 
-### Render deployment
+1. Commit and push the backend changes in **ltc-service**, then redeploy its
+   existing Render web service. Root Directory should be blank (repository root),
+   Build Command `npm ci`, Start Command `npm start`. Keep existing backend
+   environment variables and the `/health` health check.
+2. On Render, set `SKY_ALLOWED_ORIGINS` to
+   `https://letterstocasper.com,https://www.letterstocasper.com` (also the defaults).
+   Use exact origins without paths or trailing slashes.
+3. On **Netlify**, set `REACT_APP_SKY_SOCKET_URL` to the existing ltc-service
+   Render public HTTPS URL, without an API path. For example:
+   `REACT_APP_SKY_SOCKET_URL=https://ltc-service.onrender.com`.
+   Copy the actual URL from your Render dashboard.
+4. Commit and push this frontend's changes and rebuild/redeploy it on Netlify.
+5. Open `/sky` in two tabs and verify counts, pulses, the 12-second cooldown,
+   and removal when a tab closes.
 
-1. Create a Render Blueprint from this repository using `render.yaml`, or create
-   a Node web service with root directory `sky-server`, build `npm ci`, start
-   `npm start`, and health check `/health`.
-2. Set `SKY_ALLOWED_ORIGINS` to a comma-separated list of exact frontend origins
-   (no paths or trailing slashes). Defaults allow only
-   `https://letterstocasper.com` and `https://www.letterstocasper.com`.
-3. Set `REACT_APP_SKY_SOCKET_URL=https://YOUR-SERVICE.onrender.com` in the
-   frontend hosting environment, then rebuild/redeploy the frontend.
-4. Open `/sky` in two tabs. Verify the count, pulses in both tabs, the 12-second
-   cooldown, and removal when a tab closes. Check both mobile and reduced motion.
+No separate Sky Render service is needed. Do not set `sky-server` as the
+Root Directory. This repository contains only the Sky frontend.
 
-The server binds Render's `PORT` on `0.0.0.0`. Socket.io starts with HTTP polling
-and upgrades to WebSocket, retaining polling when WebSocket is unavailable.
-Origin validation applies to both transports. See
+Socket.io uses the backend's existing `PORT`, starts with HTTP polling and
+upgrades to WebSocket. Origin validation applies to both transports. See
 [Socket.io CORS](https://socket.io/docs/v4/handling-cors/) and
 [Render WebSockets](https://render.com/docs/websocket).
 
@@ -100,7 +104,7 @@ with a resting message and disabled pulse button.
 Validation:
 
 ```sh
-npm test --prefix sky-server
+# In ltc-service: npm test
 CI=true npm test -- --watchAll=false --runInBand
 npm run build
 ```

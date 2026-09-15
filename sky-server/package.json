@@ -1,9 +1,0 @@
-{
-  "name": "letters-to-casper-sky",
-  "version": "1.0.0",
-  "private": true,
-  "engines": { "node": ">=20" },
-  "scripts": { "start": "node server.js", "test": "node --test" },
-  "dependencies": { "socket.io": "^4.8.1" },
-  "devDependencies": { "socket.io-client": "^4.8.1" }
-}

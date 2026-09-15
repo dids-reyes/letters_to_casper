@@ -124,7 +124,7 @@ export default function Sky() {
 
   useEffect(() => {
     const endpoint = process.env.REACT_APP_SKY_SOCKET_URL ||
-      (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : '');
+      (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : '');
     if (!endpoint) { setStatus('unavailable'); return undefined; }
     const current = scene.current;
     const socket = io(endpoint, { autoConnect: false, transports: ['polling', 'websocket'], forceNew: true });
