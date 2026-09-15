@@ -8,7 +8,8 @@ import {Link, useNavigate} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
 import '../styles/AdminPortal.css';
 import {getOptimizedPhotoUrl} from '../data/cloudinary';
-import {IoAddCircleOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoLogOutOutline, IoMailUnreadOutline, IoSearchOutline, IoShieldCheckmarkOutline, IoStarOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
+import {IoAddCircleOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoLogOutOutline, IoMailUnreadOutline, IoSearchOutline, IoShieldCheckmarkOutline, IoStarOutline, IoStatsChartOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
+import AdminAnalytics from './AdminAnalytics';
 
 function AdminPortal() {
   const {isLoggedIn, adminName, sessionToken, logout} = useContext(AuthContext);
@@ -36,7 +37,7 @@ function AdminPortal() {
   const manualLetters = letters.filter(letter => !letter.burnRequested && needsManualReview(letter));
   const burnedLetters = letters.filter(letter => letter.burnRequested);
   const [loading, setLoading] = useState(0);
-  const [activeSection, setActiveSection] = useState('review');
+  const [activeSection, setActiveSection] = useState('analytics');
   const visibleReviewLetters = activeSection === 'manual' ? manualLetters : reviewLetters;
   const [featuredLetters, setFeaturedLetters] = useState([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
@@ -485,6 +486,9 @@ function AdminPortal() {
         </div>
       </header>
       <nav className="admin-workspace-tabs" aria-label="Admin portal sections">
+        <button className={activeSection === 'analytics' ? 'is-active' : ''} onClick={() => setActiveSection('analytics')}>
+          <IoStatsChartOutline /> Analytics
+        </button>
         <button className={activeSection === 'review' ? 'is-active' : ''} onClick={() => setActiveSection('review')}>
           <IoMailUnreadOutline /> Review Queue <span>{reviewLetters.length}</span>
         </button>
@@ -708,6 +712,7 @@ function AdminPortal() {
           )}
         </section>
       )}
+      {activeSection === 'analytics' && <AdminAnalytics />}
       {featuredToAdd && (
         <div className="admin-delete-overlay" onClick={() => {
           if (!featuredActionId) setFeaturedToAdd(null);

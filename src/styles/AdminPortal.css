@@ -267,6 +267,61 @@
   .letter-auto-moderation > small { font-size: 10.5px; }
 }
 
+/* --- Analytics dashboard --- */
+.admin-analytics { width: min(1050px,100%); margin: 18px auto 0; text-align: left; }
+
+.admin-map { padding: 22px; border: 1px solid rgba(155,181,240,.14); border-radius: 18px; background: linear-gradient(135deg,rgba(28,43,72,.78),rgba(16,27,47,.72)); box-shadow: 0 15px 36px rgba(0,0,0,.18); }
+.admin-map__header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.admin-map__header > div > span { display: inline-flex; align-items: center; gap: 6px; color: #75a1ff; font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.admin-map__header h2 { margin: 5px 0 0; color: #f3f6ff; font-size: 22px; }
+.admin-map__summary { display: flex; flex-direction: column; align-items: flex-end; }
+.admin-map__summary strong { color: #f3f6ff; font-size: 22px; line-height: 1.1; }
+.admin-map__summary span { color: #8e9bb0; font-size: 10px; }
+.admin-map__status { margin: 16px 0 0; color: #8fa5ca; font-size: 11px; text-align: center; }
+.admin-map__status.is-error { color: #ff9aaa; }
+.admin-map__status button { margin-left: 8px; padding: 5px 10px; border: 1px solid rgba(255,138,138,.28); border-radius: 8px; background: rgba(60,26,32,.5); color: #ffb1b1; font-size: 10px; cursor: pointer; }
+.admin-map__body { margin-top: 12px; }
+.admin-map__svg { display: block; width: 100%; height: min(38dvh,300px); min-height: 200px; margin: 0 auto; background: radial-gradient(ellipse,rgba(55,114,255,.08) 0,transparent 72%); }
+.admin-map__svg path { fill: #263349; stroke: #3a4a68; stroke-width: .5; stroke-linejoin: round; }
+.admin-map__svg path.has-letters { fill: #3772ff; cursor: pointer; }
+.admin-map__svg path.has-letters:hover, .admin-map__svg path.has-letters:focus { fill: #6d97ff; fill-opacity: 1 !important; stroke: #193f8d; }
+.admin-map__selection { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 12px; border: 1px solid rgba(141,176,255,.17); border-radius: 12px; background: rgba(20,32,55,.58); color: #b8c5da; font-size: 11px; }
+.admin-map__selection svg { flex: 0 0 auto; color: #76a1ff; font-size: 15px; }
+.admin-map__selection strong { color: #e4ebfb; }
+.admin-map__ranking { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 18px; margin: 14px 0 0; padding: 0; list-style: none; }
+.admin-map__ranking li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 2px; border-bottom: 1px solid rgba(155,181,240,.1); color: #aeb8c9; font-size: 11px; }
+.admin-map__ranking strong { color: #e4ebfb; }
+
+.admin-analytics__stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 11px; margin-top: 18px; }
+.admin-analytics__stat { display: flex; align-items: center; gap: 11px; min-width: 0; padding: 13px 14px; border: 1px solid rgba(155,181,240,.14); border-radius: 15px; background: rgba(18,29,48,.72); box-shadow: 0 10px 25px rgba(0,0,0,.14); }
+.admin-analytics__stat > svg { flex: 0 0 auto; width: 34px; height: 34px; padding: 9px; box-sizing: border-box; border-radius: 11px; background: rgba(55,114,255,.14); color: #76a1ff; font-size: 16px; }
+.admin-analytics__stat > div { min-width: 0; }
+.admin-analytics__stat strong { display: block; color: #f3f6ff; font-size: 19px; line-height: 1.15; }
+.admin-analytics__stat span { display: block; margin-top: 2px; color: #8290a7; font-size: 9.5px; letter-spacing: .02em; overflow-wrap: anywhere; }
+
+.admin-analytics__row { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-top: 14px; }
+.admin-analytics__panel { min-width: 0; padding: 18px; border: 1px solid rgba(155,181,240,.14); border-radius: 16px; background: rgba(18,29,48,.72); box-shadow: 0 10px 25px rgba(0,0,0,.14); }
+.admin-analytics__panel h3 { display: flex; align-items: center; gap: 7px; margin: 0 0 14px; color: #b8c5da; font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.admin-analytics__panel h3 svg { color: #76a1ff; font-size: 14px; }
+.admin-analytics__empty { margin: 0; color: #75839a; font-size: 11px; }
+
+.admin-analytics__trend { display: flex; align-items: flex-end; gap: 4px; height: 90px; }
+.admin-analytics__bar { position: relative; flex: 1 1 0; display: flex; align-items: flex-end; height: 100%; min-width: 0; border-radius: 4px; background: rgba(155,181,240,.08); }
+.admin-analytics__bar > span { display: block; width: 100%; border-radius: 4px 4px 0 0; background: linear-gradient(180deg,#5c93ff,#3772ff); transition: height .25s ease; }
+
+.admin-analytics__list { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.admin-analytics__list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 2px; border-bottom: 1px solid rgba(155,181,240,.1); color: #aeb8c9; font-size: 11.5px; }
+.admin-analytics__list li:last-child { border-bottom: 0; }
+.admin-analytics__list strong { flex: 0 0 auto; color: #e4ebfb; }
+
+@media (max-width: 720px) {
+  .admin-analytics__stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .admin-analytics__row { grid-template-columns: 1fr; }
+  .admin-map__ranking { grid-template-columns: 1fr; }
+  .admin-map__header { align-items: center; }
+  .admin-map__summary { align-items: flex-start; }
+}
+
 /* Mobile header: keep the logo + log-out button on one row and drop the
    "signed in as" chip onto its own full-width row so nothing clips. */
 @media (max-width: 720px) {

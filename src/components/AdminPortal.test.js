@@ -17,15 +17,30 @@ const logout = jest.fn();
 beforeEach(() => {
   logout.mockClear();
   axios.get.mockResolvedValue({data: {ip: '127.0.0.1'}});
-  global.fetch = jest.fn(async url => ({
-    ok: true,
-    json: async () => ({messages: url.endsWith('/unapproved') ? [pending, burned] : []}),
-  }));
+  global.fetch = jest.fn(async url => {
+    if (url.includes('/origins.json')) return {ok: true, json: async () => ({features: []})};
+    if (url.includes('/origins-map')) return {ok: true, json: async () => []};
+    if (url.includes('/analytics-summary')) {
+      return {
+        ok: true,
+        json: async () => ({
+          totals: {all: 0, approved: 0, pending: 0, burned: 0, featured: 0, withPhoto: 0},
+          reads: {total: 0, average: 0},
+          linkCopies: {total: 0},
+          reactions: {love: 0, felt: 0, sad: 0, courage: 0, notAlone: 0},
+          trend: [],
+          topCities: [],
+        }),
+      };
+    }
+    return {ok: true, json: async () => ({messages: url.endsWith('/unapproved') ? [pending, burned] : []})};
+  });
 });
 afterEach(() => { global.fetch = originalFetch; });
 
 async function openPortal(adminName = 'didsirwynreyes') {
   render(<MemoryRouter future={{v7_startTransition: true, v7_relativeSplatPath: true}}><AuthContext.Provider value={{isLoggedIn: true, adminName, sessionToken: 'test-session', logout}}><AdminPortal /></AuthContext.Provider></MemoryRouter>);
+  fireEvent.click(await screen.findByRole('button', {name: /Review Queue/}));
   await screen.findByText('Pending message');
 }
 
@@ -76,7 +91,7 @@ test('signs the administrator out and redirects to the login route', async () =>
       </AuthContext.Provider>
     </MemoryRouter>,
   );
-  await screen.findByText('Pending message');
+  await screen.findByText('Where letters come from');
   fireEvent.click(screen.getByRole('button', {name: /Log out/}));
   expect(logout).toHaveBeenCalledTimes(1);
   expect(await screen.findByText('Login screen')).toBeInTheDocument();
