@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import OriginsView from "./OriginsView";
+import FeedUpdates from "./FeedUpdates";
 import Header from "./Header";
 import Footer from "./Footer";
 import AddModal from "./AddModal";
@@ -957,6 +958,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   };
 
   const handleFeedScroll = event => {
+    if (event.target !== event.currentTarget) return;
     const pageWidth = event.currentTarget.clientWidth;
     if (!pageWidth) return;
     setFeedPage(Math.max(0, Math.min(4, Math.round(event.currentTarget.scrollLeft / pageWidth))));
@@ -1078,14 +1080,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
               className={`letter-count-popover is-${countPopover}`} role="dialog"
               aria-labelledby="letter-count-title" aria-describedby="letter-count-description">
               <button type="button" className="letter-count-popover__close" aria-label="Close letter count" onClick={closeCountPopover}>×</button>
-              <span className="letter-count-popover__icon" aria-hidden="true">
-                {countPopover === "opened" ? <IoMailOpenOutline /> : <IoMailUnreadOutline />}
-              </span>
-              <h2 id="letter-count-title">{countPopover === "opened" ? "Number of Open Letters" : "Number of Pending Letters for Approval"}</h2>
+              <h2 id="letter-count-title">{countPopover === "opened" ? "Open Letters" : "Pending Letters for Approval"}</h2>
               <strong className="letter-count-popover__number">{Number(countPopover === "opened" ? letters.counts.approved : letters.counts.unapproved).toLocaleString()}</strong>
               <p id="letter-count-description">{countPopover === "opened"
                 ? "Search through these letters, maybe someone wrote a letter for you."
-                : "Once your letter is approved and published, you can share it with others."}</p>
+                : "Once your letter is approved, you can browse it here or share it with others."}</p>
             </section>
           )}
           {isLateNight && !nightShift && !nightTipDismissed && (
@@ -1173,7 +1172,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                     <h3>A note about our advertisements.</h3>
                     <p>Transparency matters to us. Here is what you should know about the ads shown across Letters to Casper, our stance on gambling, and why advertisements are present.</p>
                   </div>
-                  <div className="feed-report__updates">
+                  <FeedUpdates>
                     <article className="feed-report__story is-featured">
                       <IoShieldCheckmarkOutline aria-hidden="true" />
                       <div>
@@ -1198,7 +1197,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                         <p>We don't endorse the ads on your screen. They are only here to keep our servers running and our platform free for the community.</p>
                       </div>
                     </article>
-                  </div>
+                  </FeedUpdates>
                 </section>
 
                 <section className="feed-report__page" aria-label="Recent updates, page 2 of 5">
@@ -1207,7 +1206,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                     <h3>A gentler way to read, feel, and let go.</h3>
                     <p>We’re moving into a fresh phase. Every letter can now carry a little more life while keeping the experience quiet and personal.</p>
                   </div>
-                  <div className="feed-report__updates">
+                  <FeedUpdates>
                     {readModeEnabled && (
                       <article className="feed-report__story is-featured">
                         <IoReaderOutline aria-hidden="true" />
@@ -1230,7 +1229,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                       <IoInformationCircleOutline aria-hidden="true" />
                       <div><span className="feed-report__kicker">Design note</span><h4>Letters that quietly glow</h4><p>Borders respond to their warmth: gold for reads, pink for Love, and blue for Sad.</p></div>
                     </article>
-                  </div>
+                  </FeedUpdates>
                 </section>
 
                 <section className="feed-report__page" aria-label="Recent updates, page 3 of 5">

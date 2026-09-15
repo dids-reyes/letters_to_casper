@@ -1,9 +1,30 @@
-.bug-report-overlay { z-index: 1500; }
-.bug-report-dialog { box-sizing: border-box; }
+.bug-report-overlay {
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  padding-bottom: calc(16px + var(--keyboard-offset, 0px));
+  box-sizing: border-box;
+  transform: translateY(var(--viewport-top, 0px));
+  transition: padding-bottom 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bug-report-dialog {
+  box-sizing: border-box;
+  margin: auto;
+  width: min(440px, 100%);
+  max-height: calc(100vh - 32px - var(--keyboard-offset, 0px));
+  transition: padding 0.22s ease, max-height 0.22s ease;
+}
+
 .bug-report-dialog form { margin-top: 22px; }
 .bug-report-dialog label { display: block; margin-bottom: 8px; font-size: .85rem; }
 .bug-report-dialog textarea {
-  box-sizing: border-box; width: 100%; resize: vertical; min-height: 150px;
+  box-sizing: border-box; width: 100%; resize: vertical; min-height: 140px;
   padding: 12px 14px; border: 1px solid rgba(55, 114, 255, .25); border-radius: 14px;
   background: rgba(55, 114, 255, .04); color: inherit; font: inherit; font-size: .9rem; line-height: 1.6;
   margin-bottom: 14px;
@@ -20,6 +41,53 @@ html.night-shift .bug-report-error { color: #f4a6ad; }
 @keyframes bug-report-spin { to { transform: rotate(360deg); } }
 @keyframes bug-report-fade-out { to { opacity: 0; } }
 @keyframes bug-report-drop-out { to { opacity: 0; transform: translateY(12px); } }
+
+@media (max-width: 600px) {
+  .bug-report-overlay {
+    padding: 12px;
+    padding-bottom: calc(12px + var(--keyboard-offset, 0px));
+  }
+  .bug-report-dialog {
+    width: 100%;
+    padding: 20px 18px 18px;
+    border-radius: 18px;
+  }
+  .bug-report-dialog form {
+    margin-top: 14px;
+  }
+  .bug-report-dialog textarea {
+    min-height: 110px;
+    margin-bottom: 12px;
+  }
+}
+
+.bug-report-overlay.keyboard-active .bug-report-dialog,
+@media (max-height: 550px) {
+  .bug-report-dialog {
+    padding: 16px 16px 14px;
+    border-radius: 16px;
+  }
+  .bug-report-dialog h2 {
+    font-size: 1.25rem;
+  }
+  .bug-report-dialog form {
+    margin-top: 10px;
+  }
+  .bug-report-dialog label {
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+  }
+  .bug-report-dialog textarea {
+    min-height: 90px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .bug-report-overlay, .bug-report-overlay .bug-report-dialog, .bug-report-spinner { animation-duration: .01ms; }
+  .bug-report-overlay, .bug-report-overlay .bug-report-dialog, .bug-report-spinner {
+    animation-duration: .01ms;
+    transition: none;
+  }
 }

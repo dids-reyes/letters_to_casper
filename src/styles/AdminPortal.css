@@ -272,10 +272,10 @@
 
 .admin-map { padding: 22px; border: 1px solid rgba(155,181,240,.14); border-radius: 18px; background: linear-gradient(135deg,rgba(28,43,72,.78),rgba(16,27,47,.72)); box-shadow: 0 15px 36px rgba(0,0,0,.18); }
 .admin-map__header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.admin-map__header > div > span { display: inline-flex; align-items: center; gap: 6px; color: #75a1ff; font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.admin-map__header > div:not(.admin-map__summary) > span { display: inline-flex; align-items: center; gap: 6px; color: #75a1ff; font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .admin-map__header h2 { margin: 5px 0 0; color: #f3f6ff; font-size: 22px; }
-.admin-map__summary { display: flex; flex-direction: column; align-items: flex-end; }
-.admin-map__summary strong { color: #f3f6ff; font-size: 22px; line-height: 1.1; }
+.admin-map__summary { display: flex; flex-direction: row; align-items: baseline; gap: 8px; white-space: nowrap; }
+.admin-map__summary strong { color: #f3f6ff; font-size: 18px; line-height: 1.1; }
 .admin-map__summary span { color: #8e9bb0; font-size: 10px; }
 .admin-map__status { margin: 16px 0 0; color: #8fa5ca; font-size: 11px; text-align: center; }
 .admin-map__status.is-error { color: #ff9aaa; }

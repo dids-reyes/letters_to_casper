@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import BugReportModal from './BugReportModal';
 import { toast } from 'react-toastify';
 jest.mock('react-toastify', () => ({ toast: { success: jest.fn() } }));
@@ -39,4 +39,42 @@ test('Escape closes after transition and restores focus', () => {
   jest.advanceTimersByTime(180);
   expect(close).toHaveBeenCalled();
   jest.useRealTimers();
+});
+
+test('adapts layout and moves up when visual viewport shrinks from virtual keyboard', () => {
+  const listeners = {};
+  const mockViewport = {
+    height: 800,
+    offsetTop: 0,
+    addEventListener: (event, cb) => { listeners[event] = cb; },
+    removeEventListener: (event) => { delete listeners[event]; },
+  };
+  window.visualViewport = mockViewport;
+  window.innerHeight = 800;
+
+  const close = jest.fn();
+  render(<BugReportModal onClose={close} />);
+  const overlay = () => document.querySelector('.bug-report-overlay');
+  expect(overlay()).not.toHaveClass('keyboard-active');
+
+  // Simulate keyboard opening (height drops to 450, 350px keyboard)
+  act(() => {
+    mockViewport.height = 450;
+    mockViewport.offsetTop = 0;
+    listeners.resize?.();
+  });
+
+  expect(overlay()).toHaveClass('keyboard-active');
+  expect(overlay().style.getPropertyValue('--keyboard-offset')).toBe('350px');
+
+  // Simulate keyboard closing
+  act(() => {
+    mockViewport.height = 800;
+    listeners.resize?.();
+  });
+
+  expect(overlay()).not.toHaveClass('keyboard-active');
+  expect(overlay().style.getPropertyValue('--keyboard-offset')).toBe('0px');
+
+  delete window.visualViewport;
 });
