@@ -21,3 +21,75 @@
 .sky-feedback { display: block; min-height: 24px; margin-top: 16px; font-size: 12px; color: #d7e0e8; }
 .sky-count { margin: 0; max-width: 360px; font-size: 12px; line-height: 1.8; letter-spacing: .025em; color: #dae2e8; }
 @media (prefers-reduced-motion: reduce) { .sky-page *, .sky-page *::before { transition: none !important; } }
+
+.sky-footer { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.sky-heading { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.sky-logo { display: block; width: 100px; height: auto; transform: scaleX(1.15); object-fit: contain; opacity: .78; filter: grayscale(1) brightness(0) invert(1); }
+
+.sky-home { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 4px; }
+.sky-home:focus-visible { outline: 2px solid #e1e7ed; outline-offset: 4px; }
+
+/* Lock the document as well as the overlay: mobile browsers can otherwise
+   scroll the body behind a fixed page and show their native scroll indicator. */
+@media (max-width: 760px), (max-height: 500px) {
+  html.sky-active, html.sky-active body {
+    overflow: hidden;
+    overscroll-behavior: none;
+    height: 100%;
+  }
+  html.sky-active body { position: fixed; inset: 0; width: 100%; }
+  .sky-page { overflow: hidden; overscroll-behavior: none; height: 100dvh; }
+  .sky-content {
+    height: 100%;
+    min-height: 0;
+    gap: 8px;
+    padding: max(12px, env(safe-area-inset-top)) 20px max(12px, env(safe-area-inset-bottom));
+  }
+  .sky-heading { gap: 0; }
+  .sky-prompt { box-sizing: border-box; padding: 8px 0; }
+  .sky-prompt p { font-size: 19px; line-height: 1.5; margin-bottom: 16px; }
+  .sky-feedback { margin-top: 8px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .sky-content { gap: 4px; }
+  .sky-heading { flex-direction: row; gap: 16px; }
+  .sky-prompt { width: min(100%, 560px); padding: 0; }
+  .sky-prompt p { font-size: 17px; margin-bottom: 8px; }
+  .sky-feedback { margin-top: 4px; min-height: 18px; }
+  .sky-count { max-width: none; font-size: 11px; }
+}
+
+.sky-stars { position: absolute; inset: 0; pointer-events: none; }
+.sky-star { position: absolute; width: 44px; height: 44px; padding: 0; transform: translate(-50%, -50%); border: 0; border-radius: 50%; background: transparent; pointer-events: auto; cursor: pointer; }
+.sky-star:focus-visible { outline: 1px solid #dbe9ff; outline-offset: 2px; }
+.sky-content { position: relative; pointer-events: none; }
+.sky-content a, .sky-content button { pointer-events: auto; }
+.sky-note-action { border: 0; border-bottom: 1px solid #c3d5e64d; background: transparent; color: #dbe5ed; padding: 6px 12px; min-height: 36px; font: inherit; font-size: 12px; cursor: pointer; }
+.sky-note-action:disabled { opacity: .5; cursor: default; }
+.sky-note-hint { font-size: 10px; opacity: .65; }
+.sky-footer { gap: 6px; }
+.sky-note-card { position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(280px, calc(100% - 40px)); box-sizing: border-box; padding: 24px 20px 18px; border: 1px solid #d1e2f133; border-radius: 16px; background: var(--sky-header-color, #101e35); color: #e1e7ed; box-shadow: 0 12px 40px #0005; max-height: 80dvh; overflow: auto; }
+.sky-note-card p { font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; margin: 10px 0 0; }
+.sky-note-card small { display: block; font-size: 10px; opacity: .75; line-height: 1.5; }
+.sky-note-close { position: absolute; top: 0; right: 0; width: 36px; height: 36px; background: none; border: 0; color: inherit; font-size: 22px; cursor: pointer; }
+.sky-note-card label { display: block; font-size: 13px; margin-bottom: 12px; }
+.sky-note-card textarea { box-sizing: border-box; width: 100%; resize: none; border: 1px solid #d1e2f155; border-radius: 8px; background: #ffffff09; color: inherit; padding: 8px; font: inherit; font-size: 16px; }
+.sky-note-card button[type="submit"] { border: 1px solid #d1e2f155; border-radius: 16px; background: #ffffff0a; color: inherit; padding: 8px 16px; margin-top: 12px; cursor: pointer; }
+html.sky-active .Toastify__toast { background: var(--sky-toast-color, #040914); color: #e1e7ed; border: 1px solid #d1e2f133; }
+html.sky-active .Toastify__close-button { color: #e1e7ed; }
+html.sky-active .Toastify__progress-bar { background: #bfd5ec; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .sky-footer { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .sky-note-hint { display: none; }
+}
+
+/* Thin diffraction spikes with transparent ends, like a photographed star. */
+.sky-star::before { content: ''; position: absolute; inset: 6px; background: linear-gradient(90deg, transparent, #cfddff66 28%, #f6f8ff 50%, #cfddff66 72%, transparent) center / 100% 1px no-repeat, linear-gradient(0deg, transparent, #cfddff66 28%, #f6f8ff 50%, #cfddff66 72%, transparent) center / 1px 100% no-repeat; filter: drop-shadow(0 0 2px #c3d6ff99); opacity: .8; }
+.sky-star--note::before { opacity: 1; filter: drop-shadow(0 0 3px #d4dfff); }
+.sky-note-card--anchored { transform: none; width: max-content; max-width: min(220px, calc(100% - 24px)); padding: 12px 32px 12px 14px; border-radius: 12px; overflow: visible; pointer-events: auto; }
+.sky-note-card--anchored::after { content: ''; position: absolute; left: var(--note-pointer-x, 50%); bottom: -7px; width: 12px; height: 12px; background: var(--sky-header-color, #101e35); border-right: 1px solid #d1e2f133; border-bottom: 1px solid #d1e2f133; transform: translateX(-50%) rotate(45deg); }
+.sky-note-card--anchored[data-below="true"]::after { bottom: auto; top: -7px; transform: translateX(-50%) rotate(225deg); }
+
+.sky-note-card--anchored p { font-size: 12px; line-height: 1.5; margin: 0; }
+.sky-note-card--anchored small { font-size: 9px; margin-bottom: 4px; }
+.sky-note-card--anchored .sky-note-close { width: 30px; height: 30px; font-size: 18px; }
