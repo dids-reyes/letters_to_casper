@@ -25,6 +25,7 @@ function App() {
             <Route path="/sky" element={<Suspense fallback={<div role="status">Opening Sky…</div>}><Sky /></Suspense>} />
             <Route path="/" element={<Home />} />
             <Route path="/letters/:messageId" element={<Home />} />
+            <Route path="/letter/:messageId" element={<Home />} />
             <Route path="/privacy_policy" element={<PrivacyPolicy />} />
             <Route
               path="/terms_and_conditions"
