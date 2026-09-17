@@ -4176,6 +4176,11 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
   pointer-events: none;
 }
 
+.pinned-letter-tooltip.react-tooltip {
+  z-index: 2000;
+  white-space: nowrap;
+}
+
 .compose-dialog .submit-button {
   background: linear-gradient(135deg, #3772ff, #2352e6);
   box-shadow: 0 4px 12px rgba(55, 114, 255, 0.22);
@@ -7799,3 +7804,63 @@ html.night-shift .feed-panel { border-color: #484c40; }
 .feed-report__updates--scroll > .feed-report__story { box-sizing: border-box; grid-column: 1; grid-template-columns: 40px minmax(0, 1fr); padding: 16px 12px; }
 .feed-report__page:has(> .feed-report__updates--scroll) > .feed-report__lead { box-sizing: border-box; }
 .feed-report__updates--scroll:focus-visible { outline: 2px solid #759bea; outline-offset: -2px; }
+
+/* Four evenly spaced actions on a quarter-circle, ordered top → left. */
+.speed-dial-container .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action) { --dial-x:0px; --dial-y:-96px; width:40px; height:40px; border-radius:50%; font-size:18px; border:1px solid var(--ltc-border); background:var(--ltc-surface); color:var(--ltc-foreground); box-shadow:0 7px 20px var(--ltc-accent-soft); }
+.speed-dial-container .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action).read-mode-action { --dial-x:-48px; --dial-y:-83px; }
+.speed-dial-container .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action).pin-letter-action { --dial-x:-83px; --dial-y:-48px; }
+.speed-dial-container .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action).bug-report-action { --dial-x:-96px; --dial-y:0px; }
+:is(html, html.night-shift) .speed-dial-container.is-open .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action) { transform:translate(var(--dial-x),var(--dial-y)) scale(1); }
+:is(html, html.night-shift) .speed-dial-container.is-open .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action):not(:disabled):hover { transform:translate(var(--dial-x),var(--dial-y)) scale(1.08); background:var(--ltc-hover); color:var(--ltc-primary); border-color:var(--ltc-primary); box-shadow:0 9px 24px var(--ltc-accent-soft); }
+:is(html, html.night-shift) .speed-dial-container.is-open .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action):not(:disabled):active { transform:translate(var(--dial-x),var(--dial-y)) scale(.96); }
+:is(html, html.night-shift) .speed-dial-container.is-open .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action).scroll-top-action:disabled { transform:translate(var(--dial-x),var(--dial-y)) scale(.96); }
+:is(html, html.night-shift) .speed-dial-container .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action):focus-visible { outline:2px solid var(--ltc-primary); outline-offset:3px; }
+@media(max-width:768px) { .speed-dial-container .fab.speed-dial-action:is(.scroll-top-action,.read-mode-action,.pin-letter-action,.bug-report-action) { width:38px; height:38px; font-size:16px; } }
+
+/* Keep pin and age together without adding another column to letter headers. */
+.letter-card__time { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+.letter-card__top { min-width:0; }
+.letter-card__from { flex:1 1 auto; overflow:hidden; }
+.letter-paper__age { display:inline-flex; align-items:center; gap:4px; min-width:0; max-width:100%; }
+.letter-paper__pin { display:inline-flex; align-items:center; justify-content:center; flex:0 0 13px; width:13px; height:13px; line-height:1; }
+.letter-paper__pin svg { display:block; width:100%; height:100%; }
+button.letter-paper__pin {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
+  position: relative;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+button.letter-paper__pin:hover {
+  opacity: 0.75;
+}
+button.letter-paper__pin:active {
+  transform: scale(0.92);
+}
+button.letter-paper__pin:focus-visible {
+  outline: 2px solid var(--ltc-primary, #646cff);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+button.letter-paper__pin::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  left: -8px;
+  right: -8px;
+}
+@media(max-width:768px) {
+  .letter-card__top { gap:4px; }
+  .letter-card__time { gap:3px; }
+  .letter-card .letter-pin-indicator { flex-basis:14px; width:14px; height:14px; font-size:10px; }
+  .letter-paper__age { gap:3px; }
+  .letter-paper__pin { flex-basis:11px; width:11px; height:11px; }
+}
+

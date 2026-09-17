@@ -1,4 +1,6 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {AiOutlinePushpin} from "react-icons/ai";
+import "./PinLetterDialog.css";
 import { useNavigate } from "react-router-dom";
 
 const clip = (str, max) => {
@@ -42,6 +44,22 @@ const getWarmthScore = letter => {
 
 function Letter({ letter, toggleDetailsModal, setSelectedLetter, maxWarmthScore = 0 }) {
   const navigate = useNavigate();
+  const [, refreshPin] = useState(0);
+  const pinExpiry = new Date(letter.pin_expires_at).getTime();
+  const isPinned = !!letter.is_pinned && pinExpiry > Date.now();
+  useEffect(() => {
+    if (!letter.is_pinned || !Number.isFinite(pinExpiry)) return undefined;
+    let timer;
+    const checkExpiry = () => {
+      clearTimeout(timer);
+      refreshPin(value => value + 1);
+      const remaining = pinExpiry - Date.now();
+      if (remaining > 0) timer = setTimeout(checkExpiry, Math.min(remaining, 2147483647));
+    };
+    checkExpiry();
+    document.addEventListener('visibilitychange', checkExpiry);
+    return () => {clearTimeout(timer); document.removeEventListener('visibilitychange', checkExpiry);};
+  }, [letter.is_pinned, pinExpiry]);
   const warmthScore = getWarmthScore(letter);
   const relativeWarmth = maxWarmthScore > 0 ? warmthScore / maxWarmthScore : 0;
   const absoluteWarmth = Math.min(warmthScore / 12, 1);
@@ -92,7 +110,11 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter, maxWarmthScore 
           <span className="letter-card__label">From</span>
           <span className="letter-card__name">{clip(letter.from, 22)}</span>
         </div>
-        <span className="letter-card__time">{timeAgo(letter.timestamp)}</span>
+        <span className="letter-card__time">
+          {isPinned &&
+            <span className="letter-pin-indicator" role="img" aria-label="Pinned memory" title={`Pinned until ${new Date(letter.pin_expires_at).toLocaleString()}`}><AiOutlinePushpin aria-hidden="true" /></span>}
+          <span>{timeAgo(letter.timestamp)}</span>
+        </span>
       </div>
       <div className="letter-card__to">
         <span className="letter-card__label">To</span>

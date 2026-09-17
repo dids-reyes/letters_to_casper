@@ -8,8 +8,9 @@ import {Link, useNavigate} from 'react-router-dom';
 import { render_base_url as render_url, api_key } from '../data/keys';
 import '../styles/AdminPortal.css';
 import {getOptimizedPhotoUrl} from '../data/cloudinary';
-import {IoAddCircleOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoLogOutOutline, IoMailUnreadOutline, IoSearchOutline, IoShieldCheckmarkOutline, IoStarOutline, IoStatsChartOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
+import {IoPinOutline, IoAddCircleOutline, IoCalendarOutline, IoCheckmarkCircleOutline, IoFlameOutline, IoImageOutline, IoLocationOutline, IoLogOutOutline, IoMailUnreadOutline, IoSearchOutline, IoShieldCheckmarkOutline, IoStarOutline, IoStatsChartOutline, IoTrashOutline, IoWarningOutline} from 'react-icons/io5';
 import AdminAnalytics from './AdminAnalytics';
+import UnpinLetterDialog from './UnpinLetterDialog';
 
 function AdminPortal() {
   const {isLoggedIn, adminName, sessionToken, logout} = useContext(AuthContext);
@@ -18,6 +19,23 @@ function AdminPortal() {
     logout();
     navigate('/admin', {replace: true});
   }, [logout, navigate]);
+  const unpinLetter = async letter => {
+    if (adminName.toLowerCase() !== 'didsirwynreyes' || unpinningId) return;
+    setUnpinningId(letter._id);
+    setManageError('');
+    try {
+      const response = await fetch(`${render_url}/api/messages/manage/unpin`, {
+        method: 'POST', headers: adminHeaders({'Content-Type': 'application/json'}),
+        body: JSON.stringify({letterId: letter._id}),
+      });
+      if (response.status === 401) { logout(); return; }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to unpin letter.');
+      setManageResults(current => current.map(item => item._id === letter._id ? {...item, ...data.letter} : item));
+      setLetterToUnpin(null);
+    } catch (error) { setManageError(error.message); }
+    finally { setUnpinningId(''); }
+  };
   const canManageFeatured = adminName.toLowerCase() === 'didsirwynreyes';
   const canFinalizeLetters = adminName.toLowerCase() === 'didsirwynreyes';
 
@@ -52,6 +70,8 @@ function AdminPortal() {
   const [manageResults, setManageResults] = useState([]);
   const [manageSearching, setManageSearching] = useState(false);
   const [manageError, setManageError] = useState('');
+  const [unpinningId, setUnpinningId] = useState('');
+  const [letterToUnpin, setLetterToUnpin] = useState(null);
   const [letterToPermanentlyDelete, setLetterToPermanentlyDelete] = useState(null);
   const [manageDeleteLoading, setManageDeleteLoading] = useState(false);
 
@@ -707,7 +727,13 @@ function AdminPortal() {
                     <p>{letter.message}</p>
                     <small><IoCalendarOutline /> {formatReviewTimestamp(letter.timestamp)} · ID {letter._id}</small>
                   </div>
+                  <div className="managed-letter-row__actions">
+                  {letter.is_pinned && new Date(letter.pin_expires_at) > new Date() && (
+                    canFinalizeLetters ? <button disabled={!!unpinningId} onClick={() => {setManageError(''); setLetterToUnpin(letter);}} title="Remove this letter's pin"><IoPinOutline /> {unpinningId === letter._id ? 'Unpinning…' : 'Unpin'}</button>
+                    : <span><IoPinOutline /> Pinned</span>
+                  )}
                   <button className="managed-letter-delete" title={!canFinalizeLetters ? 'Only didsirwynreyes can permanently delete letters' : 'Permanently delete this letter'} disabled={!canFinalizeLetters} onClick={() => setLetterToPermanentlyDelete(letter)}><IoTrashOutline /> Delete</button>
+                  </div>
                 </article>
               )) : <p className="featured-manager__empty">No letters matched your search.</p>}
             </div>
@@ -715,6 +741,10 @@ function AdminPortal() {
         </section>
       )}
       {activeSection === 'analytics' && <AdminAnalytics />}
+      {letterToUnpin && <UnpinLetterDialog letter={letterToUnpin} loading={!!unpinningId} error={manageError}
+        onClose={() => {if (!unpinningId) {setLetterToUnpin(null); setManageError('');}}}
+        onConfirm={() => unpinLetter(letterToUnpin)} />}
+
       {featuredToAdd && (
         <div className="admin-delete-overlay" onClick={() => {
           if (!featuredActionId) setFeaturedToAdd(null);
