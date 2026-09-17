@@ -1,0 +1,94 @@
+/* Shared palette follows the site's existing night-shift theme switch. */
+:root {
+  --ltc-paper:#fdfaef;
+  --ltc-surface:var(--bg-color, #fff);
+  --ltc-foreground:#20242c;
+  --ltc-muted:#647084;
+  --ltc-border:#dde3ed;
+  --ltc-subtle:var(--card-bg, #f5f5f5);
+  --ltc-hover:#edf2fb;
+  --ltc-primary:#3772ff;
+  --ltc-primary-hover:#245de0;
+  --ltc-on-primary:#fff;
+  --ltc-accent-soft:rgba(55,114,255,.09);
+  --ltc-backdrop:rgba(28,25,23,.45);
+  --ltc-error:#b42318;
+}
+html.night-shift {
+  --ltc-paper:#1b1d16;
+  --ltc-surface:#20241d;
+  --ltc-foreground:#ecebdd;
+  --ltc-muted:#b3b8a9;
+  --ltc-border:#3d443d;
+  --ltc-subtle:#282e24;
+  --ltc-hover:#30382b;
+  --ltc-primary:#8ab4ff;
+  --ltc-primary-hover:#a7c7ff;
+  --ltc-on-primary:#14213a;
+  --ltc-accent-soft:rgba(138,180,255,.12);
+  --ltc-backdrop:rgba(9,12,10,.72);
+  --ltc-error:#f4b3ab;
+}
+.pin-letter-overlay { position:fixed; inset:0; z-index:12000; display:grid; place-items:center; padding:20px; background:var(--ltc-backdrop); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); animation:pin-overlay-in .22s ease both; }
+.pin-letter-dialog { position:relative; box-sizing:border-box; width:min(100%,460px); max-height:calc(100dvh - 40px); overflow:auto; padding:24px; border:1px solid var(--ltc-border); border-radius:24px; background:var(--ltc-paper); color:var(--ltc-foreground); box-shadow:0 24px 80px #0006; font-family:inherit; animation:pin-dialog-in .25s cubic-bezier(.22,1,.36,1) both; color-scheme:light dark; }
+.pin-letter-close { position:absolute; top:18px; right:18px; z-index:2; display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; box-sizing:border-box; padding:0; border:0; border-radius:50%; background:transparent; color:var(--ltc-muted); font-size:24px; line-height:1; cursor:pointer; transition:background .18s, color .18s; }
+.pin-letter-close:hover:not(:disabled) { background:var(--ltc-hover); color:var(--ltc-foreground); }
+.pin-letter-dialog h2 { margin:0 0 10px; padding-right:36px; box-sizing:border-box; width:100%; white-space:nowrap; font-family:Georgia,"Times New Roman",serif; font-size:25px; line-height:1.25; font-weight:600; letter-spacing:-.025em; }
+.pin-letter-dialog p { line-height:1.6; }
+#pin-letter-subtext { color:var(--ltc-muted); font-size:12px; margin-bottom:22px; }
+.pin-letter-tiers { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0; margin:0; border:0; }
+.pin-letter-tiers legend { font-size:12px; color:var(--ltc-muted); margin-bottom:12px; }
+.pin-letter-tier { position:relative; cursor:pointer; padding:14px; border:1px solid var(--ltc-border); border-radius:14px; background:var(--ltc-subtle); transition:border-color .18s,background .18s,box-shadow .18s; }
+.pin-letter-tier:hover { border-color:var(--ltc-primary); }
+.pin-letter-tier.is-selected { border-color:var(--ltc-primary); background:var(--ltc-accent-soft); box-shadow:0 0 20px var(--ltc-accent-soft); }
+.pin-letter-tier input { position:absolute; opacity:0; width:1px; height:1px; }
+.pin-letter-tier:focus-within { outline:2px solid var(--ltc-primary); outline-offset:3px; }
+.pin-letter-tier-heading { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; font-size:14px; }
+.pin-letter-tier-heading b { color:var(--ltc-primary); font-weight:500; }
+.pin-letter-tier-note { display:block; margin-top:7px; color:var(--ltc-muted); font-size:11px; line-height:1.5; }
+.pin-letter-expiration { margin:18px 0 6px; font-size:12px; color:var(--ltc-muted); }
+.pin-letter-expiration time { display:block; box-sizing:border-box; width:fit-content; max-width:100%; margin-top:8px; padding:10px 14px; border:1px solid var(--ltc-border); border-radius:10px; background:var(--ltc-accent-soft); color:var(--ltc-foreground); font-weight:600; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.pin-letter-note { font-size:11px; color:var(--ltc-muted); margin:6px 0 14px; }
+.pin-letter-url-label { display:block; margin:18px 0 9px; font-size:13px; font-weight:500; }
+#pin-letter-url, #pin-letter-email { box-sizing:border-box; width:100%; padding:12px; border:1px solid var(--ltc-border); border-radius:11px; font:inherit; font-size:14px; background:var(--ltc-subtle); color:var(--ltc-foreground); }
+#pin-letter-url::placeholder, #pin-letter-email::placeholder { color:var(--ltc-muted); }
+.pin-letter-actions { display:flex; justify-content:flex-end; flex-wrap:nowrap; gap:10px; margin-top:20px; }
+.pin-letter-actions button { flex:1 1 0; min-width:0; border:1px solid var(--ltc-border); border-radius:12px; padding:11px 12px; font:inherit; font-size:13px; cursor:pointer; background:transparent; color:var(--ltc-foreground); transition:background .18s,transform .18s; }
+.pin-letter-actions .pin-letter-primary { background:var(--ltc-primary); color:var(--ltc-on-primary); border-color:transparent; font-weight:600; }
+.pin-letter-actions button:hover:not(:disabled) { background:var(--ltc-hover); }
+.pin-letter-actions .pin-letter-primary:hover:not(:disabled) { background:var(--ltc-primary-hover); }
+.pin-letter-actions button:active:not(:disabled) { transform:scale(.98); }
+.pin-letter-dialog button:disabled,.pin-letter-tiers:disabled { opacity:.55; cursor:wait; }
+.pin-letter-dialog :focus-visible { outline:2px solid var(--ltc-primary); outline-offset:3px; }
+#pin-letter-error { color:var(--ltc-error); font-size:13px; }
+.pin-letter-footer { text-align:center; font-size:11px; color:var(--ltc-muted); margin:18px 0 0; }
+.pin-letter-overlay.is-closing { animation:pin-overlay-out .18s ease both; }
+.pin-letter-overlay.is-closing .pin-letter-dialog { animation:pin-dialog-out .18s ease both; }
+@keyframes pin-overlay-in { from { opacity:0; } to { opacity:1; } }
+@keyframes pin-overlay-out { to { opacity:0; } }
+@keyframes pin-dialog-in { from { opacity:0; transform:translateY(12px) scale(.98); } to { opacity:1; transform:none; } }
+@keyframes pin-dialog-out { to { opacity:0; transform:translateY(8px) scale(.98); } }
+.letter-pin-indicator { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; flex:0 0 18px; width:18px; height:18px; border-radius:50%; border:1px solid var(--ltc-border); background:var(--ltc-subtle); color:var(--ltc-primary); font-size:12px; line-height:1; }
+.letter-pin-indicator svg { width:1em; height:1em; flex:none; }
+@media(max-width:480px) { .pin-letter-overlay { padding:12px; } .pin-letter-dialog { padding:20px 18px; max-height:calc(100dvh - 24px); } .pin-letter-close { top:14px; right:14px; } .pin-letter-dialog h2 { font-size:22px; } .pin-letter-actions { flex-direction:row; gap:8px; } .pin-letter-actions button { width:auto; padding:10px 8px; font-size:12px; } }
+@media(prefers-reduced-motion:reduce) { .pin-letter-overlay,.pin-letter-dialog,.pin-letter-overlay.is-closing,.pin-letter-overlay.is-closing .pin-letter-dialog { animation:none; } .pin-letter-tier,.pin-letter-actions button { transition:none; } }
+
+.pin-letter-dialog h2 span { display:inline-flex; align-items:center; gap:8px; white-space:nowrap; }
+.pin-letter-title-icon { display:inline-flex; align-items:center; justify-content:center; color:var(--ltc-foreground); font-size:.9em; line-height:1; flex-shrink:0; }
+
+.pin-payment-return { position:fixed; z-index:11000; top:50%; left:50%; transform:translate(-50%,-50%); box-sizing:border-box; width:min(380px,calc(100% - 32px)); padding:26px 24px 22px; background:var(--ltc-paper); color:var(--ltc-foreground); border:1px solid var(--ltc-border); border-radius:22px; box-shadow:0 16px 48px #0002; text-align:center; }
+.pin-return-icon { display:flex; align-items:center; justify-content:center; width:38px; height:38px; margin:0 auto 14px; border:1px solid var(--ltc-border); border-radius:50%; background:var(--ltc-accent-soft); color:var(--ltc-muted); font-size:19px; }
+.pin-return-brand { display:block; color:var(--ltc-muted); font-size:10px; letter-spacing:.15em; text-transform:uppercase; }
+.pin-payment-return h2 { margin:10px 0; font-family:Georgia,"Times New Roman",serif; font-size:24px; line-height:1.25; font-weight:500; color:var(--ltc-foreground); }
+.pin-payment-return p { margin:0 auto; max-width:290px; font-size:12px; line-height:1.75; color:var(--ltc-muted); }
+.pin-return-actions { display:flex; justify-content:center; gap:10px; margin-top:22px; }
+.pin-return-actions button { flex:1; min-width:0; background:transparent; color:var(--ltc-foreground); border:1px solid var(--ltc-border); border-radius:12px; padding:11px 14px; font:inherit; font-size:12px; cursor:pointer; transition:background .18s; }
+.pin-return-actions button:hover { background:var(--ltc-hover); }
+.pin-return-actions button:focus-visible { outline:2px solid var(--ltc-primary); outline-offset:3px; }
+@media(max-width:480px) { .pin-payment-return { padding:22px 20px 18px; } .pin-payment-return h2 { font-size:22px; } }
+
+.pin-letter-confirmation { margin:0; padding:18px; border:1px solid var(--ltc-border); border-radius:14px; background:var(--ltc-subtle); }
+.pin-letter-confirmation dt { font-size:11px; color:var(--ltc-muted); margin-bottom:4px; }
+.pin-letter-confirmation dd { margin:0 0 14px; font-size:14px; overflow-wrap:anywhere; }
+.pin-letter-confirmation dd:last-child { margin-bottom:0; }
+.pin-letter-message-preview { white-space:pre-wrap; line-height:1.6; }

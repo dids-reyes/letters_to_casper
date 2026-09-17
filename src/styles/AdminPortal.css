@@ -342,3 +342,17 @@
   .admin-logout-button { padding: 8px 10px; font-size: 10.5px; }
   .admin-logout-button svg { font-size: 14px; }
 }
+
+.managed-letter-row > .managed-letter-row__actions { display:flex; flex:0 0 auto; align-items:center; justify-content:flex-end; gap:8px; }
+.managed-letter-row__actions button { justify-content:center; min-width:80px; min-height:36px; white-space:nowrap; }
+.managed-letter-row__actions button svg { flex-shrink:0; width:14px; height:14px; }
+.managed-unpin-dialog { border-color:rgba(91,145,255,.28); }
+.managed-unpin-dialog::before { background:linear-gradient(90deg,transparent,rgba(91,145,255,.7),transparent); }
+.managed-unpin-dialog .admin-delete-dialog__icon { color:#9bb8ff; border-color:rgba(91,145,255,.28); background:rgba(55,114,255,.12); }
+.managed-unpin-dialog .admin-delete-dialog__eyebrow { color:#9bb8ff; }
+@media(max-width:720px) {
+  .managed-letter-row { flex-wrap:wrap; }
+  .managed-letter-row > div:first-child { flex-basis:100%; }
+  .managed-letter-row > .managed-letter-row__actions { width:100%; padding-top:10px; border-top:1px solid rgba(155,181,240,.12); }
+  .managed-letter-row__actions button { flex:1; }
+}

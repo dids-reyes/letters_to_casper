@@ -5,11 +5,14 @@ import Header from "./Header";
 import Footer from "./Footer";
 import AddModal from "./AddModal";
 import BugReportModal from "./BugReportModal";
+import PinLetterDialog from "./PinLetterDialog";
+import PinPaymentReturn from "./PinPaymentReturn";
+import { adminId } from "../data/target_letters";
 import Letter from "./Letter";
 import AdComponent from "./AdComponent";
 import AdsterraNativeBanner from "./AdsterraNativeBanner";
 import DetailsModal from "./DetailsModal";
-import { AiFillMessage } from "react-icons/ai";
+import { AiFillMessage, AiOutlinePushpin } from "react-icons/ai";
 import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
 import under_construction from "../lotties/under_construction.json";
@@ -81,6 +84,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   });
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
+  const [showPinLetter, setShowPinLetter] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [feedPage, setFeedPage] = useState(0);
   const [showOrigins, setShowOrigins] = useState(false);
@@ -872,7 +876,35 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const isSearchActive = searchTerm.trim() !== "";
   const activeLetters = useMemo(() => {
     const source = isSearchActive ? searchedResults : letters.messages;
-    return source.filter((letter) => letter.approve);
+    const approved = source.filter((letter) => letter.approve);
+
+    const now = new Date();
+    let adminLetter = null;
+    const pinnedLetters = [];
+    const regularLetters = [];
+
+    for (const letter of approved) {
+      if (String(letter._id) === adminId) {
+        adminLetter = letter;
+      } else if (letter.is_pinned && letter.pin_expires_at && new Date(letter.pin_expires_at) > now) {
+        pinnedLetters.push(letter);
+      } else {
+        regularLetters.push(letter);
+      }
+    }
+
+    pinnedLetters.sort((a, b) => new Date(b.pinned_at || 0) - new Date(a.pinned_at || 0));
+    const topPinned = pinnedLetters.slice(0, 7);
+    const overflowPinned = pinnedLetters.slice(7);
+
+    const rest = [...regularLetters, ...overflowPinned];
+    rest.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+    return [
+      ...(adminLetter ? [adminLetter] : []),
+      ...topPinned,
+      ...rest,
+    ];
   }, [isSearchActive, searchedResults, letters.messages]);
 
   const feedItems = useMemo(() => {
@@ -1644,6 +1676,8 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         </div>
       )}
 
+      <PinPaymentReturn onConfirmed={fetchLetters} />
+      {showPinLetter && <PinLetterDialog onClose={() => setShowPinLetter(false)} letters={letters.messages} />}
       {showBugReport && <BugReportModal onClose={() => setShowBugReport(false)} />}
 
       <div
@@ -1693,6 +1727,12 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             <IoReaderOutline aria-hidden="true" />
           </button>
         )}
+
+        <button type="button" className="fab speed-dial-action pin-letter-action"
+          aria-label="Pin a letter" title="Pin a letter" tabIndex={isSpeedDialOpen ? 0 : -1}
+          onClick={() => { closeSpeedDial(); setShowPinLetter(true); }}>
+          <AiOutlinePushpin aria-hidden="true" />
+        </button>
 
         {/* Sub-action 3: Bug Report (Radial spread: to the left) */}
         <button

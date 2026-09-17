@@ -127,3 +127,32 @@ test('displays precheck badge and specific heading for precheck flagged letters 
   expect(screen.getByText('Precheck')).toBeInTheDocument();
   expect(screen.getByText('[Precheck] Keyboard mash or nonsense sequence detected')).toBeInTheDocument();
 });
+
+test.each(['didsirwynreyes', 'anotheradmin'])('pin management permissions for %s', async adminName => {
+  const pinned = {...pending, _id: '66139a0e59ef92852a5d9ebe', is_pinned: true, pin_expires_at: '2099-01-01', approve: true};
+  const previousFetch = global.fetch;
+  global.fetch = jest.fn(async (url, options) => {
+    if (url.includes('/manage/search')) return {ok: true, json: async () => ({messages: [pinned]})};
+    if (url.endsWith('/manage/unpin')) return {ok: true, json: async () => ({letter: {_id: pinned._id, is_pinned: false, pinned_at: null, pin_expires_at: null}})};
+    return previousFetch(url, options);
+  });
+  await openPortal(adminName);
+  fireEvent.click(screen.getByRole('button', {name: /Manage Letters/i}));
+  fireEvent.change(screen.getByLabelText('Search all letters'), {target: {value: 'Pending'}});
+  await screen.findByText(new RegExp(`ID ${pinned._id}`));
+  if (adminName === 'didsirwynreyes') {
+    fireEvent.click(screen.getByRole('button', {name: 'Unpin'}));
+    expect(screen.getByRole('alertdialog', {name: 'Unpin this letter?'})).toBeInTheDocument();
+    expect(global.fetch.mock.calls.some(([url]) => url.endsWith('/manage/unpin'))).toBe(false);
+    fireEvent.click(screen.getByRole('button', {name: 'Keep pinned'}));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(global.fetch.mock.calls.some(([url]) => url.endsWith('/manage/unpin'))).toBe(false);
+    fireEvent.click(screen.getByRole('button', {name: 'Unpin'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Unpin letter'}));
+    await waitFor(() => expect(screen.queryByRole('button', {name: 'Unpin'})).not.toBeInTheDocument());
+    expect(global.fetch).toHaveBeenCalledWith('https://example.test/api/messages/manage/unpin', expect.objectContaining({method: 'POST', headers: expect.objectContaining({Authorization: 'Bearer test-session'}), body: JSON.stringify({letterId: pinned._id})}));
+  } else {
+    expect(screen.queryByRole('button', {name: 'Unpin'})).not.toBeInTheDocument();
+    expect(screen.getByText('Pinned')).toBeInTheDocument();
+  }
+});

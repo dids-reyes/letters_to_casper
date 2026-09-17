@@ -1,4 +1,6 @@
+import {AiOutlinePushpin} from "react-icons/ai";
 import React from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BsX } from "react-icons/bs";
 import { BsMailboxFlag } from "react-icons/bs";
@@ -148,6 +150,52 @@ const shortLetterAge = timestamp => {
   const label = unit[1] === "mo." && count > 1 ? "mos." : unit[1];
   const space = ["min.", "mo."].includes(unit[1]) ? " " : "";
   return `${count}${space}${label} ago`;
+};
+
+export const formatPinTimeRemaining = (expiresAt) => {
+  if (!expiresAt) return "Pinned";
+  const diffMs = new Date(expiresAt).getTime() - Date.now();
+  if (!Number.isFinite(diffMs) || diffMs <= 0) {
+    return "Pinned · Expired";
+  }
+
+  const totalMinutes = Math.floor(diffMs / (60 * 1000));
+  const totalHours = Math.floor(diffMs / (60 * 60 * 1000));
+  const totalDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+
+  if (totalDays >= 30) {
+    const months = Math.floor(totalDays / 30);
+    const remainingDays = totalDays % 30;
+    const monthStr = `${months} month${months === 1 ? "" : "s"}`;
+    if (remainingDays > 0) {
+      return `Pinned · ${monthStr}, ${remainingDays} day${remainingDays === 1 ? "" : "s"} left`;
+    }
+    return `Pinned · ${monthStr} left`;
+  }
+
+  if (totalDays >= 1) {
+    const remainingHours = Math.floor((diffMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const dayStr = `${totalDays} day${totalDays === 1 ? "" : "s"}`;
+    if (remainingHours > 0) {
+      return `Pinned · ${dayStr}, ${remainingHours} hour${remainingHours === 1 ? "" : "s"} left`;
+    }
+    return `Pinned · ${dayStr} left`;
+  }
+
+  if (totalHours >= 1) {
+    const remainingMinutes = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
+    const hourStr = `${totalHours} hour${totalHours === 1 ? "" : "s"}`;
+    if (remainingMinutes > 0) {
+      return `Pinned · ${hourStr}, ${remainingMinutes} min${remainingMinutes === 1 ? "" : "s"} left`;
+    }
+    return `Pinned · ${hourStr} left`;
+  }
+
+  if (totalMinutes >= 1) {
+    return `Pinned · ${totalMinutes} min${totalMinutes === 1 ? "" : "s"} left`;
+  }
+
+  return "Pinned · Less than a minute left";
 };
 
 const echoOptions = [
@@ -1455,7 +1503,14 @@ function DetailsModal({
               <span className="letter-meta-sep">·</span>
             </>
           )}
-
+          {letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now() && (
+            <>
+              <span className="letter-paper__pin" role="img" aria-label="Pinned letter">
+                <AiOutlinePushpin aria-hidden="true" />
+              </span>
+              <span className="letter-meta-sep">·</span>
+            </>
+          )}
           <span className="letter-paper__age">
             {shortLetterAge(letter.timestamp)}
           </span>
@@ -1615,7 +1670,14 @@ function DetailsModal({
               <span className="letter-meta-sep">·</span>
             </>
           )}
-
+          {letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now() && (
+            <>
+              <span className="letter-paper__pin" role="img" aria-label="Pinned letter">
+                <AiOutlinePushpin aria-hidden="true" />
+              </span>
+              <span className="letter-meta-sep">·</span>
+            </>
+          )}
           <span className="letter-paper__age">
             {shortLetterAge(letter.timestamp)}
           </span>
@@ -1866,6 +1928,36 @@ function DetailsModal({
               )}
             </span>
             <Tooltip id="badges" arrowColor="transparent" />
+            <span className="letter-meta-sep">·</span>
+          </>
+        )}
+        {selectedLetter.is_pinned && new Date(selectedLetter.pin_expires_at).getTime() > Date.now() && (
+          <>
+            <button
+              type="button"
+              className="letter-paper__pin"
+              data-tooltip-id="pinned_letter_tooltip"
+              data-tooltip-content={formatPinTimeRemaining(selectedLetter.pin_expires_at)}
+              data-tooltip-place="bottom"
+              aria-label="Pinned letter remaining time"
+            >
+              <AiOutlinePushpin aria-hidden="true" />
+            </button>
+            {typeof document !== "undefined" &&
+              createPortal(
+                <Tooltip
+                  id="pinned_letter_tooltip"
+                  place="bottom"
+                  positionStrategy="fixed"
+                  openOnClick={true}
+                  closeEvents={{ click: true }}
+                  globalCloseEvents={{ clickOutsideAnchor: true, escape: true }}
+                  arrowColor="transparent"
+                  className="pinned-letter-tooltip"
+                  render={() => formatPinTimeRemaining(selectedLetter.pin_expires_at)}
+                />,
+                document.body
+              )}
             <span className="letter-meta-sep">·</span>
           </>
         )}
