@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import AddModal from "./AddModal";
 import BugReportModal from "./BugReportModal";
 import PinLetterDialog from "./PinLetterDialog";
+import BurnLetterDialog from "./BurnLetterDialog";
 import PinPaymentReturn from "./PinPaymentReturn";
 import { adminId } from "../data/target_letters";
 import Letter from "./Letter";
@@ -144,9 +145,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const [loading, setLoading] = useState(1);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
   const [showBurnLetter, setShowBurnLetter] = useState(false);
-  const [burnKey, setBurnKey] = useState("");
-  const [burnStatus, setBurnStatus] = useState({type: "idle", message: ""});
-  const [isBurning, setIsBurning] = useState(false);
   const [letterGridColumns, setLetterGridColumns] = useState(() => {
     if (window.innerWidth > 1200) return 6;
     if (window.innerWidth > 900) return 4;
@@ -676,42 +674,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     }
   };
 
-  const handleBurnLetter = async event => {
-    event.preventDefault();
-    const normalizedKey = burnKey.trim();
-    if (!normalizedKey) {
-      setBurnStatus({type: "error", message: "Enter the private burn key for your letter."});
-      return;
-    }
-
-    setIsBurning(true);
-    setBurnStatus({type: "idle", message: ""});
-    try {
-      const response = await fetch(`${render_url}/burn`, {
-        method: "POST",
-        headers: {"x-api-key": api_key, "Content-Type": "application/json"},
-        body: JSON.stringify({burnKey: normalizedKey}),
-      });
-      if (!response.ok) throw new Error(await getResponseError(response, "Burn request"));
-      const result = await response.json();
-      setLetters(previous => ({
-        ...previous,
-        messages: previous.messages.filter(letter => letter._id !== result.letterId),
-        counts: {
-          ...previous.counts,
-          approved: Math.max(0, previous.counts.approved - 1),
-          unapproved: previous.counts.unapproved + 1,
-        },
-      }));
-      setBurnKey("");
-      setBurnStatus({type: "success", message: "Your letter has been burned and is no longer public."});
-    } catch (error) {
-      setBurnStatus({type: "error", message: error.message || "The letter could not be burned."});
-    } finally {
-      setIsBurning(false);
-    }
-  };
-
   const toggleDetailsModal = () => {
     if (showDetailsModal && messageId) {
       navigate("/");
@@ -1060,7 +1022,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
               setShowBurnLetter(true);
               setShowOrigins(false);
               setShowAnnouncements(false);
-              setBurnStatus({type: "idle", message: ""});
             }}
           >
             <IoFlameOutline size={21} />
@@ -1347,67 +1308,22 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         </div>
       </div>
       </div>
-      {showBurnLetter && (
-        <div
-          className="burn-letter-overlay"
-          onClick={() => {
-            if (burnStatus.type !== "success") setShowBurnLetter(false);
-          }}
-        >
-          <section
-            className={`burn-letter-dialog${burnStatus.type === "success" ? " is-success" : ""}`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="burn-letter-title"
-            onClick={event => event.stopPropagation()}
-          >
-            {burnStatus.type !== "success" && (
-              <button type="button" className="burn-letter-close" aria-label="Close" onClick={() => setShowBurnLetter(false)}>×</button>
-            )}
-            {burnStatus.type === "success" ? (
-              <div className="burn-letter-success" role="status">
-                <div className="burn-letter-animation" aria-hidden="true">
-                  <span className="burn-letter-paper" />
-                  <IoFlameOutline className="burn-letter-flame" />
-                  <i /><i /><i /><i />
-                  <span className="burn-letter-achievement">
-                    <img src={`${process.env.PUBLIC_URL}/android-chrome-512x512.png`} alt="" />
-                  </span>
-                </div>
-                <span className="burn-letter-eyebrow">Letter burned</span>
-                <h2 id="burn-letter-title">Your letter is gone.</h2>
-                <p>The letter has turned to ashes. You’re choosing to let go, move forward, and make space for what comes next.</p>
-                <button type="button" onClick={() => setShowBurnLetter(false)}>Move Forward</button>
-              </div>
-            ) : (
-              <>
-                <span className="burn-letter-icon" aria-hidden="true"><IoFlameOutline /></span>
-                <span className="burn-letter-eyebrow">Your letter, your choice</span>
-                <h2 id="burn-letter-title">Burn a letter you wrote</h2>
-                <p>Ready to let go? Enter your secret key to burn this letter and leave the memory behind.</p>
-                <form onSubmit={handleBurnLetter}>
-                  <label htmlFor="burn-letter-key">Secret burn key</label>
-                  <input
-                    id="burn-letter-key"
-                    type="text"
-                    value={burnKey}
-                    onChange={event => setBurnKey(event.target.value)}
-                    placeholder="LTC-••••-••••-••••-••••"
-                    autoComplete="off"
-                    spellCheck="false"
-                    disabled={isBurning}
-                  />
-                  {burnStatus.message && <p className={`burn-letter-status is-${burnStatus.type}`} role="status">{burnStatus.message}</p>}
-                  <button type="submit" disabled={isBurning}>
-                    <IoFlameOutline /> {isBurning ? "Burning letter…" : "Burn my letter"}
-                  </button>
-                </form>
-                <small>Burning removes the letter you wrote.</small>
-              </>
-            )}
-          </section>
-        </div>
-      )}
+      <BurnLetterDialog
+        isOpen={showBurnLetter}
+        onClose={() => setShowBurnLetter(false)}
+        onBurnSuccess={burnedId => {
+          setLetters(previous => ({
+            ...previous,
+            messages: previous.messages.filter(letter => letter._id !== burnedId),
+            counts: {
+              ...previous.counts,
+              approved: Math.max(0, previous.counts.approved - 1),
+              unapproved: previous.counts.unapproved + 1,
+            },
+          }));
+        }}
+        cachedMessages={letters.messages}
+      />
       <ToastContainer
         containerId="notify"
         position="top-right"

@@ -1,0 +1,596 @@
+/* BurnLetterDialog.css - Organic Typography-Preserved Paper Burn Flow */
+
+.burn-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 16px;
+  background: rgba(18, 22, 30, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: burn-fade-in 0.25s ease-out both;
+}
+
+@keyframes burn-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Base dialog card for key input stage */
+.burn-dialog-card {
+  position: relative;
+  width: min(440px, 100%);
+  box-sizing: border-box;
+  padding: 30px;
+  border: 1px solid rgba(190, 112, 65, 0.22);
+  border-radius: 22px;
+  background: #fffdf8;
+  box-shadow: 0 24px 70px rgba(26, 20, 15, 0.28);
+  text-align: left;
+  animation: burn-card-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes burn-card-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.burn-dialog-close {
+  position: absolute;
+  top: 14px;
+  right: 15px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #f4eee7;
+  color: #77685c;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.burn-dialog-close:hover,
+.burn-dialog-close:focus-visible {
+  background: #ebe0d4;
+  color: #3e3229;
+}
+
+.burn-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: #fff0e5;
+  color: #c76531;
+  font-size: 24px;
+}
+
+.burn-dialog-eyebrow {
+  display: block;
+  color: #bb673d;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.burn-dialog-card h2,
+.burn-dialog-card h3 {
+  margin: 7px 0 9px;
+  color: #25221f;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.burn-dialog-card p {
+  margin: 0 0 18px;
+  color: #706861;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* Key input form */
+.burn-dialog-form label {
+  display: block;
+  margin-bottom: 7px;
+  color: #514941;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.burn-dialog-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border: 1px solid #ded5cc;
+  border-radius: 12px;
+  outline: none;
+  background: #fff;
+  color: #332e29;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.burn-dialog-form input:focus {
+  border-color: #d08355;
+  box-shadow: 0 0 0 4px rgba(208, 131, 85, 0.14);
+}
+
+.burn-dialog-form button[type="submit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: #b95731;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.15s;
+}
+
+.burn-dialog-form button[type="submit"]:hover:not(:disabled) {
+  background: #a24724;
+}
+
+.burn-dialog-form button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.burn-status-message {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.burn-status-message.is-error {
+  background: #fff0ed;
+  color: #a33e2d;
+  border: 1px solid rgba(163, 62, 45, 0.16);
+}
+
+.burn-dialog-note,
+.burn-dialog-card small {
+  display: block;
+  margin-top: 14px;
+  color: #948a81;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+/* ==========================================================================
+   Peek-Through Stage Hosting the Authentic Normal Letter View (.letter-modal)
+   ========================================================================== */
+
+.burn-peek-stage {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.burn-peek-stage .letter-modal {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  margin: 0;
+}
+
+.burn-paper-stage {
+  position: relative;
+  width: 100%;
+}
+
+/* Dimmed & subtly blurred background peek-through overlay behind confirmation modal */
+.burn-confirm-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(18, 22, 30, 0.42);
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+  border-radius: 12px;
+  z-index: 15;
+  pointer-events: none;
+}
+
+/* Dismiss / Read controls for cancelled state */
+.burn-readable-controls {
+  position: absolute;
+  top: -48px;
+  right: 0;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.burn-readable-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #332f24;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  transition: background 0.18s;
+}
+
+.burn-readable-btn:hover {
+  background: #ffffff;
+}
+
+.burn-readable-btn.is-danger {
+  background: #b95731;
+  color: #ffffff;
+}
+
+.burn-readable-btn.is-danger:hover {
+  background: #a24724;
+}
+
+/* ==========================================================================
+   Confirmation Dialog (Layered Directly in Front of Letter)
+   ========================================================================== */
+
+.burn-confirm-dialog-wrapper {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 20;
+  pointer-events: auto;
+  animation: burn-confirm-pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes burn-confirm-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.burn-confirm-dialog {
+  width: min(390px, 92%);
+  box-sizing: border-box;
+  padding: 26px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(217, 107, 47, 0.26);
+  background: #fffdfa;
+  box-shadow: 0 20px 55px rgba(12, 10, 8, 0.38);
+  text-align: center;
+}
+
+.burn-confirm-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: #fff0e7;
+  color: #d25324;
+  font-size: 26px;
+}
+
+.burn-confirm-dialog h3 {
+  margin: 0 0 8px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 600;
+  color: #211e1b;
+  line-height: 1.35;
+}
+
+.burn-confirm-dialog p {
+  margin: 0 0 22px;
+  font-size: 13px;
+  color: #72685e;
+  line-height: 1.55;
+}
+
+.burn-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.burn-confirm-btn {
+  flex: 1;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 0;
+}
+
+.burn-confirm-btn.is-cancel {
+  background: #ece4db;
+  color: #4a4138;
+}
+
+.burn-confirm-btn.is-cancel:hover {
+  background: #dfd5c9;
+  color: #221c16;
+}
+
+.burn-confirm-btn.is-proceed {
+  background: #b95731;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(185, 87, 49, 0.35);
+}
+
+.burn-confirm-btn.is-proceed:hover {
+  background: #a24724;
+  box-shadow: 0 8px 22px rgba(185, 87, 49, 0.45);
+}
+
+/* Paper visibility during active burning */
+.letter-paper.is-center-burning,
+.letter-paper.is-letter-burning-hidden {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Canvas container: exact overlay matching the letter-paper geometry */
+.burn-canvas-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+  pointer-events: none;
+  overflow: visible;
+  border-radius: 12px;
+}
+
+/* The WebGL canvas that renders the crawling fire eating the letter */
+.burn-webgl-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  border-radius: 12px;
+}
+
+/* Atmospheric sparks and smoke floating upward and sideways */
+.burn-sparks-canvas {
+  position: absolute;
+  top: -60px;
+  left: -40px;
+  width: calc(100% + 80px);
+  height: calc(100% + 100px);
+  display: block;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* ==========================================================================
+   Post-Burn State & UI Cleanup
+   ========================================================================== */
+
+.burn-completed-card {
+  width: min(430px, 94%);
+  box-sizing: border-box;
+  padding: 38px 32px 34px;
+  border-radius: 24px;
+  border: 1px solid rgba(190, 112, 65, 0.22);
+  background: #fffdfa;
+  box-shadow: 0 28px 75px rgba(24, 20, 16, 0.32), 0 2px 10px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  animation: burn-card-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.burn-completed-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #fff2ea;
+  color: #c75727;
+  border: 1px solid rgba(199, 87, 39, 0.2);
+  box-shadow: 0 4px 18px rgba(199, 87, 39, 0.15);
+  font-size: 28px;
+}
+
+.burn-completed-card .burn-dialog-eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 4px 13px;
+  border-radius: 20px;
+  background: rgba(187, 103, 61, 0.09);
+  color: #b85b2e;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.burn-completed-card h2 {
+  margin: 0 0 14px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #24201c;
+}
+
+.burn-completed-card p {
+  margin: 0 auto 28px;
+  max-width: 330px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #6d645c;
+}
+
+.burn-completed-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  padding: 13px 32px;
+  border: 0;
+  border-radius: 14px;
+  background: #2b2620;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(43, 38, 32, 0.22);
+  transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+}
+
+.burn-completed-btn:hover {
+  background: #14120f;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(43, 38, 32, 0.32);
+}
+
+/* ==========================================================================
+   Night Shift (Dark Mode) Support
+   ========================================================================== */
+
+html.night-shift .burn-dialog-card,
+html.night-shift .burn-confirm-dialog,
+html.night-shift .burn-completed-card {
+  border-color: #4d4033;
+  background: #23221c;
+  color: #e5ded4;
+}
+
+html.night-shift .burn-completed-icon {
+  background: rgba(199, 87, 39, 0.16);
+  color: #ea7a48;
+  border-color: rgba(234, 122, 72, 0.25);
+  box-shadow: 0 4px 18px rgba(234, 122, 72, 0.15);
+}
+
+html.night-shift .burn-completed-card .burn-dialog-eyebrow {
+  background: rgba(234, 122, 72, 0.14);
+  color: #ea7a48;
+}
+
+html.night-shift .burn-dialog-close {
+  background: #34322a;
+  color: #b0a498;
+}
+
+html.night-shift .burn-dialog-close:hover {
+  background: #444136;
+  color: #f0eae1;
+}
+
+html.night-shift .burn-dialog-card h2,
+html.night-shift .burn-dialog-card h3,
+html.night-shift .burn-confirm-dialog h3,
+html.night-shift .burn-completed-card h2 {
+  color: #f4eee5;
+}
+
+html.night-shift .burn-dialog-card p,
+html.night-shift .burn-confirm-dialog p,
+html.night-shift .burn-completed-card p {
+  color: #a89d91;
+}
+
+html.night-shift .burn-dialog-form input {
+  background: #1b1a15;
+  border-color: #4a4339;
+  color: #e8e2d8;
+}
+
+html.night-shift .burn-dialog-form input:focus {
+  border-color: #d08355;
+  box-shadow: 0 0 0 4px rgba(208, 131, 85, 0.22);
+}
+
+html.night-shift .burn-confirm-btn.is-cancel {
+  background: #36322b;
+  color: #d4cbc0;
+}
+
+html.night-shift .burn-confirm-btn.is-cancel:hover {
+  background: #464137;
+  color: #fbf5ee;
+}
+
+html.night-shift .burn-completed-btn {
+  background: #efe9e0;
+  color: #1a1914;
+}
+
+html.night-shift .burn-completed-btn:hover {
+  background: #ffffff;
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .burn-dialog-overlay,
+  .burn-dialog-card,
+  .burn-confirm-dialog-wrapper,
+  .burn-completed-card {
+    animation: none !important;
+  }
+
+  .letter-paper.is-center-burning,
+  .letter-paper.is-letter-burning-hidden {
+    opacity: 0 !important;
+    transition: opacity 0.25s ease !important;
+  }
+
+  .burn-canvas-container,
+  .burn-webgl-canvas,
+  .burn-sparks-canvas {
+    display: none !important;
+  }
+}

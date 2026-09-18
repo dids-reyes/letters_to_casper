@@ -15,7 +15,7 @@ test('validates letter URLs and rejects other hosts and paths', () => {
 test('shows community framing, four tiers, and accurate expiry for every selection', () => {
   jest.useFakeTimers(); const start = new Date('2026-08-31T12:34:56Z'); jest.setSystemTime(start);
   const {container} = render(<PinLetterDialog onClose={() => {}} />);
-  const titleHeading = screen.getByRole('heading', {name: /Pin a Letter/i});
+  const titleHeading = screen.getByRole('heading', {name: /Pin & Deliver a Letter/i});
   expect(titleHeading).toBeTruthy();
   expect(titleHeading.querySelector('svg')).toBeTruthy();
   expect(screen.getAllByRole('radio')).toHaveLength(4);
