@@ -1,3 +1,9 @@
 User-agent: *
-Disallow: /:splat
 Allow: /
+Allow: /sky
+Allow: /status
+Disallow: /:splat
+Disallow: /admin
+Disallow: /admin_portal
+
+Sitemap: https://letterstocasper.com/sitemap.xml

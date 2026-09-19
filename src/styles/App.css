@@ -2364,6 +2364,41 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   transform: translateY(-1px);
 }
 
+/* ==========================================================================
+   PLDT Network Notice Dialog
+   ========================================================================== */
+.pldt-notice-dialog::before {
+  background: rgba(216, 30, 40, 0.08);
+}
+
+.pldt-notice-logo-wrapper {
+  width: auto;
+  max-width: 140px;
+  height: 40px;
+  margin-bottom: 16px;
+}
+
+.pldt-notice-logo {
+  display: block;
+  width: 125px;
+  height: auto;
+  object-fit: contain;
+}
+
+.pldt-notice-eyebrow {
+  color: #ce2035;
+}
+
+.pldt-notice-action {
+  background: linear-gradient(135deg, #d81e28, #b8141d);
+  box-shadow: 0 5px 14px rgba(216, 30, 40, 0.24);
+}
+
+.pldt-notice-action:hover {
+  background: linear-gradient(135deg, #e32631, #c41822);
+  box-shadow: 0 7px 18px rgba(216, 30, 40, 0.34);
+}
+
 .read-mode-dialog {
   width: min(100%, 330px);
   padding: 20px 18px 15px;
@@ -6924,6 +6959,26 @@ html.night-shift .ui-announcement-close {
 html.night-shift .ui-announcement-close:hover {
   background: #30342c;
   color: #f0ecdf;
+}
+
+html.night-shift .pldt-notice-dialog::before {
+  background: rgba(234, 45, 56, 0.12);
+}
+
+html.night-shift .pldt-notice-eyebrow {
+  color: #ff5460;
+}
+
+html.night-shift .pldt-notice-logo-wrapper {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 12px;
+  border-radius: 12px;
+}
+
+html.night-shift .pldt-notice-action {
+  background: linear-gradient(135deg, #e32631, #b8141d);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.4);
 }
 
 html.night-shift .read-mode-dialog-badge {

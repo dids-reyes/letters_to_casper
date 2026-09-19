@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { updatePageSeo } from '../../utils/seo';
 import './Sky.css';
 
 const COOLDOWN_MS = 12000;
@@ -87,8 +88,20 @@ export default function Sky() {
   }, []);
 
   useEffect(() => {
-    const oldTitle = document.title;
-    document.title = 'Sky';
+    const cleanupSeo = updatePageSeo({
+      title: 'Sky',
+      description:
+        'Look up at the shared realtime sky on Letters to Casper. Send stars, view peaceful pulses, and connect quietly with souls around the world.',
+      canonicalUrl: 'https://letterstocasper.com/sky',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: 'Sky · Letters to Casper',
+        url: 'https://letterstocasper.com/sky',
+        description:
+          'A shared realtime night sky connecting quiet souls across the world on Letters to Casper.',
+      },
+    });
     document.documentElement.classList.add('sky-active');
     const timer = setInterval(() => {
       setClock(Date.now());
@@ -96,7 +109,7 @@ export default function Sky() {
       setRemaining(Math.max(0, Math.ceil((deadline.current - Date.now()) / 1000)));
     }, 1000);
     return () => {
-      document.title = oldTitle;
+      cleanupSeo();
       document.documentElement.classList.remove('sky-active');
       clearInterval(timer);
     };
@@ -267,8 +280,24 @@ export default function Sky() {
   }, []);
 
   useEffect(() => {
-    const endpoint = process.env.REACT_APP_SKY_SOCKET_URL ||
-      (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : '');
+    const isLocalhost = typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+    let endpoint = process.env.REACT_APP_SKY_SOCKET_URL;
+
+    // In a live/deployed environment, never use a localhost URL even if baked in from .env
+    if (!isLocalhost && endpoint && (endpoint.includes('localhost') || endpoint.includes('127.0.0.1'))) {
+      endpoint = '';
+    }
+
+    if (!endpoint) {
+      if (process.env.NODE_ENV === 'development' || (isLocalhost && process.env.NODE_ENV !== 'test')) {
+        endpoint = 'http://localhost:8000';
+      } else if (process.env.NODE_ENV === 'production' || (!isLocalhost && process.env.NODE_ENV !== 'test')) {
+        endpoint = process.env.REACT_APP_BASE_URL || 'https://ltc-service.onrender.com';
+      }
+    }
+
     if (!endpoint) { setStatus('unavailable'); return undefined; }
     const current = scene.current;
     const socket = io(endpoint, { autoConnect: false, transports: ['polling', 'websocket'], forceNew: true });

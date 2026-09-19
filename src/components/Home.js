@@ -7,6 +7,7 @@ import AddModal from "./AddModal";
 import BugReportModal from "./BugReportModal";
 import PinLetterDialog from "./PinLetterDialog";
 import BurnLetterDialog from "./BurnLetterDialog";
+import NetworkNoticeDialog from "./NetworkNoticeDialog";
 import PinPaymentReturn from "./PinPaymentReturn";
 import { adminId } from "../data/target_letters";
 import Letter from "./Letter";
@@ -54,6 +55,11 @@ import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
+export const PLDT_NOTICE_KEY = "ltc-pldt-network-notice-v1";
+export const SHOW_PLDT_NOTICE =
+  typeof process !== "undefined" && process.env?.REACT_APP_SHOW_PLDT_NOTICE === "false"
+    ? false
+    : true;
 const CHRISTMAS_SNOWFLAKES = Array.from({length: 30}, (_, index) => ({
   left: (index * 37 + 11) % 101,
   size: 2.4 + ((index * 13) % 36) / 10,
@@ -155,6 +161,20 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       return localStorage.getItem(UI_ANNOUNCEMENT_KEY) !== "seen";
     } catch (error) {
       return true;
+    }
+  });
+  const [showPldtNotice, setShowPldtNotice] = useState(() => {
+    if (!SHOW_PLDT_NOTICE) return false;
+    try {
+      const isPldtSeen = localStorage.getItem(PLDT_NOTICE_KEY) === "seen";
+      if (isPldtSeen) return false;
+      // If Dialog 1 is pending, hold off until Dialog 1 is dismissed
+      const isUiAnnouncementPending =
+        localStorage.getItem(UI_ANNOUNCEMENT_KEY) !== "seen";
+      if (isUiAnnouncementPending) return false;
+      return true;
+    } catch (error) {
+      return false;
     }
   });
   const [nightShift, setNightShift] = useState(() => {
@@ -745,6 +765,26 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       /* The dialog can still be dismissed when browser storage is unavailable. */
     }
     setShowUiAnnouncement(false);
+
+    // Sequence: trigger PLDT network advisory immediately after Dialog 1 is dismissed
+    if (SHOW_PLDT_NOTICE) {
+      try {
+        if (localStorage.getItem(PLDT_NOTICE_KEY) !== "seen") {
+          setShowPldtNotice(true);
+        }
+      } catch (error) {
+        setShowPldtNotice(true);
+      }
+    }
+  };
+
+  const dismissPldtNotice = () => {
+    try {
+      localStorage.setItem(PLDT_NOTICE_KEY, "seen");
+    } catch (error) {
+      /* The dialog can still be dismissed when browser storage is unavailable. */
+    }
+    setShowPldtNotice(false);
   };
 
   const notify_error = (details) =>
@@ -1543,6 +1583,12 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             </button>
           </section>
         </div>
+      )}
+      {SHOW_PLDT_NOTICE && (
+        <NetworkNoticeDialog
+          isOpen={showPldtNotice}
+          onDismiss={dismissPldtNotice}
+        />
       )}
       {readModeEnabled && showReadModeModal && (
         <div
