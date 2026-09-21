@@ -47,7 +47,7 @@ Deploy the backend route along with the frontend update.
 ## Sky — hidden shared presence space
 
 Open `/sky` directly. It is intentionally absent from navigation. Each open tab
-is one anonymous presence; the footer counts **other** connected tabs. Local
+is one anonymous presence; the header counts **other** connected tabs. Local
 device time blends dawn (05:00–07:00) and dusk (17:00–19:00). Reduced motion
 freezes drift and twinkle, omits meteors, and uses a gentle brightening.
 Stars glimmer when someone sends a pulse; occasional ambient meteors cross the sky. Hidden tabs stop painting.
@@ -117,9 +117,47 @@ your note and choose Clear note to remove it. Each saved note lasts one hour
 from its latest save. On disconnect, a note-bearing star stays smaller and faded
 until that deadline; stars without notes leave immediately. The live counter
 counts only connected visitors. Notes and the bounded activity log live in server
-memory, so server restarts clear them early. The latest three activity entries
-appear above the bottom controls; the center remains open sky.
+memory, so server restarts clear them early. The bounded activity log remains available in presence state; the dock now
+prioritizes chat and controls, leaving the center open for visitor stars.
 The backend validates length and limits note changes to once every three seconds.
 Deploy the updated `ltc-service` Sky module before the frontend to enable notes.
 Sky also adapts the mobile browser theme color and toast styling to its header
 palette, restoring the browser color when the route closes.
+
+### Sky chat and soul statuses
+
+The Sky header now holds the count and star hint, fading after 15 seconds. The
+fixed mobile dock contains shared chat, notes, Pulse, and a mood selector. Visitor
+positions are sampled against measured header/dock exclusions (at least 120px at
+the top and 320px at the bottom), including the whole touch target and drift.
+Resize recomputes positions. If those zones fill the viewport, visitor targets
+are hidden until space is available; the status picker remains accessible.
+
+Deploy `ltc-service/services/sky.js` before this frontend. `sky_state` now includes
+public `messages` and each participant's `mood`. `set_mood` broadcasts
+`presence_updated`. `send_chat` accepts `{ text, sessionId? }`; `chat_message`
+contains server-assigned identity and `createdAt` in epoch milliseconds. Public
+history is capped at 500 messages, private history at 200 per session, and both
+are pruned after 30 minutes in server memory and filtered on clients. Restarts
+clear history. Chat sends are limited to one per second per connection.
+
+`request_chat` targets a connected participant ID. The recipient gets
+`chat_request` and answers with `respond_chat: { id, accept }`. Invitations expire
+after 60 seconds; only the recipient can accept. `chat_started` gives both peers
+a private session ID. The server checks membership for every private send and
+routes messages only to those two socket IDs. `leave_chat` or either peer's
+disconnect ends the session with `chat_ended`. Reconnects create a fresh presence.
+Private sessions support one peer per visitor at a time and are not end-to-end
+encrypted. No database migration is needed; the existing single-instance hosting
+requirement still applies.
+
+“Send a shooting star” uses `send_shooting_star` with a target participant ID.
+The server validates the active recipient and enforces a three-second cooldown,
+then broadcasts `receive_shooting_star: { from, to }`. Each browser resolves the
+flight endpoints to its own rendered star positions. Reduced-motion visitors
+see a brief glow at the recipient instead. Restart the local backend, or deploy
+its updated Sky service, when adding this event handler.
+
+Star hue is shared presence: the connection auth supplies the saved `tint`, and
+`set_tint` updates it through `presence_updated`. The server accepts only the
+five built-in hues. New visitors and retained note stars receive that hue too.
