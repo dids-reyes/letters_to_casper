@@ -214,14 +214,68 @@ test('own-star introduction is anchored and disappears after three seconds', () 
   expect(screen.queryByText('This is you')).not.toBeInTheDocument();
 });
 
-test('own star identifies you with and without a note', () => {
+test('own star keeps its mood picker in the anchored tooltip', () => {
   render(<Sky />);
   enter();
   fireEvent.click(screen.getByRole('button', { name: 'Your star, no note yet' }));
-  expect(screen.getByText('This is you.')).toBeInTheDocument();
-  expect(screen.queryByText('A quiet soul is here too.')).not.toBeInTheDocument();
-  act(() => handlers.note_updated({ id: 'a', note: 'My little light' }));
+  const card = screen.getByRole('dialog', { name: 'Your sky note' });
+  expect(screen.getAllByLabelText('Feeling')[1]).toHaveValue('');
+  expect(card).toHaveClass('sky-note-card--anchored');
+  expect(card).toHaveAttribute('data-star-id', 'a');
+  expect(screen.getAllByRole('dialog')).toHaveLength(1);
   expect(screen.getByText('This is you')).toBeInTheDocument();
-  expect(screen.getByText('My little light')).toBeInTheDocument();
-  expect(screen.queryByText('A quiet soul left this here')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Request Chat' })).not.toBeInTheDocument();
+  fireEvent.change(screen.getAllByLabelText('Feeling')[1], { target: { value: 'lonely' } });
+  expect(socket.emit).toHaveBeenCalledWith('set_mood', 'lonely', expect.any(Function));
+  act(() => handlers.presence_updated({ id: 'a', soul: 'soul123', mood: 'lonely', x: .2, y: .3 }));
+  expect(screen.getAllByLabelText('Feeling')[1]).toHaveValue('lonely');
+  expect(screen.getByRole('dialog')).toBe(card);
+});
+
+test('header banner fades after fifteen seconds', () => {
+  render(<Sky />); enter();
+  const banner = screen.getByText('Tap a cross-lit star to read a note').parentElement;
+  expect(banner.closest('header')).not.toBeNull();
+  expect(banner).toHaveStyle({ opacity: '1' });
+  act(() => jest.advanceTimersByTime(15000));
+  expect(banner).toHaveStyle({ opacity: '0', pointerEvents: 'none' });
+});
+
+test('global chat expires while idle and private chat has a separate conversation', () => {
+  render(<Sky />); enter();
+  act(() => handlers.chat_message({ id: 'm', soul: 'soul123', text: 'A hello', createdAt: Date.now() }));
+  expect(screen.getByText('A hello', { exact: false })).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(30 * 60 * 1000));
+  expect(screen.queryByText('A hello', { exact: false })).not.toBeInTheDocument();
+  act(() => handlers.chat_request({ id: 'r', soul: 'soul123' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
+  expect(socket.emit).toHaveBeenCalledWith('respond_chat', { id: 'r', accept: true }, expect.any(Function));
+  act(() => handlers.chat_started({ sessionId: 'private', peer: { soul: 'soul123' } }));
+  fireEvent.change(screen.getByLabelText('Private message'), { target: { value: 'Just us' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+  expect(socket.emit).toHaveBeenCalledWith('send_chat', { sessionId: 'private', text: 'Just us' }, expect.any(Function));
+  act(() => handlers.disconnect());
+  expect(screen.queryByLabelText('Private message')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Global message')).toBeDisabled();
+});
+
+
+test('own tooltip points to the rendered star rather than the viewport center', () => {
+  const rect = jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this.classList.contains('sky-star')) return { left: 178, top: 278, width: 44, height: 44 };
+    if (this.classList.contains('sky-page')) return { left: 0, top: 0, width: 800, height: 700 };
+    return { left: 0, top: 0, bottom: 0, width: 0, height: 0 };
+  });
+  const width = jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(180);
+  const height = jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(90);
+  try {
+    render(<Sky />); enter();
+    fireEvent.click(screen.getByRole('button', { name: 'Your star, no note yet' }));
+    const card = screen.getByRole('dialog');
+    expect(card.style.left).toBe('110px');
+    expect(card.style.top).toBe('186px');
+    expect(card.style.transform).toBe('none');
+    expect(card.style.getPropertyValue('--note-pointer-x')).toBe('90px');
+    expect(card).toHaveAttribute('data-below', 'false');
+  } finally { rect.mockRestore(); width.mockRestore(); height.mockRestore(); }
 });
