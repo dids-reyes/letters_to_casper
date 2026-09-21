@@ -49,11 +49,15 @@ export default function PinLetterDialog({
   hideUrlInput = false,
 }) {
   const activePins = useMemo(() => {
-    if (Array.isArray(passedActivePins)) return passedActivePins;
-    return letters.filter((letter) => {
-      if (!letter || !letter.is_pinned || !letter.pin_expires_at) return false;
-      return new Date(letter.pin_expires_at) > new Date();
-    });
+    const rawPins = Array.isArray(passedActivePins)
+      ? passedActivePins
+      : (letters || []).filter((letter) => {
+          if (!letter || !letter.is_pinned || !letter.pin_expires_at) return false;
+          return new Date(letter.pin_expires_at) > new Date();
+        });
+    return [...rawPins].sort(
+      (a, b) => new Date(a.pin_expires_at) - new Date(b.pin_expires_at)
+    );
   }, [letters, passedActivePins]);
 
   const isFull = activePins.length >= 7;

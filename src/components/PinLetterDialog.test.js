@@ -154,6 +154,29 @@ test('displays full capacity state when 7 active pinned letters are present', ()
   expect(close).toHaveBeenCalledTimes(1);
 });
 
+test('displays earliest expiration date when active pins are out of order', () => {
+  const now = new Date('2026-09-16T12:00:00Z');
+  jest.useFakeTimers();
+  jest.setSystemTime(now);
+  const earliestExpiryDate = new Date(now.getTime() + 2 * 3600000);
+  const laterExpiryDate = new Date(now.getTime() + 10 * 3600000);
+
+  const letters = [
+    { _id: 'late-1', approve: true, is_pinned: true, pin_expires_at: laterExpiryDate.toISOString() },
+    { _id: 'late-2', approve: true, is_pinned: true, pin_expires_at: new Date(now.getTime() + 8 * 3600000).toISOString() },
+    { _id: 'earliest', approve: true, is_pinned: true, pin_expires_at: earliestExpiryDate.toISOString() },
+    { _id: 'late-3', approve: true, is_pinned: true, pin_expires_at: new Date(now.getTime() + 6 * 3600000).toISOString() },
+    { _id: 'late-4', approve: true, is_pinned: true, pin_expires_at: new Date(now.getTime() + 5 * 3600000).toISOString() },
+    { _id: 'late-5', approve: true, is_pinned: true, pin_expires_at: new Date(now.getTime() + 4 * 3600000).toISOString() },
+    { _id: 'late-6', approve: true, is_pinned: true, pin_expires_at: new Date(now.getTime() + 7 * 3600000).toISOString() },
+  ];
+
+  render(<PinLetterDialog onClose={jest.fn()} letters={letters} />);
+  const timeElement = screen.getByText((content, element) => element?.tagName.toLowerCase() === 'time');
+  expect(timeElement).toBeTruthy();
+  expect(timeElement.getAttribute('dateTime')).toBe(earliestExpiryDate.toISOString());
+});
+
  test.each([['love', {love: 4, sad: 1}], ['sad', {love: 0, sad: 3}], ['neutral', {}]])('active pin preserves %s color and removes only its badge at expiry', (mood, echoes) => {
   jest.useFakeTimers(); jest.setSystemTime(new Date('2026-09-17T00:00:00Z'));
   const letter = {_id: id, approve: true, from: 'A', to: 'B', message: 'Memory', echoes, is_pinned: true, pin_expires_at: new Date(Date.now() + 1000).toISOString()};
