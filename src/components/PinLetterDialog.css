@@ -48,8 +48,8 @@ html.night-shift {
 .pin-letter-tier-price del { color:var(--ltc-muted); font-size:11px; }
 .pin-letter-tier-heading b { color:var(--ltc-primary); font-weight:500; }
 .pin-letter-tier-note { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; margin-top:7px; color:var(--ltc-muted); font-size:11px; line-height:1.5; }
-.pin-letter-expiration { margin:18px 0 6px; font-size:12px; color:var(--ltc-muted); }
-.pin-letter-expiration time { display:block; box-sizing:border-box; width:fit-content; max-width:100%; margin-top:8px; padding:10px 14px; border:1px solid var(--ltc-border); border-radius:10px; background:var(--ltc-accent-soft); color:var(--ltc-foreground); font-weight:600; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.pin-letter-expiration { margin:14px 0 6px; font-size:12px; color:var(--ltc-muted); }
+.pin-letter-expiration time { display:inline-block; box-sizing:border-box; width:fit-content; max-width:100%; margin-top:5px; padding:4px 9px; border:1px solid var(--ltc-border); border-radius:6px; background:var(--ltc-accent-soft); color:var(--ltc-foreground); font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.4; overflow-wrap:anywhere; }
 .pin-letter-note { font-size:11px; color:var(--ltc-muted); margin:6px 0 14px; }
 .pin-letter-url-label { display:block; margin:18px 0 9px; font-size:13px; font-weight:500; }
 #pin-letter-url, #pin-letter-email, #pin-recipient-email { box-sizing:border-box; width:100%; padding:12px; border:1px solid var(--ltc-border); border-radius:11px; font:inherit; font-size:14px; background:var(--ltc-subtle); color:var(--ltc-foreground); }
@@ -108,23 +108,167 @@ html.night-shift {
   .pin-letter-tier-price del { font-size:9px; }
 }
 
-.pin-email-section { margin-top:12px; border:1px solid var(--ltc-border); border-radius:14px; background:var(--ltc-subtle); overflow:hidden; transition:border-color .2s ease,box-shadow .2s ease; }
-.pin-email-section.is-open { border-color:var(--ltc-border); box-shadow:0 4px 16px rgba(0,0,0,.04); }
-.pin-email-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; box-sizing:border-box; padding:11px 13px; border:0; background:transparent; color:var(--ltc-foreground); text-align:left; cursor:pointer; font:inherit; transition:background .18s; }
-.pin-email-toggle:hover:not(:disabled) { background:var(--ltc-hover); }
-.pin-email-toggle span { display:flex; flex-direction:column; gap:2px; min-width:0; }
-.pin-email-toggle strong { display:block; font-size:11.5px; font-weight:700; }
-.pin-email-toggle small { display:block; color:var(--ltc-muted); font-size:10px; }
-.pin-email-toggle svg { flex-shrink:0; color:var(--ltc-muted); font-size:16px; transition:transform .22s ease; }
-.pin-email-toggle[aria-expanded="true"] svg, .pin-email-section.is-open .pin-email-toggle svg { transform:rotate(180deg); }
-.pin-email-content { display:grid; gap:12px; padding:13px; border-top:1px solid var(--ltc-border); }
-.pin-email-field { display:flex; flex-direction:column; }
-.pin-email-field .pin-letter-url-label { margin:0 0 6px; font-size:12px; font-weight:500; }
-.pin-email-field input { box-sizing:border-box; width:100%; padding:11px 12px; border:1px solid var(--ltc-border); border-radius:10px; font:inherit; font-size:13px; background:var(--ltc-paper); color:var(--ltc-foreground); }
-.pin-email-field input::placeholder { color:var(--ltc-muted); }
-.pin-email-field input:focus { outline:2px solid var(--ltc-primary); outline-offset:1px; }
-.pin-email-field .pin-letter-note { margin:4px 0 0; font-size:11px; color:var(--ltc-muted); }
-@media(prefers-reduced-motion:reduce) { .pin-email-toggle svg { transition:none; } }
+.pin-delivery-card {
+  margin-top: 14px;
+  border: 1px solid var(--ltc-border);
+  border-radius: 14px;
+  background: var(--ltc-subtle);
+  padding: 14px;
+  transition: border-color .18s, box-shadow .18s, background .18s;
+}
+
+.pin-delivery-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  font: inherit;
+}
+
+.pin-delivery-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+}
+
+.pin-delivery-checkbox-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: 1.5px solid var(--ltc-border);
+  border-radius: 6px;
+  background: var(--ltc-paper);
+  color: transparent;
+  transition: all .16s ease;
+}
+
+.pin-delivery-checkbox-input:checked + .pin-delivery-checkbox-box {
+  background: var(--ltc-primary);
+  border-color: var(--ltc-primary);
+  color: var(--ltc-on-primary);
+}
+
+.pin-delivery-checkbox-input:focus-visible + .pin-delivery-checkbox-box {
+  outline: 2px solid var(--ltc-primary);
+  outline-offset: 2px;
+}
+
+.pin-delivery-checkmark {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pin-delivery-toggle-text {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+
+.pin-delivery-toggle-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ltc-foreground);
+  letter-spacing: -0.01em;
+}
+
+.pin-deliver-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--ltc-accent-soft);
+  color: var(--ltc-primary);
+  border: 1px solid var(--ltc-border);
+  line-height: 1.2;
+}
+
+.pin-delivery-fields {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--ltc-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.pin-delivery-fields input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--ltc-border);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--ltc-paper);
+  color: var(--ltc-foreground);
+}
+
+.pin-delivery-fields input::placeholder {
+  color: var(--ltc-muted);
+}
+
+.pin-delivery-fields input:focus {
+  outline: 2px solid var(--ltc-primary);
+  outline-offset: 1px;
+}
+
+.pin-sender-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--ltc-muted);
+  line-height: 1.4;
+}
+
+.pin-receipt-section {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pin-receipt-section .pin-letter-url-label {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.pin-receipt-section input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--ltc-border);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--ltc-subtle);
+  color: var(--ltc-foreground);
+}
+
+.pin-receipt-section input::placeholder {
+  color: var(--ltc-muted);
+}
+
+.pin-receipt-section input:focus {
+  outline: 2px solid var(--ltc-primary);
+  outline-offset: 1px;
+}
+
+.pin-receipt-section .pin-letter-note {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: var(--ltc-muted);
+  line-height: 1.4;
+}
 
 .pin-checkout-trust { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; margin:14px 0 0; color:var(--ltc-muted); font-size:11px; letter-spacing:-.01em; text-align:center; }
 .pin-checkout-trust svg { flex-shrink:0; font-size:13px; opacity:.85; }

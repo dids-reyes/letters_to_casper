@@ -77,6 +77,14 @@ describe("formatPinTimeRemaining helper", () => {
 });
 
 describe("DetailsModal pinned letter indicator and separator", () => {
+  beforeAll(() => {
+    global.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  });
+
   beforeEach(() => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2026-09-16T12:00:00.000Z"));
@@ -183,6 +191,125 @@ describe("DetailsModal pinned letter indicator and separator", () => {
 
     const pinButton = screen.queryByRole("button", { name: /pinned letter remaining time/i });
     expect(pinButton).not.toBeInTheDocument();
+  });
+
+  test("renders pin button on unpinned letter and opens PinLetterDialog with detected letter URL", () => {
+    render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={unpinnedLetter}
+          readMode={false}
+          initialOpened={true}
+        />
+      </MemoryRouter>
+    );
+
+    const pinButton = screen.getByRole("button", { name: /pin this letter/i });
+    expect(pinButton).toBeInTheDocument();
+    expect(pinButton).toHaveClass("letter-paper__pin");
+
+    // Click pin button on unpinned letter
+    fireEvent.click(pinButton);
+
+    // Should open PinLetterDialog with URL field automatically hidden
+    expect(screen.getByRole("heading", { name: /Pin & Deliver via Email/i })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Which letter would you like to pin\?/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /pin for ₱19/i })).toBeInTheDocument();
+
+    // Dismiss pin dialog
+    fireEvent.click(screen.getByRole("button", { name: /close pin dialog/i }));
+    act(() => jest.advanceTimersByTime(200));
+    expect(screen.queryByRole("heading", { name: /Pin & Deliver via Email/i })).not.toBeInTheDocument();
+  });
+
+  test("renders pin button on expired pinned letter allowing re-pinning with URL field hidden", () => {
+    render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={expiredPinnedLetter}
+          readMode={false}
+          initialOpened={true}
+        />
+      </MemoryRouter>
+    );
+
+    const pinButton = screen.getByRole("button", { name: /pin this letter/i });
+    expect(pinButton).toBeInTheDocument();
+
+    fireEvent.click(pinButton);
+    expect(screen.getByRole("heading", { name: /Pin & Deliver via Email/i })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Which letter would you like to pin\?/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /pin for ₱19/i })).toBeInTheDocument();
+  });
+
+  test("clicking deliver email checkbox inside PinLetterDialog does not close DetailsModal or PinLetterDialog", () => {
+    const toggleDetailsModal = jest.fn();
+    render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={toggleDetailsModal}
+          selectedLetter={unpinnedLetter}
+          readMode={false}
+          initialOpened={true}
+        />
+      </MemoryRouter>
+    );
+
+    const pinButton = screen.getByRole("button", { name: /pin this letter/i });
+    fireEvent.click(pinButton);
+
+    const dialogHeading = screen.getByRole("heading", { name: /Pin & Deliver via Email/i });
+    expect(dialogHeading).toBeInTheDocument();
+
+    const deliveryToggle = screen.getByLabelText(/Deliver an anonymous copy via email/i);
+    expect(deliveryToggle.checked).toBe(false);
+
+    // Clicking the delivery checkbox must not close DetailsModal or PinLetterDialog
+    fireEvent.click(deliveryToggle);
+    expect(deliveryToggle.checked).toBe(true);
+    expect(screen.getByRole("heading", { name: /Pin & Deliver via Email/i })).toBeInTheDocument();
+    expect(toggleDetailsModal).not.toHaveBeenCalled();
+
+    // Recipient email input appears and can receive input
+    const recipientInput = screen.getByLabelText(/Recipient's Email/i);
+    expect(recipientInput).toBeInTheDocument();
+    fireEvent.change(recipientInput, { target: { value: "lovedone@example.com" } });
+    expect(recipientInput.value).toBe("lovedone@example.com");
+
+    // Submit button label updates to Pin and Deliver
+    expect(screen.getByRole("button", { name: /Pin and Deliver for ₱19/i })).toBeInTheDocument();
+    expect(toggleDetailsModal).not.toHaveBeenCalled();
+
+    // Uncheck toggle without closing
+    fireEvent.click(deliveryToggle);
+    expect(deliveryToggle.checked).toBe(false);
+    expect(screen.getByRole("heading", { name: /Pin & Deliver via Email/i })).toBeInTheDocument();
+    expect(toggleDetailsModal).not.toHaveBeenCalled();
+  });
+
+  test("pinned letter pin button only triggers time remaining tooltip and never opens PinLetterDialog", () => {
+    render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={pinnedLetter}
+          readMode={false}
+          initialOpened={true}
+        />
+      </MemoryRouter>
+    );
+
+    const pinButton = screen.getByRole("button", { name: /pinned letter remaining time/i });
+    expect(pinButton).toBeInTheDocument();
+
+    fireEvent.click(pinButton);
+    expect(screen.queryByRole("heading", { name: /Pin & Deliver via Email/i })).not.toBeInTheDocument();
   });
 });
 
