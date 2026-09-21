@@ -199,6 +199,16 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
   background: rgba(255, 255, 255, 0.92);
 }
 
+.home-toolbar.is-compact .search-clear-button {
+  width: 24px;
+  height: 24px;
+  margin-left: 3px;
+}
+
+.home-toolbar.is-compact .search-clear-icon {
+  font-size: 15px;
+}
+
 .home-toolbar.is-compact .big-button {
   grid-column: 3;
   width: 44px;
@@ -347,6 +357,53 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
 .search-input::placeholder {
   color: #7a8089;
   opacity: 1;
+}
+
+.search-clear-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: #6f7680;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.search-clear-button::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  bottom: -7px;
+  left: -7px;
+  right: -7px;
+}
+
+.search-clear-button:hover {
+  background-color: rgba(60, 64, 67, 0.08);
+  color: #202124;
+}
+
+.search-clear-button:active {
+  background-color: rgba(60, 64, 67, 0.15);
+  transform: scale(0.92);
+}
+
+.search-clear-button:focus-visible {
+  outline: 2px solid #3772ff;
+  outline-offset: 1px;
+}
+
+.search-clear-icon {
+  font-size: 17px;
 }
 
 .add-button {
@@ -2609,6 +2666,16 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     font-size: 14px;
   }
 
+  .home-toolbar.is-compact .search-clear-button {
+    width: 22px;
+    height: 22px;
+    margin-left: 2px;
+  }
+
+  .home-toolbar.is-compact .search-clear-icon {
+    font-size: 14px;
+  }
+
   .home-toolbar.is-compact .big-button {
     width: 40px;
     min-height: 40px;
@@ -3075,6 +3142,16 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     min-width: 0;
     padding-inline: 5px;
     font-size: 12px;
+  }
+
+  .home-toolbar.is-compact .search-clear-button {
+    width: 20px;
+    height: 20px;
+    margin-left: 2px;
+  }
+
+  .home-toolbar.is-compact .search-clear-icon {
+    font-size: 13px;
   }
 
   .home-toolbar:not(.is-compact) .message-stat {
@@ -6360,6 +6437,23 @@ html.night-shift .search-input::placeholder {
 
 html.night-shift .search-icon {
   color: #8a8f99;
+}
+
+html.night-shift .search-clear-button {
+  color: #8a8f99;
+}
+
+html.night-shift .search-clear-button:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ecebdd;
+}
+
+html.night-shift .search-clear-button:active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+html.night-shift .search-clear-button:focus-visible {
+  outline-color: #8ab4f8;
 }
 
 /* Stat bar */

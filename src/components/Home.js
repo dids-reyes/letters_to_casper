@@ -436,6 +436,10 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     setSearchTerm(event.target.value);
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
+
   const [isFeatured, setIsFeatured] = useState(false);
   const [goBackToNotFeatured, setGoBackToNotFeatured] = useState(false);
   const [daysLeftXmas, setDaysLeftXmas] = useState(0);
@@ -1018,6 +1022,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         <Header
           searchTerm={searchTerm}
           handleSearchChange={handleSearchChange}
+          handleClearSearch={handleClearSearch}
           isCompact={isHeaderCompact}
         />
         <div className="add-button">

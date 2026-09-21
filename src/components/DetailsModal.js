@@ -26,6 +26,7 @@ import {
   IoShareSocialOutline,
 } from "react-icons/io5";
 import AdsterraBanner from "./AdsterraBanner";
+import PinLetterDialog from "./PinLetterDialog";
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
@@ -1151,6 +1152,7 @@ function DetailsModal({
   const [isRevealed, setIsRevealed] = useState(false);
   const [hasClickedAd, setHasClickedAd] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
   const location = useLocation();
   const handledEmailShare = useRef('');
   useEffect(() => {
@@ -1199,6 +1201,17 @@ function DetailsModal({
     selectedLetter?._id && !selectedLetter.preview
       ? `${window.location.origin}/letters/${selectedLetter._id}`
       : "";
+  const letterPinUrl =
+    selectedLetter?._id && !selectedLetter.preview
+      ? (typeof window !== "undefined" && window.location?.origin && window.location.origin !== "null"
+          ? `${window.location.origin}/letters/${selectedLetter._id}`
+          : `https://letterstocasper.com/letters/${selectedLetter._id}`)
+      : "";
+  const isLetterPinned = Boolean(
+    selectedLetter?.is_pinned &&
+    selectedLetter.pin_expires_at &&
+    new Date(selectedLetter.pin_expires_at).getTime() > Date.now()
+  );
   const letterQrUrl = letterShareUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(
         letterShareUrl
@@ -1307,7 +1320,10 @@ function DetailsModal({
     setIsClosing(true);
   };
 
-  const handleOverlayClick = () => {
+  const handleOverlayClick = (event) => {
+    if (event && event.target !== event.currentTarget) {
+      return;
+    }
     if (!readMode) {
       handleCloseModal();
       return;
@@ -1328,6 +1344,7 @@ function DetailsModal({
     setIsRevealed(false);
     setHasClickedAd(false);
     setShowShareDialog(false);
+    setShowPinModal(false);
     setShowQrCode(false);
     setIsDownloadingQr(false);
     setTranslatedMessage("");
@@ -1361,6 +1378,10 @@ function DetailsModal({
     const onKeyDown = (event) => {
       if (closingRef.current) return;
       if (event.key === "Escape") {
+        if (showPinModal) {
+          setShowPinModal(false);
+          return;
+        }
         if (showPhotoViewer) {
           setShowPhotoViewer(false);
           return;
@@ -1375,7 +1396,7 @@ function DetailsModal({
         handleCloseModal();
         return;
       }
-      if (readMode && !showPhotoViewer && !showShareDialog) {
+      if (readMode && !showPhotoViewer && !showShareDialog && !showPinModal) {
         if (showAdLock) return;
         if (event.key === "ArrowDown" || event.key === "PageDown") {
           event.preventDefault();
@@ -1389,7 +1410,7 @@ function DetailsModal({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDetailsModal, showPhotoViewer, showShareDialog, readMode, showAdLock, goToNext, goToPrev]);
+  }, [showDetailsModal, showPhotoViewer, showShareDialog, showPinModal, readMode, showAdLock, goToNext, goToPrev]);
 
   const formatReadsCount = (readsCount) => {
     const parsed = parseInt(readsCount) || 0;
@@ -1503,9 +1524,13 @@ function DetailsModal({
               <span className="letter-meta-sep">·</span>
             </>
           )}
-          {letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now() && (
+          {letter._id && !letter.preview && (
             <>
-              <span className="letter-paper__pin" role="img" aria-label="Pinned letter">
+              <span
+                className="letter-paper__pin"
+                role="img"
+                aria-label={letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now() ? "Pinned letter" : "Pin letter"}
+              >
                 <AiOutlinePushpin aria-hidden="true" />
               </span>
               <span className="letter-meta-sep">·</span>
@@ -1670,9 +1695,13 @@ function DetailsModal({
               <span className="letter-meta-sep">·</span>
             </>
           )}
-          {letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now() && (
+          {letter._id && !letter.preview && (
             <>
-              <span className="letter-paper__pin" role="img" aria-label="Pinned letter">
+              <span
+                className="letter-paper__pin"
+                role="img"
+                aria-label={letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now() ? "Pinned letter" : "Pin letter"}
+              >
                 <AiOutlinePushpin aria-hidden="true" />
               </span>
               <span className="letter-meta-sep">·</span>
@@ -1785,21 +1814,7 @@ function DetailsModal({
       >
         <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
         <span className="timestamp-text">
-          {readMode ? (
-            <span>{formatTimestamp(selectedLetter.timestamp)}</span>
-          ) : (
-            <Typewriter
-              options={{ delay: 70, loop: false }}
-              onInit={(typewriter) => {
-                typewriter
-                  .typeString(formatTimestamp(selectedLetter.timestamp))
-                  .callFunction((state) => {
-                    state.elements.cursor.remove();
-                  })
-                  .start();
-              }}
-            />
-          )}
+          <span>{formatTimestamp(selectedLetter.timestamp)}</span>
         </span>
       </div>
       <Tooltip id="timezone_tooltip" />
@@ -1931,35 +1946,50 @@ function DetailsModal({
             <span className="letter-meta-sep">·</span>
           </>
         )}
-        {selectedLetter.is_pinned && new Date(selectedLetter.pin_expires_at).getTime() > Date.now() && (
-          <>
-            <button
-              type="button"
-              className="letter-paper__pin"
-              data-tooltip-id="pinned_letter_tooltip"
-              data-tooltip-content={formatPinTimeRemaining(selectedLetter.pin_expires_at)}
-              data-tooltip-place="bottom"
-              aria-label="Pinned letter remaining time"
-            >
-              <AiOutlinePushpin aria-hidden="true" />
-            </button>
-            {typeof document !== "undefined" &&
-              createPortal(
-                <Tooltip
-                  id="pinned_letter_tooltip"
-                  place="bottom"
-                  positionStrategy="fixed"
-                  openOnClick={true}
-                  closeEvents={{ click: true }}
-                  globalCloseEvents={{ clickOutsideAnchor: true, escape: true }}
-                  arrowColor="transparent"
-                  className="pinned-letter-tooltip"
-                  render={() => formatPinTimeRemaining(selectedLetter.pin_expires_at)}
-                />,
-                document.body
-              )}
-            <span className="letter-meta-sep">·</span>
-          </>
+        {selectedLetter?._id && !selectedLetter.preview && (
+          isLetterPinned ? (
+            <>
+              <button
+                type="button"
+                className="letter-paper__pin"
+                data-tooltip-id="pinned_letter_tooltip"
+                data-tooltip-content={formatPinTimeRemaining(selectedLetter.pin_expires_at)}
+                data-tooltip-place="bottom"
+                aria-label="Pinned letter remaining time"
+              >
+                <AiOutlinePushpin aria-hidden="true" />
+              </button>
+              {typeof document !== "undefined" &&
+                createPortal(
+                  <Tooltip
+                    id="pinned_letter_tooltip"
+                    place="bottom"
+                    positionStrategy="fixed"
+                    openOnClick={true}
+                    closeEvents={{ click: true }}
+                    globalCloseEvents={{ clickOutsideAnchor: true, escape: true }}
+                    arrowColor="transparent"
+                    className="pinned-letter-tooltip"
+                    render={() => formatPinTimeRemaining(selectedLetter.pin_expires_at)}
+                  />,
+                  document.body
+                )}
+              <span className="letter-meta-sep">·</span>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="letter-paper__pin"
+                onClick={() => setShowPinModal(true)}
+                aria-label="Pin this letter"
+                title="Pin this letter"
+              >
+                <AiOutlinePushpin aria-hidden="true" />
+              </button>
+              <span className="letter-meta-sep">·</span>
+            </>
+          )
         )}
 
         <span className="letter-paper__age" title={js_ago(new Date(selectedLetter.timestamp), {format: "long"})}>
@@ -2271,6 +2301,17 @@ function DetailsModal({
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {showPinModal && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <PinLetterDialog
+              onClose={() => setShowPinModal(false)}
+              defaultUrl={letterPinUrl}
+              letters={letters}
+              hideUrlInput={true}
+            />
           </div>
         )}
 

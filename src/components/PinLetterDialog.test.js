@@ -15,9 +15,9 @@ test('validates letter URLs and rejects other hosts and paths', () => {
 test('shows community framing, four tiers, and accurate expiry for every selection', () => {
   jest.useFakeTimers(); const start = new Date('2026-08-31T12:34:56Z'); jest.setSystemTime(start);
   const {container} = render(<PinLetterDialog onClose={() => {}} />);
-  const titleHeading = screen.getByRole('heading', {name: /Pin & Deliver a Letter/i});
+  const titleHeading = screen.getByRole('heading', {name: /Pin & Deliver via Email/i});
   expect(titleHeading).toBeTruthy();
-  expect(titleHeading.querySelector('svg')).toBeTruthy();
+  expect(titleHeading.querySelectorAll('svg')).toHaveLength(2);
   expect(screen.getAllByRole('radio')).toHaveLength(4);
   for (const tier of SUPPORT_TIERS) {
     fireEvent.click(screen.getByRole('radio', {name: new RegExp(tier.label)}));
@@ -54,12 +54,12 @@ test('previews the letter before creating a checkout and sends the selected tier
   const redirect = jest.fn(); render(<PinLetterDialog onClose={() => {}} redirect={redirect} />);
   fireEvent.click(screen.getByRole('radio', {name: /3 Days/}));
   fillLink();
-  fireEvent.click(screen.getByRole('button', {name: /Email notifications/i}));
-  const email = screen.getByLabelText('Your email (optional)');
+  const email = screen.getByLabelText(/Your Email \(for receipt only\)/i);
   expect(email.autocomplete).toBe('email'); expect(email.type).toBe('email'); expect(email.required).toBe(false);
   fireEvent.change(email, {target: {value: 'reader@example.com'}});
-  fireEvent.change(screen.getByLabelText('Their email (To Notify)'), {target: {value: 'recipient@example.com'}});
-  fireEvent.click(screen.getByText('Pin and Notify for ₱79'));
+  fireEvent.click(screen.getByLabelText(/Deliver an anonymous copy via email/i));
+  fireEvent.change(screen.getByLabelText(/Recipient's Email/i), {target: {value: 'recipient@example.com'}});
+  fireEvent.click(screen.getByText('Pin and Deliver for ₱79'));
   expect(screen.getByText('Loading letter…').disabled).toBe(true);
   await screen.findByRole('heading', {name: 'Confirm your letter'});
   expect(screen.getByText('Sender')).toBeTruthy(); expect(screen.getByText('Recipient')).toBeTruthy();
@@ -97,8 +97,7 @@ test('cancel returns to the preserved form without creating a payment; blank ema
 });
 test('invalid optional email blocks preview', () => {
   global.fetch = jest.fn(); render(<PinLetterDialog onClose={() => {}} />); fillLink();
-  fireEvent.click(screen.getByRole('button', {name: /Email notifications/i}));
-  fireEvent.change(screen.getByLabelText('Your email (optional)'), {target: {value: 'not-an-email'}});
+  fireEvent.change(screen.getByLabelText(/Your Email \(for receipt only\)/i), {target: {value: 'not-an-email'}});
   fireEvent.click(screen.getByText('Pin for ₱19'));
   expect(screen.getByRole('alert').textContent).toMatch(/valid email/); expect(fetch).not.toHaveBeenCalled();
 });
@@ -125,6 +124,12 @@ test('starts with an empty link field and defaults to 12 hours (₱19)', () => {
   expect(screen.getByRole('radio', {name: /12 Hours/}).checked).toBe(true);
   fireEvent.change(input, {target: {value: ''}});
   expect(input.value).toBe('');
+});
+
+test('pre-populates the letter link when defaultUrl is provided', () => {
+  render(<PinLetterDialog onClose={() => {}} defaultUrl={`https://letterstocasper.com/letters/${id}`} />);
+  const input = screen.getByLabelText('Which letter would you like to pin?');
+  expect(input.value).toBe(`https://letterstocasper.com/letters/${id}`);
 });
 
 test('displays full capacity state when 7 active pinned letters are present', () => {
@@ -164,43 +169,55 @@ test('displays full capacity state when 7 active pinned letters are present', ()
 
 test('invalid recipient email blocks checkout preview', () => {
   global.fetch = jest.fn(); render(<PinLetterDialog onClose={() => {}} />); fillLink();
-  fireEvent.click(screen.getByRole('button', {name: /Email notifications/i}));
-  fireEvent.change(screen.getByLabelText('Their email (To Notify)'), {target: {value: 'invalid'}});
-  fireEvent.click(screen.getByText('Pin and Notify for ₱19'));
+  fireEvent.click(screen.getByLabelText(/Deliver an anonymous copy via email/i));
+  fireEvent.change(screen.getByLabelText(/Recipient's Email/i), {target: {value: 'invalid'}});
+  fireEvent.click(screen.getByText('Pin and Deliver for ₱19'));
   expect(screen.getByRole('alert').textContent).toMatch(/valid recipient email/);
   expect(fetch).not.toHaveBeenCalled();
 });
 
-test('email sections start collapsed and preserve values when reopened', () => {
+test('delivery toggle controls recipient email field and preserves values', () => {
   render(<PinLetterDialog onClose={() => {}} />);
-  expect(screen.queryByLabelText('Your email (optional)')).toBeNull();
-  expect(screen.queryByLabelText('Their email (To Notify)')).toBeNull();
-  const toggle = screen.getByRole('button', {name: /Email notifications/i});
+  const toggle = screen.getByLabelText(/Deliver an anonymous copy via email/i);
+  expect(toggle.checked).toBe(false);
+  expect(screen.queryByLabelText(/Recipient's Email/i)).toBeNull();
+  expect(screen.getByLabelText(/Your Email \(for receipt only\)/i)).toBeTruthy();
+
+  // Check delivery toggle
   fireEvent.click(toggle);
-  fireEvent.change(screen.getByLabelText('Your email (optional)'), {target:{value:'reader@example.com'}});
-  fireEvent.change(screen.getByLabelText('Their email (To Notify)'), {target:{value:'recipient@example.com'}});
+  expect(toggle.checked).toBe(true);
+  expect(screen.getByLabelText(/Recipient's Email/i)).toBeTruthy();
+
+  fireEvent.change(screen.getByLabelText(/Recipient's Email/i), {target: {value: 'recipient@example.com'}});
+  fireEvent.change(screen.getByLabelText(/Your Email \(for receipt only\)/i), {target: {value: 'reader@example.com'}});
+
+  // Uncheck delivery toggle
   fireEvent.click(toggle);
-  expect(screen.queryByLabelText('Your email (optional)')).toBeNull();
-  expect(screen.queryByLabelText('Their email (To Notify)')).toBeNull();
+  expect(toggle.checked).toBe(false);
+  expect(screen.queryByLabelText(/Recipient's Email/i)).toBeNull();
+  expect(screen.getByLabelText(/Your Email \(for receipt only\)/i).value).toBe('reader@example.com');
+
+  // Re-check delivery toggle
   fireEvent.click(toggle);
-  expect(screen.getByLabelText('Your email (optional)').value).toBe('reader@example.com');
-  expect(screen.getByLabelText('Their email (To Notify)').value).toBe('recipient@example.com');
+  expect(toggle.checked).toBe(true);
+  expect(screen.getByLabelText(/Recipient's Email/i).value).toBe('recipient@example.com');
 });
 
 test('dynamically updates submit button label based on recipient email presence', () => {
   render(<PinLetterDialog onClose={() => {}} />);
   expect(screen.getByRole('button', {name: 'Pin for ₱19'})).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', {name: /Email notifications/i}));
-  const recipientInput = screen.getByLabelText('Their email (To Notify)');
+  
+  fireEvent.click(screen.getByLabelText(/Deliver an anonymous copy via email/i));
+  const recipientInput = screen.getByLabelText(/Recipient's Email/i);
   
   fireEvent.change(recipientInput, {target: {value: '   '}});
   expect(screen.getByRole('button', {name: 'Pin for ₱19'})).toBeTruthy();
 
   fireEvent.change(recipientInput, {target: {value: 'casper@example.com'}});
-  expect(screen.getByRole('button', {name: 'Pin and Notify for ₱19'})).toBeTruthy();
+  expect(screen.getByRole('button', {name: 'Pin and Deliver for ₱19'})).toBeTruthy();
 
   fireEvent.click(screen.getByRole('radio', {name: /7 Days/}));
-  expect(screen.getByRole('button', {name: 'Pin and Notify for ₱129'})).toBeTruthy();
+  expect(screen.getByRole('button', {name: 'Pin and Deliver for ₱129'})).toBeTruthy();
 
   fireEvent.change(recipientInput, {target: {value: ''}});
   expect(screen.getByRole('button', {name: 'Pin for ₱129'})).toBeTruthy();
@@ -209,8 +226,8 @@ test('dynamically updates submit button label based on recipient email presence'
 test('opens and dismisses the Delivering Your Letter guide dialog with correct content', () => {
   const onClose = jest.fn();
   render(<PinLetterDialog onClose={onClose} />);
-  fireEvent.click(screen.getByRole('button', {name: /Email notifications/i}));
 
+  fireEvent.click(screen.getByLabelText(/Deliver an anonymous copy via email/i));
   const guideTrigger = screen.getByRole('button', {name: /What’s this\?/i});
   expect(guideTrigger).toBeTruthy();
 
