@@ -214,14 +214,14 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     fireEvent.click(pinButton);
 
     // Should open PinLetterDialog with URL field automatically hidden
-    expect(screen.getByRole("heading", { name: /Pin & Deliver via Email/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Pin & Deliver/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/Which letter would you like to pin\?/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /pin for ₱19/i })).toBeInTheDocument();
 
     // Dismiss pin dialog
     fireEvent.click(screen.getByRole("button", { name: /close pin dialog/i }));
     act(() => jest.advanceTimersByTime(200));
-    expect(screen.queryByRole("heading", { name: /Pin & Deliver via Email/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Pin & Deliver/i })).not.toBeInTheDocument();
   });
 
   test("renders pin button on expired pinned letter allowing re-pinning with URL field hidden", () => {
@@ -241,7 +241,7 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     expect(pinButton).toBeInTheDocument();
 
     fireEvent.click(pinButton);
-    expect(screen.getByRole("heading", { name: /Pin & Deliver via Email/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Pin & Deliver/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/Which letter would you like to pin\?/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /pin for ₱19/i })).toBeInTheDocument();
   });
@@ -263,7 +263,7 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     const pinButton = screen.getByRole("button", { name: /pin this letter/i });
     fireEvent.click(pinButton);
 
-    const dialogHeading = screen.getByRole("heading", { name: /Pin & Deliver via Email/i });
+    const dialogHeading = screen.getByRole("heading", { name: /Pin & Deliver/i });
     expect(dialogHeading).toBeInTheDocument();
 
     const deliveryToggle = screen.getByLabelText(/Deliver an anonymous copy via email/i);
@@ -272,7 +272,7 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     // Clicking the delivery checkbox must not close DetailsModal or PinLetterDialog
     fireEvent.click(deliveryToggle);
     expect(deliveryToggle.checked).toBe(true);
-    expect(screen.getByRole("heading", { name: /Pin & Deliver via Email/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Pin & Deliver/i })).toBeInTheDocument();
     expect(toggleDetailsModal).not.toHaveBeenCalled();
 
     // Recipient email input appears and can receive input
@@ -288,7 +288,7 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     // Uncheck toggle without closing
     fireEvent.click(deliveryToggle);
     expect(deliveryToggle.checked).toBe(false);
-    expect(screen.getByRole("heading", { name: /Pin & Deliver via Email/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Pin & Deliver/i })).toBeInTheDocument();
     expect(toggleDetailsModal).not.toHaveBeenCalled();
   });
 
@@ -309,7 +309,6 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     expect(pinButton).toBeInTheDocument();
 
     fireEvent.click(pinButton);
-    expect(screen.queryByRole("heading", { name: /Pin & Deliver via Email/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Pin & Deliver/i })).not.toBeInTheDocument();
   });
 });
-

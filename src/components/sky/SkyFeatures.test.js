@@ -84,10 +84,17 @@ describe('Sky Interactive Features Integration', () => {
   }
 
   test('renders centered moon in the sky', () => {
-    render(<Sky />);
+    render(<Sky forceCelestialBody="moon" />);
     const moonButton = screen.getByRole('button', { name: /Moon phase:/i });
     expect(moonButton).toBeInTheDocument();
     expect(moonButton.closest('.sky-center-celestial')).toBeInTheDocument();
+  });
+
+  test('renders active sun projection in the sky during daylight', () => {
+    render(<Sky forceCelestialBody="sun" />);
+    const sunButton = screen.getByRole('button', { name: /Sun:/i });
+    expect(sunButton).toBeInTheDocument();
+    expect(sunButton.closest('.sky-center-celestial')).toBeInTheDocument();
   });
 
   test('header logo placement remains authentic and links home', () => {
@@ -151,4 +158,69 @@ describe('Sky Interactive Features Integration', () => {
     fireEvent.click(canvas);
     expect(screen.queryByText(/A quiet wish was released/i)).not.toBeInTheDocument();
   });
+
+  test('first-time pulse click opens confirmation dialog and cancel leaves state intact', () => {
+    render(<Sky />);
+    enter();
+
+    const pulseButton = screen.getByRole('button', { name: 'Pulse' });
+    fireEvent.click(pulseButton);
+
+    const dialog = screen.getByRole('dialog', { name: 'Send a Pulse' });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByText("Send a pulse just to let them know you're here.")).toBeInTheDocument();
+    expect(socket.emit).not.toHaveBeenCalledWith('send_pulse', expect.any(Function));
+
+    const cancelBtn = screen.getByRole('button', { name: 'Cancel' });
+    fireEvent.click(cancelBtn);
+
+    expect(screen.queryByRole('dialog', { name: 'Send a Pulse' })).not.toBeInTheDocument();
+    expect(localStorage.getItem('sky_pulse_confirmed')).toBeNull();
+    expect(socket.emit).not.toHaveBeenCalledWith('send_pulse', expect.any(Function));
+  });
+
+  test('escape key and backdrop click dismiss pulse confirmation dialog', () => {
+    const { container } = render(<Sky />);
+    enter();
+
+    const pulseButton = screen.getByRole('button', { name: 'Pulse' });
+    fireEvent.click(pulseButton);
+    expect(screen.getByRole('dialog', { name: 'Send a Pulse' })).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Send a Pulse' })).not.toBeInTheDocument();
+
+    // Reopen and test backdrop click
+    fireEvent.click(pulseButton);
+    const backdrop = container.querySelector('.sky-pulse-backdrop');
+    expect(backdrop).toBeInTheDocument();
+    fireEvent.click(backdrop);
+    expect(screen.queryByRole('dialog', { name: 'Send a Pulse' })).not.toBeInTheDocument();
+  });
+
+  test('confirming pulse sets storage, emits pulse, and subsequent clicks bypass dialog', () => {
+    render(<Sky />);
+    enter();
+
+    const pulseButton = screen.getByRole('button', { name: 'Pulse' });
+    fireEvent.click(pulseButton);
+
+    const confirmBtn = screen.getByRole('button', { name: 'Send Pulse' });
+    fireEvent.click(confirmBtn);
+
+    expect(localStorage.getItem('sky_pulse_confirmed')).toBe('true');
+    expect(screen.queryByRole('dialog', { name: 'Send a Pulse' })).not.toBeInTheDocument();
+    expect(socket.emit).toHaveBeenCalledWith('send_pulse', expect.any(Function));
+
+    // Advance cooldown timer
+    act(() => jest.advanceTimersByTime(12000));
+    expect(pulseButton).toBeEnabled();
+
+    // Subsequent click directly sends pulse without dialog
+    socket.emit.mockClear();
+    fireEvent.click(pulseButton);
+    expect(screen.queryByRole('dialog', { name: 'Send a Pulse' })).not.toBeInTheDocument();
+    expect(socket.emit).toHaveBeenCalledWith('send_pulse', expect.any(Function));
+  });
 });
+

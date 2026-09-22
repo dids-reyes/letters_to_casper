@@ -15,7 +15,7 @@ test('validates letter URLs and rejects other hosts and paths', () => {
 test('shows community framing, four tiers, and accurate expiry for every selection', () => {
   jest.useFakeTimers(); const start = new Date('2026-08-31T12:34:56Z'); jest.setSystemTime(start);
   const {container} = render(<PinLetterDialog onClose={() => {}} />);
-  const titleHeading = screen.getByRole('heading', {name: /Pin & Deliver via Email/i});
+  const titleHeading = screen.getByRole('heading', {name: /Pin & Deliver/i});
   expect(titleHeading).toBeTruthy();
   expect(titleHeading.querySelectorAll('svg')).toHaveLength(2);
   expect(screen.getAllByRole('radio')).toHaveLength(4);
@@ -31,6 +31,18 @@ test('shows community framing, four tiers, and accurate expiry for every selecti
   expect(document.querySelector('time').dateTime).toBe('2026-09-07T12:34:57.000Z');
   expect(expirationForTier(start, SUPPORT_TIERS[0]).toISOString()).toBe('2026-09-01T00:34:56.000Z');
   expect(container).toBeTruthy();
+});
+test('explains how pinned letters may qualify for Featured Letters', () => {
+  render(<PinLetterDialog onClose={() => {}} />);
+  fireEvent.click(screen.getByRole('button', {name: 'Featured Letters.'}));
+  expect(screen.getByRole('dialog', {name: 'About Featured Letters'})).toBeTruthy();
+  expect(screen.getByText(/does not guarantee it will be featured/i)).toBeTruthy();
+  expect(screen.getByText(/Featured spots are always 100% free/i)).toBeTruthy();
+  expect(screen.getByText(/pinned letters notify our admins and moderators/i)).toBeTruthy();
+  expect(screen.getByText(/Genuine and vulnerable:/i)).toBeTruthy();
+  expect(screen.getByText(/Intentional length:/i)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', {name: 'Got it'}));
+  expect(screen.queryByRole('dialog', {name: 'About Featured Letters'})).toBeNull();
 });
 test.each(['button', 'escape', 'backdrop'])('dismisses with %s after exit transition', method => {
   jest.useFakeTimers(); const close = jest.fn(); render(<PinLetterDialog onClose={close} />);

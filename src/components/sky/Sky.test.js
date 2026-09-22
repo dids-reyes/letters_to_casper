@@ -23,6 +23,7 @@ beforeEach(() => {
 afterEach(() => {
   jest.useRealTimers();
   delete process.env.REACT_APP_SKY_SOCKET_URL;
+  localStorage.clear();
 });
 function enter() {
   act(() => handlers.sky_state({ selfId: 'a', participants: [{ id: 'a', x: .2, y: .3 }, { id: 'b', x: .8, y: .7 }] }));
@@ -46,6 +47,7 @@ test('presence count, pulse cooldown, reconnect and route cleanup', () => {
   enter();
   expect(screen.getByText('1 quiet soul is looking at the sky with you right now.')).toBeInTheDocument();
   fireEvent.click(button);
+  fireEvent.click(screen.getByRole('button', { name: 'Send Pulse' }));
   expect(socket.emit).toHaveBeenCalledTimes(1);
   expect(socket.emit.mock.calls[0][0]).toBe('send_pulse');
   expect(button).toBeDisabled();
@@ -278,4 +280,28 @@ test('own tooltip points to the rendered star rather than the viewport center', 
     expect(card.style.getPropertyValue('--note-pointer-x')).toBe('90px');
     expect(card).toHaveAttribute('data-below', 'false');
   } finally { rect.mockRestore(); width.mockRestore(); height.mockRestore(); }
+});
+
+test('dock positions 3 action buttons above Global Chat at the bottom', () => {
+  const { container } = render(<Sky />);
+  enter();
+
+  const dock = container.querySelector('.sky-bottom');
+  expect(dock).toBeInTheDocument();
+
+  const footer = dock.querySelector('.sky-footer');
+  expect(footer).toBeInTheDocument();
+
+  const noteBtn = screen.getByRole('button', { name: 'Leave a little note' });
+  const pulseBtn = screen.getByRole('button', { name: 'Pulse' });
+  const moodBtn = footer.querySelector('.sky-mood-btn');
+  expect(noteBtn.closest('.sky-footer')).toBe(footer);
+  expect(pulseBtn.closest('.sky-footer')).toBe(footer);
+  expect(moodBtn.closest('.sky-footer')).toBe(footer);
+
+  const globalChat = dock.querySelector('.sky-chat');
+  expect(globalChat).toBeInTheDocument();
+
+  // SkyFooter occurs before SkyChat in DOM order inside .sky-bottom
+  expect(footer.compareDocumentPosition(globalChat) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

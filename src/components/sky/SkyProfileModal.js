@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { GENDER_ICONS, VALID_GENDERS, processTemporaryAvatar } from './avatar';
 
 export function DefaultAvatarIcon({ size = 48, className = '' }) {
@@ -97,16 +97,26 @@ export function GenderSymbol({ gender, size = 20, className = '' }) {
   return null;
 }
 
-export default function SkyProfileModal({ onSubmit }) {
-  const [username, setUsername] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('');
-  const [avatar, setAvatar] = useState(null);
+export default function SkyProfileModal({ onSubmit, onClose, initialData = null }) {
+  const [username, setUsername] = useState(initialData?.username || '');
+  const [age, setAge] = useState(initialData?.age ? String(initialData.age) : '');
+  const [gender, setGender] = useState(initialData?.gender || '');
+  const [avatar, setAvatar] = useState(initialData?.avatar || null);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarError, setAvatarError] = useState('');
   const [touched, setTouched] = useState({ username: false, age: false, gender: false });
 
   const fileInputRef = useRef(null);
+
+  // Close on Escape key if onClose is provided
+  useEffect(() => {
+    if (!onClose) return undefined;
+    const handleKeyDown = e => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const trimmedUsername = username.trim();
   const parsedAge = Number(age);
@@ -145,15 +155,35 @@ export default function SkyProfileModal({ onSubmit }) {
       age: parsedAge,
       gender,
       avatar,
-      status: 'peaceful',
+      status: initialData?.status || 'peaceful',
     });
   }
 
   return (
-    <div className="sky-profile-backdrop" role="dialog" aria-modal="true" aria-labelledby="sky-profile-title">
+    <div
+      className="sky-profile-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sky-profile-title"
+      onClick={e => {
+        if (e.target === e.currentTarget && onClose) onClose();
+      }}
+    >
       <div className="sky-profile-modal">
+        {onClose && (
+          <button
+            type="button"
+            className="sky-profile-close"
+            onClick={onClose}
+            aria-label="Close profile editor"
+          >
+            ×
+          </button>
+        )}
         <header className="sky-profile-header">
-          <h2 id="sky-profile-title">Create Your Temporary Soul</h2>
+          <h2 id="sky-profile-title">
+            {initialData ? 'Customize Your Temporary Profile' : 'Create Your Temporary Profile'}
+          </h2>
           <p className="sky-profile-notice">
             This is a temporary profile for this session only. Your avatar and details will vanish completely when you leave.
           </p>
@@ -194,11 +224,8 @@ export default function SkyProfileModal({ onSubmit }) {
               disabled={avatarLoading}
             />
 
-            <div className="sky-profile-avatar-meta">
-              <span className="sky-profile-avatar-hint">
-                {avatar ? 'Click avatar to change' : 'Add photo (optional, &lt; 50 KB)'}
-              </span>
-              {avatar && (
+            {avatar && (
+              <div className="sky-profile-avatar-meta">
                 <button
                   type="button"
                   className="sky-profile-avatar-remove"
@@ -206,56 +233,59 @@ export default function SkyProfileModal({ onSubmit }) {
                 >
                   Remove
                 </button>
-              )}
-            </div>
+              </div>
+            )}
             {avatarError && <small className="sky-profile-error" role="alert">{avatarError}</small>}
           </div>
 
-          {/* Username */}
-          <div className="sky-profile-field">
-            <label htmlFor="sky-profile-username" className="sky-profile-label">
-              Username <span className="sky-profile-required">*</span>
-            </label>
-            <input
-              id="sky-profile-username"
-              type="text"
-              className={`sky-profile-input ${touched.username && !isUsernameValid ? 'sky-profile-input--error' : ''}`}
-              placeholder="3 to 18 characters (e.g. Orion)"
-              maxLength={18}
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              onBlur={() => setTouched(t => ({ ...t, username: true }))}
-              required
-            />
-            {touched.username && !isUsernameValid && (
-              <small className="sky-profile-error" role="alert">
-                Username must be between 3 and 18 characters.
-              </small>
-            )}
-          </div>
+          {/* Username & Age horizontally aligned */}
+          <div className="sky-profile-row">
+            {/* Username */}
+            <div className="sky-profile-field sky-profile-field--username">
+              <label htmlFor="sky-profile-username" className="sky-profile-label">
+                Username <span className="sky-profile-required">*</span>
+              </label>
+              <input
+                id="sky-profile-username"
+                type="text"
+                className={`sky-profile-input ${touched.username && !isUsernameValid ? 'sky-profile-input--error' : ''}`}
+                placeholder="e.g. Orion"
+                maxLength={18}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                onBlur={() => setTouched(t => ({ ...t, username: true }))}
+                required
+              />
+              {touched.username && !isUsernameValid && (
+                <small className="sky-profile-error" role="alert">
+                  3 to 18 characters.
+                </small>
+              )}
+            </div>
 
-          {/* Age */}
-          <div className="sky-profile-field">
-            <label htmlFor="sky-profile-age" className="sky-profile-label">
-              Age <span className="sky-profile-required">*</span>
-            </label>
-            <input
-              id="sky-profile-age"
-              type="number"
-              min="13"
-              max="99"
-              className={`sky-profile-input ${touched.age && !isAgeValid ? 'sky-profile-input--error' : ''}`}
-              placeholder="13 to 99"
-              value={age}
-              onChange={e => setAge(e.target.value)}
-              onBlur={() => setTouched(t => ({ ...t, age: true }))}
-              required
-            />
-            {touched.age && !isAgeValid && (
-              <small className="sky-profile-error" role="alert">
-                Please enter a valid age between 13 and 99.
-              </small>
-            )}
+            {/* Age */}
+            <div className="sky-profile-field sky-profile-field--age">
+              <label htmlFor="sky-profile-age" className="sky-profile-label">
+                Age <span className="sky-profile-required">*</span>
+              </label>
+              <input
+                id="sky-profile-age"
+                type="number"
+                min="13"
+                max="99"
+                className={`sky-profile-input ${touched.age && !isAgeValid ? 'sky-profile-input--error' : ''}`}
+                placeholder="13–99"
+                value={age}
+                onChange={e => setAge(e.target.value)}
+                onBlur={() => setTouched(t => ({ ...t, age: true }))}
+                required
+              />
+              {touched.age && !isAgeValid && (
+                <small className="sky-profile-error" role="alert">
+                  13 to 99.
+                </small>
+              )}
+            </div>
           </div>
 
           {/* Gender Selection */}
