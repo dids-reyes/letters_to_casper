@@ -16,6 +16,12 @@ export const MOOD_EMOJIS = {
 };
 export const VALID_MOODS = MOODS;
 
+export function formatChatTimestamp(createdAt, now = Date.now()) {
+  const elapsed = Math.max(0, now - Number(createdAt || now));
+  if (elapsed < 60000) return 'just now';
+  return `${Math.floor(elapsed / 60000)}m ago`;
+}
+
 export function defaultAnonymousUsername(id) {
   if (!id && id !== 0) return 'soul000';
   const str = String(id).trim();
@@ -211,6 +217,7 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
             </span>
             <span className="sky-chat-content">
               <strong>{displayName}{genderIcon ? ` ${genderIcon}` : ''}</strong>: <span className="sky-chat-text">{m.text}</span>
+              <small className="sky-chat-time">{formatChatTimestamp(m.createdAt, clock)}</small>
             </span>
           </p>
         );

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import pldtLogo from "../assets/pldt_logo.png";
+import smartLogo from "../assets/smart_communications_logo.svg";
 
 function NetworkNoticeDialog({ isOpen, onDismiss }) {
   useEffect(() => {
@@ -33,16 +34,18 @@ function NetworkNoticeDialog({ isOpen, onDismiss }) {
           aria-hidden="true"
         >
           <img src={pldtLogo} alt="PLDT" className="pldt-notice-logo" />
+          <span className="network-notice-logo-divider" />
+          <img src={smartLogo} alt="Smart Communications" className="smart-notice-logo" />
         </span>
         <span className="ui-announcement-eyebrow pldt-notice-eyebrow">
           Network Advisory
         </span>
         <h2 id="pldt-notice-title">Network Notice</h2>
         <p id="pldt-notice-message">
-          If you are currently using PLDT and experiencing issues loading the
-          mailbox, please try switching to another network provider or changing
-          your DNS. PLDT is currently experiencing ongoing DNS issues affecting
-          access to our servers.
+          If you are currently using PLDT or Smart Communications and experiencing
+          issues loading the mailbox, please try switching to another network
+          provider or changing your DNS. Both networks are addressing ongoing DNS
+          issues affecting access to our servers nationwide.
         </p>
         <button
           type="button"
@@ -63,4 +66,3 @@ NetworkNoticeDialog.propTypes = {
 };
 
 export default NetworkNoticeDialog;
-

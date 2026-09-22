@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { PiShootingStar } from 'react-icons/pi';
 import { updatePageSeo } from '../../utils/seo';
 import SkyCelestial from './SkyCelestial';
 import { STAR_TINTS, DEFAULT_TINT } from './tints';
@@ -13,6 +14,27 @@ import { loadSkySession, saveSkySession, touchSkySession } from './session';
 export { defaultAnonymousUsername };
 
 const COOLDOWN_MS = 12000;
+const NOTE_TTL_MS = 60 * 60 * 1000;
+
+export function formatNoteTimestamp(person, now = Date.now()) {
+  const savedAt = Number(
+    person?.noteUpdatedAt
+    || person?.noteCreatedAt
+    || person?.noteAt
+    || (person?.noteExpiresAt ? person.noteExpiresAt - NOTE_TTL_MS : 0)
+  );
+  if (!Number.isFinite(savedAt) || savedAt <= 0) return null;
+  const elapsed = Math.max(0, now - savedAt);
+  if (elapsed < 60000) return 'just now';
+  if (elapsed < NOTE_TTL_MS) return `${Math.floor(elapsed / 60000)}m ago`;
+  if (elapsed < 24 * NOTE_TTL_MS) return `${Math.floor(elapsed / NOTE_TTL_MS)}h ago`;
+  return `${Math.floor(elapsed / (24 * NOTE_TTL_MS))}d ago`;
+}
+
+function isInactiveStar(person) {
+  return person?.active === false || person?.departed === true || person?.faded === true;
+}
+
 export function daylightAt(date) {
   const hour = date.getHours() + date.getMinutes() / 60;
   return Math.max(0, Math.min(1, (hour - 5) / 2, (19 - hour) / 2));
@@ -25,6 +47,21 @@ function position(point, time, reduced) {
     x: (point.safeX ?? point.x) + (reduced ? 0 : Math.sin(time / 18000 + phase) * (point.driftX ?? .008)),
     y: (point.safeY ?? point.y) + (reduced ? 0 : Math.cos(time / 23000 + phase) * (point.driftY ?? .008)),
   };
+}
+
+export function chatConnectionPoints(points, connections, selfId, session) {
+  const pairs = (connections || []).map(connection => {
+    const members = Array.isArray(connection?.members) ? connection.members : [];
+    const first = points.get(members[0]);
+    const second = points.get(members[1]);
+    return first && second ? [first, second] : null;
+  }).filter(Boolean);
+  const self = points.get(selfId);
+  const peer = points.get(session?.peer?.id);
+  if (self && peer && !pairs.some(pair => pair.includes(self) && pair.includes(peer))) {
+    pairs.push([self, peer]);
+  }
+  return pairs;
 }
 
 function anchorNote(card, point, width, height) {
@@ -115,6 +152,7 @@ export default function Sky({
   const [bannerVisible, setBannerVisible] = useState(true);
   const [messages, setMessages] = useState([]);
   const [session, setSession] = useState(null);
+  const [chatConnections, setChatConnections] = useState([]);
   const [invitation, setInvitation] = useState(null);
   const [outgoing, setOutgoing] = useState(null);
 
@@ -457,6 +495,23 @@ export default function Sky({
 
       dust.forEach(point => dot(point, true));
 
+      chatConnectionPoints(current.points, chatConnections, current.selfId, session).forEach(connection => {
+        const start = position(connection[0], time, reduced);
+        const end = position(connection[1], time, reduced);
+        ctx.save?.();
+        ctx.setLineDash?.([2, 6]);
+        ctx.lineDashOffset = reduced ? 0 : -(time / 90) % 8;
+        ctx.strokeStyle = 'rgba(218, 231, 245, .58)';
+        ctx.lineWidth = 1.1;
+        ctx.shadowColor = 'rgba(205, 225, 245, .35)';
+        ctx.shadowBlur = 3;
+        ctx.beginPath();
+        ctx.moveTo(start.x * width, start.y * height);
+        ctx.lineTo(end.x * width, end.y * height);
+        ctx.stroke();
+        ctx.restore?.();
+      });
+
       // Draw gentle solace constellations between nearby connected quiet souls
       if (!reduced && current.points.size > 1) {
         const activePoints = Array.from(current.points.values()).filter(pt => pt.active !== false && !pt.hidden);
@@ -623,7 +678,7 @@ export default function Sky({
       document.removeEventListener('visibilitychange', visibilityChanged);
       media.removeEventListener('change', motionChanged);
     };
-  }, [selfTint]);
+  }, [selfTint, chatConnections, session]);
 
   useEffect(() => {
     const isLocalhost = typeof window !== 'undefined' &&
@@ -675,7 +730,7 @@ export default function Sky({
           age: null,
           gender: null,
           avatar: null,
-          status: selfPoint?.mood || 'peaceful',
+          status: selfPoint?.mood || '',
           isDefault: true,
         };
         profileRef.current = defaultAnon;
@@ -696,6 +751,10 @@ export default function Sky({
       setCount(state.activeCount ?? state.participants.length);
       setActivity(state.activity || []);
       setMessages((state.messages || []).filter(m => Date.now() - m.createdAt < CHAT_TTL_MS));
+      setChatConnections(items => {
+        const next = state.chatConnections || [];
+        return items.length === 0 && next.length === 0 ? items : next;
+      });
       setSession(null); setInvitation(null); setOutgoing(null);
       setStatus('connected');
       if (pendingProfileRef.current) {
@@ -751,6 +810,13 @@ export default function Sky({
     });
     socket.on('chat_started', value => { setSession(value); setSelected(null); setInvitation(null); setOutgoing(null); });
     socket.on('chat_ended', () => { setSession(null); setMessages(items => items.filter(m => !m.sessionId)); setFeedback('The private chat has ended.'); });
+    socket.on('chat_connection_started', connection => {
+      setChatConnections(items => [...items.filter(item => item.members?.join(':') !== connection.members?.join(':')), connection]);
+    });
+    socket.on('chat_connection_ended', connection => {
+      const ended = new Set(connection.members || []);
+      setChatConnections(items => items.filter(item => !(item.members || []).every(member => ended.has(member))));
+    });
     socket.on('presence_updated', point => {
       current.points.set(point.id, point);
       setPeople([...current.points.values()]);
@@ -795,7 +861,7 @@ export default function Sky({
     const disconnected = () => {
       setIntroId(null);
       setStatus('reconnecting');
-      setMessages([]); setSession(null); setInvitation(null); setOutgoing(null);
+      setMessages([]); setSession(null); setInvitation(null); setOutgoing(null); setChatConnections([]);
       setPeople([]);
       setActivity([]);
       setSelected(null);
@@ -968,8 +1034,22 @@ export default function Sky({
         gender: selectedPersonRaw.gender || profile.gender,
         avatar: selectedPersonRaw.avatar !== undefined ? selectedPersonRaw.avatar : profile.avatar,
         mood: selectedPersonRaw.mood || profile.status || '',
-      }
+    }
     : selectedPersonRaw;
+  const selectedNoteTimestamp = selectedPerson?.note ? formatNoteTimestamp(selectedPerson, clock) : null;
+  const selectedStarIsInactive = isInactiveStar(selectedPerson);
+  const invitationPoint = invitation && people.find(person => (
+    person.id === (invitation.from || invitation.senderId || invitation.requesterId)
+    || (invitation.soul && (person.soul === invitation.soul || person.username === invitation.soul))
+  ));
+  const invitationPerson = invitation ? {
+    ...invitationPoint,
+    username: invitation.username || invitationPoint?.username,
+    soul: invitation.soul || invitationPoint?.soul,
+    age: invitation.age ?? invitationPoint?.age,
+    gender: invitation.gender || invitationPoint?.gender,
+    avatar: invitation.avatar !== undefined ? invitation.avatar : invitationPoint?.avatar,
+  } : null;
   const others = Math.max(0, count - 1);
 
   return (
@@ -1032,7 +1112,7 @@ export default function Sky({
         <header className="sky-heading" ref={headerRef}>
           <h1 id="sky-title">Sky</h1>
           <a className="sky-home" href="https://letterstocasper.com/" aria-label="Letters to Casper home">
-            <img className="sky-logo" src="/ltc-preview.webp" alt="Letters to Casper" />
+            <img className="sky-logo" src="/ltc_favicon.png" alt="Letters to Casper" />
           </a>
           <div className="sky-banner" style={{ opacity: bannerVisible ? 1 : 0, pointerEvents: 'none' }} aria-hidden={!bannerVisible}>
             <small className="sky-note-hint">Tap a cross-lit star to read a note</small>
@@ -1084,9 +1164,30 @@ export default function Sky({
         </div>
       </div>
       {invitation && <section className="sky-note-card sky-invitation" role="dialog" aria-label="Incoming chat request">
-        <p>{invitation.soul?.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(invitation.soul) : invitation.soul} requested to chat.</p>
-        <button autoFocus onClick={() => command('respond_chat', { id: invitation.id, accept: true })}>Accept</button>
-        <button onClick={() => command('respond_chat', { id: invitation.id, accept: false })}>Decline</button>
+        <div className="sky-invitation-person">
+          <div className="sky-invitation-avatar">
+            {invitationPerson.avatar ? (
+              <img src={invitationPerson.avatar} alt={`${soulName(invitationPerson)} avatar`} />
+            ) : (
+              <DefaultAvatarIcon size={40} />
+            )}
+          </div>
+          <div className="sky-invitation-details">
+            <strong>{soulName(invitationPerson)}</strong>
+            {(invitationPerson.age || invitationPerson.gender) && (
+              <span>
+                {invitationPerson.age || null}
+                {invitationPerson.age && invitationPerson.gender ? ' · ' : ''}
+                {invitationPerson.gender ? `${invitationPerson.gender.replace('-', ' ')} ${GENDER_ICONS[invitationPerson.gender] || ''}`.trim() : null}
+              </span>
+            )}
+            <p>Would like to chat.</p>
+          </div>
+        </div>
+        <div className="sky-invitation-actions">
+          <button autoFocus onClick={() => command('respond_chat', { id: invitation.id, accept: true })}>Accept</button>
+          <button onClick={() => command('respond_chat', { id: invitation.id, accept: false })}>Decline</button>
+        </div>
       </section>}
       {introId && !editing && !selectedPerson && (
         <div ref={introCard} data-star-id={introId} className="sky-note-card sky-note-card--anchored sky-intro" role="status">
@@ -1164,7 +1265,12 @@ export default function Sky({
                       </div>
                     </div>
                   </div>
-                  {selectedPerson.note && <p className="sky-star-note">{selectedPerson.note}</p>}
+                  {selectedPerson.note && (
+                    <>
+                      <p className="sky-star-note">{selectedPerson.note}</p>
+                      {selectedNoteTimestamp && <time className="sky-note-timestamp">{selectedNoteTimestamp}</time>}
+                    </>
+                  )}
                 </>
               ) : (
                 <>
@@ -1196,13 +1302,23 @@ export default function Sky({
                       </p>
                     </div>
                   </div>
-                  {selectedPerson.note && <p className="sky-visitor-note">{selectedPerson.note}</p>}
-                  <div className="sky-visitor-actions">
-                    <button className="sky-request-chat" disabled={selectedPerson.active === false || status !== 'connected' || Boolean(outgoing) || Boolean(session)} onClick={() => command('request_chat', selectedPerson.id, (ok, reason, reply) => {
-                      if (ok) { setOutgoing(reply.invitation); setFeedback('Chat request sent.'); }
-                    })}>{outgoing?.to === selectedPerson.id ? 'Request sent' : 'Request Chat'}</button>
-                    <button type="button" className="sky-shooting-star-btn" disabled={status !== 'connected' || selectedPerson.active === false || clock < shootingUntil} onClick={() => sendShootingStar(selectedPerson)}>Send a shooting star</button>
-                  </div>
+                  {selectedPerson.note && (
+                    <>
+                      <p className="sky-visitor-note">{selectedPerson.note}</p>
+                      {selectedNoteTimestamp && <time className="sky-note-timestamp">{selectedNoteTimestamp}</time>}
+                    </>
+                  )}
+                  {!selectedStarIsInactive && (
+                    <div className="sky-visitor-actions">
+                      <button className="sky-request-chat" disabled={status !== 'connected' || Boolean(outgoing) || Boolean(session)} onClick={() => command('request_chat', selectedPerson.id, (ok, reason, reply) => {
+                        if (ok) { setOutgoing(reply.invitation); setFeedback('Chat request sent.'); }
+                      })}>{outgoing?.to === selectedPerson.id ? 'Request sent' : 'Request Chat'}</button>
+                      <button type="button" className="sky-shooting-star-btn" aria-label="Send a shooting star" disabled={status !== 'connected' || clock < shootingUntil} onClick={() => sendShootingStar(selectedPerson)}>
+                        <span>Send a</span>
+                        <PiShootingStar aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </>

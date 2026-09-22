@@ -43,7 +43,7 @@ describe('SkyProfileModal', () => {
       age: 25,
       gender: 'male',
       avatar: null,
-      status: 'peaceful',
+      status: '',
     });
   });
 
@@ -79,7 +79,7 @@ describe('SkyProfileModal', () => {
       age: 19,
       gender: 'non-binary',
       avatar: 'data:image/webp;base64,mockAvatar',
-      status: 'peaceful',
+      status: '',
     });
 
     avatarModule.processTemporaryAvatar.mockRestore();
@@ -129,5 +129,4 @@ describe('SkyProfileModal', () => {
     expect(handleClose).toHaveBeenCalledTimes(2);
   });
 });
-
 

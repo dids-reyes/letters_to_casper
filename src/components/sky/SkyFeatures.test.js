@@ -100,7 +100,7 @@ describe('Sky Interactive Features Integration', () => {
   test('header logo placement remains authentic and links home', () => {
     render(<Sky />);
     const logo = screen.getByAltText('Letters to Casper');
-    expect(logo).toHaveAttribute('src', '/ltc-preview.webp');
+    expect(logo).toHaveAttribute('src', '/ltc_favicon.png');
     expect(logo.closest('.sky-heading')).toBeInTheDocument();
   });
 
@@ -137,6 +137,8 @@ describe('Sky Interactive Features Integration', () => {
 
     const warmthBtn = screen.getByRole('button', { name: /Send a shooting star/i });
     expect(warmthBtn).toBeInTheDocument();
+    expect(warmthBtn).toHaveTextContent('Send a');
+    expect(warmthBtn.querySelector('svg')).toBeInTheDocument();
 
     fireEvent.click(warmthBtn);
     const call = socket.emit.mock.calls.find(([name]) => name === 'send_shooting_star');
@@ -223,4 +225,3 @@ describe('Sky Interactive Features Integration', () => {
     expect(socket.emit).toHaveBeenCalledWith('send_pulse', expect.any(Function));
   });
 });
-

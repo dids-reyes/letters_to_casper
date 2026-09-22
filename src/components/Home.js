@@ -22,6 +22,8 @@ import empty from "../lotties/empty2.json";
 import lettersToCasperLogo from "../lotties/ltc_logo_1.webp";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { io } from "socket.io-client";
+import { PiStarFour } from "react-icons/pi";
 import MailboxLoading from "./MailboxLoading";
 import {
   IoAddOutline,
@@ -48,12 +50,12 @@ import { CiLocationOn } from "react-icons/ci";
 import { TbChristmasTree } from "react-icons/tb";
 import { RiAdvertisementLine } from "react-icons/ri";
 import { render_url, api_key } from "../data/keys";
-import tc from "thousands-counter";
 import { useFeedVirtualizer } from "../hooks/useFeedVirtualizer";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
+const SHOW_SKY_NAV = process.env.REACT_APP_SHOW_SKY_NAV === "true";
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
 export const PLDT_NOTICE_KEY = "ltc-pldt-network-notice-v1";
 export const SHOW_PLDT_NOTICE =
@@ -151,6 +153,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const [loading, setLoading] = useState(1);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
   const [showBurnLetter, setShowBurnLetter] = useState(false);
+  const [showSkyConfirmation, setShowSkyConfirmation] = useState(false);
+  const [skySoulCount, setSkySoulCount] = useState(0);
+  const [showSkyPresence, setShowSkyPresence] = useState(false);
+  const skySoulCountRef = useRef(0);
+  const skyPresenceTimerRef = useRef(null);
   const [letterGridColumns, setLetterGridColumns] = useState(() => {
     if (window.innerWidth > 1200) return 6;
     if (window.innerWidth > 900) return 4;
@@ -220,6 +227,61 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       /* storage unavailable */
     }
   }, []);
+
+  useEffect(() => {
+    if (!SHOW_SKY_NAV) return undefined;
+    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    let endpoint = process.env.REACT_APP_SKY_SOCKET_URL;
+    if (!isLocalhost && endpoint && (endpoint.includes("localhost") || endpoint.includes("127.0.0.1"))) endpoint = "";
+    if (!endpoint && process.env.NODE_ENV === "development") endpoint = "http://localhost:8000";
+    if (!endpoint && process.env.NODE_ENV === "production") endpoint = process.env.REACT_APP_BASE_URL || "https://ltc-service.onrender.com";
+    if (!endpoint) return undefined;
+
+    const presenceSocket = io(endpoint, {
+      autoConnect: false,
+      transports: ["polling", "websocket"],
+      auth: { observer: true },
+    });
+    const updateCount = value => {
+      const nextCount = Math.max(0, Number(value) || 0);
+      if (nextCount !== skySoulCountRef.current) {
+        skySoulCountRef.current = nextCount;
+        setSkySoulCount(nextCount);
+        if (skyPresenceTimerRef.current) clearTimeout(skyPresenceTimerRef.current);
+        setShowSkyPresence(nextCount > 0);
+        if (nextCount > 0) {
+          skyPresenceTimerRef.current = setTimeout(() => {
+            setShowSkyPresence(false);
+            skyPresenceTimerRef.current = null;
+          }, 3000);
+        }
+      }
+    };
+    presenceSocket.on("sky_state", state => {
+      const activeParticipants = Array.isArray(state?.participants)
+        ? state.participants.filter(person => person.active !== false).length
+        : 0;
+      updateCount(state?.activeCount ?? activeParticipants);
+    });
+    presenceSocket.on("user_count", updateCount);
+    presenceSocket.on("disconnect", () => updateCount(0));
+    presenceSocket.on("connect_error", () => updateCount(0));
+    presenceSocket.connect();
+    return () => {
+      if (skyPresenceTimerRef.current) clearTimeout(skyPresenceTimerRef.current);
+      presenceSocket.removeAllListeners();
+      presenceSocket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!showSkyConfirmation) return undefined;
+    const dismiss = event => {
+      if (event.key === "Escape") setShowSkyConfirmation(false);
+    };
+    document.addEventListener("keydown", dismiss);
+    return () => document.removeEventListener("keydown", dismiss);
+  }, [showSkyConfirmation]);
 
   const [showReadModeModal, setShowReadModeModal] = useState(false);
   const isReadModeActive = Boolean(readModeEnabled && showDetailsModal && readMode);
@@ -1012,7 +1074,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   });
 
   const goToFeedPage = page => {
-    const nextPage = Math.max(0, Math.min(4, page));
+    const nextPage = Math.max(0, Math.min(5, page));
     setFeedPage(nextPage);
     feedPagesRef.current?.scrollTo({
       left: feedPagesRef.current.clientWidth * nextPage,
@@ -1024,7 +1086,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     if (event.target !== event.currentTarget) return;
     const pageWidth = event.currentTarget.clientWidth;
     if (!pageWidth) return;
-    setFeedPage(Math.max(0, Math.min(4, Math.round(event.currentTarget.scrollLeft / pageWidth))));
+    setFeedPage(Math.max(0, Math.min(5, Math.round(event.currentTarget.scrollLeft / pageWidth))));
   };
 
   const christmasCountdownMatch = typeof daysLeftXmas === "string"
@@ -1056,7 +1118,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           <span className="leave-letter-label">Leave a Letter</span>
         </button>
         <div className="information-panel">
-          <div className="messages-count" aria-label="Letter information">
+          <nav className={`messages-count${SHOW_SKY_NAV ? " has-sky-nav" : ""}`} aria-label="Primary navigation">
           <button
             type="button"
             className="message-stat message-stat--count count-popover-trigger"
@@ -1067,7 +1129,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             onClick={event => toggleCountPopover("opened", event)}
           >
             <IoMailOpenOutline size={21} />
-            <span className="message-stat__count">{tc(letters.counts.approved)}</span>
+            <span className="message-stat__label">Open</span>
           </button>
           <button
             type="button"
@@ -1081,7 +1143,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             }}
           >
             <CiLocationOn size={21} />
-            <span>Origins</span>
+            <span className="message-stat__label">Origins</span>
           </button>
           <button
             type="button"
@@ -1095,8 +1157,28 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             }}
           >
             <IoFlameOutline size={21} />
-            <span>Burn</span>
+            <span className="message-stat__label">Burn</span>
           </button>
+          {SHOW_SKY_NAV && (
+            <div className="sky-nav-item">
+              <button
+                type="button"
+                className="message-stat toolbar-trigger sky-nav-trigger"
+                aria-label="Enter Sky"
+                aria-haspopup="dialog"
+                aria-expanded={showSkyConfirmation}
+                onClick={() => setShowSkyConfirmation(true)}
+              >
+                <PiStarFour size={21} />
+                <span className="message-stat__label">Sky</span>
+                {skySoulCount > 0 && showSkyPresence && (
+                  <span className="sky-presence-tooltip" role="status">
+                    {skySoulCount} {skySoulCount === 1 ? "soul is" : "souls are"} looking in the sky
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
           <button
             type="button"
             className="message-stat toolbar-trigger"
@@ -1110,7 +1192,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             }}
           >
             <IoNewspaperOutline size={21} />
-            <span>Feed</span>
+            <span className="message-stat__label">Feed</span>
           </button>
           <button
             type="button"
@@ -1122,7 +1204,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             onClick={event => toggleCountPopover("pending", event)}
           >
             <IoMailUnreadOutline size={21} />
-            <span className="message-stat__count">{tc(letters.counts.unapproved)}</span>
+            <span className="message-stat__label">Pending</span>
           </button>
           <button
             type="button"
@@ -1136,8 +1218,9 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             ) : (
               <IoMoonOutline size={21} />
             )}
+            <span className="message-stat__label">{nightShift ? "Day" : "Night"}</span>
           </button>
-          </div>
+          </nav>
           {countPopover && (
             <section id="letter-count-popover" ref={countPopoverRef}
               className={`letter-count-popover is-${countPopover}`} role="dialog"
@@ -1149,6 +1232,23 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                 ? "Search through these letters, maybe someone wrote a letter for you."
                 : "Once your letter is approved, you can browse it here or share it with others."}</p>
             </section>
+          )}
+          {SHOW_SKY_NAV && showSkyConfirmation && (
+            <div className="ui-announcement-overlay sky-entry-backdrop" role="presentation" onMouseDown={event => {
+              if (event.target === event.currentTarget) setShowSkyConfirmation(false);
+            }}>
+              <section className="sky-entry-dialog" role="dialog" aria-modal="true" aria-labelledby="sky-entry-title" aria-describedby="sky-entry-description" onMouseDown={event => event.stopPropagation()}>
+                <div className="compact-dialog-heading">
+                  <PiStarFour aria-hidden="true" />
+                  <h2 id="sky-entry-title">Enter Sky</h2>
+                </div>
+                <p id="sky-entry-description">Step into the shared sky with the souls looking up right now.</p>
+                <div className="sky-entry-actions">
+                  <button type="button" onClick={() => setShowSkyConfirmation(false)}>Cancel</button>
+                  <button type="button" autoFocus onClick={() => navigate("/sky")}>Proceed</button>
+                </div>
+              </section>
+            </div>
           )}
           {isLateNight && !nightShift && !nightTipDismissed && (
             <aside className="night-mode-suggestion" role="status">
@@ -1229,7 +1329,25 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
               </header>
 
               <div className="feed-report__pages" ref={feedPagesRef} onScroll={handleFeedScroll}>
-                <section className="feed-report__page" aria-label="About our advertisements, page 1 of 5">
+                <section className="feed-report__page" aria-label="Network advisory, page 1 of 6">
+                  <div className="feed-report__lead">
+                    <span>Important Notice</span>
+                    <h3>Connection issues?</h3>
+                    <p>Some PLDT and Smart Communications customers may currently have difficulty connecting to our servers.</p>
+                  </div>
+                  <div className="feed-report__updates">
+                    <article className="feed-report__story is-featured">
+                      <IoServerOutline aria-hidden="true" />
+                      <div>
+                        <span className="feed-report__kicker">Nationwide network advisory</span>
+                        <h4>PLDT and Smart Communications DNS issue</h4>
+                        <p>Some customers may have trouble reaching our servers. Both networks are currently addressing the issue nationwide. In the meantime, switching networks or changing your DNS may help.</p>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section className="feed-report__page" aria-label="About our advertisements, page 2 of 6">
                   <div className="feed-report__lead">
                     <span>Important Notice</span>
                     <h3>A note about our advertisements.</h3>
@@ -1263,7 +1381,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                   </FeedUpdates>
                 </section>
 
-                <section className="feed-report__page" aria-label="Recent updates, page 2 of 5">
+                <section className="feed-report__page" aria-label="Recent updates, page 3 of 6">
                   <div className="feed-report__lead">
                     <span>From the desk</span>
                     <h3>A gentler way to read, feel, and let go.</h3>
@@ -1295,7 +1413,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                   </FeedUpdates>
                 </section>
 
-                <section className="feed-report__page" aria-label="Recent updates, page 3 of 5">
+                <section className="feed-report__page" aria-label="Recent updates, page 4 of 6">
                   <div className="feed-report__lead">
                     <span>More ways to share</span>
                     <h3>Give your words a place and a picture.</h3>
@@ -1313,7 +1431,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                   </div>
                 </section>
 
-                <section className="feed-report__page feed-report__page--care" aria-label="Community care and support, page 4 of 5">
+                <section className="feed-report__page feed-report__page--care" aria-label="Community care and support, page 5 of 6">
                   <div className="feed-report__lead">
                     <span>Community care</span>
                     <h3>A little support can make the page feel lighter.</h3>
@@ -1331,7 +1449,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                   </div>
                 </section>
 
-                <section className="feed-report__page feed-report__page--christmas" aria-label="Christmas countdown, page 5 of 5">
+                <section className="feed-report__page feed-report__page--christmas" aria-label="Christmas countdown, page 6 of 6">
                   <div className="feed-report__snow" aria-hidden="true">
                     {CHRISTMAS_SNOWFLAKES.map((flake, index) => (
                       <i
@@ -1370,8 +1488,8 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
               <nav className="feed-report__pagination" aria-label="Feed pages">
                 <button type="button" onClick={() => goToFeedPage(feedPage - 1)} disabled={feedPage === 0} aria-label="Previous update page"><IoChevronBackOutline /></button>
-                <div>{[0, 1, 2, 3, 4].map(page => <button key={page} type="button" className={feedPage === page ? "is-active" : ""} onClick={() => goToFeedPage(page)} aria-label={`Go to update page ${page + 1}`} aria-current={feedPage === page ? "page" : undefined} />)}</div>
-                <button type="button" onClick={() => goToFeedPage(feedPage + 1)} disabled={feedPage === 4} aria-label="Next update page"><IoChevronForwardOutline /></button>
+                <div>{[0, 1, 2, 3, 4, 5].map(page => <button key={page} type="button" className={feedPage === page ? "is-active" : ""} onClick={() => goToFeedPage(page)} aria-label={`Go to update page ${page + 1}`} aria-current={feedPage === page ? "page" : undefined} />)}</div>
+                <button type="button" onClick={() => goToFeedPage(feedPage + 1)} disabled={feedPage === 5} aria-label="Next update page"><IoChevronForwardOutline /></button>
               </nav>
             </div>
           )}
@@ -1626,26 +1744,23 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           onClick={() => setShowReadModeModal(false)}
         >
           <section
-            className="ui-announcement-dialog read-mode-dialog"
+            className="read-mode-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="read-mode-dialog-title"
             aria-describedby="read-mode-dialog-description"
             onClick={(event) => event.stopPropagation()}
           >
-            <span className="ui-announcement-icon" aria-hidden="true">
-              <IoReaderOutline size={20} />
-            </span>
-            <span className="ui-announcement-eyebrow">Reading Experience</span>
-            <h2 id="read-mode-dialog-title">Read Mode</h2>
+            <div className="compact-dialog-heading">
+              <IoReaderOutline aria-hidden="true" />
+              <h2 id="read-mode-dialog-title">Read Mode</h2>
+            </div>
             <p id="read-mode-dialog-description">
               When Read Mode is enabled, typing effects are disabled and letters are displayed immediately. You can also swipe or scroll down to browse through letters.
             </p>
-            <div className="read-mode-dialog-status">
-              <span className={`read-mode-dialog-badge${readMode ? " is-active" : ""}`}>
-                {readMode ? "● Read Mode is ON" : "○ Read Mode is OFF"}
-              </span>
-            </div>
+            <p className={`read-mode-dialog-status${readMode ? " is-active" : ""}`}>
+              {readMode ? "● Read Mode is ON" : "○ Read Mode is OFF"}
+            </p>
             <div className="read-mode-dialog-actions">
               <button
                 type="button"

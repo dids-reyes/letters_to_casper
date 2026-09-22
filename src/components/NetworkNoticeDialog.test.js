@@ -28,8 +28,9 @@ beforeAll(() => {
         addEventListener: function () {},
         removeEventListener: function () {},
       };
-    };
+  };
   window.scrollTo = jest.fn();
+  HTMLElement.prototype.scrollTo = jest.fn();
 });
 
 describe("NetworkNoticeDialog Component", () => {
@@ -56,10 +57,11 @@ describe("NetworkNoticeDialog Component", () => {
     expect(dialog).toHaveAttribute("aria-labelledby", "pldt-notice-title");
     expect(dialog).toHaveAttribute("aria-describedby", "pldt-notice-message");
 
-    // PLDT Logo
+    // Network logos
     const logo = screen.getByAltText("PLDT");
     expect(logo).toBeInTheDocument();
     expect(logo).toHaveClass("pldt-notice-logo");
+    expect(screen.getByAltText("Smart Communications")).toHaveClass("smart-notice-logo");
 
     // Eyebrow and Heading
     expect(screen.getByText("Network Advisory")).toBeInTheDocument();
@@ -70,12 +72,12 @@ describe("NetworkNoticeDialog Component", () => {
     // Body content
     expect(
       screen.getByText(
-        /If you are currently using PLDT and experiencing issues loading the mailbox/i
+        /If you are currently using PLDT or Smart Communications and experiencing issues loading the mailbox/i
       )
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /PLDT is currently experiencing ongoing DNS issues affecting access to our servers/i
+        /Both networks are addressing ongoing DNS issues affecting access to our servers nationwide/i
       )
     ).toBeInTheDocument();
 
@@ -197,7 +199,7 @@ describe("Sequential Modal Flow in Home", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /If you are currently using PLDT and experiencing issues loading the mailbox/i
+        /If you are currently using PLDT or Smart Communications and experiencing issues loading the mailbox/i
       )
     ).toBeInTheDocument();
 
@@ -259,5 +261,29 @@ describe("Sequential Modal Flow in Home", () => {
 
   test("SHOW_PLDT_NOTICE is exported as true by default so notice is active until toggled off", () => {
     expect(SHOW_PLDT_NOTICE).toBe(true);
+  });
+
+  test("the first Feed page includes the PLDT and Smart nationwide DNS advisory", async () => {
+    localStorage.setItem(UI_ANNOUNCEMENT_KEY, "seen");
+    localStorage.setItem(PLDT_NOTICE_KEY, "seen");
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <Home readModeEnabled={false} />
+        </MemoryRouter>
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Open updates feed/i }));
+    const firstPage = screen.getByRole("region", { name: /Network advisory, page 1 of 6/i });
+    expect(firstPage).toHaveTextContent("PLDT and Smart Communications DNS issue");
+    expect(firstPage).toHaveTextContent("Both networks are currently addressing the issue nationwide");
+    expect(firstPage).not.toHaveTextContent("We do not promote gambling");
+    expect(firstPage.querySelector(".feed-report__updates--scroll")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Go to update page 6" }));
+    expect(screen.getByRole("button", { name: "Go to update page 6" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("region", { name: /Christmas countdown, page 6 of 6/i })).toBeInTheDocument();
   });
 });

@@ -155,7 +155,7 @@ export default function SkyProfileModal({ onSubmit, onClose, initialData = null 
       age: parsedAge,
       gender,
       avatar,
-      status: initialData?.status || 'peaceful',
+      status: initialData?.status || '',
     });
   }
 
@@ -340,4 +340,3 @@ export default function SkyProfileModal({ onSubmit, onClose, initialData = null 
     </div>
   );
 }
-

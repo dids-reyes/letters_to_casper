@@ -1065,7 +1065,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
     // Open Feed to check Page 2
     const feedBtn = screen.getByRole('button', { name: /Open updates feed/i });
     fireEvent.click(feedBtn);
-    const page2 = screen.getByRole('region', { name: /Recent updates, page 2 of 5/i });
+    const page2 = screen.getByRole('region', { name: /Recent updates, page 3 of 6/i });
     expect(page2).not.toHaveTextContent(/Newest addition · Read Mode/i);
   });
 
@@ -1441,7 +1441,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
     expect(screen.getByRole('region', { name: /Letters to Casper update report/i })).toBeInTheDocument();
 
-    const page2 = screen.getByRole('region', { name: /Recent updates, page 2 of 5/i });
+    const page2 = screen.getByRole('region', { name: /Recent updates, page 3 of 6/i });
     expect(page2).toBeInTheDocument();
 
     // Check that Read Mode is present as the newest addition
@@ -2143,4 +2143,3 @@ describe('Read Mode background tap fold tooltip', () => {
     });
   });
 });
-
