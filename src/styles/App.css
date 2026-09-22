@@ -6280,7 +6280,7 @@ html.night-shift .letter-paper__translation-control small {
   }
 
   .letter-paper__body--scrollable {
-    max-height: calc(12 * 28px);
+    max-height: calc(15 * 28px);
     overflow-y: scroll;
   }
 
@@ -7978,4 +7978,3 @@ button.letter-paper__pin::after {
   .letter-paper__age { gap:3px; }
   .letter-paper__pin { flex-basis:11px; width:11px; height:11px; }
 }
-

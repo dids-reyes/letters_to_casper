@@ -1,13 +1,16 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { updatePageSeo } from '../../utils/seo';
-import SkyMoon from './SkyMoon';
+import SkyCelestial from './SkyCelestial';
 import { STAR_TINTS, DEFAULT_TINT } from './tints';
 import './Sky.css';
 import { getSafeStarPosition } from './safePositions';
-import SkyChat, { CHAT_TTL_MS, MOOD_EMOJIS, MoodPicker, soulName } from './SkyChat';
+import SkyChat, { CHAT_TTL_MS, MOOD_EMOJIS, MoodPicker, soulName, defaultAnonymousUsername } from './SkyChat';
 import SkyProfileModal, { DefaultAvatarIcon } from './SkyProfileModal';
 import { GENDER_ICONS } from './avatar';
+import { loadSkySession, saveSkySession, touchSkySession } from './session';
+
+export { defaultAnonymousUsername };
 
 const COOLDOWN_MS = 12000;
 export function daylightAt(date) {
@@ -54,7 +57,10 @@ function anchorStarCard(card, star) {
   card.style.transform = 'none';
 }
 
-export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' ? { username: 'testSoul', age: 24, gender: 'male' } : null) }) {
+export default function Sky({
+  initialProfile = (process.env.NODE_ENV === 'test' ? { username: 'testSoul', age: 24, gender: 'male' } : null),
+  forceCelestialBody = null,
+}) {
   const canvasRef = useRef(null);
   const socketRef = useRef(null);
   const scene = useRef({ points: new Map(), pulses: [], sparks: [], shootingStars: [], selfId: null, redraw: () => {}, meteors: [] });
@@ -64,10 +70,48 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
   const introCard = useRef(null);
   const headerRef = useRef(null);
   const dockRef = useRef(null);
-  const [profile, setProfile] = useState(initialProfile);
+  // 30-minute grace period session restoration
+  const [profile, setProfile] = useState(() => {
+    if (initialProfile) return initialProfile;
+    const restored = loadSkySession();
+    return restored?.profile || null;
+  });
   const profileRef = useRef(profile);
   profileRef.current = profile;
   const pendingProfileRef = useRef(null);
+
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [pulseConfirmOpen, setPulseConfirmOpen] = useState(false);
+  const [tooltipDismissed, setTooltipDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem('sky_profile_hint_dismissed') === '1';
+    } catch (_) {
+      return false;
+    }
+  });
+  const [tooltipVisible, setTooltipVisible] = useState(() => !tooltipDismissed);
+
+  useEffect(() => {
+    if (!tooltipVisible) return undefined;
+    const timer = setTimeout(() => {
+      setTooltipVisible(false);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [tooltipVisible]);
+
+  function dismissTooltip() {
+    setTooltipVisible(false);
+    setTooltipDismissed(true);
+    try {
+      sessionStorage.setItem('sky_profile_hint_dismissed', '1');
+    } catch (_) {}
+  }
+
+  function openProfileEditor() {
+    setTooltipVisible(false);
+    setProfileModalOpen(true);
+  }
+
   const [bannerVisible, setBannerVisible] = useState(true);
   const [messages, setMessages] = useState([]);
   const [session, setSession] = useState(null);
@@ -75,9 +119,15 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
   const [outgoing, setOutgoing] = useState(null);
 
   function handleProfileSubmit(data) {
-    profileRef.current = data;
-    setProfile(data);
+    const updatedProfile = { ...data, isDefault: false };
+    profileRef.current = updatedProfile;
+    setProfile(updatedProfile);
+    setProfileModalOpen(false);
+
     const current = scene.current;
+    const existingNote = current.points.get(current.selfId)?.note || '';
+    saveSkySession({ profile: updatedProfile, note: existingNote });
+
     if (current.selfId) {
       const selfPoint = current.points.get(current.selfId);
       if (selfPoint) {
@@ -115,7 +165,16 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
       done(ok, reason, reply);
     });
   }
-  const changeMood = mood => command('set_mood', mood);
+  const changeMood = mood => {
+    const current = scene.current;
+    const selfPoint = current.points.get(current.selfId);
+    if (selfPoint) {
+      selfPoint.mood = mood || null;
+      setPeople([...current.points.values()]);
+      current.redraw();
+    }
+    command('set_mood', mood);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setBannerVisible(false), 15000);
@@ -263,6 +322,9 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
       setMessages(items => items.filter(m => Date.now() - m.createdAt < CHAT_TTL_MS));
       setDaylight(daylightAt(new Date()));
       setRemaining(Math.max(0, Math.ceil((deadline.current - Date.now()) / 1000)));
+      if (Date.now() % 30000 < 1000) {
+        touchSkySession();
+      }
     }, 1000);
     return () => {
       cleanupSeo();
@@ -590,9 +652,8 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
       current.selfId = state.selfId;
       setIntroId(state.selfId);
       current.points = new Map(state.participants.map(point => [point.id, point]));
-      current.pulses = [];
-      if (profileRef.current) {
-        const selfPoint = current.points.get(state.selfId);
+      const selfPoint = current.points.get(state.selfId);
+      if (profileRef.current && !profileRef.current.isDefault) {
         if (selfPoint) {
           Object.assign(selfPoint, {
             username: profileRef.current.username,
@@ -601,6 +662,32 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
             gender: profileRef.current.gender,
             avatar: profileRef.current.avatar,
             mood: profileRef.current.status || selfPoint.mood || '',
+          });
+        }
+      } else {
+        const fallbackName = (selfPoint?.username && !selfPoint.username.startsWith('soul') ? selfPoint.username : null)
+          || (selfPoint?.soul && !selfPoint.soul.startsWith('soul') ? selfPoint.soul : null)
+          || (profileRef.current?.username ? profileRef.current.username : null)
+          || defaultAnonymousUsername(state.selfId);
+
+        const defaultAnon = {
+          username: fallbackName,
+          age: null,
+          gender: null,
+          avatar: null,
+          status: selfPoint?.mood || 'peaceful',
+          isDefault: true,
+        };
+        profileRef.current = defaultAnon;
+        setProfile(defaultAnon);
+        saveSkySession({ profile: defaultAnon, note: selfPoint?.note || '' });
+        if (selfPoint) {
+          Object.assign(selfPoint, {
+            username: defaultAnon.username,
+            soul: defaultAnon.username,
+            age: null,
+            gender: null,
+            avatar: null,
           });
         }
       }
@@ -724,14 +811,36 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
     };
     socket.on('disconnect', disconnected);
     socket.on('connect_error', disconnected);
-    const leave = () => socket.disconnect();
-    const resume = () => socket.connect();
+    const saveCurrentSession = () => {
+      if (profileRef.current) {
+        const note = current.points.get(current.selfId)?.note || '';
+        saveSkySession({ profile: profileRef.current, note });
+      }
+    };
+    const leave = () => {
+      saveCurrentSession();
+      socket.disconnect();
+    };
+    const resume = () => {
+      touchSkySession();
+      socket.connect();
+    };
+    const handleVisibility = () => {
+      if (document.hidden) {
+        saveCurrentSession();
+      } else {
+        touchSkySession();
+      }
+    };
     window.addEventListener('pagehide', leave);
     window.addEventListener('pageshow', resume);
+    document.addEventListener('visibilitychange', handleVisibility);
     socket.connect();
     return () => {
+      saveCurrentSession();
       window.removeEventListener('pagehide', leave);
       window.removeEventListener('pageshow', resume);
+      document.removeEventListener('visibilitychange', handleVisibility);
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
@@ -766,6 +875,39 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
       } else setFeedback('Your pulse has been shared.');
     });
   }
+
+  function handlePulseClick() {
+    try {
+      if (localStorage.getItem('sky_pulse_confirmed') === 'true') {
+        sendPulse();
+        return;
+      }
+    } catch (_) {}
+    setPulseConfirmOpen(true);
+  }
+
+  function handleConfirmPulse() {
+    try {
+      localStorage.setItem('sky_pulse_confirmed', 'true');
+    } catch (_) {}
+    setPulseConfirmOpen(false);
+    sendPulse();
+  }
+
+  function handleCancelPulse() {
+    setPulseConfirmOpen(false);
+  }
+
+  useEffect(() => {
+    if (!pulseConfirmOpen) return undefined;
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        setPulseConfirmOpen(false);
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [pulseConfirmOpen]);
 
   useLayoutEffect(() => {
     if (!selected || editing || !noteCard.current) return;
@@ -811,6 +953,7 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
         setNoteError(error ? 'Could not save your note. Please try again.' : reply.error);
       } else {
         setEditing(false);
+        saveSkySession({ profile: profileRef.current, note: noteToSave });
         setFeedback(noteToSave.trim() ? 'Your note is in the sky.' : 'Your note has been removed.');
       }
     });
@@ -856,6 +999,36 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
         })}
       </div>
       <div className="sky-content">
+        <div className="sky-top-profile">
+          <button
+            type="button"
+            className="sky-profile-trigger"
+            onClick={openProfileEditor}
+            aria-label="Customize profile"
+            title="Customize profile"
+          >
+            {profile?.avatar ? (
+              <img src={profile.avatar} alt="Your profile avatar" className="sky-profile-trigger-img" />
+            ) : (
+              <DefaultAvatarIcon size={32} className="sky-profile-trigger-placeholder" />
+            )}
+          </button>
+          {tooltipVisible && (
+            <div className="sky-onboarding-tooltip" role="tooltip">
+              <span className="sky-onboarding-text">
+                Customize your temporary profile here to request chats and get accepted, show you're not an alien!
+              </span>
+              <button
+                type="button"
+                className="sky-onboarding-dismiss"
+                onClick={dismissTooltip}
+                aria-label="Dismiss hint"
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
         <header className="sky-heading" ref={headerRef}>
           <h1 id="sky-title">Sky</h1>
           <a className="sky-home" href="https://letterstocasper.com/" aria-label="Letters to Casper home">
@@ -870,8 +1043,8 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
                   : status === 'connecting' ? 'Finding our place in the sky…' : 'Reconnecting to the shared sky…'}
             </p>
           </div>
-        <div className="sky-center-celestial" aria-label="Current moon phase">
-          <SkyMoon date={new Date(clock)} />
+        <div className="sky-center-celestial" aria-label="Current celestial body">
+          <SkyCelestial date={new Date(clock)} forceBody={forceCelestialBody} />
         </div>
         </header>
 
@@ -883,11 +1056,9 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
         )}
 
         <div className="sky-bottom" ref={dockRef}>
-          <SkyChat key={session?.sessionId || 'global'} messages={messages} session={session} connected={status === 'connected'} clock={clock}
-            send={(data, done) => command('send_chat', data, done)} leave={() => command('leave_chat', session.sessionId)} />
           <ol className="sky-activity" aria-label="Recent sky activity">
             {activity.filter(item => clock - item.at < 3600000).slice(-3).map(item => (
-              <li key={item.id}>{item.soul} {item.action} <span>{clock - item.at < 60000 ? 'just now' : Math.floor((clock - item.at) / 60000) + 'm ago'}</span></li>
+              <li key={item.id}>{item.soul?.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(item.soul) : item.soul} {item.action} <span>{clock - item.at < 60000 ? 'just now' : Math.floor((clock - item.at) / 60000) + 'm ago'}</span></li>
             ))}
           </ol>
           <section className="sky-prompt" aria-label="Leave a pulse">
@@ -906,12 +1077,14 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
             <span className="sky-footer-divider" aria-hidden="true" />
             <MoodPicker value={people.find(p => p.id === scene.current.selfId)?.mood} onChange={changeMood} disabled={status !== 'connected'} />
             <span className="sky-footer-divider" aria-hidden="true" />
-            <button className="sky-pulse" onClick={sendPulse} disabled={status !== 'connected' || remaining > 0} aria-describedby="sky-feedback">Pulse</button>
+            <button className="sky-pulse" onClick={handlePulseClick} disabled={status !== 'connected' || remaining > 0} aria-describedby="sky-feedback">Pulse</button>
           </footer>
+          <SkyChat key={session?.sessionId || 'global'} messages={messages} session={session} connected={status === 'connected'} clock={clock}
+            send={(data, done) => command('send_chat', data, done)} leave={() => command('leave_chat', session.sessionId)} />
         </div>
       </div>
       {invitation && <section className="sky-note-card sky-invitation" role="dialog" aria-label="Incoming chat request">
-        <p>{invitation.soul} requested to chat.</p>
+        <p>{invitation.soul?.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(invitation.soul) : invitation.soul} requested to chat.</p>
         <button autoFocus onClick={() => command('respond_chat', { id: invitation.id, accept: true })}>Accept</button>
         <button onClick={() => command('respond_chat', { id: invitation.id, accept: false })}>Decline</button>
       </section>}
@@ -972,19 +1145,21 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
                       )}
                     </div>
                     <div className="sky-star-info">
-                      <strong>
-                        {selectedPerson.username
-                          ? `${selectedPerson.username}${selectedPerson.age ? `, ${selectedPerson.age}` : ''}`
-                          : 'This is you'}
+                      <div className="sky-star-name-row">
+                        <strong className="sky-star-name">
+                          {selectedPerson.username
+                            ? `${selectedPerson.username}${selectedPerson.age ? `, ${selectedPerson.age}` : ''}`
+                            : 'This is you'}
+                        </strong>
                         {selectedPerson.gender && GENDER_ICONS[selectedPerson.gender] ? (
                           <span className="sky-star-gender" aria-hidden="true">
                             {' ' + GENDER_ICONS[selectedPerson.gender]}
                           </span>
                         ) : null}
-                      </strong>
+                      </div>
                       {selectedPerson.username && <small className="sky-star-self-badge">This is you</small>}
                       <div className="sky-own-feeling">
-                        <span className="sky-feeling-text">is feeling </span>
+                        <span className="sky-feeling-text">is feeling</span>
                         <MoodPicker id="sky-mood-editor" value={selectedPerson.mood} onChange={changeMood} disabled={status !== 'connected'} showEmoji />
                       </div>
                     </div>
@@ -996,24 +1171,28 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
                   <div className="sky-star-header">
                     <div className="sky-star-avatar-frame">
                       {selectedPerson.avatar ? (
-                        <img src={selectedPerson.avatar} alt={selectedPerson.username || soulName(selectedPerson)} className="sky-star-avatar-img" />
+                        <img src={selectedPerson.avatar} alt={soulName(selectedPerson)} className="sky-star-avatar-img" />
                       ) : (
                         <DefaultAvatarIcon size={48} className="sky-star-avatar-placeholder" />
                       )}
                     </div>
                     <div className="sky-star-info">
-                      <strong>
-                        {selectedPerson.username
-                          ? `${selectedPerson.username}${selectedPerson.age ? `, ${selectedPerson.age}` : ''}`
-                          : soulName(selectedPerson)}
+                      <div className="sky-star-name-row">
+                        <strong className="sky-star-name">
+                          {soulName(selectedPerson)}
+                          {selectedPerson.age ? `, ${selectedPerson.age}` : ''}
+                        </strong>
                         {selectedPerson.gender && GENDER_ICONS[selectedPerson.gender] ? (
                           <span className="sky-star-gender" aria-hidden="true">
                             {' ' + GENDER_ICONS[selectedPerson.gender]}
                           </span>
                         ) : null}
-                      </strong>
-                      <p className="sky-visitor-mood" aria-label={`${selectedPerson.username || soulName(selectedPerson)} is feeling ${selectedPerson.mood || 'peaceful'}`}>
-                        is feeling {selectedPerson.mood || 'peaceful'} <span aria-hidden="true">{MOOD_EMOJIS[selectedPerson.mood || 'peaceful'] || '😌'}</span>
+                      </div>
+                      <p className="sky-visitor-mood" aria-label={`${soulName(selectedPerson)} is feeling ${selectedPerson.mood || 'peaceful'}`}>
+                        <span className="sky-feeling-text">is feeling</span>{' '}
+                        <span className="sky-visitor-mood-val">
+                          {selectedPerson.mood || 'peaceful'} <span aria-hidden="true">{MOOD_EMOJIS[selectedPerson.mood || 'peaceful'] || '😌'}</span>
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -1030,8 +1209,50 @@ export default function Sky({ initialProfile = (process.env.NODE_ENV === 'test' 
           )}
         </section>
       )}
-      {!profile && (
-        <SkyProfileModal onSubmit={handleProfileSubmit} />
+      {pulseConfirmOpen && (
+        <div
+          className="sky-pulse-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sky-pulse-dialog-title"
+          aria-describedby="sky-pulse-dialog-desc"
+          onClick={e => {
+            if (e.target === e.currentTarget) handleCancelPulse();
+          }}
+        >
+          <div className="sky-pulse-dialog">
+            <h2 id="sky-pulse-dialog-title" className="sky-pulse-dialog-title">
+              Send a Pulse
+            </h2>
+            <p id="sky-pulse-dialog-desc" className="sky-pulse-dialog-desc">
+              Send a pulse just to let them know you're here.
+            </p>
+            <div className="sky-pulse-dialog-actions">
+              <button
+                type="button"
+                className="sky-pulse-dialog-cancel"
+                onClick={handleCancelPulse}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="sky-pulse-dialog-confirm"
+                onClick={handleConfirmPulse}
+                autoFocus
+              >
+                Send Pulse
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {profileModalOpen && (
+        <SkyProfileModal
+          initialData={profile}
+          onSubmit={handleProfileSubmit}
+          onClose={() => setProfileModalOpen(false)}
+        />
       )}
     </main>
   );

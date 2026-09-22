@@ -550,7 +550,7 @@ describe('Read Mode in DetailsModal', () => {
     expect(document.body.style.overflow).toBe('');
   });
 
-  test('triggers Ad lock intermission after viewing 10 letters and enables continue after countdown', () => {
+  test('triggers Ad lock intermission after viewing 20 letters and enables continue after countdown', () => {
     jest.useFakeTimers();
     let currentIdx = 0;
     const mockSetSelectedLetter = jest.fn((letter) => {
@@ -570,8 +570,8 @@ describe('Read Mode in DetailsModal', () => {
       </MemoryRouter>
     );
 
-    // Navigate through 9 letters (initial letter is letter 1, so 9 steps reaches 10 letters)
-    for (let i = 0; i < 9; i++) {
+    // Navigate through 19 letters (initial letter is letter 1, so 19 steps reaches 20 letters)
+    for (let i = 0; i < 19; i++) {
       fireEvent.keyDown(document, { key: 'ArrowDown' });
       act(() => {
         jest.advanceTimersByTime(550);
@@ -590,14 +590,14 @@ describe('Read Mode in DetailsModal', () => {
       );
     }
 
-    // Now on letter 10. When attempting to scroll to letter 11:
+    // Now on letter 20. When attempting to scroll to letter 21:
     fireEvent.keyDown(document, { key: 'ArrowDown' });
 
     // The Ad lock overlay should appear!
     expect(container.querySelector('.read-mode-ad-lock-overlay')).not.toBeNull();
     expect(screen.getByText(/Reading intermission/i)).toBeInTheDocument();
     expect(screen.getByText(/Take a brief pause/i)).toBeInTheDocument();
-    expect(screen.getByText(/You’ve read 10 letters/i)).toBeInTheDocument();
+    expect(screen.getByText(/You’ve read 20 letters/i)).toBeInTheDocument();
 
     const adBtn = container.querySelector('.read-mode-ad-lock-btn');
     expect(adBtn).toBeDisabled();
@@ -683,8 +683,8 @@ describe('Read Mode in DetailsModal', () => {
       </MemoryRouter>
     );
 
-    // Scroll down 8 letters (indices 0 to 8: 9 letters uncovered so far)
-    for (let i = 0; i < 8; i++) {
+    // Scroll down 18 letters (indices 0 to 18: 19 letters uncovered so far)
+    for (let i = 0; i < 18; i++) {
       fireEvent.keyDown(document, { key: 'ArrowDown' });
       act(() => {
         jest.advanceTimersByTime(550);
@@ -702,10 +702,10 @@ describe('Read Mode in DetailsModal', () => {
         </MemoryRouter>
       );
     }
-    expect(currentIdx).toBe(8);
+    expect(currentIdx).toBe(18);
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
 
-    // Scroll back up 5 letters (indices 8 -> 7 -> 6 -> 5 -> 4 -> 3)
+    // Scroll back up 5 letters (indices 18 -> 17 -> 16 -> 15 -> 14 -> 13)
     for (let i = 0; i < 5; i++) {
       fireEvent.keyDown(document, { key: 'ArrowUp' });
       act(() => {
@@ -724,10 +724,10 @@ describe('Read Mode in DetailsModal', () => {
         </MemoryRouter>
       );
     }
-    expect(currentIdx).toBe(3);
+    expect(currentIdx).toBe(13);
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
 
-    // Now re-scroll down 5 letters over the already explored range (indices 3 -> 4 -> 5 -> 6 -> 7 -> 8)
+    // Now re-scroll down 5 letters over the already explored range (indices 13 -> 14 -> 15 -> 16 -> 17 -> 18)
     for (let i = 0; i < 5; i++) {
       fireEvent.keyDown(document, { key: 'ArrowDown' });
       act(() => {
@@ -746,11 +746,11 @@ describe('Read Mode in DetailsModal', () => {
         </MemoryRouter>
       );
     }
-    expect(currentIdx).toBe(8);
+    expect(currentIdx).toBe(18);
     // Crucial check: Ad lock MUST NOT appear because we did not uncover any net-new letters!
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
 
-    // Now scroll down 1 net-new letter to index 9 (now 10 letters uncovered: 0 through 9)
+    // Now scroll down 1 net-new letter to index 19 (now 20 letters uncovered: 0 through 19)
     fireEvent.keyDown(document, { key: 'ArrowDown' });
     act(() => {
       jest.advanceTimersByTime(550);
@@ -767,20 +767,20 @@ describe('Read Mode in DetailsModal', () => {
         />
       </MemoryRouter>
     );
-    expect(currentIdx).toBe(9);
+    expect(currentIdx).toBe(19);
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
 
-    // Now attempting to scroll to the 11th net-new letter (index 10): Ad MUST trigger!
+    // Now attempting to scroll to the 21st net-new letter (index 20): Ad MUST trigger!
     fireEvent.keyDown(document, { key: 'ArrowDown' });
     expect(container.querySelector('.read-mode-ad-lock-overlay')).not.toBeNull();
-    expect(screen.getByText(/You’ve read 10 letters/i)).toBeInTheDocument();
+    expect(screen.getByText(/You’ve read 20 letters/i)).toBeInTheDocument();
 
     jest.useRealTimers();
   });
 
-  test('session-unique upward traversal: navigating upward across 10 unseen letters triggers ad lock intermission', () => {
+  test('session-unique upward traversal: navigating upward across 20 unseen letters triggers ad lock intermission', () => {
     jest.useFakeTimers();
-    let currentIdx = 15;
+    let currentIdx = 24;
     const mockSetSelectedLetter = jest.fn((letter) => {
       currentIdx = sampleLetters.findIndex(l => l._id === letter._id);
     });
@@ -798,9 +798,9 @@ describe('Read Mode in DetailsModal', () => {
       </MemoryRouter>
     );
 
-    // Initial letter is sampleLetters[15] (1 unseen letter)
-    // Navigate upward 9 times (indices 15 -> 14 -> 13 -> 12 -> 11 -> 10 -> 9 -> 8 -> 7 -> 6)
-    for (let i = 0; i < 9; i++) {
+    // Initial letter is sampleLetters[24] (1 unseen letter)
+    // Navigate upward 19 times (indices 24 through 5)
+    for (let i = 0; i < 19; i++) {
       fireEvent.keyDown(document, { key: 'ArrowUp' });
       act(() => {
         jest.advanceTimersByTime(550);
@@ -818,15 +818,15 @@ describe('Read Mode in DetailsModal', () => {
         </MemoryRouter>
       );
     }
-    expect(currentIdx).toBe(6);
+    expect(currentIdx).toBe(5);
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
 
-    // Now on letter 10 of this session (index 6). Attempting to navigate upward to index 5 (the 11th unseen letter):
+    // Now on letter 20 of this session (index 5). Attempting to navigate upward to index 4 (the 21st unseen letter):
     fireEvent.keyDown(document, { key: 'ArrowUp' });
     expect(container.querySelector('.read-mode-ad-lock-overlay')).not.toBeNull();
     expect(screen.getByText(/Reading intermission/i)).toBeInTheDocument();
     expect(screen.getByText(/Take a brief pause/i)).toBeInTheDocument();
-    expect(screen.getByText(/You’ve read 10 letters/i)).toBeInTheDocument();
+    expect(screen.getByText(/You’ve read 20 letters/i)).toBeInTheDocument();
 
     const adBtn = container.querySelector('.read-mode-ad-lock-btn');
     expect(adBtn).toBeDisabled();
@@ -838,7 +838,7 @@ describe('Read Mode in DetailsModal', () => {
     expect(adBtn).not.toBeDisabled();
     expect(adBtn).toHaveTextContent(/Continue reading/i);
 
-    // Click continue reading -> proceeds upward to index 5
+    // Click continue reading -> proceeds upward to index 4
     fireEvent.click(adBtn);
     act(() => {
       jest.advanceTimersByTime(550);
@@ -856,7 +856,7 @@ describe('Read Mode in DetailsModal', () => {
       </MemoryRouter>
     );
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
-    expect(currentIdx).toBe(5);
+    expect(currentIdx).toBe(4);
 
     jest.useRealTimers();
   });
@@ -898,8 +898,8 @@ describe('Read Mode in DetailsModal', () => {
     );
 
     // Now 2 unique letters seen: index 0 and index 20. Intermediate letters 1..19 remain unseen.
-    // User reads upward 8 times: indices 20 -> 19 -> 18 -> 17 -> 16 -> 15 -> 14 -> 13 -> 12
-    for (let i = 0; i < 8; i++) {
+    // User reads upward 18 times: indices 20 through 2
+    for (let i = 0; i < 18; i++) {
       fireEvent.keyDown(document, { key: 'ArrowUp' });
       act(() => {
         jest.advanceTimersByTime(550);
@@ -917,11 +917,11 @@ describe('Read Mode in DetailsModal', () => {
         </MemoryRouter>
       );
     }
-    expect(currentIdx).toBe(12);
-    // Total unseen letters encountered = 1 (index 0) + 1 (index 20) + 8 (indices 19..12) = 10 letters.
+    expect(currentIdx).toBe(2);
+    // Total unseen letters encountered = 1 (index 0) + 1 (index 20) + 18 (indices 19..2) = 20 letters.
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
 
-    // Re-reading already seen letters downward (12 -> 13 -> 14) and back upward (14 -> 13 -> 12) does NOT trigger ad
+    // Re-reading already seen letters downward (2 -> 3 -> 4) and back upward (4 -> 3 -> 2) does NOT trigger ad
     for (let i = 0; i < 2; i++) {
       fireEvent.keyDown(document, { key: 'ArrowDown' });
       act(() => {
@@ -940,7 +940,7 @@ describe('Read Mode in DetailsModal', () => {
         </MemoryRouter>
       );
     }
-    expect(currentIdx).toBe(14);
+    expect(currentIdx).toBe(4);
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
 
     for (let i = 0; i < 2; i++) {
@@ -961,13 +961,13 @@ describe('Read Mode in DetailsModal', () => {
         </MemoryRouter>
       );
     }
-    expect(currentIdx).toBe(12);
+    expect(currentIdx).toBe(2);
     expect(container.querySelector('.read-mode-ad-lock-overlay')).toBeNull();
 
-    // Now navigating upward to index 11 (the 11th unseen letter): Ad MUST trigger!
+    // Now navigating upward to index 1 (the 21st unseen letter): Ad MUST trigger!
     fireEvent.keyDown(document, { key: 'ArrowUp' });
     expect(container.querySelector('.read-mode-ad-lock-overlay')).not.toBeNull();
-    expect(screen.getByText(/You’ve read 10 letters/i)).toBeInTheDocument();
+    expect(screen.getByText(/You’ve read 20 letters/i)).toBeInTheDocument();
 
     jest.useRealTimers();
   });
@@ -2143,5 +2143,4 @@ describe('Read Mode background tap fold tooltip', () => {
     });
   });
 });
-
 

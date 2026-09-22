@@ -79,6 +79,7 @@ export default function PinLetterDialog({
   const [deliverEmail, setDeliverEmail] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [showDeliveryGuide, setShowDeliveryGuide] = useState(false);
+  const [showFeaturedGuide, setShowFeaturedGuide] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const emailInput = useRef(null);
   const [error, setError] = useState('');
@@ -126,6 +127,11 @@ export default function PinLetterDialog({
   const close = () => { if (!busy.current) setClosing(true); };
   const onKeyDown = event => {
     if (event.key === 'Escape') {
+      if (showFeaturedGuide) {
+        event.stopPropagation();
+        setShowFeaturedGuide(false);
+        return;
+      }
       if (showDeliveryGuide) {
         event.stopPropagation();
         setShowDeliveryGuide(false);
@@ -135,8 +141,8 @@ export default function PinLetterDialog({
       close();
     }
     if (event.key === 'Tab') {
-      if (showDeliveryGuide) {
-        const guide = document.querySelector('.pin-delivery-guide');
+      if (showDeliveryGuide || showFeaturedGuide) {
+        const guide = document.querySelector(showFeaturedGuide ? '.pin-featured-guide' : '.pin-delivery-guide');
         if (guide) {
           const controls = [...guide.querySelectorAll('button:not(:disabled)')];
           if (!controls.length) { event.preventDefault(); return; }
@@ -236,7 +242,7 @@ export default function PinLetterDialog({
               "All Pinned Slots Occupied (7/7)"
             ) : (
               <>
-                Pin & Deliver via Email
+                Pin & Deliver
                 <AiOutlinePushpin
                   className="pin-letter-title-icon"
                   aria-hidden="true"
@@ -252,7 +258,7 @@ export default function PinLetterDialog({
         <p id="pin-letter-subtext">
           {confirmation ? "Is this the letter you’d like to pin?" : isFull
             ? "To keep the quiet feed balanced and give every featured letter its moment, we only allow 7 pinned letters at a time. Please check back soon once a current pin expires to pin your own or another letter."
-            : "Keep these words at the top of the feed, and optionally deliver them anonymously via email."}
+            : <>Keep these words at the top of the feed, and optionally deliver them anonymously via email. <button type="button" className="pin-featured-guide-btn" onClick={() => setShowFeaturedGuide(true)}>Featured Letters.</button></>}
         </p>
         {confirmation ? (
           <form onSubmit={pay} noValidate>
@@ -555,6 +561,52 @@ export default function PinLetterDialog({
           </section>
         </div>
       )}
+    {showFeaturedGuide && (
+      <div
+        className="pin-delivery-guide-overlay"
+        onClick={(event) => {
+          event.stopPropagation();
+          setShowFeaturedGuide(false);
+        }}
+        onKeyDown={onKeyDown}
+      >
+        <section
+          className="pin-delivery-guide pin-featured-guide"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pin-featured-guide-title"
+          onClick={event => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="pin-letter-close"
+            aria-label="Close featured letters guide"
+            onClick={() => setShowFeaturedGuide(false)}
+          >
+            ×
+          </button>
+          <h3 id="pin-featured-guide-title">About Featured Letters</h3>
+          <p className="pin-delivery-guide-intro">
+            Pinning a letter does not guarantee it will be featured. Featured spots are always 100% free and can never be bought or paid for. However, pinned letters notify our admins and moderators, giving your letter higher visibility and a much greater chance of being featured if it meets our criteria.
+          </p>
+          <ul className="pin-featured-criteria">
+            <li><strong>Genuine and vulnerable:</strong> Honest words written from the heart, not generic quotes.</li>
+            <li><strong>Leaves a mark:</strong> Stirs real emotion, whether it is comfort, ache, or closure.</li>
+            <li><strong>Meaningful, not filler:</strong> Every line has purpose and a clear thought behind it.</li>
+            <li><strong>Intentional length:</strong> If it is short, make it punchy. If it is long, take the reader on a journey without rambling.</li>
+          </ul>
+          <div className="pin-delivery-guide-actions">
+            <button
+              type="button"
+              className="pin-delivery-guide-dismiss"
+              onClick={() => setShowFeaturedGuide(false)}
+            >
+              Got it
+            </button>
+          </div>
+        </section>
+      </div>
+    )}
     </>,
     document.body,
   );

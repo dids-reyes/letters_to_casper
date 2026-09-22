@@ -7,7 +7,7 @@ describe('SkyProfileModal', () => {
   test('renders modal with title, subtitle, and disabled submit button initially', () => {
     render(<SkyProfileModal onSubmit={jest.fn()} />);
 
-    expect(screen.getByRole('dialog', { name: /Create Your Temporary Soul/i })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /Create Your Temporary Profile/i })).toBeInTheDocument();
     expect(screen.getByText(/This is a temporary profile for this session only/i)).toBeInTheDocument();
 
     const submitBtn = screen.getByRole('button', { name: /Step Into the Sky/i });
@@ -99,5 +99,35 @@ describe('SkyProfileModal', () => {
     expect(femaleSvg).toHaveAttribute('width', '20');
     expect(nonBinarySvg).toHaveAttribute('width', '20');
   });
+
+  test('pre-fills initialData and allows closing via close button or Escape key', () => {
+    const handleClose = jest.fn();
+    const handleSubmit = jest.fn();
+    const initialData = {
+      username: 'Nova',
+      age: 22,
+      gender: 'female',
+      avatar: null,
+      status: 'peaceful',
+    };
+
+    render(<SkyProfileModal onSubmit={handleSubmit} onClose={handleClose} initialData={initialData} />);
+
+    // Pre-filled values
+    expect(screen.getByLabelText(/Username/i)).toHaveValue('Nova');
+    expect(screen.getByLabelText(/Age/i)).toHaveValue(22);
+    expect(screen.getByRole('radio', { name: 'Female' })).toHaveAttribute('aria-checked', 'true');
+
+    // Close button dismisses modal
+    const closeBtn = screen.getByRole('button', { name: 'Close profile editor' });
+    expect(closeBtn).toBeInTheDocument();
+    fireEvent.click(closeBtn);
+    expect(handleClose).toHaveBeenCalledTimes(1);
+
+    // Pressing Escape also closes
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(handleClose).toHaveBeenCalledTimes(2);
+  });
 });
+
 

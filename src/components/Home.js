@@ -481,8 +481,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     }
   };
 
-  const fetchMoreData = async () => {
-    if (isReadModeActive) return;
+  const isFetchingMoreRef = useRef(false);
+
+  const fetchMoreData = useCallback(async () => {
+    if (isReadModeActive || isFetchingMoreRef.current) return;
+    isFetchingMoreRef.current = true;
     try {
       const response = await fetch(
         `${render_url}?offset=${letters.messages.length}&limit=50`,
@@ -497,17 +500,27 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       }
       const newData = await response.json();
       setTimeout(() => {
-        setLetters((prevState) => ({
-          ...prevState,
-          messages: [...prevState.messages, ...newData.messages],
-        }));
+        setLetters((prevState) => {
+          const existingIds = new Set(
+            (prevState.messages || []).map((m) => String(m._id || ""))
+          );
+          const uniqueNew = (newData.messages || []).filter(
+            (m) => m && m._id && !existingIds.has(String(m._id))
+          );
+          return {
+            ...prevState,
+            messages: [...prevState.messages, ...uniqueNew],
+          };
+        });
         setLoading(0);
+        isFetchingMoreRef.current = false;
       }, 1500);
     } catch (error) {
       console.error("Error fetching more letters:", error);
       setLoading(2);
+      isFetchingMoreRef.current = false;
     }
-  };
+  }, [isReadModeActive, letters.messages.length]);
 
   const fetchLetters = async () => {
     if (goBackToNotFeatured) {
@@ -885,14 +898,27 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     const approved = source.filter((letter) => letter.approve);
 
     const now = new Date();
-    let adminLetter = null;
     const pinnedLetters = [];
     const regularLetters = [];
+    const seenIds = new Set();
 
     for (const letter of approved) {
-      if (String(letter._id) === adminId) {
-        adminLetter = letter;
-      } else if (letter.is_pinned && letter.pin_expires_at && new Date(letter.pin_expires_at) > now) {
+      const id = String(letter._id || "");
+      if (id && seenIds.has(id)) continue;
+      if (id) seenIds.add(id);
+
+      // The backend injects the admin letter (from 2023) into the offset=0 response.
+      // If it is not actively pinned, ignore this legacy injection in the regular feed
+      // so it does not appear prematurely at the very bottom of today's letters.
+      if (
+        !isSearchActive &&
+        id === adminId &&
+        !(letter.is_pinned && letter.pin_expires_at && new Date(letter.pin_expires_at) > now)
+      ) {
+        continue;
+      }
+
+      if (letter.is_pinned && letter.pin_expires_at && new Date(letter.pin_expires_at) > now) {
         pinnedLetters.push(letter);
       } else {
         regularLetters.push(letter);
@@ -907,7 +933,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     rest.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
 
     return [
-      ...(adminLetter ? [adminLetter] : []),
       ...topPinned,
       ...rest,
     ];
@@ -983,7 +1008,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     containerRef: feedContainerRef,
     onNearEnd: fetchMoreData,
     hasMore: hasMoreLetters,
-    overscanRows: 2,
+    overscanRows: 4,
   });
 
   const goToFeedPage = page => {

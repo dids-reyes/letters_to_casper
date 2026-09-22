@@ -3,9 +3,60 @@ import { GENDER_ICONS } from './avatar';
 import { DefaultAvatarIcon } from './SkyProfileModal';
 
 export const CHAT_TTL_MS = 30 * 60 * 1000;
-export const MOODS = ['bored', 'heartbroken', 'sleepy', 'lonely', 'peaceful'];
-export const MOOD_EMOJIS = { bored: '🥱', heartbroken: '💔', sleepy: '😴', lonely: '🥺', peaceful: '😌' };
-export const soulName = person => person?.username || person?.soul || (person?.id ? `soul${person.id}` : 'soul');
+export const MOODS = ['bored', 'heartbroken', 'sleepy', 'alone', 'depressed', 'anxious', 'peaceful'];
+export const MOOD_EMOJIS = {
+  bored: '🥱',
+  heartbroken: '💔',
+  sleepy: '😴',
+  alone: '🥺',
+  depressed: '😞',
+  anxious: '😰',
+  peaceful: '😌',
+  lonely: '🥺', // legacy alias for backward compatibility
+};
+export const VALID_MOODS = MOODS;
+
+export function defaultAnonymousUsername(id) {
+  if (!id && id !== 0) return 'soul000';
+  const str = String(id).trim();
+  let prefix = 'soul';
+  let rawId = str;
+
+  if (str.toLowerCase().startsWith('soul')) {
+    prefix = str.slice(0, 4);
+    rawId = str.slice(4);
+  }
+
+  // Strip leading/trailing non-alphanumeric chars
+  const cleanId = rawId.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').replace(/[^a-zA-Z0-9_-]/g, '');
+  let identifier = cleanId || rawId.replace(/[^a-zA-Z0-9]/g, '');
+
+  if (!identifier) {
+    identifier = '000';
+  } else {
+    // Limit to max 8 characters
+    if (identifier.length > 8) {
+      identifier = identifier.slice(0, 8);
+    }
+    // Pad to minimum 3 characters
+    if (identifier.length < 3) {
+      identifier = identifier.padStart(3, '0');
+    }
+  }
+
+  return `${prefix}${identifier}`;
+}
+
+export const soulName = person => {
+  const name = person?.username || person?.soul;
+  if (name) {
+    if (name.toLowerCase().startsWith('soul')) {
+      return defaultAnonymousUsername(name);
+    }
+    return name;
+  }
+  return person?.id ? defaultAnonymousUsername(person.id) : 'soul000';
+};
 
 export function MoodPicker({ value, onChange, disabled, id = 'sky-mood', showEmoji = false }) {
   const [open, setOpen] = useState(false);
@@ -87,6 +138,14 @@ export function MoodPicker({ value, onChange, disabled, id = 'sky-mood', showEmo
               {mood} {MOOD_EMOJIS[mood]}
             </option>
           ))}
+          <option value="lonely" hidden>
+            alone {MOOD_EMOJIS.alone}
+          </option>
+          {!MOODS.includes(value) && value && value !== 'lonely' && (
+            <option value={value}>
+              {value} {MOOD_EMOJIS[value] || ''}
+            </option>
+          )}
         </select>
       </label>
 
@@ -130,7 +189,7 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
   const lastId = visible[visible.length - 1]?.id;
   useEffect(() => { if (pinned.current && list.current) list.current.scrollTop = list.current.scrollHeight; }, [lastId]);
   return <section className="sky-chat" aria-label={session ? 'Private chat' : 'Global chat'}>
-    <div className="sky-chat-heading"><strong>{session ? `With ${session.peer.soul}` : 'Global Chat'}</strong>
+    <div className="sky-chat-heading"><strong>{session ? `With ${session.peer.soul?.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(session.peer.soul) : session.peer.soul}` : 'Global Chat'}</strong>
       {session && <button type="button" onClick={leave}>Leave chat</button>}
       <small>Messages fade after 30 minutes</small>
     </div>
@@ -138,7 +197,8 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
       const el = list.current; pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
     }}>
       {visible.map(m => {
-        const displayName = m.username || m.soul || 'soul';
+        const rawName = m.username || m.soul || 'soul';
+        const displayName = rawName.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(rawName) : rawName;
         const genderIcon = m.gender && GENDER_ICONS[m.gender] ? GENDER_ICONS[m.gender] : null;
         return (
           <p key={m.id} className="sky-chat-message">
@@ -146,7 +206,7 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
               {m.avatar ? (
                 <img src={m.avatar} alt="" className="sky-chat-avatar-img" />
               ) : (
-                <DefaultAvatarIcon size={24} className="sky-chat-avatar-placeholder" />
+                <DefaultAvatarIcon size={12} className="sky-chat-avatar-placeholder" />
               )}
             </span>
             <span className="sky-chat-content">

@@ -711,7 +711,7 @@ function DetailsModal({
     }
   }
 
-  const AD_INTERVAL = 10;
+  const AD_INTERVAL = 20;
   const [outgoingLetter, setOutgoingLetter] = useState(null);
   const [slideDirection, setSlideDirection] = useState(null);
   const isTransitioningRef = useRef(false);
