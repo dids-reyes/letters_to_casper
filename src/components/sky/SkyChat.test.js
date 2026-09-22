@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import SkyChat, { MoodPicker, soulName, defaultAnonymousUsername } from './SkyChat';
+import SkyChat, { MoodPicker, soulName, defaultAnonymousUsername, formatChatTimestamp } from './SkyChat';
 
 test('incoming messages follow the bottom only while the reader has not scrolled up', () => {
   const clock = Date.now();
@@ -32,6 +32,19 @@ test('renders compact avatar alongside chat message with 12px dimensions', () =>
   expect(placeholder).toBeInTheDocument();
   expect(placeholder).toHaveAttribute('width', '12');
   expect(placeholder).toHaveAttribute('height', '12');
+});
+
+test('renders compact relative timestamps beside global chat messages', () => {
+  const clock = Date.now();
+  const messages = [
+    { id: 'now', text: 'hello', soul: 'soul123', createdAt: clock - 12000 },
+    { id: 'minute', text: 'still here', soul: 'soul456', createdAt: clock - 60000 },
+  ];
+  render(<SkyChat messages={messages} connected={true} send={jest.fn()} clock={clock} />);
+
+  expect(screen.getByText('just now')).toBeInTheDocument();
+  expect(screen.getByText('1m ago')).toBeInTheDocument();
+  expect(formatChatTimestamp(clock - 30 * 60000, clock)).toBe('30m ago');
 });
 
 test('MoodPicker defaults to empty Status and opens anchored selection dropdown on click', () => {
@@ -165,4 +178,3 @@ describe('defaultAnonymousUsername & soulName identifier constraints', () => {
     expect(soulName({ id: '7' })).toBe('soul007');
   });
 });
-

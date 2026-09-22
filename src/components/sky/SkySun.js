@@ -135,7 +135,7 @@ export default function SkySun({
 
           {/* Dynamic Weather Obscuration Layer */}
           {obscuration === 'partly' && (
-            <g filter="url(#cloudFilter)" opacity="0.7">
+            <g filter="url(#cloudFilter)" opacity="0.7" transform="translate(3.2 3.2) scale(0.8)">
               <path
                 d="M 9 20 C 8 18 10 16 12 16 C 13 14 16 14 18 16 C 20 15 22 17 22 19 C 23 20 22 23 20 23 L 11 23 C 9 23 8 21 9 20 Z"
                 fill="#d8e6f7"
@@ -144,7 +144,7 @@ export default function SkySun({
           )}
 
           {obscuration === 'clouds' && (
-            <g filter="url(#cloudFilter)" opacity="0.88">
+            <g filter="url(#cloudFilter)" opacity="0.88" transform="translate(5.6 5.6) scale(0.65)">
               <path
                 d="M 6 21 C 5 18 8 15 11 16 C 12 13 16 12 19 14 C 22 13 25 15 25 18 C 26 21 24 24 21 24 L 9 24 C 6 24 5 22 6 21 Z"
                 fill="#b8cbdf"
@@ -158,7 +158,7 @@ export default function SkySun({
           )}
 
           {obscuration === 'rain' && (
-            <g>
+            <g transform="translate(4.8 4.8) scale(0.7)">
               <g filter="url(#cloudFilter)" opacity="0.9">
                 <path
                   d="M 5 19 C 4 16 7 14 10 15 C 11 12 15 11 18 13 C 21 12 24 14 24 17 C 25 20 23 23 20 23 L 8 23 C 5 23 4 21 5 19 Z"
@@ -239,4 +239,3 @@ export default function SkySun({
     </div>
   );
 }
-

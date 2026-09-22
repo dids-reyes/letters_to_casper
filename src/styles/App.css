@@ -536,29 +536,34 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
 }
 
 .messages-count {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(44px, 1fr));
   align-items: center;
+  width: min(100%, 540px);
   max-width: 100%;
-  padding: 7px;
-  overflow-x: auto;
+  padding: 4px;
+  overflow: visible;
   background: #f7f9fc;
   border: 1px solid #e4e9f0;
-  border-radius: 18px;
+  border-radius: 11px;
   box-shadow: 0 2px 8px rgba(32, 33, 36, 0.06);
   scrollbar-width: none;
 }
+.messages-count.has-sky-nav { grid-template-columns: repeat(7, minmax(44px, 1fr)); }
 
 .messages-count::-webkit-scrollbar {
   display: none;
 }
 
 .message-stat {
-  display: inline-flex;
-  flex: 0 0 auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 7px 12px;
+  gap: 1px;
+  min-width: 0;
+  padding: 4px 5px;
   color: #4b5563;
   font-size: 12px;
   font-weight: 400;
@@ -573,7 +578,95 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
 
 .message-stat svg {
   color: #3772ff;
+  width: 16px;
+  height: 16px;
 }
+
+.message-stat__label { font-size: 8px; line-height: 10px; }
+.message-stat__count {
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 5px);
+  min-width: 14px;
+  min-height: 14px;
+  box-sizing: border-box;
+  padding: 0 3px;
+  border: 1px solid #dce4ef;
+  border-radius: 6px;
+  background: #fff;
+  color: #4b5563;
+  font-size: 8px;
+  line-height: 12px;
+}
+.sky-nav-item {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  align-items: stretch;
+  justify-content: center;
+}
+.sky-nav-item .message-stat { width: 100%; border-left: 1px solid #dfe5ec; }
+.sky-presence-tooltip {
+  position: absolute;
+  z-index: 12;
+  left: 50%;
+  top: calc(100% + 8px);
+  width: max-content;
+  max-width: min(210px, calc(100vw - 24px));
+  padding: 7px 9px;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(32, 33, 36, .12);
+  color: #343a43;
+  font-size: 10px;
+  line-height: 14px;
+  transform: translateX(-50%);
+  white-space: normal;
+  animation: sky-presence-tip-in .25s ease both;
+}
+@keyframes sky-presence-tip-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.sky-presence-tooltip::after {
+  position: absolute;
+  left: 50%;
+  top: -5px;
+  width: 9px;
+  height: 9px;
+  border-top: 1px solid #dfe5ec;
+  border-left: 1px solid #dfe5ec;
+  background: inherit;
+  content: "";
+  transform: translateX(-50%) rotate(45deg);
+}
+.home-toolbar.is-compact .message-stat__label,
+.home-toolbar.is-compact .message-stat__count { display: none; }
+.home-toolbar.is-compact .sky-presence-tooltip { top: calc(100% + 5px); }
+@media (prefers-reduced-motion: reduce) {
+  .sky-presence-tooltip { animation: none; }
+}
+
+.sky-entry-dialog {
+  width: min(320px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid #e7e0ce;
+  border-radius: 10px;
+  background: #fffdf5;
+  box-shadow: 0 2px 8px rgba(32, 33, 36, .12);
+  color: #39352b;
+  text-align: left;
+}
+.compact-dialog-heading { display: flex; align-items: center; gap: 8px; }
+.compact-dialog-heading > svg { flex: none; width: 20px; height: 20px; color: #3772ff; }
+.compact-dialog-heading h2 { margin: 0; font-size: 17px; font-weight: 600; line-height: 22px; }
+.sky-entry-dialog p { margin: 9px 0 0; color: #6f685b; font-size: 13px; line-height: 1.55; }
+.sky-entry-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 17px; }
+.sky-entry-actions button { min-height: 38px; padding: 0 12px; border: 1px solid #ded5c2; border-radius: 7px; background: #fffaf0; color: #665f53; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.sky-entry-actions button:last-child { border-color: #3772ff; background: #3772ff; color: #fff; }
 
 .message-stat:hover {
   background-color: #fff;
@@ -2320,15 +2413,8 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 }
 
 .ui-announcement-dialog::before {
-  content: "";
-  position: absolute;
-  top: -75px;
-  right: -65px;
-  width: 190px;
-  height: 190px;
-  border-radius: 50%;
-  background: rgba(55, 114, 255, 0.08);
-  pointer-events: none;
+  display: none;
+  content: none;
 }
 
 .ui-announcement-close {
@@ -2425,20 +2511,39 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
    PLDT Network Notice Dialog
    ========================================================================== */
 .pldt-notice-dialog::before {
-  background: rgba(216, 30, 40, 0.08);
+  display: none;
 }
 
-.pldt-notice-logo-wrapper {
-  width: auto;
-  max-width: 140px;
+.ui-announcement-icon.ui-announcement-logo.pldt-notice-logo-wrapper {
+  display: flex;
+  width: 252px;
+  max-width: 100%;
   height: 40px;
+  margin-right: auto;
   margin-bottom: 16px;
+  margin-left: auto;
+  gap: 14px;
+  justify-content: center;
 }
 
-.pldt-notice-logo {
+.pldt-notice-logo-wrapper .pldt-notice-logo {
   display: block;
-  width: 125px;
+  width: 104px;
   height: auto;
+  object-fit: contain;
+}
+
+.network-notice-logo-divider {
+  width: 1px;
+  height: 24px;
+  background: #d9dde3;
+}
+
+.pldt-notice-logo-wrapper .smart-notice-logo {
+  display: block;
+  width: 135px;
+  height: auto;
+  margin-left: -16px;
   object-fit: contain;
 }
 
@@ -2456,97 +2561,49 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   box-shadow: 0 7px 18px rgba(216, 30, 40, 0.34);
 }
 
-.read-mode-dialog {
-  width: min(100%, 330px);
-  padding: 20px 18px 15px;
-  border-radius: 18px;
-}
-
-.read-mode-dialog::before {
-  width: 120px;
-  height: 120px;
-  top: -50px;
-  right: -40px;
-}
-
-.read-mode-dialog .ui-announcement-icon {
-  width: 36px;
-  height: 36px;
-  margin-bottom: 10px;
-  border-radius: 11px;
-}
-
-.read-mode-dialog .ui-announcement-eyebrow {
-  margin-bottom: 3px;
-  font-size: 9px;
-  letter-spacing: 0.1em;
-}
-
-.read-mode-dialog h2 {
-  font-size: 17px;
-  line-height: 1.25;
-}
+.read-mode-dialog { width:min(340px, calc(100vw - 32px)); box-sizing:border-box; padding:20px; border:1px solid #e7e0ce; border-radius:10px; background:#fffdf5; box-shadow:0 2px 8px rgba(32,33,36,.12); color:#39352b; text-align:left; }
 
 .read-mode-dialog p {
-  margin: 6px 0 0;
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: #64748b;
+  margin: 9px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #6f685b;
 }
 
 .read-mode-dialog-status {
-  display: flex;
-  justify-content: center;
-  margin-top: 11px;
-}
-
-.read-mode-dialog-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3.5px 10px;
-  border-radius: 999px;
-  background: #f1f3f7;
-  border: 1px solid #e2e6ed;
-  color: #64748b;
-  font-size: 10.5px;
+  margin-top: 10px !important;
+  color: #746d61 !important;
+  font-size: 11.5px !important;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  transition: all 0.2s ease;
 }
-
-.read-mode-dialog-badge.is-active {
-  background: rgba(37, 99, 235, 0.1);
-  border-color: rgba(37, 99, 235, 0.28);
-  color: #2563eb;
-  font-weight: 700;
-}
+.read-mode-dialog-status.is-active { color:#315fc7 !important; }
 
 .read-mode-dialog-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr 78px;
+  gap: 8px;
   width: 100%;
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .read-mode-dialog-toggle {
   width: 100%;
-  min-height: 36px;
+  min-height: 40px;
   padding: 0 14px;
-  border: 0;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #3772ff, #2352e6);
-  box-shadow: 0 4px 12px rgba(55, 114, 255, 0.22);
+  border: 1px solid #3772ff;
+  border-radius: 6px;
+  background: #3772ff;
+  box-shadow: none;
   color: #ffffff;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .read-mode-dialog-toggle:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 15px rgba(55, 114, 255, 0.3);
+  background: #315fc7;
+  box-shadow: none;
 }
 
 .read-mode-dialog-toggle.is-active {
@@ -2564,13 +2621,14 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 
 .read-mode-dialog-close {
   width: 100%;
-  min-height: 30px;
+  min-height: 40px;
   padding: 0 12px;
   border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: #64748b;
-  font-size: 11.5px;
+  border: 1px solid #ded5c2;
+  border-radius: 6px;
+  background: #fffaf0;
+  color: #665f53;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
@@ -2605,12 +2663,16 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 
   .home-toolbar:not(.is-compact) .messages-count {
     display: grid;
-    grid-template-columns: 1.15fr 1.35fr 1.15fr 1.15fr 1fr 0.85fr;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     width: 100%;
     max-width: 430px;
     box-sizing: border-box;
     padding: 4px;
     overflow: visible;
+  }
+
+  .home-toolbar:not(.is-compact) .messages-count.has-sky-nav {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
   .home-toolbar:not(.is-compact) .message-stat {
@@ -2621,17 +2683,17 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     width: 100%;
     box-sizing: border-box;
     margin: 0;
-    padding: 6px 2px;
-    gap: 3px;
-    font-size: 10px;
+    padding: 4px 1px;
+    gap: 1px;
+    font-size: 8px;
     line-height: 1;
   }
 
   .home-toolbar:not(.is-compact) .message-stat svg {
     display: block;
-    width: 18px;
-    height: 18px;
-    flex: 0 0 18px;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
     align-self: center;
   }
 
@@ -3114,7 +3176,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     flex: 0 0 17px;
   }
 
-  .home-toolbar.is-compact .toolbar-trigger > span {
+  .home-toolbar.is-compact .toolbar-trigger > .message-stat__label {
     display: none;
   }
 }
@@ -6474,6 +6536,18 @@ html.night-shift .message-stat:not(:first-child) {
 html.night-shift .message-stat svg {
   color: #8ab4ff;
 }
+html.night-shift .sky-nav-item .message-stat { border-left-color: #333842; }
+html.night-shift .message-stat__count { border-color: #333842; background: #262a31; color: #d8d4c8; }
+html.night-shift .sky-presence-tooltip { border-color: #333842; background: #15171b; color: #f2eee2; }
+html.night-shift .sky-presence-tooltip::after { border-color: #333842; }
+html.night-shift .sky-entry-dialog,
+html.night-shift .read-mode-dialog { border-color:#3d4139; background:#20231d; color:#f0ecdf; }
+html.night-shift .sky-entry-dialog p,
+html.night-shift .read-mode-dialog p { color:#b8b4a8; }
+html.night-shift .compact-dialog-heading > svg { color:#8ab4ff; }
+html.night-shift .read-mode-dialog-status.is-active { color:#8ab4ff !important; }
+html.night-shift .sky-entry-actions button { border-color: #464c57; background: #252930; color: #ecebdd; }
+html.night-shift .sky-entry-actions button:last-child { border-color: #6f91d9; background: #6f91d9; color: #fff; }
 
 html.night-shift .message-stat:hover {
   background-color: #262a31;
@@ -7022,10 +7096,6 @@ html.night-shift .ui-announcement-dialog {
   background: #20231d;
 }
 
-html.night-shift .ui-announcement-dialog::before {
-  background: rgba(138, 180, 255, 0.08);
-}
-
 html.night-shift .ui-announcement-dialog h2 {
   color: #f0ecdf;
 }
@@ -7040,6 +7110,10 @@ html.night-shift .ui-announcement-highlights strong { color:#ecebdd; }
 html.night-shift .ui-announcement-icon {
   background: rgba(138, 180, 255, 0.12);
   color: #8ab4ff;
+}
+
+html.night-shift .ui-announcement-icon.ui-announcement-logo {
+  background: transparent;
 }
 
 html.night-shift .ui-announcement-eyebrow {
@@ -7075,26 +7149,15 @@ html.night-shift .pldt-notice-action {
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.4);
 }
 
-html.night-shift .read-mode-dialog-badge {
-  background: #252822;
-  border-color: #3b3f37;
-  color: #aaa69a;
-}
-
-html.night-shift .read-mode-dialog-badge.is-active {
-  background: rgba(138, 180, 255, 0.15);
-  border-color: rgba(138, 180, 255, 0.35);
-  color: #8ab4ff;
-}
-
 html.night-shift .read-mode-dialog-toggle {
-  background: linear-gradient(135deg, #4f87ff, #3772ff);
-  box-shadow: 0 5px 14px rgba(79, 135, 255, 0.28);
+  background: #4f87ff;
+  box-shadow: none;
   color: #ffffff;
 }
 
 html.night-shift .read-mode-dialog-toggle:hover {
-  box-shadow: 0 7px 18px rgba(79, 135, 255, 0.38);
+  background: #3772ff;
+  box-shadow: none;
 }
 
 html.night-shift .read-mode-dialog-toggle.is-active {
@@ -7110,6 +7173,8 @@ html.night-shift .read-mode-dialog-toggle.is-active:hover {
 }
 
 html.night-shift .read-mode-dialog-close {
+  border-color: #40453d;
+  background: #252822;
   color: #aaa69a;
 }
 
@@ -7263,6 +7328,7 @@ html.night-shift .submit-retention-details summary { color:#a0b2ce; }
     padding:4px;
     overflow:visible;
   }
+  .home-toolbar.is-compact .messages-count.has-sky-nav { grid-template-columns:repeat(7,minmax(0,1fr)); }
   .home-toolbar.is-compact .message-stat {
     display:flex;
     justify-content:center;
@@ -7278,7 +7344,7 @@ html.night-shift .submit-retention-details summary { color:#a0b2ce; }
     line-height:1;
   }
   .home-toolbar.is-compact .message-stat svg { display:block; width:18px; height:18px; flex:0 0 18px; }
-  .home-toolbar.is-compact .toolbar-trigger > span { display:none; }
+  .home-toolbar.is-compact .toolbar-trigger > .message-stat__label { display:none; }
 }
 
 .message-stat--count { align-items:center; justify-content:center; }
@@ -7287,14 +7353,15 @@ html.night-shift .submit-retention-details summary { color:#a0b2ce; }
   align-items:center;
   justify-content:center;
   align-self:center;
-  min-height:18px;
-  line-height:18px;
+  min-height:14px;
+  line-height:12px;
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
 }
 .message-stat--count > svg { display:block; align-self:center; }
 @media (max-width: 480px) {
-  .home-toolbar.is-compact .messages-count { grid-template-columns:1.3fr repeat(3,minmax(0,1fr)) 1.15fr 1fr; }
+  .home-toolbar.is-compact .messages-count { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); }
+  .home-toolbar.is-compact .messages-count.has-sky-nav { grid-template-columns:repeat(7,minmax(0,1fr)); }
   .home-toolbar.is-compact .message-stat--count { gap:4px; }
 }
 

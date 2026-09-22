@@ -587,8 +587,9 @@ export default function PinLetterDialog({
           </button>
           <h3 id="pin-featured-guide-title">About Featured Letters</h3>
           <p className="pin-delivery-guide-intro">
-            Pinning a letter does not guarantee it will be featured. Featured spots are always 100% free and can never be bought or paid for. However, pinned letters notify our admins and moderators, giving your letter higher visibility and a much greater chance of being featured if it meets our criteria.
+            Pinning guarantees your letter stays highlighted at the top of the community. While featured status is 100% free and chosen based on content, pinned letters are brought straight to our moderators&apos; &amp; admin attention, giving your piece the best possible shot at being selected.
           </p>
+          <p className="pin-featured-criteria-label">Criterias are:</p>
           <ul className="pin-featured-criteria">
             <li><strong>Genuine and vulnerable:</strong> Honest words written from the heart, not generic quotes.</li>
             <li><strong>Leaves a mark:</strong> Stirs real emotion, whether it is comfort, ache, or closure.</li>

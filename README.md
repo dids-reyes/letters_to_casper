@@ -102,6 +102,10 @@ and accepts `send_pulse` with an acknowledgement. It broadcasts
 Without a configured production endpoint, the ambient page remains available
 with a resting message and disabled pulse button.
 
+The main-page Sky navigation observes `user_count` using Socket.io auth
+`{ observer: true }`. Observer connections must receive `sky_state` and
+`user_count` but must not create a participant or increment `activeCount`.
+
 Validation:
 
 ```sh

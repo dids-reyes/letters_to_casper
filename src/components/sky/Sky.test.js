@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { io } from 'socket.io-client';
-import Sky, { daylightAt } from './Sky';
+import Sky, { chatConnectionPoints, daylightAt } from './Sky';
 
 jest.mock('socket.io-client', () => ({ io: jest.fn() }));
 let handlers;
@@ -36,6 +36,16 @@ test('local time blends through dawn and dusk', () => {
   expect(at(18)).toBe(.5);
   expect(at(22)).toBe(0);
 });
+test('public chat connections resolve accepted participant pairs without exposing messages', () => {
+  const self = { id: 'self', soul: 'Itc', x: .2, y: .3 };
+  const peer = { id: 'peer', soul: 'Nova', x: .7, y: .6 };
+  const bystander = { id: 'other', soul: 'Elsewhere', x: .5, y: .5 };
+  const points = new Map([['self', self], ['peer', peer], ['other', bystander]]);
+
+  expect(chatConnectionPoints(points, [])).toEqual([]);
+  expect(chatConnectionPoints(points, [{ members: ['self', 'peer'] }])).toEqual([[self, peer]]);
+  expect(chatConnectionPoints(points, [], 'self', { peer: { id: 'peer' } })).toEqual([[self, peer]]);
+});
 test('presence count, pulse cooldown, reconnect and route cleanup', () => {
   document.title = 'Letters';
   const { unmount } = render(<Sky />);
@@ -43,7 +53,7 @@ test('presence count, pulse cooldown, reconnect and route cleanup', () => {
   expect(document.title).toBe('Sky');
   expect(document.documentElement).toHaveClass('sky-active');
   expect(button).toBeDisabled();
-  expect(screen.getByAltText('Letters to Casper')).toHaveAttribute('src', '/ltc-preview.webp');
+  expect(screen.getByAltText('Letters to Casper')).toHaveAttribute('src', '/ltc_favicon.png');
   enter();
   expect(screen.getByText('1 quiet soul is looking at the sky with you right now.')).toBeInTheDocument();
   fireEvent.click(button);
@@ -186,10 +196,11 @@ test('reopening an existing note offers one-click clearing', () => {
 });
 
 test('departed note stars remain faded until expiry and activity stays compact', () => {
+  const noteExpiresAt = Date.now() + 45 * 60 * 1000;
   render(<Sky />);
   act(() => handlers.sky_state({
     selfId: 'a', activeCount: 1,
-    participants: [{ id: 'a', x: .2, y: .3, active: true }, { id: 'b', x: .8, y: .7, active: false, note: 'Still a little light' }],
+    participants: [{ id: 'a', x: .2, y: .3, active: true }, { id: 'b', x: .8, y: .7, active: false, note: 'Still a little light', noteExpiresAt }],
     activity: [{ id: 'event', soul: 'soul123', action: 'left a note', at: Date.now() }],
   }));
   expect(screen.getByText('0 quiet souls are looking at the sky with you right now.')).toBeInTheDocument();
@@ -197,11 +208,30 @@ test('departed note stars remain faded until expiry and activity stays compact',
   expect(star).toHaveClass('sky-star--resting');
   fireEvent.click(star);
   expect(screen.getByText('Still a little light')).toBeInTheDocument();
+  expect(screen.getByText('15m ago')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Request Chat' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /shooting star/i })).not.toBeInTheDocument();
   expect(screen.getByText(/soul123 left a note/)).toBeInTheDocument();
   act(() => handlers.presence_left('b'));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Pulse' }).closest('.sky-bottom')).not.toBeNull();
   expect(screen.getByText('You don’t have to say a word. Leave a little light.')).toBeInTheDocument();
+});
+
+test('note timestamps render only when a note exists', () => {
+  render(<Sky />);
+  act(() => handlers.sky_state({
+    selfId: 'a',
+    participants: [
+      { id: 'a', x: .2, y: .3 },
+      { id: 'b', x: .8, y: .7, note: 'A recent thought', noteExpiresAt: Date.now() + 50 * 60 * 1000 },
+    ],
+  }));
+  fireEvent.click(screen.getByRole('button', { name: 'Quiet soul 2, read note' }));
+  expect(screen.getByText('10m ago')).toBeInTheDocument();
+
+  act(() => handlers.note_updated({ id: 'b', note: '', noteExpiresAt: null }));
+  expect(document.querySelector('.sky-note-timestamp')).toBeNull();
 });
 
 test('own-star introduction is anchored and disappears after three seconds', () => {
@@ -259,6 +289,26 @@ test('global chat expires while idle and private chat has a separate conversatio
   act(() => handlers.disconnect());
   expect(screen.queryByLabelText('Private message')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Global message')).toBeDisabled();
+});
+
+test('incoming chat requests show the requester profile and always show an avatar', () => {
+  render(<Sky />); enter();
+  act(() => handlers.chat_request({
+    id: 'request-1',
+    from: 'b',
+    username: 'Orion',
+    age: 28,
+    gender: 'male',
+    avatar: 'data:image/webp;base64,requestAvatar',
+  }));
+
+  const request = screen.getByRole('dialog', { name: 'Incoming chat request' });
+  expect(request).toHaveTextContent('Orion');
+  expect(request).toHaveTextContent('28 · male ♂');
+  expect(screen.getByAltText('Orion avatar')).toHaveAttribute('src', 'data:image/webp;base64,requestAvatar');
+
+  act(() => handlers.chat_request({ id: 'request-2', soul: 'soul123' }));
+  expect(screen.getByRole('dialog', { name: 'Incoming chat request' }).querySelector('.sky-invitation-avatar svg')).toBeInTheDocument();
 });
 
 
