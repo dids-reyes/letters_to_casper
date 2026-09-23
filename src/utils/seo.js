@@ -42,12 +42,15 @@ export function updatePageSeo({
   canonicalUrl,
   ogType = 'website',
   ogImage = 'https://letterstocasper.com/ltc-header-social.png',
+  robots,
   jsonLd,
   jsonLdId = 'page-json-ld',
 } = {}) {
   const previousTitle = document.title;
   const previousDescription = document.querySelector('meta[name="description"]')?.getAttribute('content');
   const previousCanonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href');
+  const previousRobotsElement = document.querySelector('meta[name="robots"]');
+  const previousRobots = previousRobotsElement?.getAttribute('content');
 
   if (title) document.title = title;
   if (description) {
@@ -67,6 +70,9 @@ export function updatePageSeo({
   if (ogImage) {
     setMetaTag('property', 'og:image', ogImage);
   }
+  if (robots) {
+    setMetaTag('name', 'robots', robots);
+  }
   if (jsonLd) {
     setJsonLd(jsonLdId, jsonLd);
   }
@@ -80,6 +86,14 @@ export function updatePageSeo({
     }
     if (previousCanonical) {
       setCanonicalUrl(previousCanonical);
+    }
+    if (robots) {
+      const robotsElement = document.querySelector('meta[name="robots"]');
+      if (previousRobotsElement) {
+        previousRobotsElement.setAttribute('content', previousRobots || '');
+      } else if (robotsElement) {
+        robotsElement.remove();
+      }
     }
     const jsonLdScript = document.getElementById(jsonLdId);
     if (jsonLdScript) {
