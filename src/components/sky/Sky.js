@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { PiShootingStar } from 'react-icons/pi';
 import { updatePageSeo } from '../../utils/seo';
@@ -6,10 +6,10 @@ import SkyCelestial from './SkyCelestial';
 import { STAR_TINTS, DEFAULT_TINT } from './tints';
 import './Sky.css';
 import { getSafeStarPosition } from './safePositions';
-import SkyChat, { CHAT_TTL_MS, MOOD_EMOJIS, MoodPicker, soulName, defaultAnonymousUsername } from './SkyChat';
+import SkyChat, { isChatMessageFresh, MOOD_EMOJIS, MoodPicker, soulName, defaultAnonymousUsername } from './SkyChat';
 import SkyProfileModal, { DefaultAvatarIcon } from './SkyProfileModal';
 import { GENDER_ICONS } from './avatar';
-import { loadSkySession, saveSkySession, touchSkySession } from './session';
+import { clearSkySession } from './session';
 
 export { defaultAnonymousUsername };
 
@@ -107,15 +107,14 @@ export default function Sky({
   const introCard = useRef(null);
   const headerRef = useRef(null);
   const dockRef = useRef(null);
-  // 30-minute grace period session restoration
-  const [profile, setProfile] = useState(() => {
-    if (initialProfile) return initialProfile;
-    const restored = loadSkySession();
-    return restored?.profile || null;
-  });
+  const [profile, setProfile] = useState(initialProfile || null);
   const profileRef = useRef(profile);
   profileRef.current = profile;
   const pendingProfileRef = useRef(null);
+
+  useEffect(() => {
+    clearSkySession();
+  }, []);
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [pulseConfirmOpen, setPulseConfirmOpen] = useState(false);
@@ -163,8 +162,6 @@ export default function Sky({
     setProfileModalOpen(false);
 
     const current = scene.current;
-    const existingNote = current.points.get(current.selfId)?.note || '';
-    saveSkySession({ profile: updatedProfile, note: existingNote });
 
     if (current.selfId) {
       const selfPoint = current.points.get(current.selfId);
@@ -250,6 +247,23 @@ export default function Sky({
   const [count, setCount] = useState(0);
   const [daylight, setDaylight] = useState(() => daylightAt(new Date()));
   const [feedback, setFeedback] = useState('');
+
+  const resetTemporarySession = useCallback((updateUi = true) => {
+    profileRef.current = null;
+    pendingProfileRef.current = null;
+    clearSkySession();
+    if (!updateUi) return;
+    setProfile(null);
+    setProfileModalOpen(false);
+    setMessages([]);
+    setSession(null);
+    setChatConnections([]);
+    setInvitation(null);
+    setOutgoing(null);
+    setSelected(null);
+    setEditing(false);
+    setDraft('');
+  }, []);
 
   function selectTint(tintId) {
     if (!Object.prototype.hasOwnProperty.call(STAR_TINTS, tintId)) return;
@@ -357,12 +371,9 @@ export default function Sky({
     document.documentElement.classList.add('sky-active');
     const timer = setInterval(() => {
       setClock(Date.now());
-      setMessages(items => items.filter(m => Date.now() - m.createdAt < CHAT_TTL_MS));
+      setMessages(items => items.filter(m => isChatMessageFresh(m)));
       setDaylight(daylightAt(new Date()));
       setRemaining(Math.max(0, Math.ceil((deadline.current - Date.now()) / 1000)));
-      if (Date.now() % 30000 < 1000) {
-        touchSkySession();
-      }
     }, 1000);
     return () => {
       cleanupSeo();
@@ -735,7 +746,6 @@ export default function Sky({
         };
         profileRef.current = defaultAnon;
         setProfile(defaultAnon);
-        saveSkySession({ profile: defaultAnon, note: selfPoint?.note || '' });
         if (selfPoint) {
           Object.assign(selfPoint, {
             username: defaultAnon.username,
@@ -750,7 +760,7 @@ export default function Sky({
       setSelected(null);
       setCount(state.activeCount ?? state.participants.length);
       setActivity(state.activity || []);
-      setMessages((state.messages || []).filter(m => Date.now() - m.createdAt < CHAT_TTL_MS));
+      setMessages((state.messages || []).filter(m => isChatMessageFresh(m)));
       setChatConnections(items => {
         const next = state.chatConnections || [];
         return items.length === 0 && next.length === 0 ? items : next;
@@ -792,6 +802,7 @@ export default function Sky({
       }
     });
     socket.on('chat_message', message => {
+      if (!current.selfId) return;
       const senderPoint = current.points.get(message.senderId);
       const isSelf = message.senderId === current.selfId || message.soul === current.points.get(current.selfId)?.soul;
       const enriched = {
@@ -800,7 +811,7 @@ export default function Sky({
         gender: message.gender || (isSelf && profileRef.current?.gender) || senderPoint?.gender || null,
         avatar: message.avatar || (isSelf && profileRef.current?.avatar) || senderPoint?.avatar || null,
       };
-      setMessages(items => [...items.filter(m => m.id !== message.id && Date.now() - m.createdAt < CHAT_TTL_MS), enriched]);
+      setMessages(items => [...items.filter(m => m.id !== message.id && isChatMessageFresh(m)), enriched]);
     });
     socket.on('chat_request', setInvitation);
     socket.on('chat_request_closed', ({ id, reason }) => {
@@ -859,9 +870,9 @@ export default function Sky({
       current.redraw();
     });
     const disconnected = () => {
+      resetTemporarySession();
       setIntroId(null);
       setStatus('reconnecting');
-      setMessages([]); setSession(null); setInvitation(null); setOutgoing(null); setChatConnections([]);
       setPeople([]);
       setActivity([]);
       setSelected(null);
@@ -877,36 +888,20 @@ export default function Sky({
     };
     socket.on('disconnect', disconnected);
     socket.on('connect_error', disconnected);
-    const saveCurrentSession = () => {
-      if (profileRef.current) {
-        const note = current.points.get(current.selfId)?.note || '';
-        saveSkySession({ profile: profileRef.current, note });
-      }
-    };
     const leave = () => {
-      saveCurrentSession();
+      resetTemporarySession();
       socket.disconnect();
     };
     const resume = () => {
-      touchSkySession();
       socket.connect();
-    };
-    const handleVisibility = () => {
-      if (document.hidden) {
-        saveCurrentSession();
-      } else {
-        touchSkySession();
-      }
     };
     window.addEventListener('pagehide', leave);
     window.addEventListener('pageshow', resume);
-    document.addEventListener('visibilitychange', handleVisibility);
     socket.connect();
     return () => {
-      saveCurrentSession();
+      resetTemporarySession(false);
       window.removeEventListener('pagehide', leave);
       window.removeEventListener('pageshow', resume);
-      document.removeEventListener('visibilitychange', handleVisibility);
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
@@ -916,7 +911,7 @@ export default function Sky({
       current.shootingStars = [];
       current.selfId = null;
     };
-  }, []);
+  }, [resetTemporarySession]);
 
   function sendPulse() {
     const socket = socketRef.current;
@@ -1019,7 +1014,6 @@ export default function Sky({
         setNoteError(error ? 'Could not save your note. Please try again.' : reply.error);
       } else {
         setEditing(false);
-        saveSkySession({ profile: profileRef.current, note: noteToSave });
         setFeedback(noteToSave.trim() ? 'Your note is in the sky.' : 'Your note has been removed.');
       }
     });
@@ -1254,7 +1248,7 @@ export default function Sky({
                         </strong>
                         {selectedPerson.gender && GENDER_ICONS[selectedPerson.gender] ? (
                           <span className="sky-star-gender" aria-hidden="true">
-                            {' ' + GENDER_ICONS[selectedPerson.gender]}
+                            {GENDER_ICONS[selectedPerson.gender]}
                           </span>
                         ) : null}
                       </div>
@@ -1290,7 +1284,7 @@ export default function Sky({
                         </strong>
                         {selectedPerson.gender && GENDER_ICONS[selectedPerson.gender] ? (
                           <span className="sky-star-gender" aria-hidden="true">
-                            {' ' + GENDER_ICONS[selectedPerson.gender]}
+                            {GENDER_ICONS[selectedPerson.gender]}
                           </span>
                         ) : null}
                       </div>
@@ -1365,7 +1359,6 @@ export default function Sky({
       )}
       {profileModalOpen && (
         <SkyProfileModal
-          initialData={profile}
           onSubmit={handleProfileSubmit}
           onClose={() => setProfileModalOpen(false)}
         />

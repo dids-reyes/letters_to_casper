@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { StrictMode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import SkyProfileModal from './SkyProfileModal';
 import * as avatarModule from './avatar';
@@ -85,6 +85,26 @@ describe('SkyProfileModal', () => {
     avatarModule.processTemporaryAvatar.mockRestore();
   });
 
+  test('loads an avatar preview under React Strict Mode', async () => {
+    jest.spyOn(avatarModule, 'processTemporaryAvatar').mockResolvedValue('data:image/webp;base64,strictAvatar');
+
+    const { container } = render(
+      <StrictMode>
+        <SkyProfileModal onSubmit={jest.fn()} />
+      </StrictMode>
+    );
+    const fileInput = container.querySelector('input[type="file"]');
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['pixels'], 'strict.png', { type: 'image/png' })] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByAltText('Avatar preview')).toHaveAttribute('src', 'data:image/webp;base64,strictAvatar');
+    });
+
+    avatarModule.processTemporaryAvatar.mockRestore();
+  });
+
   test('renders pixel-perfect vector GenderSymbol SVGs for male, female, and non-binary', () => {
     const { container } = render(<SkyProfileModal onSubmit={jest.fn()} />);
     const maleSvg = container.querySelector('.sky-gender-btn[aria-label="Male"] svg');
@@ -129,4 +149,3 @@ describe('SkyProfileModal', () => {
     expect(handleClose).toHaveBeenCalledTimes(2);
   });
 });
-

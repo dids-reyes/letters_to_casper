@@ -6117,14 +6117,42 @@ html.night-shift .letter-paper__translation-control small {
   animation: letter-share-rise-in 0.2s ease-out;
 }
 
-.letter-share-dialog__qr img {
-  display: block;
+.letter-share-dialog__qr-code {
+  position: relative;
   width: min(210px, 100%);
-  height: auto;
   aspect-ratio: 1;
   padding: 7px;
   border-radius: 12px;
   background: #fff;
+}
+
+.letter-share-dialog__qr-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
+}
+
+.letter-share-dialog__qr-mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 19%;
+  aspect-ratio: 1;
+  padding: 2.5%;
+  border-radius: 5px;
+  background: #fff;
+  transform: translate(-50%, -50%);
+}
+
+.letter-share-dialog__qr-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .letter-share-dialog__download {
@@ -8038,6 +8066,94 @@ button.letter-paper__pin::after {
   left: -8px;
   right: -8px;
 }
+
+.pin-letter-onboarding-tooltip {
+  position: relative;
+  z-index: 1200 !important;
+  box-sizing: border-box;
+  width: min(224px, calc(100vw - 32px));
+  padding: 10px 34px 10px 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px !important;
+  background: #292821 !important;
+  color: #fffdf6 !important;
+  box-shadow: 0 10px 26px rgba(32, 29, 20, 0.24) !important;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px !important;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.pin-letter-onboarding-tooltip__copy {
+  display: block;
+  animation: pin-letter-tooltip-copy-in 180ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.pin-letter-onboarding-tooltip__close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.72;
+}
+
+.pin-letter-onboarding-tooltip__close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.pin-letter-onboarding-tooltip__close:focus-visible {
+  outline: 2px solid #fffdf6;
+  outline-offset: -2px;
+}
+
+.pin-letter-onboarding-tooltip__arrow {
+  background: #292821 !important;
+}
+
+.pin-letter-hover-tooltip {
+  z-index: 1200 !important;
+  max-width: 210px;
+  padding: 7px 9px !important;
+  border-radius: 6px !important;
+  background: #292821 !important;
+  color: #fffdf6 !important;
+  box-shadow: 0 6px 18px rgba(32, 29, 20, 0.2) !important;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 11px !important;
+  line-height: 1.35;
+}
+
+@keyframes pin-letter-tooltip-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin-letter-onboarding-tooltip__copy {
+    animation: none;
+  }
+}
+
 @media(max-width:768px) {
   .letter-card__top { gap:4px; }
   .letter-card__time { gap:3px; }

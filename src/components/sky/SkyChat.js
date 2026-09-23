@@ -2,7 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { GENDER_ICONS } from './avatar';
 import { DefaultAvatarIcon } from './SkyProfileModal';
 
-export const CHAT_TTL_MS = 30 * 60 * 1000;
+export const GLOBAL_CHAT_TTL_MS = 10 * 60 * 1000;
+export const PRIVATE_CHAT_TTL_MS = 30 * 60 * 1000;
+
+export function isChatMessageFresh(message, clock = Date.now()) {
+  const ttl = message?.sessionId ? PRIVATE_CHAT_TTL_MS : GLOBAL_CHAT_TTL_MS;
+  return clock - message.createdAt < ttl;
+}
 export const MOODS = ['bored', 'heartbroken', 'sleepy', 'alone', 'depressed', 'anxious', 'peaceful'];
 export const MOOD_EMOJIS = {
   bored: '🥱',
@@ -191,13 +197,13 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
   const list = useRef(null);
   const pinned = useRef(true);
   const sessionId = session?.sessionId || null;
-  const visible = messages.filter(m => (m.sessionId || null) === sessionId && clock - m.createdAt < CHAT_TTL_MS);
+  const visible = messages.filter(m => (m.sessionId || null) === sessionId && isChatMessageFresh(m, clock));
   const lastId = visible[visible.length - 1]?.id;
   useEffect(() => { if (pinned.current && list.current) list.current.scrollTop = list.current.scrollHeight; }, [lastId]);
   return <section className="sky-chat" aria-label={session ? 'Private chat' : 'Global chat'}>
     <div className="sky-chat-heading"><strong>{session ? `With ${session.peer.soul?.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(session.peer.soul) : session.peer.soul}` : 'Global Chat'}</strong>
       {session && <button type="button" onClick={leave}>Leave chat</button>}
-      <small>Messages fade after 30 minutes</small>
+      <small>Messages fade after {session ? '30' : '10'} minutes</small>
     </div>
     <div className="sky-chat-messages" ref={list} role="log" aria-live="polite" onScroll={() => {
       const el = list.current; pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
@@ -216,7 +222,12 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
               )}
             </span>
             <span className="sky-chat-content">
-              <strong>{displayName}{genderIcon ? ` ${genderIcon}` : ''}</strong>: <span className="sky-chat-text">{m.text}</span>
+              <span className="sky-chat-identity">
+                <strong>{displayName}</strong>
+                {genderIcon && <span className="sky-chat-gender" aria-hidden="true">{genderIcon}</span>}
+              </span>
+              <span className="sky-chat-separator" aria-hidden="true">:</span>{' '}
+              <span className="sky-chat-text">{m.text}</span>
               <small className="sky-chat-time">{formatChatTimestamp(m.createdAt, clock)}</small>
             </span>
           </p>
@@ -229,7 +240,7 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
       setBusy(true); setError('');
       send({ text, sessionId }, (ok, reason) => { setBusy(false); if (ok) { setText(''); pinned.current = true; } else setError(reason); });
     }}>
-      <input aria-label={session ? 'Private message' : 'Global message'} value={text} maxLength={400} onChange={e => setText(e.target.value)} placeholder={connected ? 'Say something kind…' : 'Waiting for the shared sky…'} disabled={!connected} />
+      <input aria-label={session ? 'Private message' : 'Global message'} value={text} maxLength={400} onChange={e => setText(e.target.value)} placeholder={connected ? (session ? 'Say something kind…' : 'Send a message across the sky...') : 'Waiting for the shared sky…'} disabled={!connected} />
       <button disabled={!connected || busy || !text.trim()}>Send</button>
     </form>
     {error && <small role="alert">{error}</small>}

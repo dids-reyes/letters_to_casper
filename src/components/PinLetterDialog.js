@@ -9,8 +9,8 @@ import {
 import {AiOutlinePushpin} from 'react-icons/ai';
 import {createPortal} from 'react-dom';
 import {render_url, api_key} from '../data/keys';
-import paymongoLogo from '../assets/paymongo_logo.png';
 import qrphLogo from '../assets/qrph_logo.png';
+import gcashLogo from '../assets/gcash-logo-vector.svg';
 import './PinLetterDialog.css';
 
 export function letterIdFromUrl(value) {
@@ -82,6 +82,7 @@ export default function PinLetterDialog({
   const [showFeaturedGuide, setShowFeaturedGuide] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const emailInput = useRef(null);
+  const recipientEmailInput = useRef(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const busy = useRef(false);
@@ -168,8 +169,15 @@ export default function PinLetterDialog({
     const letterId = letterIdFromUrl(url);
     if (!letterId) { setError('Paste a valid Letters to Casper letter link.'); return; }
     const recipient_email = deliverEmail ? recipientEmail.trim() : '';
-    if (deliverEmail && recipient_email && (recipient_email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email))) {
-      setError('Enter a valid recipient email address or leave it blank.'); return;
+    if (deliverEmail && !recipient_email) {
+      setError('Enter the recipient email address to deliver this letter anonymously.');
+      recipientEmailInput.current?.focus();
+      return;
+    }
+    if (deliverEmail && (recipient_email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email))) {
+      setError('Enter a valid recipient email address.');
+      recipientEmailInput.current?.focus();
+      return;
     }
     const notificationEmail = email.trim();
     if (notificationEmail && (notificationEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail) || emailInput.current?.validity.typeMismatch)) {
@@ -256,18 +264,33 @@ export default function PinLetterDialog({
           </span>
         </h2>
         <p id="pin-letter-subtext">
-          {confirmation ? "Is this the letter you’d like to pin?" : isFull
+          {confirmation ? (confirmation.recipient_email
+            ? "Is this the letter you’d like to pin and deliver anonymously?"
+            : "Is this the letter you’d like to pin?") : isFull
             ? "To keep the quiet feed balanced and give every featured letter its moment, we only allow 7 pinned letters at a time. Please check back soon once a current pin expires to pin your own or another letter."
             : <>Keep these words at the top of the feed, and optionally deliver them anonymously via email. <button type="button" className="pin-featured-guide-btn" onClick={() => setShowFeaturedGuide(true)}>Featured Letters.</button></>}
         </p>
         {confirmation ? (
           <form onSubmit={pay} noValidate>
             <dl className="pin-letter-confirmation">
-              <dt>From</dt><dd>{confirmation.from || 'Anonymous'}</dd>
-              <dt>To</dt><dd>{confirmation.to || 'Anonymous'}</dd>
+              <div className="pin-letter-confirmation-row">
+                <dt>From:</dt><dd>{confirmation.from || 'Anonymous'}</dd>
+              </div>
+              <div className="pin-letter-confirmation-row">
+                <dt>To:</dt><dd>{confirmation.to || 'Anonymous'}</dd>
+              </div>
               <dt>Message</dt><dd className="pin-letter-message-preview">{confirmation.message}</dd>
             </dl>
-            <p className="pin-letter-note">{tier.label} · ₱{tier.price}</p>
+            {confirmation.recipient_email && (
+              <p className="pin-letter-anonymous-recipient">
+                <span>Anonymously Send to:</span> {confirmation.recipient_email}
+              </p>
+            )}
+            <div className="pin-letter-confirmation-price" aria-label={`${tier.label}, ₱${tier.price.toFixed(2)}`}>
+              <span>{tier.label}</span>
+              <span className="pin-letter-confirmation-price-divider" aria-hidden="true">·</span>
+              <strong><span className="pin-letter-confirmation-currency" aria-hidden="true">₱</span>{tier.price.toFixed(2)}</strong>
+            </div>
             {confirmation.notificationEmail && <p className="pin-letter-note">We’ll email {confirmation.notificationEmail} once your payment is confirmed.</p>}
             {error && <p id="pin-letter-error" role="alert">{error}</p>}
             <div className="pin-letter-actions">
@@ -281,8 +304,8 @@ export default function PinLetterDialog({
               <IoLockClosedOutline aria-hidden="true" />
               <span>Secure checkout using</span>
               <img src={qrphLogo} alt="QRPH" className="pin-qrph-logo" />
-              <span>by</span>
-              <img src={paymongoLogo} alt="PayMongo" className="pin-paymongo-logo" />
+              <span>or</span>
+              <img src={gcashLogo} alt="GCash" className="pin-gcash-logo" />
             </p>
           </form>
         ) : isFull ? (
@@ -424,12 +447,14 @@ export default function PinLetterDialog({
                     </button>
                   </div>
                   <input
+                    ref={recipientEmailInput}
                     id="pin-recipient-email"
                     name="recipient_email"
                     type="email"
                     inputMode="email"
                     autoComplete="off"
                     value={recipientEmail}
+                    required={deliverEmail}
                     maxLength={254}
                     disabled={loading || closing}
                     placeholder="recipient@example.com"
@@ -484,7 +509,7 @@ export default function PinLetterDialog({
               >
                 {loading
                   ? "Loading letter…"
-                  : (deliverEmail && recipientEmail.trim())
+                  : deliverEmail
                     ? `Pin and Deliver for ₱${tier.price}`
                     : `Pin for ₱${tier.price}`}
               </button>

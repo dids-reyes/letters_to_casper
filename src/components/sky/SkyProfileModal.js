@@ -107,15 +107,55 @@ export default function SkyProfileModal({ onSubmit, onClose, initialData = null 
   const [touched, setTouched] = useState({ username: false, age: false, gender: false });
 
   const fileInputRef = useRef(null);
+  const avatarRef = useRef(avatar);
+  const mountedRef = useRef(true);
+  avatarRef.current = avatar;
+
+  function releaseAvatar(value) {
+    if (typeof value === 'string' && value.startsWith('blob:')) {
+      URL.revokeObjectURL(value);
+    }
+  }
+
+  function resetForm() {
+    releaseAvatar(avatarRef.current);
+    avatarRef.current = null;
+    setUsername('');
+    setAge('');
+    setGender('');
+    setAvatar(null);
+    setAvatarLoading(false);
+    setAvatarError('');
+    setTouched({ username: false, age: false, gender: false });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function closeModal() {
+    resetForm();
+    onClose?.();
+  }
+
+  useEffect(() => {
+    // React Strict Mode replays this setup/cleanup cycle in development.
+    mountedRef.current = true;
+    const fileInput = fileInputRef.current;
+    return () => {
+      mountedRef.current = false;
+      releaseAvatar(avatarRef.current);
+      if (fileInput) fileInput.value = '';
+    };
+  }, []);
 
   // Close on Escape key if onClose is provided
   useEffect(() => {
     if (!onClose) return undefined;
     const handleKeyDown = e => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') closeModal();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // closeModal deliberately resets the form before delegating to onClose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose]);
 
   const trimmedUsername = username.trim();
@@ -133,11 +173,18 @@ export default function SkyProfileModal({ onSubmit, onClose, initialData = null 
     setAvatarLoading(true);
     try {
       const compressed = await processTemporaryAvatar(file);
+      if (!mountedRef.current) {
+        releaseAvatar(compressed);
+        return;
+      }
+      releaseAvatar(avatarRef.current);
       setAvatar(compressed);
     } catch (err) {
+      if (!mountedRef.current) return;
       setAvatarError(err.message || 'Could not process avatar.');
       setAvatar(null);
     } finally {
+      if (!mountedRef.current) return;
       setAvatarLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -166,7 +213,7 @@ export default function SkyProfileModal({ onSubmit, onClose, initialData = null 
       aria-modal="true"
       aria-labelledby="sky-profile-title"
       onClick={e => {
-        if (e.target === e.currentTarget && onClose) onClose();
+        if (e.target === e.currentTarget && onClose) closeModal();
       }}
     >
       <div className="sky-profile-modal">
@@ -174,7 +221,7 @@ export default function SkyProfileModal({ onSubmit, onClose, initialData = null 
           <button
             type="button"
             className="sky-profile-close"
-            onClick={onClose}
+            onClick={closeModal}
             aria-label="Close profile editor"
           >
             ×
@@ -229,7 +276,11 @@ export default function SkyProfileModal({ onSubmit, onClose, initialData = null 
                 <button
                   type="button"
                   className="sky-profile-avatar-remove"
-                  onClick={() => setAvatar(null)}
+                  onClick={() => {
+                    releaseAvatar(avatarRef.current);
+                    avatarRef.current = null;
+                    setAvatar(null);
+                  }}
                 >
                   Remove
                 </button>

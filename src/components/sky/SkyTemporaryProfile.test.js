@@ -2,7 +2,7 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { io } from 'socket.io-client';
 import Sky from './Sky';
-import { SKY_SESSION_STORAGE_KEY, SKY_SESSION_TTL_MS } from './session';
+import { SKY_SESSION_STORAGE_KEY } from './session';
 
 jest.mock('socket.io-client', () => ({ io: jest.fn() }));
 
@@ -95,6 +95,12 @@ describe('Sky Temporary Profile & Mobile Layout Integration', () => {
       }),
       expect.any(Function)
     );
+
+    fireEvent.click(trigger);
+    const reopenedModal = screen.getByRole('dialog', { name: /Create Your Temporary Profile/i });
+    expect(within(reopenedModal).getByLabelText(/Username/i)).toHaveValue('');
+    expect(within(reopenedModal).getByLabelText(/^Age/i)).toHaveValue(null);
+    expect(within(reopenedModal).queryByAltText('Avatar preview')).not.toBeInTheDocument();
   });
 
   test('default anonymous profile assigns soul<id> with unset age and gender', () => {
@@ -243,62 +249,62 @@ describe('Sky Temporary Profile & Mobile Layout Integration', () => {
     expect(chatMsg).toHaveTextContent('Alex ⚧: hello from the stars');
   });
 
-  test('30-minute grace period: restores profile within 30 minutes, purges after 30 minutes', () => {
-    // 1. User with profile departs and session is saved to localStorage
-    const savedData = {
-      profile: {
-        username: 'Cassiopeia',
-        age: 26,
-        gender: 'female',
-        avatar: null,
-        status: 'peaceful',
-      },
-      note: 'Looking up',
+  test('disconnect purges the temporary profile, chat cache, storage, and modal defaults', () => {
+    localStorage.setItem(SKY_SESSION_STORAGE_KEY, JSON.stringify({
+      profile: { username: 'Cassiopeia', age: 26, gender: 'female' },
       lastActiveAt: Date.now(),
-    };
-    localStorage.setItem(SKY_SESSION_STORAGE_KEY, JSON.stringify(savedData));
+    }));
 
-    // 2. User returns within 30 minutes (e.g., 15 minutes later)
-    const { unmount } = render(<Sky initialProfile={null} />);
+    render(<Sky initialProfile={{
+      username: 'Cassiopeia',
+      age: 26,
+      gender: 'female',
+      avatar: 'data:image/webp;base64,temporaryAvatar',
+      status: 'peaceful',
+    }} />);
 
     act(() => {
       handlers.sky_state({
         selfId: 'self-99',
         participants: [{ id: 'self-99', x: 0.5, y: 0.5 }],
       });
-    });
-
-    // The restored profile is active
-    const ownStar = screen.getByRole('button', { name: /Your star/i });
-    fireEvent.click(ownStar);
-
-    const ownCard = screen.getByRole('dialog', { name: 'Your sky note' });
-    expect(ownCard).toHaveTextContent('Cassiopeia, 26 ♀');
-
-    unmount();
-
-    // 3. User is inactive for over 30 minutes
-    const expiredData = {
-      ...savedData,
-      lastActiveAt: Date.now() - (SKY_SESSION_TTL_MS + 5000),
-    };
-    localStorage.setItem(SKY_SESSION_STORAGE_KEY, JSON.stringify(expiredData));
-
-    // Next visit purges session and gives fresh default anonymous profile
-    render(<Sky initialProfile={null} />);
-    expect(localStorage.getItem(SKY_SESSION_STORAGE_KEY)).toBeNull();
-
-    act(() => {
-      handlers.sky_state({
-        selfId: 'soul777',
-        participants: [{ id: 'soul777', x: 0.5, y: 0.5 }],
+      handlers.chat_message({
+        id: 'temporary-message',
+        senderId: 'self-99',
+        soul: 'Cassiopeia',
+        text: 'Temporary words',
+        createdAt: Date.now(),
       });
     });
 
-    const freshStar = screen.getByRole('button', { name: /Your star/i });
-    fireEvent.click(freshStar);
-    const freshCard = screen.getByRole('dialog', { name: 'Your sky note' });
-    expect(freshCard).toHaveTextContent('soul777');
-    expect(freshCard).not.toHaveTextContent('Cassiopeia');
+    expect(screen.getByText('Temporary words')).toBeInTheDocument();
+    expect(screen.getByAltText('Your profile avatar')).toHaveAttribute('src', 'data:image/webp;base64,temporaryAvatar');
+    expect(localStorage.getItem(SKY_SESSION_STORAGE_KEY)).toBeNull();
+
+    act(() => handlers.disconnect());
+
+    expect(screen.queryByText('Temporary words')).not.toBeInTheDocument();
+    expect(screen.queryByAltText('Your profile avatar')).not.toBeInTheDocument();
+    expect(localStorage.getItem(SKY_SESSION_STORAGE_KEY)).toBeNull();
+
+    act(() => handlers.chat_message({
+      id: 'late-message',
+      senderId: 'self-99',
+      soul: 'Cassiopeia',
+      avatar: 'data:image/webp;base64,temporaryAvatar',
+      text: 'Late stale words',
+      createdAt: Date.now(),
+    }));
+    expect(screen.queryByText('Late stale words')).not.toBeInTheDocument();
+
+    act(() => handlers.sky_state({
+      selfId: 'fresh-1',
+      participants: [{ id: 'fresh-1', x: 0.5, y: 0.5 }],
+    }));
+    fireEvent.click(screen.getByRole('button', { name: /Customize profile/i }));
+    const modal = screen.getByRole('dialog', { name: /Create Your Temporary Profile/i });
+    expect(within(modal).getByLabelText(/Username/i)).toHaveValue('');
+    expect(within(modal).getByLabelText(/^Age/i)).toHaveValue(null);
+    expect(within(modal).queryByAltText('Avatar preview')).not.toBeInTheDocument();
   });
 });

@@ -13,11 +13,15 @@ export default function SkyMoon({ date = new Date(), weather = null }) {
   useEffect(() => {
     if (!open) return undefined;
     const handleKeyDown = e => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setHovered(false);
+      }
     };
     const handleClickOutside = e => {
       if (cardRef.current && !cardRef.current.contains(e.target)) {
         setOpen(false);
+        setHovered(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -58,7 +62,10 @@ export default function SkyMoon({ date = new Date(), weather = null }) {
       <button
         type="button"
         className={`sky-moon-btn ${dimClass}`}
-        onClick={() => setOpen(v => !v)}
+        onClick={() => {
+          if (open) setHovered(false);
+          setOpen(v => !v);
+        }}
         aria-label={ariaLabel}
         aria-expanded={open}
         title={`${name} · ${illumination}%${statusText ? ` · ${statusText}` : ''}`}
@@ -159,7 +166,7 @@ export default function SkyMoon({ date = new Date(), weather = null }) {
       {/* Quick hover badge when details card is not open */}
       {hovered && !open && (
         <div className="sky-moon-tooltip" role="tooltip">
-          <strong>{name}</strong>
+          <strong>Moon Phase: {name}</strong>
           <span>{illumination}% illuminated</span>
           {statusText ? <span className="sky-moon-tooltip-weather">{statusText}</span> : null}
         </div>
@@ -176,12 +183,15 @@ export default function SkyMoon({ date = new Date(), weather = null }) {
             type="button"
             className="sky-moon-close"
             aria-label="Close moon details"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              setHovered(false);
+            }}
           >
             ×
           </button>
           <header className="sky-moon-card-header">
-            <h2 className="sky-moon-card-title">{name}</h2>
+            <h2 className="sky-moon-card-title">Moon Phase: {name}</h2>
             <span className="sky-moon-card-date">{formattedDate} · {illumination}% illuminated</span>
           </header>
           <div className="sky-moon-card-body">
