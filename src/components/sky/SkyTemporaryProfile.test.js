@@ -189,8 +189,8 @@ describe('Sky Temporary Profile & Mobile Layout Integration', () => {
     expect(avatarImg).toBeInTheDocument();
     expect(avatarImg).toHaveAttribute('src', 'data:image/webp;base64,mockAvatarData');
 
-    // Name line: Orion, 28 ♂
-    expect(card).toHaveTextContent('Orion, 28 ♂');
+    expect(card).toHaveTextContent('Orion, 28');
+    expect(card.querySelector('.sky-star-gender svg')).toBeInTheDocument();
 
     // Status line: is feeling sleepy 😴
     expect(card).toHaveTextContent('is feeling sleepy');
@@ -201,11 +201,12 @@ describe('Sky Temporary Profile & Mobile Layout Integration', () => {
 
     const ownCard = screen.getByRole('dialog', { name: 'Your sky note' });
     expect(ownCard).toBeInTheDocument();
-    expect(ownCard).toHaveTextContent('Alex, 24 ⚧');
+    expect(ownCard).toHaveTextContent('Alex, 24');
+    expect(ownCard.querySelector('.sky-star-gender svg')).toBeInTheDocument();
     expect(ownCard).toHaveTextContent('is feeling');
   });
 
-  test('global chat feed renders 24x24 avatar and username with gender icon', () => {
+  test('global chat feed renders the avatar and username without gender', () => {
     render(
       <Sky
         initialProfile={{
@@ -245,8 +246,8 @@ describe('Sky Temporary Profile & Mobile Layout Integration', () => {
     expect(avatarImg).toBeInTheDocument();
     expect(avatarImg).toHaveAttribute('src', 'data:image/webp;base64,mockChatAvatar');
 
-    // Username with gender icon
-    expect(chatMsg).toHaveTextContent('Alex ⚧: hello from the stars');
+    expect(chatMsg).toHaveTextContent('Alex: hello from the stars');
+    expect(chatMsg.querySelector('.sky-chat-gender')).toBeNull();
   });
 
   test('disconnect purges the temporary profile, chat cache, storage, and modal defaults', () => {

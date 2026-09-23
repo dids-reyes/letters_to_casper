@@ -131,6 +131,11 @@ describe('Sky Interactive Features Integration', () => {
   });
 
   test('sending a shooting star uses realtime and reports acknowledgement', () => {
+    const vibrate = jest.fn();
+    Object.defineProperty(navigator, 'vibrate', {
+      configurable: true,
+      value: vibrate,
+    });
     render(<Sky />);
     enter();
 
@@ -149,6 +154,7 @@ describe('Sky Interactive Features Integration', () => {
     expect(screen.getByText('Your shooting star is on its way.')).toBeInTheDocument();
     act(() => handlers.receive_shooting_star({ from: 'other', to: 'me' }));
     expect(screen.getByText(/sent you a shooting star/)).toBeInTheDocument();
+    expect(vibrate).toHaveBeenCalledWith([18, 30, 18]);
   });
 
   test('clicking sky during active meteor releases a wish and stardust', () => {

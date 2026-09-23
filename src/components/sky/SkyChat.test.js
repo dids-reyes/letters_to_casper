@@ -65,6 +65,43 @@ test('renders compact relative timestamps beside global chat messages', () => {
   expect(formatChatTimestamp(clock - 30 * 60000, clock)).toBe('30m ago');
 });
 
+test('aligns a font-sized globe icon after the Global Chat label', () => {
+  const { container } = render(
+    <SkyChat messages={[]} connected={true} send={jest.fn()} clock={Date.now()} />
+  );
+
+  expect(screen.getByText('Global Chat')).toBeInTheDocument();
+  const icon = container.querySelector('.sky-chat-title-icon');
+  expect(icon).toBeInTheDocument();
+  expect(icon).toHaveAttribute('width', '1em');
+  expect(icon).toHaveAttribute('height', '1em');
+});
+
+test('requires confirmation before leaving a private chat', () => {
+  const leave = jest.fn();
+  const props = {
+    messages: [],
+    session: { sessionId: 'private-1', peer: { soul: 'Orion' } },
+    connected: true,
+    send: jest.fn(),
+    leave,
+    clock: Date.now(),
+  };
+  render(<SkyChat {...props} />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Leave chat' }));
+  expect(leave).not.toHaveBeenCalled();
+  expect(screen.getByRole('dialog', { name: 'Leave this chat?' })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(screen.queryByRole('dialog', { name: 'Leave this chat?' })).not.toBeInTheDocument();
+  expect(leave).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Leave chat' }));
+  fireEvent.click(within(screen.getByRole('dialog', { name: 'Leave this chat?' })).getByRole('button', { name: 'Leave chat' }));
+  expect(leave).toHaveBeenCalledTimes(1);
+});
+
 test('MoodPicker defaults to empty Status and opens anchored selection dropdown on click', () => {
   const handleChange = jest.fn();
   const { container } = render(<MoodPicker value="" onChange={handleChange} />);
