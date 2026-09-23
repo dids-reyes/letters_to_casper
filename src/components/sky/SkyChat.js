@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GENDER_ICONS } from './avatar';
+import { createPortal } from 'react-dom';
+import { CiGlobe } from 'react-icons/ci';
 import { DefaultAvatarIcon } from './SkyProfileModal';
 
 export const GLOBAL_CHAT_TTL_MS = 10 * 60 * 1000;
@@ -194,15 +195,44 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
   const list = useRef(null);
   const pinned = useRef(true);
+  const leaveTrigger = useRef(null);
+  const cancelLeave = useRef(null);
   const sessionId = session?.sessionId || null;
   const visible = messages.filter(m => (m.sessionId || null) === sessionId && isChatMessageFresh(m, clock));
   const lastId = visible[visible.length - 1]?.id;
   useEffect(() => { if (pinned.current && list.current) list.current.scrollTop = list.current.scrollHeight; }, [lastId]);
+  useEffect(() => {
+    if (!session) setConfirmingLeave(false);
+  }, [session]);
+  useEffect(() => {
+    if (!confirmingLeave) return undefined;
+    cancelLeave.current?.focus();
+    const closeOnEscape = event => {
+      if (event.key === 'Escape') setConfirmingLeave(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [confirmingLeave]);
+
+  const closeLeaveConfirmation = () => {
+    setConfirmingLeave(false);
+    requestAnimationFrame(() => leaveTrigger.current?.focus());
+  };
+
+  const confirmLeave = () => {
+    setConfirmingLeave(false);
+    leave();
+  };
+
   return <section className="sky-chat" aria-label={session ? 'Private chat' : 'Global chat'}>
-    <div className="sky-chat-heading"><strong>{session ? `With ${session.peer.soul?.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(session.peer.soul) : session.peer.soul}` : 'Global Chat'}</strong>
-      {session && <button type="button" onClick={leave}>Leave chat</button>}
+    <div className="sky-chat-heading"><strong className="sky-chat-title">
+      <span>{session ? `With ${session.peer.soul?.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(session.peer.soul) : session.peer.soul}` : 'Global Chat'}</span>
+      {!session && <CiGlobe className="sky-chat-title-icon" aria-hidden="true" />}
+    </strong>
+      {session && <button ref={leaveTrigger} type="button" onClick={() => setConfirmingLeave(true)}>Leave chat</button>}
       <small>Messages fade after {session ? '30' : '10'} minutes</small>
     </div>
     <div className="sky-chat-messages" ref={list} role="log" aria-live="polite" onScroll={() => {
@@ -211,7 +241,6 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
       {visible.map(m => {
         const rawName = m.username || m.soul || 'soul';
         const displayName = rawName.toLowerCase().startsWith('soul') ? defaultAnonymousUsername(rawName) : rawName;
-        const genderIcon = m.gender && GENDER_ICONS[m.gender] ? GENDER_ICONS[m.gender] : null;
         return (
           <p key={m.id} className="sky-chat-message">
             <span className="sky-chat-avatar" aria-hidden="true">
@@ -224,7 +253,6 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
             <span className="sky-chat-content">
               <span className="sky-chat-identity">
                 <strong>{displayName}</strong>
-                {genderIcon && <span className="sky-chat-gender" aria-hidden="true">{genderIcon}</span>}
               </span>
               <span className="sky-chat-separator" aria-hidden="true">:</span>{' '}
               <span className="sky-chat-text">{m.text}</span>
@@ -244,5 +272,31 @@ export default function SkyChat({ messages, session, connected, send, leave, clo
       <button disabled={!connected || busy || !text.trim()}>Send</button>
     </form>
     {error && <small role="alert">{error}</small>}
+    {confirmingLeave && typeof document !== 'undefined' && createPortal(
+      <div className="sky-leave-chat-overlay" onClick={closeLeaveConfirmation}>
+        <section
+          className="sky-leave-chat-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sky-leave-chat-title"
+          aria-describedby="sky-leave-chat-description"
+          onClick={event => event.stopPropagation()}
+        >
+          <h2 id="sky-leave-chat-title">Leave this chat?</h2>
+          <p id="sky-leave-chat-description">
+            This will end the private conversation for both of you.
+          </p>
+          <div className="sky-leave-chat-actions">
+            <button ref={cancelLeave} type="button" onClick={closeLeaveConfirmation}>
+              Cancel
+            </button>
+            <button type="button" className="sky-leave-chat-confirm" onClick={confirmLeave}>
+              Leave chat
+            </button>
+          </div>
+        </section>
+      </div>,
+      document.body
+    )}
   </section>;
 }

@@ -7,9 +7,10 @@ import { STAR_TINTS, DEFAULT_TINT } from './tints';
 import './Sky.css';
 import { getSafeStarPosition } from './safePositions';
 import SkyChat, { isChatMessageFresh, MOOD_EMOJIS, MoodPicker, soulName, defaultAnonymousUsername } from './SkyChat';
-import SkyProfileModal, { DefaultAvatarIcon } from './SkyProfileModal';
+import SkyProfileModal, { DefaultAvatarIcon, GenderSymbol } from './SkyProfileModal';
 import { GENDER_ICONS } from './avatar';
 import { clearSkySession } from './session';
+import { resolveSkySocketEndpoint } from './socketEndpoint';
 
 export { defaultAnonymousUsername };
 
@@ -692,23 +693,7 @@ export default function Sky({
   }, [selfTint, chatConnections, session]);
 
   useEffect(() => {
-    const isLocalhost = typeof window !== 'undefined' &&
-      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-    let endpoint = process.env.REACT_APP_SKY_SOCKET_URL;
-
-    // In a live/deployed environment, never use a localhost URL even if baked in from .env
-    if (!isLocalhost && endpoint && (endpoint.includes('localhost') || endpoint.includes('127.0.0.1'))) {
-      endpoint = '';
-    }
-
-    if (!endpoint) {
-      if (process.env.NODE_ENV === 'development' || (isLocalhost && process.env.NODE_ENV !== 'test')) {
-        endpoint = 'http://localhost:8000';
-      } else if (process.env.NODE_ENV === 'production' || (!isLocalhost && process.env.NODE_ENV !== 'test')) {
-        endpoint = process.env.REACT_APP_BASE_URL || 'https://ltc-service.onrender.com';
-      }
-    }
+    const endpoint = resolveSkySocketEndpoint();
 
     if (!endpoint) { setStatus('unavailable'); return undefined; }
     const current = scene.current;
@@ -861,7 +846,10 @@ export default function Sky({
     socket.on('receive_shooting_star', flight => {
       if (!current.points.has(flight.from) || !current.points.has(flight.to)) return;
       current.shootingStars = [...current.shootingStars.slice(-19), { ...flight, started: Date.now() }];
-      if (flight.to === current.selfId) setFeedback(soulName(current.points.get(flight.from)) + ' sent you a shooting star.');
+      if (flight.to === current.selfId) {
+        setFeedback(soulName(current.points.get(flight.from)) + ' sent you a shooting star.');
+        try { navigator.vibrate?.([18, 30, 18]); } catch (_) { /* Haptics are optional. */ }
+      }
       current.redraw();
     });
     socket.on('receive_pulse', point => {
@@ -1248,7 +1236,7 @@ export default function Sky({
                         </strong>
                         {selectedPerson.gender && GENDER_ICONS[selectedPerson.gender] ? (
                           <span className="sky-star-gender" aria-hidden="true">
-                            {GENDER_ICONS[selectedPerson.gender]}
+                            <GenderSymbol gender={selectedPerson.gender} size={14} />
                           </span>
                         ) : null}
                       </div>
@@ -1284,7 +1272,7 @@ export default function Sky({
                         </strong>
                         {selectedPerson.gender && GENDER_ICONS[selectedPerson.gender] ? (
                           <span className="sky-star-gender" aria-hidden="true">
-                            {GENDER_ICONS[selectedPerson.gender]}
+                            <GenderSymbol gender={selectedPerson.gender} size={14} />
                           </span>
                         ) : null}
                       </div>

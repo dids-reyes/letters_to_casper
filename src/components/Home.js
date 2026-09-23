@@ -24,6 +24,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { io } from "socket.io-client";
 import { PiStarFour } from "react-icons/pi";
+import { resolveSkySocketEndpoint } from "./sky/socketEndpoint";
 import MailboxLoading from "./MailboxLoading";
 import {
   IoAddOutline,
@@ -230,11 +231,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
   useEffect(() => {
     if (!SHOW_SKY_NAV) return undefined;
-    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    let endpoint = process.env.REACT_APP_SKY_SOCKET_URL;
-    if (!isLocalhost && endpoint && (endpoint.includes("localhost") || endpoint.includes("127.0.0.1"))) endpoint = "";
-    if (!endpoint && process.env.NODE_ENV === "development") endpoint = "http://localhost:8000";
-    if (!endpoint && process.env.NODE_ENV === "production") endpoint = process.env.REACT_APP_BASE_URL || "https://ltc-service.onrender.com";
+    const endpoint = resolveSkySocketEndpoint();
     if (!endpoint) return undefined;
 
     const presenceSocket = io(endpoint, {
