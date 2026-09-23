@@ -33,6 +33,7 @@ import { adminId, targetDate } from "../data/target_letters";
 import stringSplitter from "../data/splitLetterCharacters";
 import { toast } from "react-toastify";
 import { getOptimizedPhotoUrl } from "../data/cloudinary";
+import usePinTooltipOnboarding from "../hooks/usePinTooltipOnboarding";
 // Translation remains disabled until explicitly re-enabled.
 const TRANSLATION_ENABLED = false;
 
@@ -215,6 +216,13 @@ const getLetterId = (letter) => {
   if (letter._id?.$oid) return letter._id.$oid;
   return String(letter._id || "");
 };
+
+const loadImageFromUrl = (url) => new Promise((resolve, reject) => {
+  const image = new Image();
+  image.onload = () => resolve(image);
+  image.onerror = () => reject(new Error("Unable to load QR artwork"));
+  image.src = url;
+});
 
 export const viewedLetterIds = new Set();
 export let unbilledNewLettersCount = 0;
@@ -523,6 +531,7 @@ function DetailsModal({
   const message = media?.newMessage || selectedLetter?.message || "";
 
   const [showAttachments, setShowAttachments] = useState(false);
+  const [completedLetterKey, setCompletedLetterKey] = useState("");
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [translatedMessage, setTranslatedMessage] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
@@ -657,14 +666,17 @@ function DetailsModal({
   useEffect(() => {
     if (!showDetailsModal || !selectedLetter) {
       setShowAttachments(false);
+      setCompletedLetterKey("");
       return;
     }
-    if (readMode) {
+    if (readMode && opened) {
       setShowAttachments(true);
+      setCompletedLetterKey(getLetterId(selectedLetter));
     } else {
       setShowAttachments(false);
+      setCompletedLetterKey("");
     }
-  }, [showDetailsModal, selectedLetter, readMode]);
+  }, [showDetailsModal, selectedLetter, readMode, opened]);
 
   const navigate = useNavigate();
   const approvedLetters = useMemo(() => (Array.isArray(letters) ? letters : []), [letters]);
@@ -1153,6 +1165,44 @@ function DetailsModal({
   const [hasClickedAd, setHasClickedAd] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  const pinTooltipEligible = Boolean(
+    showDetailsModal &&
+    opened &&
+    selectedLetter?._id &&
+    !selectedLetter.preview &&
+    !(
+      selectedLetter.is_pinned &&
+      selectedLetter.pin_expires_at &&
+      new Date(selectedLetter.pin_expires_at).getTime() > Date.now()
+    ) &&
+    completedLetterKey === getLetterId(selectedLetter)
+  );
+  const {
+    isMounted: mountPinOnboarding,
+    isOpen: showPinOnboarding,
+    dismiss: dismissPinOnboarding,
+  } = usePinTooltipOnboarding({
+    ready: pinTooltipEligible,
+    letterKey: getLetterId(selectedLetter),
+  });
+  useEffect(() => {
+    if (!showPinOnboarding) return undefined;
+
+    const dismissOnOutsidePress = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (
+        target.closest("#pin-letter-action") ||
+        target.closest(".pin-letter-onboarding-tooltip")
+      ) {
+        return;
+      }
+      dismissPinOnboarding();
+    };
+
+    document.addEventListener("pointerdown", dismissOnOutsidePress);
+    return () => document.removeEventListener("pointerdown", dismissOnOutsidePress);
+  }, [dismissPinOnboarding, showPinOnboarding]);
   const location = useLocation();
   const handledEmailShare = useRef('');
   useEffect(() => {
@@ -1213,7 +1263,7 @@ function DetailsModal({
     new Date(selectedLetter.pin_expires_at).getTime() > Date.now()
   );
   const letterQrUrl = letterShareUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&ecc=H&data=${encodeURIComponent(
         letterShareUrl
       )}`
     : "";
@@ -1285,19 +1335,65 @@ function DetailsModal({
     if (!letterQrUrl || isDownloadingQr) return;
 
     setIsDownloadingQr(true);
+    const temporaryUrls = [];
     try {
-      const response = await fetch(letterQrUrl);
-      if (!response.ok) throw new Error("Unable to download QR code");
+      const downloadQrUrl = letterQrUrl.replace("size=240x240&margin=12", "size=720x720&margin=36");
+      const [qrResponse, logoResponse] = await Promise.all([
+        fetch(downloadQrUrl),
+        fetch("/ltc_favicon.png"),
+      ]);
+      if (!qrResponse.ok || !logoResponse.ok) {
+        throw new Error("Unable to download QR artwork");
+      }
 
-      const qrBlob = await response.blob();
-      const downloadUrl = URL.createObjectURL(qrBlob);
+      const [qrBlob, logoBlob] = await Promise.all([
+        qrResponse.blob(),
+        logoResponse.blob(),
+      ]);
+      const qrObjectUrl = URL.createObjectURL(qrBlob);
+      const logoObjectUrl = URL.createObjectURL(logoBlob);
+      temporaryUrls.push(qrObjectUrl, logoObjectUrl);
+      const [qrImage, logoImage] = await Promise.all([
+        loadImageFromUrl(qrObjectUrl),
+        loadImageFromUrl(logoObjectUrl),
+      ]);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 720;
+      canvas.height = 720;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Unable to prepare QR image");
+
+      context.drawImage(qrImage, 0, 0, 720, 720);
+      const plateSize = 136;
+      const platePosition = (720 - plateSize) / 2;
+      context.fillStyle = "#ffffff";
+      context.beginPath();
+      if (typeof context.roundRect === "function") {
+        context.roundRect(platePosition, platePosition, plateSize, plateSize, 18);
+      } else {
+        context.rect(platePosition, platePosition, plateSize, plateSize);
+      }
+      context.fill();
+
+      const logoSize = 94;
+      const logoPosition = (720 - logoSize) / 2;
+      context.drawImage(logoImage, logoPosition, logoPosition, logoSize, logoSize);
+
+      const brandedQrBlob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error("Unable to export QR image")),
+          "image/png"
+        );
+      });
+      const downloadUrl = URL.createObjectURL(brandedQrBlob);
+      temporaryUrls.push(downloadUrl);
       const downloadLink = document.createElement("a");
       downloadLink.href = downloadUrl;
       downloadLink.download = `letter-to-casper-${selectedLetter._id}-qr.png`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       downloadLink.remove();
-      URL.revokeObjectURL(downloadUrl);
 
       toast.info("QR code downloaded — ready to share.", {
         position: "top-center",
@@ -1309,6 +1405,7 @@ function DetailsModal({
         autoClose: 2500,
       });
     } finally {
+      temporaryUrls.forEach(url => URL.revokeObjectURL(url));
       setIsDownloadingQr(false);
     }
   };
@@ -1854,6 +1951,7 @@ function DetailsModal({
                 .pauseFor(500)
                 .callFunction(() => {
                   setShowAttachments(true);
+                  setCompletedLetterKey(getLetterId(selectedLetter));
                 })
                 .start();
             }}
@@ -1981,12 +2079,60 @@ function DetailsModal({
               <button
                 type="button"
                 className="letter-paper__pin"
-                onClick={() => setShowPinModal(true)}
+                id="pin-letter-action"
+                onClick={() => {
+                  dismissPinOnboarding();
+                  setShowPinModal(true);
+                }}
                 aria-label="Pin this letter"
-                title="Pin this letter"
+                data-tooltip-id="pin-letter-description"
+                data-tooltip-content="Email this letter directly to them, anonymously."
+                data-tooltip-place="bottom"
               >
                 <AiOutlinePushpin aria-hidden="true" />
               </button>
+              {mountPinOnboarding && typeof document !== "undefined" &&
+                createPortal(
+                  <Tooltip
+                    anchorSelect="#pin-letter-action"
+                    place="bottom"
+                    offset={11}
+                    positionStrategy="fixed"
+                    isOpen={showPinOnboarding}
+                    clickable={true}
+                    className="pin-letter-onboarding-tooltip"
+                    classNameArrow="pin-letter-onboarding-tooltip__arrow"
+                    role="status"
+                  >
+                    <span className="pin-letter-onboarding-tooltip__copy">
+                      Email this letter directly to them, anonymously.
+                    </span>
+                    <button
+                      type="button"
+                      className="pin-letter-onboarding-tooltip__close"
+                      aria-label="Dismiss Pin Letter tip"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        dismissPinOnboarding();
+                      }}
+                    >
+                      ×
+                    </button>
+                  </Tooltip>,
+                  document.body
+                )}
+              {!mountPinOnboarding && typeof document !== "undefined" &&
+                createPortal(
+                  <Tooltip
+                    id="pin-letter-description"
+                    place="bottom"
+                    offset={8}
+                    delayShow={450}
+                    positionStrategy="fixed"
+                    className="pin-letter-hover-tooltip"
+                  />,
+                  document.body
+                )}
               <span className="letter-meta-sep">·</span>
             </>
           )
@@ -2382,13 +2528,19 @@ function DetailsModal({
 
               {showQrCode && (
                 <div className="letter-share-dialog__qr">
-                  <img
-                    src={letterQrUrl}
-                    alt="QR code for this letter"
-                    width="240"
-                    height="240"
-                    referrerPolicy="no-referrer"
-                  />
+                  <div className="letter-share-dialog__qr-code">
+                    <img
+                      className="letter-share-dialog__qr-image"
+                      src={letterQrUrl}
+                      alt="QR code for this letter"
+                      width="240"
+                      height="240"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="letter-share-dialog__qr-mark" aria-hidden="true">
+                      <img src="/ltc_favicon.png" alt="" />
+                    </span>
+                  </div>
                   <span>Scan to open this letter</span>
                   <button
                     type="button"

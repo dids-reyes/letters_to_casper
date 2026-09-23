@@ -25,11 +25,15 @@ export default function SkySun({
   useEffect(() => {
     if (!open) return undefined;
     const handleKeyDown = e => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setHovered(false);
+      }
     };
     const handleClickOutside = e => {
       if (cardRef.current && !cardRef.current.contains(e.target)) {
         setOpen(false);
+        setHovered(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -69,7 +73,10 @@ export default function SkySun({
       <button
         type="button"
         className={`sky-sun-btn ${sunDimClass}`}
-        onClick={() => setOpen(v => !v)}
+        onClick={() => {
+          if (open) setHovered(false);
+          setOpen(v => !v);
+        }}
         aria-label={`Sun: ${elevation}° altitude, ${position}. ${statusText}`}
         aria-expanded={open}
         title={`The Sun · ${elevation}° · ${statusText}`}
@@ -205,7 +212,10 @@ export default function SkySun({
             type="button"
             className="sky-sun-close"
             aria-label="Close sun details"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              setHovered(false);
+            }}
           >
             ×
           </button>

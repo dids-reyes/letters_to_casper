@@ -30,9 +30,10 @@ describe('Sky Lunar calculations & SkyMoon component', () => {
     expect(moonButton).toBeInTheDocument();
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.mouseEnter(moonButton);
     fireEvent.click(moonButton);
     expect(screen.getByRole('dialog', { name: /Moon details: Full Moon/i })).toBeInTheDocument();
-    expect(screen.getByText('Full Moon')).toBeInTheDocument();
+    expect(screen.getByText('Moon Phase: Full Moon')).toBeInTheDocument();
     expect(screen.getByText(/Sky Position:/i)).toBeInTheDocument();
     expect(screen.getByText(/Accurate based on the sky today/i)).toBeInTheDocument();
     expect(screen.getByText(/Look up at the moon tonight/i)).toBeInTheDocument();
@@ -41,6 +42,7 @@ describe('Sky Lunar calculations & SkyMoon component', () => {
     const closeBtn = screen.getByRole('button', { name: 'Close moon details' });
     fireEvent.click(closeBtn);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });
 

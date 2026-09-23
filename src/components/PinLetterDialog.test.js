@@ -74,10 +74,16 @@ test('previews the letter before creating a checkout and sends the selected tier
   fireEvent.click(screen.getByText('Pin and Deliver for ₱79'));
   expect(screen.getByText('Loading letter…').disabled).toBe(true);
   await screen.findByRole('heading', {name: 'Confirm your letter'});
+  expect(screen.getByText('Is this the letter you’d like to pin and deliver anonymously?')).toBeTruthy();
   expect(screen.getByText('Sender')).toBeTruthy(); expect(screen.getByText('Recipient')).toBeTruthy();
+  expect(screen.getByText('Anonymously Send to:').closest('.pin-letter-confirmation')).toBeNull();
+  expect(screen.getByText('recipient@example.com')).toBeTruthy();
+  expect(screen.getByText('A'.repeat(90))).toHaveClass('pin-letter-message-preview');
+  expect(screen.getByLabelText('3 Days, ₱79.00')).toHaveClass('pin-letter-confirmation-price');
   expect(screen.getByText(/Secure checkout using/i)).toBeTruthy();
   expect(screen.getByAltText('QRPH')).toBeTruthy();
-  expect(screen.getByAltText('PayMongo')).toBeTruthy();
+  expect(screen.getByAltText('GCash')).toBeTruthy();
+  expect(screen.queryByAltText('PayMongo')).toBeNull();
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(fetch).toHaveBeenCalledWith(`https://service.example/api/messages/public/${id}`, expect.objectContaining({headers: {'x-api-key': 'test'}}));
   expect(redirect).not.toHaveBeenCalled();
@@ -211,6 +217,16 @@ test('invalid recipient email blocks checkout preview', () => {
   expect(fetch).not.toHaveBeenCalled();
 });
 
+test('checked anonymous delivery requires a recipient email before preview', () => {
+  global.fetch = jest.fn(); render(<PinLetterDialog onClose={() => {}} />); fillLink();
+  fireEvent.click(screen.getByLabelText(/Deliver an anonymous copy via email/i));
+  const recipientInput = screen.getByLabelText(/Recipient's Email/i);
+  fireEvent.click(screen.getByText('Pin and Deliver for ₱19'));
+  expect(screen.getByRole('alert').textContent).toMatch(/recipient email address/i);
+  expect(recipientInput).toHaveFocus();
+  expect(fetch).not.toHaveBeenCalled();
+});
+
 test('delivery toggle controls recipient email field and preserves values', () => {
   render(<PinLetterDialog onClose={() => {}} />);
   const toggle = screen.getByLabelText(/Deliver an anonymous copy via email/i);
@@ -246,7 +262,7 @@ test('dynamically updates submit button label based on recipient email presence'
   const recipientInput = screen.getByLabelText(/Recipient's Email/i);
   
   fireEvent.change(recipientInput, {target: {value: '   '}});
-  expect(screen.getByRole('button', {name: 'Pin for ₱19'})).toBeTruthy();
+  expect(screen.getByRole('button', {name: 'Pin and Deliver for ₱19'})).toBeTruthy();
 
   fireEvent.change(recipientInput, {target: {value: 'casper@example.com'}});
   expect(screen.getByRole('button', {name: 'Pin and Deliver for ₱19'})).toBeTruthy();
@@ -255,7 +271,7 @@ test('dynamically updates submit button label based on recipient email presence'
   expect(screen.getByRole('button', {name: 'Pin and Deliver for ₱129'})).toBeTruthy();
 
   fireEvent.change(recipientInput, {target: {value: ''}});
-  expect(screen.getByRole('button', {name: 'Pin for ₱129'})).toBeTruthy();
+  expect(screen.getByRole('button', {name: 'Pin and Deliver for ₱129'})).toBeTruthy();
 });
 
 test('opens and dismisses the Delivering Your Letter guide dialog with correct content', () => {

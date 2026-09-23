@@ -141,8 +141,9 @@ Deploy `ltc-service/services/sky.js` before this frontend. `sky_state` now inclu
 public `messages` and each participant's `mood`. `set_mood` broadcasts
 `presence_updated`. `send_chat` accepts `{ text, sessionId? }`; `chat_message`
 contains server-assigned identity and `createdAt` in epoch milliseconds. Public
-history is capped at 500 messages, private history at 200 per session, and both
-are pruned after 30 minutes in server memory and filtered on clients. Restarts
+history is capped at 500 messages and fades after 10 minutes. Private history is
+capped at 200 per session and fades after 30 minutes. Both are pruned in server
+memory and filtered on clients. Restarts
 clear history. Chat sends are limited to one per second per connection.
 
 `request_chat` targets a connected participant ID. The recipient gets

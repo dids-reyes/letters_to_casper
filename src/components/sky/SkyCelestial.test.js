@@ -39,6 +39,7 @@ describe('SkyCelestial component', () => {
     expect(sunButton).toHaveClass('sky-sun-btn');
 
     // Click to open Sun details card
+    fireEvent.mouseEnter(sunButton);
     fireEvent.click(sunButton);
     expect(screen.getByRole('dialog', { name: /Sun details/i })).toBeInTheDocument();
     expect(screen.getByText('The Sun')).toBeInTheDocument();
@@ -48,6 +49,7 @@ describe('SkyCelestial component', () => {
     // Close button
     fireEvent.click(screen.getByRole('button', { name: 'Close sun details' }));
     expect(screen.queryByRole('dialog', { name: /Sun details/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
   test('renders Moon during nighttime hours with weather obscuration', async () => {
@@ -78,4 +80,3 @@ describe('SkyCelestial component', () => {
     expect(screen.getByRole('button', { name: /Sun:/i })).toBeInTheDocument();
   });
 });
-

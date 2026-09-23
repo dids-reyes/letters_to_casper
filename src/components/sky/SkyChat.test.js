@@ -1,6 +1,24 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import SkyChat, { MoodPicker, soulName, defaultAnonymousUsername, formatChatTimestamp } from './SkyChat';
+import SkyChat, {
+  GLOBAL_CHAT_TTL_MS,
+  PRIVATE_CHAT_TTL_MS,
+  MoodPicker,
+  soulName,
+  defaultAnonymousUsername,
+  formatChatTimestamp,
+  isChatMessageFresh,
+} from './SkyChat';
+
+test('global messages expire after 10 minutes while private messages retain 30 minutes', () => {
+  const clock = Date.now();
+  const globalMessage = { createdAt: clock - GLOBAL_CHAT_TTL_MS };
+  const privateMessage = { createdAt: clock - GLOBAL_CHAT_TTL_MS, sessionId: 'private-1' };
+
+  expect(isChatMessageFresh(globalMessage, clock)).toBe(false);
+  expect(isChatMessageFresh(privateMessage, clock)).toBe(true);
+  expect(isChatMessageFresh({ ...privateMessage, createdAt: clock - PRIVATE_CHAT_TTL_MS }, clock)).toBe(false);
+});
 
 test('incoming messages follow the bottom only while the reader has not scrolled up', () => {
   const clock = Date.now();

@@ -1647,6 +1647,26 @@ html.sky-active .Toastify__progress-bar { background: #bfd5ec; }
   overflow-wrap: anywhere;
 }
 
+.sky-chat-identity {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 3px;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.sky-chat-identity strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sky-chat-separator {
+  white-space: nowrap;
+}
+
 .sky-chat-time {
   margin-left: 5px;
   color: rgba(209, 226, 241, 0.48);
@@ -1662,11 +1682,15 @@ html.sky-active .Toastify__progress-bar { background: #bfd5ec; }
 }
 
 .sky-chat-gender {
-  display: inline-block;
-  vertical-align: -1px;
+  display: inline-grid;
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  place-items: center;
+  vertical-align: middle;
   line-height: 1;
   opacity: 0.85;
-  margin-left: 2px;
+  font-size: 13px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
 
@@ -1689,16 +1713,16 @@ html.sky-active .Toastify__progress-bar { background: #bfd5ec; }
 }
 
 .sky-star-gender {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
   vertical-align: middle;
   line-height: 1;
   opacity: 0.85;
   font-size: 13px;
-  margin-left: 2px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  flex-shrink: 0;
+  flex: 0 0 16px;
 }
 
 /* Star Tap Modal (Soul Card) Avatar Frame */
