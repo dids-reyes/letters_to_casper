@@ -360,14 +360,7 @@ export default function Sky({
       description:
         'Look up at the shared realtime sky on Letters to Casper. Send stars, view peaceful pulses, and connect quietly with souls around the world.',
       canonicalUrl: 'https://letterstocasper.com/sky',
-      jsonLd: {
-        '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        name: 'Sky · Letters to Casper',
-        url: 'https://letterstocasper.com/sky',
-        description:
-          'A shared realtime night sky connecting quiet souls across the world on Letters to Casper.',
-      },
+      robots: 'noindex, nofollow, noarchive',
     });
     document.documentElement.classList.add('sky-active');
     const timer = setInterval(() => {

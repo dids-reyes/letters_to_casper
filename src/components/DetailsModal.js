@@ -14,6 +14,7 @@ import { FaUserTie } from "react-icons/fa";
 import { PiShootingStarFill } from "react-icons/pi";
 import { PiHeartBreakFill } from "react-icons/pi";
 import { TbHeart, TbMoodSad } from "react-icons/tb";
+import { RiMailSendLine } from "react-icons/ri";
 import {
   IoCopyOutline,
   IoDownloadOutline,
@@ -33,6 +34,7 @@ import { adminId, targetDate } from "../data/target_letters";
 import stringSplitter from "../data/splitLetterCharacters";
 import { toast } from "react-toastify";
 import { getOptimizedPhotoUrl } from "../data/cloudinary";
+import { displayDirectLinkAds } from "../data/direct_link";
 import usePinTooltipOnboarding from "../hooks/usePinTooltipOnboarding";
 // Translation remains disabled until explicitly re-enabled.
 const TRANSLATION_ENABLED = false;
@@ -1157,14 +1159,17 @@ function DetailsModal({
       encodeURIComponent(letterCity)
     : null;
 
-  // Location is gated behind an ad view: first click opens the ad, and on
-  // returning to the tab the link becomes the actual map.
-  const adLink =
-    "https://www.profitableratecpmnetwork.com/rxyce75in3?key=945fab619a2a948227fecaaf9d93f787";
+  // Location is revealed after the visitor explicitly accepts the ad step.
   const [isRevealed, setIsRevealed] = useState(false);
   const [hasClickedAd, setHasClickedAd] = useState(false);
+  const [showLocationAdConfirm, setShowLocationAdConfirm] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  useEffect(() => {
+    setIsRevealed(false);
+    setHasClickedAd(false);
+    setShowLocationAdConfirm(false);
+  }, [selectedLetter?._id]);
   const pinTooltipEligible = Boolean(
     showDetailsModal &&
     opened &&
@@ -1216,6 +1221,7 @@ function DetailsModal({
   }, [showDetailsModal, selectedLetter?._id, selectedLetter?.preview, location.search]);
 
   const [showQrCode, setShowQrCode] = useState(false);
+  const [showQrAdConfirm, setShowQrAdConfirm] = useState(false);
   const [isDownloadingQr, setIsDownloadingQr] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
   const [showImageOptions, setShowImageOptions] = useState(false);
@@ -1288,9 +1294,13 @@ function DetailsModal({
   }, [hasClickedAd, isRevealed]);
 
   const handleLocateClick = () => {
-    if (!isRevealed) {
-      setHasClickedAd(true);
-    }
+    if (!isRevealed) setShowLocationAdConfirm(true);
+  };
+
+  const confirmLocationAd = () => {
+    setShowLocationAdConfirm(false);
+    setHasClickedAd(true);
+    displayDirectLinkAds();
   };
 
   const handleCopyLetterLink = async () => {
@@ -1410,6 +1420,12 @@ function DetailsModal({
     }
   };
 
+  const confirmQrDownloadAd = () => {
+    setShowQrAdConfirm(false);
+    displayDirectLinkAds();
+    handleDownloadQr();
+  };
+
   const handleCloseModal = () => {
     if (closingRef.current) return;
     dismissFoldTip();
@@ -1440,9 +1456,11 @@ function DetailsModal({
     setOpened(false);
     setIsRevealed(false);
     setHasClickedAd(false);
+    setShowLocationAdConfirm(false);
     setShowShareDialog(false);
     setShowPinModal(false);
     setShowQrCode(false);
+    setShowQrAdConfirm(false);
     setIsDownloadingQr(false);
     setTranslatedMessage("");
     setIsTranslating(false);
@@ -1467,6 +1485,7 @@ function DetailsModal({
   const closeShareDialog = () => {
     setShowShareDialog(false);
     setShowQrCode(false);
+    setShowQrAdConfirm(false);
     setIsDownloadingQr(false);
   };
 
@@ -1628,7 +1647,9 @@ function DetailsModal({
                 role="img"
                 aria-label={letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now() ? "Pinned letter" : "Pin letter"}
               >
-                <AiOutlinePushpin aria-hidden="true" />
+                {letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now()
+                  ? <AiOutlinePushpin aria-hidden="true" />
+                  : <RiMailSendLine aria-hidden="true" />}
               </span>
               <span className="letter-meta-sep">·</span>
             </>
@@ -1799,7 +1820,9 @@ function DetailsModal({
                 role="img"
                 aria-label={letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now() ? "Pinned letter" : "Pin letter"}
               >
-                <AiOutlinePushpin aria-hidden="true" />
+                {letter.is_pinned && new Date(letter.pin_expires_at).getTime() > Date.now()
+                  ? <AiOutlinePushpin aria-hidden="true" />
+                  : <RiMailSendLine aria-hidden="true" />}
               </span>
               <span className="letter-meta-sep">·</span>
             </>
@@ -2089,7 +2112,7 @@ function DetailsModal({
                 data-tooltip-content="Email this letter directly to them, anonymously."
                 data-tooltip-place="bottom"
               >
-                <AiOutlinePushpin aria-hidden="true" />
+                <RiMailSendLine aria-hidden="true" />
               </button>
               {mountPinOnboarding && typeof document !== "undefined" &&
                 createPortal(
@@ -2153,18 +2176,26 @@ function DetailsModal({
             <span className="letter-meta-sep">·</span>
             <span className="letter-paper__actions">
               {hasLocation && (
-                <a
-                  className={`letter-paper__locate${
-                    isRevealed ? " is-revealed" : ""
-                  }`}
-                  href={isRevealed ? letterLocationMap : adLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleLocateClick}
-                >
-                  <IoLocationOutline size="12px" />
-                  <span>{isRevealed ? "View on Map" : "Locate"}</span>
-                </a>
+                isRevealed ? (
+                  <a
+                    className="letter-paper__locate"
+                    href={letterLocationMap}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <IoLocationOutline size="12px" />
+                    <span>View on Map</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className="letter-paper__locate"
+                    onClick={handleLocateClick}
+                  >
+                    <IoLocationOutline size="12px" />
+                    <span>Locate</span>
+                  </button>
+                )
               )}
               {hasLocation &&
                 !selectedLetter.preview &&
@@ -2461,6 +2492,72 @@ function DetailsModal({
           </div>
         )}
 
+        {showLocationAdConfirm && (
+          <div
+            className="letter-location-ad-overlay"
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowLocationAdConfirm(false);
+            }}
+          >
+            <section
+              className="letter-location-ad-dialog"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="letter-location-ad-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="letter-location-ad-title-row">
+                <IoLocationOutline aria-hidden="true" />
+                <h2 id="letter-location-ad-title">
+                  Watch an ad to see letter origin?
+                </h2>
+              </div>
+              <p>The origin will be available when you return to this letter.</p>
+              <div className="letter-location-ad-actions">
+                <button type="button" onClick={() => setShowLocationAdConfirm(false)}>
+                  Not now
+                </button>
+                <button type="button" onClick={confirmLocationAd} autoFocus>
+                  Yes
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {showQrAdConfirm && (
+          <div
+            className="letter-location-ad-overlay"
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowQrAdConfirm(false);
+            }}
+          >
+            <section
+              className="letter-location-ad-dialog"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="letter-qr-ad-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="letter-location-ad-title-row">
+                <IoQrCodeOutline aria-hidden="true" />
+                <h2 id="letter-qr-ad-title">Watch an ad to download this QR code?</h2>
+              </div>
+              <p>Your download will begin after the ad opens.</p>
+              <div className="letter-location-ad-actions">
+                <button type="button" onClick={() => setShowQrAdConfirm(false)}>
+                  Not now
+                </button>
+                <button type="button" onClick={confirmQrDownloadAd} autoFocus>
+                  Yes
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
         {showShareDialog && (
           <div
             className="letter-share-dialog-overlay"
@@ -2545,7 +2642,7 @@ function DetailsModal({
                   <button
                     type="button"
                     className="letter-share-dialog__download"
-                    onClick={handleDownloadQr}
+                    onClick={() => setShowQrAdConfirm(true)}
                     disabled={isDownloadingQr}
                   >
                     <IoDownloadOutline />

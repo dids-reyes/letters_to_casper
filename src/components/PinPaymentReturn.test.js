@@ -57,12 +57,13 @@ test('confirmed payments reuse the thank-you dialog without ads and close immedi
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(document.body.style.overflow).toBe('');
 });
-test('already fulfilled but unpinned letters do not claim an active pin in the thank-you dialog', async () => {
+test('fulfilled inbox deliveries use delivery-specific confirmation copy', async () => {
   window.history.replaceState({}, '', `/?pin_payment=${token}`);
   global.fetch = jest.fn().mockResolvedValue({ok: true, json: async () => ({status: 'fulfilled'})});
   render(<PinPaymentReturn onConfirmed={jest.fn()} />);
-  const dialog = await screen.findByRole('dialog', {name: 'Your support made it here.'});
-  expect(dialog.textContent).toContain('no longer actively pinned');
+  const dialog = await screen.findByRole('dialog', {name: 'Your letter is on its way.'});
+  expect(dialog.textContent).toContain('delivered anonymously');
+  expect(dialog.textContent).not.toContain('pin');
   fireEvent.keyDown(dialog, {key: 'Escape'});
   expect(screen.queryByRole('dialog')).toBeNull();
 });

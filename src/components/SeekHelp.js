@@ -86,7 +86,7 @@ function SeekHelp() {
 
       <section className="help-community"><span>Community</span><h2>Connect with others who understand.</h2><div className="help-reddit"><blockquote key={isNightShift ? 'dark' : 'light'} className="reddit-embed-bq" data-embed-height="502" data-embed-theme={isNightShift ? 'dark' : undefined}>Posts from the <a href="https://www.reddit.com/r/MentalHealthPH/">mentalhealthph</a> community on Reddit</blockquote></div></section>
 
-      <footer className="help-footer"><IoHeartOutline /><h2>Seeking help is a sign of strength.</h2><p>You do not have to face mental health challenges alone.</p><Link to="/">Return to Letters to Casper</Link></footer>
+      <footer className="help-footer"><IoHeartOutline /><h2>Seeking help is a sign of strength.</h2><p>You do not have to face mental health challenges alone. If you’re reading all the way down here, thank you. We have a hidden page called <Link className="help-sky-link" to="/sky">Sky</Link>, which you can enter by clicking its name. You won’t find it linked from the front page, and it isn’t available to everyone. Sky is still unmoderated, so please share it only with a few close friends you trust. Don’t post about it publicly, and help us protect the space from spammers and predators online. We aren’t planning to launch it soon, and we may never launch it publicly, so please keep it among a very limited circle. Gatekeep Sky, but don’t gatekeep Letters to Casper.</p><Link to="/">Return to Letters to Casper</Link></footer>
     </main>
   );
 }

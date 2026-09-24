@@ -297,10 +297,332 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
 .pin-recipient-guide-btn:hover { text-decoration:underline; text-underline-offset:2px; color:var(--ltc-primary-hover); }
 .pin-recipient-guide-btn svg { font-size:13px; flex-shrink:0; }
 
+/* Tiered Pin & Deliver flow */
+.pin-letter-dialog {
+  width: min(100%, 500px);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(25, 29, 38, .18);
+}
+
+.pin-letter-dialog h2 {
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.pin-letter-tiers {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: auto;
+  gap: 8px;
+}
+
+.pin-letter-tier {
+  display: block;
+  padding: 13px 14px;
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pin-letter-tier-option {
+  display: block;
+  cursor: pointer;
+}
+
+.pin-letter-tier.is-unavailable .pin-letter-tier-option {
+  cursor: not-allowed;
+}
+
+.pin-letter-tier:hover {
+  background: var(--ltc-subtle);
+}
+
+.pin-letter-tier.is-selected {
+  border-color: var(--ltc-primary);
+  background: transparent;
+  box-shadow: none;
+}
+
+.pin-letter-tier:focus-within {
+  outline: none;
+}
+
+.pin-letter-tier-option > input[type="radio"]:focus-visible + .pin-letter-tier-heading .pin-letter-radio {
+  outline: 2px solid var(--ltc-primary);
+  outline-offset: 2px;
+}
+
+.pin-letter-tier.is-unavailable {
+  cursor: not-allowed;
+  opacity: .52;
+}
+
+.pin-letter-tier-heading {
+  justify-content: flex-start;
+  gap: 8px;
+  white-space: normal;
+}
+
+.pin-letter-tier-heading strong {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.pin-letter-radio {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid var(--ltc-border);
+  border-radius: 50%;
+  background: var(--ltc-paper);
+}
+
+.pin-letter-tier.is-selected .pin-letter-radio {
+  border: 5px solid var(--ltc-primary);
+}
+
+.pin-letter-tier-price {
+  flex: 0 0 auto;
+}
+
+.pin-letter-tier-heading b {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pin-letter-tier-badge {
+  display: block;
+  width: fit-content;
+  margin: 7px 0 0 24px;
+  color: var(--ltc-primary);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.pin-letter-tier-note,
+.pin-letter-tier-capacity {
+  display: block;
+  margin: 3px 0 0 24px;
+  overflow: visible;
+  color: var(--ltc-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.pin-letter-tier-capacity {
+  color: var(--ltc-error);
+}
+
+.pin-tier-email-field {
+  display: block;
+  margin: 12px 0 0 24px;
+  padding-top: 11px;
+  border-top: 1px solid var(--ltc-border);
+}
+
+.pin-tier-email-field .pin-letter-url-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+}
+
+.pin-recipient-label-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.pin-recipient-label-row .pin-letter-url-label {
+  margin: 0;
+}
+
+.pin-recipient-guide-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ltc-muted);
+  cursor: pointer;
+}
+
+.pin-recipient-guide-button:hover {
+  color: var(--ltc-primary);
+  background: var(--ltc-hover);
+}
+
+.pin-recipient-guide-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pin-tier-email-field #pin-recipient-email {
+  position: static;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 10px 11px;
+  border-radius: 8px;
+  background: var(--ltc-paper);
+  font-size: 13px;
+  opacity: 1;
+}
+
+.pin-tier-email-field #pin-recipient-email:focus,
+.pin-tier-email-field #pin-recipient-email:focus-visible {
+  border-color: var(--ltc-muted);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--ltc-border);
+}
+
+.pin-letter-expiration {
+  margin: 10px 0 0;
+}
+
+.pin-letter-expiration time {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.pin-letter-actions {
+  align-items: stretch;
+}
+
+.pin-letter-actions button {
+  border-radius: 8px;
+}
+
+.pin-payment-methods {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 20px;
+  margin-top: 11px;
+  color: var(--ltc-muted);
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pin-payment-methods > svg {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+}
+
+.pin-payment-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  height: 16px;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.pin-payment-brand img {
+  display: block;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+}
+
+/* Optical normalization: the source assets have different internal bounds. */
+.pin-payment-brand--gcash img { height: 14px; }
+.pin-payment-brand--maya img { position:relative; top:1px; height:12px; }
+.pin-payment-brand--qrph img { height: 10px; }
+
+.pin-upgrade-summary {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 12px 0;
+  border-block: 1px solid var(--ltc-border);
+}
+
+.pin-upgrade-summary > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pin-upgrade-summary dt,
+.pin-upgrade-summary dd {
+  margin: 0;
+  font-size: 11px;
+}
+
+.pin-upgrade-summary dt {
+  color: var(--ltc-muted);
+}
+
+.pin-upgrade-summary dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ltc-foreground);
+  font-weight: 600;
+  text-align: right;
+}
+
+.pin-letter-message-preview {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media(max-width:480px) {
+  .pin-letter-dialog {
+    padding: 20px 16px;
+  }
+
+  .pin-letter-dialog h2 {
+    font-size: 19px;
+  }
+
+  .pin-letter-tier {
+    padding: 12px;
+  }
+
+  .pin-payment-methods {
+    gap: 5px;
+    font-size: 9px;
+  }
+}
+
 .pin-delivery-guide-overlay { position:fixed; inset:0; z-index:13000; display:grid; place-items:center; padding:20px; background:var(--ltc-backdrop); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); animation:pin-overlay-in .22s ease both; }
 .pin-delivery-guide { position:relative; box-sizing:border-box; width:min(100%,410px); max-height:calc(100dvh - 40px); overflow-y:auto; padding:24px; border:1px solid var(--ltc-border); border-radius:24px; background:var(--ltc-paper); color:var(--ltc-foreground); box-shadow:0 24px 80px rgba(0,0,0,.4); font-family:inherit; animation:pin-dialog-in .25s cubic-bezier(.22,1,.36,1) both; color-scheme:light dark; }
 .pin-delivery-guide h3 { margin:0 0 10px; padding-right:36px; box-sizing:border-box; width:100%; font-family:Georgia,"Times New Roman",serif; font-size:22px; line-height:1.25; font-weight:600; letter-spacing:-.025em; color:var(--ltc-foreground); }
 .pin-delivery-guide-intro { margin:0 0 16px; font-size:12px; line-height:1.6; color:var(--ltc-muted); }
+.pin-recipient-email-preview { display:flex; align-items:center; gap:11px; min-width:0; padding:14px; border:1px solid var(--ltc-border); border-radius:10px; background:var(--ltc-subtle); }
+.pin-recipient-email-preview > img { flex:0 0 36px; width:36px; height:36px; object-fit:contain; }
+.pin-recipient-email-preview__content { display:flex; min-width:0; flex:1; flex-direction:column; gap:2px; }
+.pin-recipient-email-preview__sender { display:flex; align-items:baseline; justify-content:space-between; gap:10px; min-width:0; }
+.pin-recipient-email-preview__sender strong { overflow:hidden; color:var(--ltc-foreground); font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+.pin-recipient-email-preview__sender time { flex:none; color:var(--ltc-muted); font-size:10px; }
+.pin-recipient-email-preview__content > b { overflow:hidden; color:var(--ltc-foreground); font-size:12px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.pin-recipient-email-preview__content > span { overflow:hidden; color:var(--ltc-muted); font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.pin-recipient-guide-note { display:flex; align-items:flex-start; gap:9px; margin-top:14px; }
+.pin-recipient-guide-note > svg { flex:0 0 15px; width:15px; height:15px; margin-top:2px; color:var(--ltc-muted); }
+.pin-recipient-guide-note strong { display:block; margin-bottom:2px; color:var(--ltc-foreground); font-size:12px; }
+.pin-recipient-guide-note p { margin:0; color:var(--ltc-muted); font-size:11px; line-height:1.55; }
 .pin-featured-criteria-label { margin:0 0 7px; color:var(--ltc-foreground); font-size:12px; font-weight:600; }
 .pin-delivery-guide-list { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
 .pin-delivery-guide-item { display:flex; align-items:flex-start; gap:11px; padding:12px 14px; border:1px solid var(--ltc-border); border-radius:14px; background:var(--ltc-subtle); }

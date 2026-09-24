@@ -1,6 +1,11 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import BurnLetterDialog from "./BurnLetterDialog";
+import { displayDirectLinkAds } from "../data/direct_link";
+
+jest.mock("../data/direct_link", () => ({
+  displayDirectLinkAds: jest.fn(),
+}));
 
 jest.mock("../data/keys", () => ({
   render_url: "https://test-api.example/api/messages",
@@ -126,20 +131,25 @@ describe("BurnLetterDialog", () => {
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
   });
 
-  test("dismisses confirmation dialog and keeps letter intact on Cancel", async () => {
+  test("closes the entire burn flow on Cancel without leaving the letter behind", async () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
       json: async () => ({ letter: mockLetter }),
     });
 
-    render(
-      <BurnLetterDialog
-        isOpen={true}
-        onClose={jest.fn()}
-        onBurnSuccess={jest.fn()}
-      />
-    );
+    const BurnFlowHarness = () => {
+      const [isOpen, setIsOpen] = React.useState(true);
+      return (
+        <BurnLetterDialog
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onBurnSuccess={jest.fn()}
+        />
+      );
+    };
+
+    render(<BurnFlowHarness />);
 
     fireEvent.change(screen.getByLabelText("Secret burn key"), {
       target: { value: validBurnKey },
@@ -155,17 +165,13 @@ describe("BurnLetterDialog", () => {
     // Click Cancel
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
-    // Confirmation dialog is dismissed
+    // The confirmation and its underlying letter preview both close.
     expect(
       screen.queryByText("Are you sure you want to burn your letter?")
     ).not.toBeInTheDocument();
 
-    // Letter remains intact and readable in view
-    expect(screen.getByText(mockLetter.message)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Burn This Letter/i })
-    ).toBeInTheDocument();
+    expect(screen.queryByText(mockLetter.message)).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   test("proceeds to center-out paper burn animation, commits burn, and shows completion state", async () => {
@@ -220,32 +226,47 @@ describe("BurnLetterDialog", () => {
       screen.queryByText("Are you sure you want to burn your letter?")
     ).not.toBeInTheDocument();
 
-    // 2. Letter enters center-out paper burn animation
+    // 2. The intact letter remains visible for one second against a dim backdrop.
     const letterCard = screen.getByText(mockLetter.message).closest(".letter-paper");
-    expect(letterCard).toHaveClass("is-center-burning");
+    expect(letterCard).not.toHaveClass("is-center-burning");
+    expect(document.querySelector(".burn-dialog-overlay")).toHaveClass("is-burn-stage");
+    expect(global.fetch).toHaveBeenCalledTimes(1);
 
-    // 3. Deliberate 4.8-second burn animation finishes
     await act(async () => {
-      jest.advanceTimersByTime(5000);
+      jest.advanceTimersByTime(999);
+    });
+    expect(letterCard).not.toHaveClass("is-center-burning");
+
+    // 3. The existing burn animation begins after the full delay.
+    await act(async () => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(letterCard).toHaveClass("is-center-burning");
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    // 4. The burn animation finishes on its original duration.
+    await act(async () => {
+      jest.advanceTimersByTime(3400);
       await Promise.resolve();
     });
 
-    // 4. Verification that onBurnSuccess was called with the letter ID
+    // 5. Verification that onBurnSuccess was called with the letter ID
     await waitFor(() => {
       expect(onBurnSuccessMock).toHaveBeenCalledWith(mockLetter._id);
       expect(screen.getByText("Your Letter is Gone...")).toBeInTheDocument();
     });
 
-    // 5. Post-burn completion state displayed: "Your Letter is Gone..."
+    // 6. Post-burn completion state displayed: "Your Letter is Gone..."
     expect(
       screen.getByText(/The letter has turned to ashes/i)
     ).toBeInTheDocument();
 
-    // 6. Old animation icons and text are gone, letter container cleared
+    // 7. Old animation icons and text are gone, letter container cleared
     expect(screen.queryByText(mockLetter.message)).not.toBeInTheDocument();
 
-    // 7. Clicking Move Forward dismisses the dialog
+    // 8. Clicking Move Forward dismisses the dialog
     fireEvent.click(screen.getByRole("button", { name: "Move Forward" }));
+    expect(displayDirectLinkAds).toHaveBeenCalledTimes(1);
     expect(onCloseMock).toHaveBeenCalled();
 
     jest.useRealTimers();

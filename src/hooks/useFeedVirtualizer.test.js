@@ -252,5 +252,32 @@ describe("useFeedVirtualizer Unit Tests", () => {
       });
       expect(window.scrollY).toBe(1500);
     });
+
+    test("uses the last feed coordinate if modal layout transiently reports the top", () => {
+      const items = generateLetters(100);
+      setWindowScrollY(1800);
+
+      const { rerender } = renderHook(
+        ({ isSuspended }) =>
+          useFeedVirtualizer({
+            items,
+            columns: 6,
+            isSuspended,
+            hasMore: false,
+          }),
+        { initialProps: { isSuspended: false } }
+      );
+
+      // A size-collapsing modal layout can report zero before suspension effects run.
+      setWindowScrollY(0);
+      rerender({ isSuspended: true });
+      rerender({ isSuspended: false });
+
+      expect(window.scrollTo).toHaveBeenCalledWith({
+        top: 1800,
+        behavior: "instant",
+      });
+      expect(window.scrollY).toBe(1800);
+    });
   });
 });

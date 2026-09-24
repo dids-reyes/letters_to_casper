@@ -3,7 +3,7 @@ import {createPortal} from 'react-dom';
 import {IoShareSocialOutline} from 'react-icons/io5';
 import '../styles/App.css';
 
-export default function PinThankYouDialog({pinned, onClose}) {
+export default function PinThankYouDialog({mode = 'pinned', onClose}) {
   const dialog = useRef(null);
   const [shareStatus, setShareStatus] = useState('');
   useEffect(() => {
@@ -44,13 +44,14 @@ export default function PinThankYouDialog({pinned, onClose}) {
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
   };
+  const delivered = mode === 'delivered';
   return createPortal(
     <div className="submit-confirm-overlay share-celebration-overlay" onKeyDown={onKeyDown} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
       <section ref={dialog} className="share-celebration-dialog" role="dialog" aria-modal="true" aria-labelledby="pin-thank-you-title" aria-describedby="pin-thank-you-message">
         <div className="share-celebration-achievement" aria-hidden="true"><img src={`${process.env.PUBLIC_URL}/android-chrome-512x512.png`} alt="" /></div>
-        <span className="submission-notice-eyebrow">PINNED SUCCESSFULLY</span>
-        <h2 id="pin-thank-you-title">{pinned ? 'A little more time to shine.' : 'Your support made it here.'}</h2>
-        <p id="pin-thank-you-message">{pinned ? 'Thank you for supporting Letters to Casper and keeping this quiet space alive.' : 'Your contribution helps keep this quiet space running for everyone. This letter is no longer actively pinned, but your support still means so much.'}</p>
+        <span className="submission-notice-eyebrow">{delivered ? 'SENT SUCCESSFULLY' : 'PINNED SUCCESSFULLY'}</span>
+        <h2 id="pin-thank-you-title">{delivered ? 'Your letter is on its way.' : 'A little more time to shine.'}</h2>
+        <p id="pin-thank-you-message">{delivered ? 'Your letter will be delivered anonymously to the recipient’s inbox.' : 'Thank you for supporting Letters to Casper and keeping this quiet space alive.'}</p>
         <button type="button" className="share-celebration-primary" onClick={shareWebsite}><IoShareSocialOutline /> Share Letters to Casper</button>
         {shareStatus && <span className="share-celebration-status" role="status">{shareStatus}</span>}
         <button type="button" className="share-celebration-finish" onClick={onClose}>Close</button>

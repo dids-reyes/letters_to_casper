@@ -5,7 +5,6 @@ import Header from "./Header";
 import Footer from "./Footer";
 import AddModal from "./AddModal";
 import BugReportModal from "./BugReportModal";
-import PinLetterDialog from "./PinLetterDialog";
 import BurnLetterDialog from "./BurnLetterDialog";
 import NetworkNoticeDialog from "./NetworkNoticeDialog";
 import PinPaymentReturn from "./PinPaymentReturn";
@@ -14,7 +13,7 @@ import Letter from "./Letter";
 import AdComponent from "./AdComponent";
 import AdsterraNativeBanner from "./AdsterraNativeBanner";
 import DetailsModal from "./DetailsModal";
-import { AiFillMessage, AiOutlinePushpin } from "react-icons/ai";
+import { AiFillMessage } from "react-icons/ai";
 import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
 import under_construction from "../lotties/under_construction.json";
@@ -57,7 +56,16 @@ import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 
 const SHOW_SKY_NAV = process.env.REACT_APP_SHOW_SKY_NAV === "true";
+// Disabled by default; set to "true" at build time to restore both feed ad slots.
+export const SHOW_MAIN_FEED_ADS =
+  process.env.REACT_APP_SHOW_MAIN_FEED_ADS === "true";
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
+const getLetterGridColumns = width => {
+  if (width >= 1800) return 7;
+  if (width > 1200) return 6;
+  if (width > 900) return 4;
+  return 3;
+};
 export const PLDT_NOTICE_KEY = "ltc-pldt-network-notice-v1";
 export const SHOW_PLDT_NOTICE =
   typeof process !== "undefined" && process.env?.REACT_APP_SHOW_PLDT_NOTICE === "false"
@@ -94,7 +102,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   });
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
-  const [showPinLetter, setShowPinLetter] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [feedPage, setFeedPage] = useState(0);
   const [showOrigins, setShowOrigins] = useState(false);
@@ -159,11 +166,9 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const [showSkyPresence, setShowSkyPresence] = useState(false);
   const skySoulCountRef = useRef(0);
   const skyPresenceTimerRef = useRef(null);
-  const [letterGridColumns, setLetterGridColumns] = useState(() => {
-    if (window.innerWidth > 1200) return 6;
-    if (window.innerWidth > 900) return 4;
-    return 3;
-  });
+  const [letterGridColumns, setLetterGridColumns] = useState(() =>
+    getLetterGridColumns(window.innerWidth)
+  );
   const [showUiAnnouncement, setShowUiAnnouncement] = useState(() => {
     try {
       return localStorage.getItem(UI_ANNOUNCEMENT_KEY) !== "seen";
@@ -280,7 +285,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     return () => document.removeEventListener("keydown", dismiss);
   }, [showSkyConfirmation]);
 
-  const [showReadModeModal, setShowReadModeModal] = useState(false);
   const isReadModeActive = Boolean(readModeEnabled && showDetailsModal && readMode);
 
   const [showReadModeTooltip, setShowReadModeTooltip] = useState(false);
@@ -420,17 +424,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   }, [nightShift, showDetailsModal]);
 
   useEffect(() => {
-    if (!showReadModeModal) return undefined;
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setShowReadModeModal(false);
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [showReadModeModal]);
-
-  useEffect(() => {
     const updateLateNight = () => {
       const hour = new Date().getHours();
       setIsLateNight(hour >= 23 || hour < 5);
@@ -480,9 +473,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
   useEffect(() => {
     const updateLetterGridColumns = () => {
-      const nextColumns =
-        window.innerWidth > 1200 ? 6 : window.innerWidth > 900 ? 4 : 3;
-      setLetterGridColumns(nextColumns);
+      setLetterGridColumns(getLetterGridColumns(window.innerWidth));
     };
 
     window.addEventListener("resize", updateLetterGridColumns, {
@@ -1033,6 +1024,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       });
 
       const shouldInsertAd =
+        SHOW_MAIN_FEED_ADS &&
         letterNumber >= firstAdAfter &&
         (letterNumber - firstAdAfter) % followingAdInterval === 0;
 
@@ -1735,53 +1727,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           onDismiss={dismissPldtNotice}
         />
       )}
-      {readModeEnabled && showReadModeModal && (
-        <div
-          className="ui-announcement-overlay read-mode-dialog-overlay"
-          onClick={() => setShowReadModeModal(false)}
-        >
-          <section
-            className="read-mode-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="read-mode-dialog-title"
-            aria-describedby="read-mode-dialog-description"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="compact-dialog-heading">
-              <IoReaderOutline aria-hidden="true" />
-              <h2 id="read-mode-dialog-title">Read Mode</h2>
-            </div>
-            <p id="read-mode-dialog-description">
-              When Read Mode is enabled, typing effects are disabled and letters are displayed immediately. You can also swipe or scroll down to browse through letters.
-            </p>
-            <p className={`read-mode-dialog-status${readMode ? " is-active" : ""}`}>
-              {readMode ? "● Read Mode is ON" : "○ Read Mode is OFF"}
-            </p>
-            <div className="read-mode-dialog-actions">
-              <button
-                type="button"
-                className={`read-mode-dialog-toggle${readMode ? " is-active" : ""}`}
-                onClick={() => {
-                  setReadMode((prev) => !prev);
-                }}
-              >
-                {readMode ? "Turn Off Read Mode" : "Turn On Read Mode"}
-              </button>
-              <button
-                type="button"
-                className="read-mode-dialog-close"
-                onClick={() => setShowReadModeModal(false)}
-              >
-                Done
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
-
       <PinPaymentReturn onConfirmed={fetchLetters} />
-      {showPinLetter && <PinLetterDialog onClose={() => setShowPinLetter(false)} letters={letters.messages} />}
       {showBugReport && <BugReportModal onClose={() => setShowBugReport(false)} />}
 
       <div
@@ -1821,22 +1767,24 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                 setShowReadModeTooltip(false);
                 setIsTooltipFading(false);
               }
-              setShowReadModeModal(true);
+              const nextReadMode = !readMode;
+              setReadMode(nextReadMode);
+              toast.info(nextReadMode ? "Read Mode On" : "Read Mode Off", {
+                position: "top-center",
+                autoClose: 900,
+                hideProgressBar: true,
+                pauseOnFocusLoss: false,
+                pauseOnHover: false,
+              });
             }}
             aria-pressed={readMode}
-            aria-label={`Read mode info and settings (${readMode ? "on" : "off"})`}
-            title={`Read mode: ${readMode ? "On" : "Off"} (Click to learn more)`}
+            aria-label={`Toggle Read Mode (${readMode ? "on" : "off"})`}
+            title={`Turn Read Mode ${readMode ? "off" : "on"}`}
             tabIndex={isSpeedDialOpen ? 0 : -1}
           >
             <IoReaderOutline aria-hidden="true" />
           </button>
         )}
-
-        <button type="button" className="fab speed-dial-action pin-letter-action"
-          aria-label="Pin a letter" title="Pin a letter" tabIndex={isSpeedDialOpen ? 0 : -1}
-          onClick={() => { closeSpeedDial(); setShowPinLetter(true); }}>
-          <AiOutlinePushpin aria-hidden="true" />
-        </button>
 
         {/* Sub-action 3: Bug Report (Radial spread: to the left) */}
         <button
