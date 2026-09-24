@@ -1,16 +1,13 @@
 import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {
-  IoEyeOutline,
   IoInformationCircleOutline,
   IoLockClosedOutline,
-  IoMailOutline,
-  IoPaperPlaneOutline,
 } from 'react-icons/io5';
-import {AiOutlinePushpin} from 'react-icons/ai';
 import {createPortal} from 'react-dom';
 import {render_url, api_key} from '../data/keys';
 import qrphLogo from '../assets/qrph_logo.png';
 import gcashLogo from '../assets/gcash-logo-vector.svg';
+import mayaLogo from '../assets/maya-seeklogo.svg';
 import './PinLetterDialog.css';
 
 export function letterIdFromUrl(value) {
@@ -22,12 +19,37 @@ export function letterIdFromUrl(value) {
   } catch { return null; }
 }
 export const SUPPORT_TIERS = [
-  {id: '12h', label: '12 Hours', price: 19, originalPrice: 29, hours: 12, note: 'A fleeting spark'},
-  {id: '24h', label: '24 Hours', price: 39, originalPrice: 49, days: 1, note: 'A quiet day in the spotlight'},
-  {id: '3d', label: '3 Days', price: 79, originalPrice: 89, days: 3, note: 'Keep it close for the weekend'},
-  {id: '7d', label: '7 Days', price: 129, originalPrice: 149, days: 7, note: 'Seven days in spotlight'},
+  {
+    id: 'delivery',
+    label: 'Send to Inbox',
+    price: 9,
+    originalPrice: 19,
+    badge: 'Direct',
+    description: 'Deliver this letter anonymously straight to their email inbox.',
+    delivers: true,
+  },
+  {
+    id: 'pin-24h',
+    label: 'Pin to Feed',
+    price: 9,
+    originalPrice: 19,
+    badge: 'Visibility',
+    description: 'Pin at the top of the public feed for 24 hours.',
+    hours: 24,
+  },
+  {
+    id: 'keepsake-48h',
+    label: 'The Keepsake (Both)',
+    price: 29,
+    originalPrice: 49,
+    badge: 'Most Meaningful',
+    description: 'Inbox delivery + 48 hours pinned to the top of the feed.',
+    hours: 48,
+    delivers: true,
+  },
 ];
 export function expirationForTier(start, tier) {
+  if (!tier.hours && !tier.days) return null;
   const date = new Date(start);
   if (tier.hours) {
     date.setTime(date.getTime() + tier.hours * 3600000);
@@ -39,6 +61,26 @@ export function expirationForTier(start, tier) {
 export function redirectToCheckout(url) {
   window.location.assign(url);
 }
+
+function PaymentMethods() {
+  return (
+    <div className="pin-payment-methods" aria-label="Secure payment via GCash, Maya, or QRPH">
+      <IoLockClosedOutline aria-hidden="true" />
+      <span>Secure payment via</span>
+      <span className="pin-payment-brand pin-payment-brand--gcash">
+        <img src={gcashLogo} alt="GCash" />
+      </span>
+      <span className="pin-payment-brand pin-payment-brand--maya">
+        <img src={mayaLogo} alt="Maya" />
+      </span>
+      <span>or</span>
+      <span className="pin-payment-brand pin-payment-brand--qrph">
+        <img src={qrphLogo} alt="QRPH" />
+      </span>
+    </div>
+  );
+}
+
 export default function PinLetterDialog({
   onClose,
   redirect = redirectToCheckout,
@@ -61,9 +103,7 @@ export default function PinLetterDialog({
   }, [letters, passedActivePins]);
 
   const isFull = activePins.length >= 7;
-  const earliestExpiry = isFull && activePins[0] ? new Date(activePins[0].pin_expires_at) : null;
-
-  const [tierId, setTierId] = useState('12h');
+  const [tierId, setTierId] = useState('delivery');
   const [previewTime, setPreviewTime] = useState(() => new Date());
   const [closing, setClosing] = useState(false);
   const tier = SUPPORT_TIERS.find(option => option.id === tierId) || SUPPORT_TIERS[0];
@@ -76,7 +116,6 @@ export default function PinLetterDialog({
     }
   }, [defaultUrl, initialUrl]);
   const [email, setEmail] = useState('');
-  const [deliverEmail, setDeliverEmail] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [showDeliveryGuide, setShowDeliveryGuide] = useState(false);
   const [showFeaturedGuide, setShowFeaturedGuide] = useState(false);
@@ -85,6 +124,10 @@ export default function PinLetterDialog({
   const recipientEmailInput = useRef(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const requiresRecipientEmail = Boolean(tier.delivers);
+  const normalizedRecipientEmail = recipientEmail.trim();
+  const recipientEmailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedRecipientEmail)
+    && normalizedRecipientEmail.length <= 254;
   const busy = useRef(false);
   const dialog = useRef(null);
   const headline = useRef(null);
@@ -168,13 +211,13 @@ export default function PinLetterDialog({
     if (busy.current || closing) return;
     const letterId = letterIdFromUrl(url);
     if (!letterId) { setError('Paste a valid Letters to Casper letter link.'); return; }
-    const recipient_email = deliverEmail ? recipientEmail.trim() : '';
-    if (deliverEmail && !recipient_email) {
+    const recipient_email = requiresRecipientEmail ? recipientEmail.trim() : '';
+    if (requiresRecipientEmail && !recipient_email) {
       setError('Enter the recipient email address to deliver this letter anonymously.');
       recipientEmailInput.current?.focus();
       return;
     }
-    if (deliverEmail && (recipient_email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email))) {
+    if (requiresRecipientEmail && (recipient_email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email))) {
       setError('Enter a valid recipient email address.');
       recipientEmailInput.current?.focus();
       return;
@@ -189,9 +232,8 @@ export default function PinLetterDialog({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'This letter is not available. Please check the link.');
       if (!data.message || data.message._id?.toLowerCase() !== letterId.toLowerCase() || typeof data.message.message !== 'string') throw new Error('Unable to load this letter. Please check the link.');
-      const characters = Array.from(data.message.message);
       setConfirmation({letterId, tierId, notificationEmail, recipient_email, from: data.message.from, to: data.message.to,
-        message: characters.slice(0, 80).join('') + (characters.length > 80 ? '...' : '')});
+        message: data.message.message});
     } catch (err) { setError(err.message || 'Unable to load this letter. Please try again.'); }
     finally { busy.current = false; setLoading(false); }
   };
@@ -245,30 +287,12 @@ export default function PinLetterDialog({
           ×
         </button>
         <h2 id="pin-letter-title" ref={headline} tabIndex={-1}>
-          <span>
-            {confirmation ? "Confirm your letter" : isFull ? (
-              "All Pinned Slots Occupied (7/7)"
-            ) : (
-              <>
-                Pin & Deliver
-                <AiOutlinePushpin
-                  className="pin-letter-title-icon"
-                  aria-hidden="true"
-                />
-                <IoMailOutline
-                  className="pin-letter-title-icon"
-                  aria-hidden="true"
-                />
-              </>
-            )}
-          </span>
+          <span>{confirmation ? "Confirm Your Letter" : "Make Sure Your Words Are Felt"}</span>
         </h2>
         <p id="pin-letter-subtext">
-          {confirmation ? (confirmation.recipient_email
-            ? "Is this the letter you’d like to pin and deliver anonymously?"
-            : "Is this the letter you’d like to pin?") : isFull
-            ? "To keep the quiet feed balanced and give every featured letter its moment, we only allow 7 pinned letters at a time. Please check back soon once a current pin expires to pin your own or another letter."
-            : <>Keep these words at the top of the feed, and optionally deliver them anonymously via email. <button type="button" className="pin-featured-guide-btn" onClick={() => setShowFeaturedGuide(true)}>Featured Letters.</button></>}
+          {confirmation
+            ? "Review the letter and delivery details before opening checkout."
+            : "Because some things are too heavy to keep to yourself."}
         </p>
         {confirmation ? (
           <form onSubmit={pay} noValidate>
@@ -279,112 +303,95 @@ export default function PinLetterDialog({
               <div className="pin-letter-confirmation-row">
                 <dt>To:</dt><dd>{confirmation.to || 'Anonymous'}</dd>
               </div>
-              <dt>Message</dt><dd className="pin-letter-message-preview">{confirmation.message}</dd>
+              <div className="pin-letter-confirmation-row pin-letter-message-row">
+                <dt>Message:</dt><dd className="pin-letter-message-preview">{confirmation.message}</dd>
+              </div>
             </dl>
-            {confirmation.recipient_email && (
-              <p className="pin-letter-anonymous-recipient">
-                <span>Anonymously Send to:</span> {confirmation.recipient_email}
-              </p>
-            )}
-            <div className="pin-letter-confirmation-price" aria-label={`${tier.label}, ₱${tier.price.toFixed(2)}`}>
-              <span>{tier.label}</span>
-              <span className="pin-letter-confirmation-price-divider" aria-hidden="true">·</span>
-              <strong><span className="pin-letter-confirmation-currency" aria-hidden="true">₱</span>{tier.price.toFixed(2)}</strong>
-            </div>
+            <dl className="pin-upgrade-summary">
+              <div><dt>Selected</dt><dd>{tier.label}</dd></div>
+              {confirmation.recipient_email && <div><dt>Recipient</dt><dd>{confirmation.recipient_email}</dd></div>}
+              {tier.hours && <div><dt>Pin duration</dt><dd>{tier.hours} hours</dd></div>}
+              <div><dt>Total</dt><dd>₱{tier.price.toFixed(2)}</dd></div>
+            </dl>
             {confirmation.notificationEmail && <p className="pin-letter-note">We’ll email {confirmation.notificationEmail} once your payment is confirmed.</p>}
             {error && <p id="pin-letter-error" role="alert">{error}</p>}
             <div className="pin-letter-actions">
-              <button type="button" disabled={loading || closing} onClick={() => {setConfirmation(null); setError('');}}>Cancel</button>
+              <button type="button" disabled={loading || closing} onClick={() => {setConfirmation(null); setError('');}}>Back</button>
               <button className="pin-letter-primary" type="submit" disabled={loading || closing}>
-                {loading ? 'Opening checkout…' : 'Proceed to Payment'}
+                {loading ? 'Opening checkout…' : 'Confirm & Pay'}
               </button>
             </div>
             {loading && <p role="status" className="pin-letter-note">Opening your secure checkout…</p>}
-            <p className="pin-checkout-trust">
-              <IoLockClosedOutline aria-hidden="true" />
-              <span>Secure checkout using</span>
-              <img src={qrphLogo} alt="QRPH" className="pin-qrph-logo" />
-              <span>or</span>
-              <img src={gcashLogo} alt="GCash" className="pin-gcash-logo" />
-            </p>
+            <PaymentMethods />
           </form>
-        ) : isFull ? (
-          <>
-            {earliestExpiry && (
-              <p className="pin-letter-expiration">
-                Next available slot opens around:
-                <br />
-                <time dateTime={earliestExpiry.toISOString()}>
-                  {earliestExpiry.toLocaleString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    timeZoneName: "short",
-                  })}
-                </time>
-              </p>
-            )}
-            <div className="pin-letter-actions">
-              <button
-                className="pin-letter-primary"
-                type="button"
-                onClick={close}
-              >
-                Understood
-              </button>
-            </div>
-          </>
         ) : (
           <form onSubmit={preview} noValidate>
-            <fieldset className="pin-letter-tiers" disabled={loading || closing}>
+            <fieldset className="pin-letter-tiers" disabled={loading || closing} aria-label="Choose an upgrade">
               {SUPPORT_TIERS.map((option) => (
-                <label
+                <div
                   key={option.id}
-                  className={`pin-letter-tier${tierId === option.id ? " is-selected" : ""}`}
+                  className={`pin-letter-tier${tierId === option.id ? " is-selected" : ""}${isFull && option.hours ? " is-unavailable" : ""}`}
                 >
-                  <input
-                    type="radio"
-                    name="pin-tier"
-                    value={option.id}
-                    checked={tierId === option.id}
-                    onChange={() => {
-                      setTierId(option.id);
-                      setPreviewTime(new Date());
-                    }}
-                  />
-                  <span className="pin-letter-tier-heading">
-                    <strong>{option.label}</strong>
-                    <span className="pin-letter-tier-price"><del aria-label={`Previously ₱${option.originalPrice}`}>₱{option.originalPrice}</del><b aria-label={`Now ₱${option.price}`}>₱{option.price}</b></span>
-                  </span>
-                  <span className="pin-letter-tier-note" title={option.note}>{option.note}</span>
-                </label>
+                  <label className="pin-letter-tier-option">
+                    <input
+                      type="radio"
+                      name="pin-tier"
+                      value={option.id}
+                      checked={tierId === option.id}
+                      disabled={isFull && Boolean(option.hours)}
+                      onChange={() => {
+                        setTierId(option.id);
+                        setPreviewTime(new Date());
+                      }}
+                    />
+                    <span className="pin-letter-tier-heading">
+                      <span className="pin-letter-radio" aria-hidden="true" />
+                      <strong>{option.label}</strong>
+                      <span className="pin-letter-tier-price"><del aria-label={`Previously ₱${option.originalPrice}`}>₱{option.originalPrice}</del><b aria-label={`Now ₱${option.price}`}>₱{option.price}</b></span>
+                    </span>
+                    <span className="pin-letter-tier-badge">{option.badge}</span>
+                    <span className="pin-letter-tier-note">{option.description}</span>
+                    {isFull && option.hours && <span className="pin-letter-tier-capacity">Pinned slots are currently full.</span>}
+                  </label>
+                  {tierId === option.id && option.delivers && (
+                    <div className="pin-tier-email-field">
+                      <div className="pin-recipient-label-row">
+                        <label className="pin-letter-url-label" htmlFor="pin-recipient-email">Recipient&apos;s Email Address</label>
+                        <button
+                          type="button"
+                          className="pin-recipient-guide-button"
+                          aria-label="Preview the recipient email"
+                          aria-haspopup="dialog"
+                          onClick={() => setShowDeliveryGuide(true)}
+                        >
+                          <IoInformationCircleOutline aria-hidden="true" />
+                        </button>
+                      </div>
+                      <input
+                        ref={recipientEmailInput}
+                        id="pin-recipient-email"
+                        name="recipient_email"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        value={recipientEmail}
+                        required
+                        maxLength={254}
+                        disabled={loading || closing}
+                        placeholder="name@example.com"
+                        onChange={event => { setRecipientEmail(event.target.value); setError(''); }}
+                        aria-invalid={Boolean(recipientEmail) && !recipientEmailIsValid}
+                      />
+                    </div>
+                  )}
+                </div>
               ))}
             </fieldset>
-            <p className="pin-letter-expiration">
-              If pinned now, visible until:
-              <br />
-              <time dateTime={expiration.toISOString()}>
-                {expiration.toLocaleString(undefined, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  timeZoneName: "short",
-                })}
-              </time>
-            </p>
-            <p className="pin-letter-note">
-              Time begins when payment is confirmed.
-            </p>
+            {expiration && <p className="pin-letter-expiration">Pinned until <time dateTime={expiration.toISOString()}>{expiration.toLocaleString()}</time>. Time begins after payment.</p>}
             {!hideUrlInput && (
               <>
                 <label className="pin-letter-url-label" htmlFor="pin-letter-url">
-                  Which letter would you like to pin?
+                  Which letter would you like to upgrade?
                 </label>
                 <input
                   id="pin-letter-url"
@@ -406,68 +413,6 @@ export default function PinLetterDialog({
                 </p>
               </>
             )}
-            <div className="pin-delivery-card">
-              <label className="pin-delivery-toggle-label" htmlFor="pin-deliver-toggle">
-                <input
-                  id="pin-deliver-toggle"
-                  type="checkbox"
-                  className="pin-delivery-checkbox-input"
-                  checked={deliverEmail}
-                  disabled={loading || closing}
-                  onChange={event => {
-                    setDeliverEmail(event.target.checked);
-                    setError('');
-                  }}
-                />
-                <span className="pin-delivery-checkbox-box" aria-hidden="true">
-                  <span className="pin-delivery-checkmark">✓</span>
-                </span>
-                <span className="pin-delivery-toggle-text">
-                  <span className="pin-delivery-toggle-title">
-                    Deliver an anonymous copy via email
-                  </span>
-                  <span className="pin-deliver-badge">Included</span>
-                </span>
-              </label>
-
-              {deliverEmail && (
-                <div className="pin-delivery-fields">
-                  <div className="pin-recipient-label-row">
-                    <label className="pin-letter-url-label" htmlFor="pin-recipient-email">
-                      Recipient's Email
-                    </label>
-                    <button
-                      type="button"
-                      className="pin-recipient-guide-btn"
-                      onClick={() => setShowDeliveryGuide(true)}
-                      aria-label="What’s this? Learn more about delivering your letter"
-                    >
-                      <IoInformationCircleOutline aria-hidden="true" />
-                      <span>What’s this?</span>
-                    </button>
-                  </div>
-                  <input
-                    ref={recipientEmailInput}
-                    id="pin-recipient-email"
-                    name="recipient_email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="off"
-                    value={recipientEmail}
-                    required={deliverEmail}
-                    maxLength={254}
-                    disabled={loading || closing}
-                    placeholder="recipient@example.com"
-                    onChange={event => { setRecipientEmail(event.target.value); setError(''); }}
-                    aria-describedby="pin-recipient-note"
-                  />
-                  <p id="pin-recipient-note" className="pin-letter-note pin-sender-note">
-                    Sender name: Sent anonymously via Letters to Casper
-                  </p>
-                </div>
-              )}
-            </div>
-
             <div className="pin-receipt-section">
               <label className="pin-letter-url-label" htmlFor="pin-letter-email">
                 Your Email (for receipt only)
@@ -505,15 +450,14 @@ export default function PinLetterDialog({
               <button
                 className="pin-letter-primary"
                 type="submit"
-                disabled={loading || closing}
+                disabled={loading || closing || (requiresRecipientEmail && !recipientEmailIsValid)}
               >
                 {loading
                   ? "Loading letter…"
-                  : deliverEmail
-                    ? `Pin and Deliver for ₱${tier.price}`
-                    : `Pin for ₱${tier.price}`}
+                  : `Continue • ₱${tier.price}`}
               </button>
             </div>
+            <PaymentMethods />
             {loading && (
               <p role="status" className="text-xs text-muted-foreground">
                 Loading your letter preview…
@@ -547,31 +491,26 @@ export default function PinLetterDialog({
             >
               ×
             </button>
-            <h3 id="pin-delivery-guide-title">Delivering Your Letter</h3>
+            <h3 id="pin-delivery-guide-title">What will they receive?</h3>
             <p className="pin-delivery-guide-intro">
-              If you know the email address of the person you wrote this for, you can add it in the field. Once your transaction is confirmed, we’ll send them a notification letting them know someone wrote a letter for them, along with a link to read it on the site.
+              Their inbox will show a private notification from Letters to Casper, similar to this:
             </p>
-            <div className="pin-delivery-guide-list">
-              <div className="pin-delivery-guide-item">
-                <IoEyeOutline aria-hidden="true" />
-                <div>
-                  <strong>What they will see:</strong>
-                  <p>Only the names you entered in the To and From fields, plus a short preview snippet of your letter.</p>
+            <div className="pin-recipient-email-preview" aria-label="Example recipient inbox message">
+              <img src="/ltc_favicon.png" alt="" />
+              <div className="pin-recipient-email-preview__content">
+                <div className="pin-recipient-email-preview__sender">
+                  <strong>Letters to Casper</strong>
+                  <time>2:40 PM</time>
                 </div>
+                <b>Recipient, someone wrote a letter for you</b>
+                <span>Someone wrote to you. Open the letter when you’re ready…</span>
               </div>
-              <div className="pin-delivery-guide-item">
-                <IoLockClosedOutline aria-hidden="true" />
-                <div>
-                  <strong>Your receipt email stays private:</strong>
-                  <p>The email address you use for payment confirmation is never shown or shared with the recipient.</p>
-                </div>
-              </div>
-              <div className="pin-delivery-guide-item">
-                <IoPaperPlaneOutline aria-hidden="true" />
-                <div>
-                  <strong>One-time dispatch:</strong>
-                  <p>This is a single, quiet delivery notification—never a mailing list or promotional email.</p>
-                </div>
+            </div>
+            <div className="pin-recipient-guide-note">
+              <IoLockClosedOutline aria-hidden="true" />
+              <div>
+                <strong>Your identity stays private.</strong>
+                <p>The email includes the To and From names written on the letter, a short preview, and a link to read it. Your payment and receipt details are never shared.</p>
               </div>
             </div>
             <div className="pin-delivery-guide-actions">

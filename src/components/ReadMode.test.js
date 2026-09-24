@@ -3,6 +3,7 @@ import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import DetailsModal, { resetSessionViewedLetters, viewedLetterIds } from './DetailsModal';
 import Home from './Home';
+import { toast } from 'react-toastify';
 
 const finishFold = element => {
   const event = new Event('animationend', {bubbles: true});
@@ -13,6 +14,14 @@ const finishFold = element => {
 jest.mock('react-lottie-player', () => () => null);
 jest.mock('./AdComponent', () => () => null);
 jest.mock('./AdsterraNativeBanner', () => () => null);
+jest.mock('react-toastify', () => ({
+  ToastContainer: () => null,
+  toast: {
+    error: jest.fn(),
+    info: jest.fn(),
+    success: jest.fn(),
+  },
+}));
 jest.mock('../data/keys', () => ({
   render_url: 'https://example.test/api/messages',
   api_key: 'test',
@@ -36,6 +45,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  jest.clearAllMocks();
   resetSessionViewedLetters();
 });
 
@@ -1046,7 +1056,7 @@ describe('Read Mode in DetailsModal', () => {
   });
 });
 
-describe('Read Mode FAB and Explanatory Dialog in Home', () => {
+describe('Read Mode FAB in Home', () => {
   test('when Read Mode is disabled (default in production), FAB, tooltip, dialog, and Feed Page 2 banner are completely hidden', () => {
     localStorage.removeItem('readModeTipDismissed');
     render(
@@ -1056,7 +1066,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
     );
 
     // No FAB button
-    expect(screen.queryByRole('button', { name: /Read mode info and settings/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Toggle Read Mode/i })).toBeNull();
     // No suggestion tooltip
     expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
     // No dialog
@@ -1069,58 +1079,44 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
     expect(page2).not.toHaveTextContent(/Newest addition · Read Mode/i);
   });
 
-  test('clicking the Read Mode FAB opens the explanatory dialog describing the feature', async () => {
+  test('clicking the Read Mode FAB enables it immediately and shows an info toast', () => {
     render(
       <MemoryRouter>
         <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
-    const fabButton = screen.getByRole('button', { name: /Read mode info and settings/i });
+    const fabButton = screen.getByRole('button', { name: /Toggle Read Mode/i });
     expect(fabButton).toBeInTheDocument();
     expect(fabButton).toHaveAttribute('aria-pressed', 'false');
 
-    // Dialog is not open initially
-    expect(screen.queryByRole('dialog', { name: /Read Mode/i })).toBeNull();
-
-    // Click FAB to open dialog
     fireEvent.click(fabButton);
 
-    const dialog = screen.getByRole('dialog', { name: /Read Mode/i });
-    expect(dialog).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Read Mode/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /When Read Mode is enabled, typing effects are disabled and letters are displayed immediately\. You can also swipe or scroll down to browse through letters\./i
-      )
-    ).toBeInTheDocument();
-    expect(screen.getByText(/○ Read Mode is OFF/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Turn On Read Mode/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Done/i })).toBeInTheDocument();
+    expect(fabButton).toHaveAttribute('aria-pressed', 'true');
+    expect(toast.info).toHaveBeenCalledWith('Read Mode On', expect.objectContaining({
+      position: 'top-center',
+    }));
+    expect(screen.queryByRole('dialog', { name: /Read Mode/i })).toBeNull();
   });
 
-  test('toggling Read Mode in the dialog updates status and toggles active state', async () => {
+  test('clicking the FAB again turns Read Mode off without a dialog', () => {
     render(
       <MemoryRouter>
         <Home readModeEnabled={true} />
       </MemoryRouter>
     );
 
-    const fabButton = screen.getByRole('button', { name: /Read mode info and settings/i });
+    const fabButton = screen.getByRole('button', { name: /Toggle Read Mode/i });
     fireEvent.click(fabButton);
-
-    const toggleBtn = screen.getByRole('button', { name: /Turn On Read Mode/i });
-    fireEvent.click(toggleBtn);
-
-    expect(screen.getByText(/● Read Mode is ON/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Turn Off Read Mode/i })).toBeInTheDocument();
-    expect(localStorage.getItem('readMode')).toBeNull();
     expect(fabButton).toHaveAttribute('aria-pressed', 'true');
 
-    // Click Done to close dialog
-    const doneBtn = screen.getByRole('button', { name: /Done/i });
-    fireEvent.click(doneBtn);
+    fireEvent.click(fabButton);
+    expect(fabButton).toHaveAttribute('aria-pressed', 'false');
+    expect(toast.info).toHaveBeenLastCalledWith('Read Mode Off', expect.objectContaining({
+      position: 'top-center',
+    }));
     expect(screen.queryByRole('dialog', { name: /Read Mode/i })).toBeNull();
+    expect(localStorage.getItem('readMode')).toBeNull();
   });
 
   test('Read Mode is never persisted in storage and always defaults to OFF on visit/reload', () => {
@@ -1132,14 +1128,11 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
       </MemoryRouter>
     );
 
-    const fabButton = screen.getByRole('button', { name: /Read mode info and settings/i });
+    const fabButton = screen.getByRole('button', { name: /Toggle Read Mode/i });
     expect(fabButton).toHaveAttribute('aria-pressed', 'false');
     expect(localStorage.getItem('readMode')).toBeNull();
 
-    // Turn it ON in dialog
     fireEvent.click(fabButton);
-    const toggleBtn = screen.getByRole('button', { name: /Turn On Read Mode/i });
-    fireEvent.click(toggleBtn);
     expect(fabButton).toHaveAttribute('aria-pressed', 'true');
     expect(localStorage.getItem('readMode')).toBeNull();
 
@@ -1151,23 +1144,8 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
         <Home readModeEnabled={true} />
       </MemoryRouter>
     );
-    const reloadedFab = screen.getByRole('button', { name: /Read mode info and settings/i });
+    const reloadedFab = screen.getByRole('button', { name: /Toggle Read Mode/i });
     expect(reloadedFab).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  test('pressing Escape closes the Read Mode dialog', async () => {
-    render(
-      <MemoryRouter>
-        <Home readModeEnabled={true} />
-      </MemoryRouter>
-    );
-
-    const fabButton = screen.getByRole('button', { name: /Read mode info and settings/i });
-    fireEvent.click(fabButton);
-    expect(screen.getByRole('dialog', { name: /Read Mode/i })).toBeInTheDocument();
-
-    fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('dialog', { name: /Read Mode/i })).toBeNull();
   });
 
   test('introductory tooltip for Read Mode is completely removed so visitors can explore the site on their own', () => {
@@ -1204,7 +1182,7 @@ describe('Read Mode FAB and Explanatory Dialog in Home', () => {
 
       const triggerBtn = screen.getByRole('button', { name: /Open quick actions menu/i });
       const scrollUpBtn = screen.getByRole('button', { name: /Back to top/i });
-      const readModeBtn = screen.getByRole('button', { name: /Read mode info and settings/i });
+      const readModeBtn = screen.getByRole('button', { name: /Toggle Read Mode/i });
       const bugReportBtn = screen.getByRole('button', { name: /Report a bug/i });
 
       expect(triggerBtn).toBeInTheDocument();

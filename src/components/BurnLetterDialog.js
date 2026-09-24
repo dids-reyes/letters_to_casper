@@ -5,18 +5,20 @@ import { BsMailboxFlag } from "react-icons/bs";
 import { toast } from "react-toastify";
 import html2canvas from "html2canvas";
 import { render_url, api_key } from "../data/keys";
+import { displayDirectLinkAds } from "../data/direct_link";
 import { extractMediaLinks } from "./DetailsModal";
 import "./BurnLetterDialog.css";
 
 const STAGES = {
   KEY_INPUT: "KEY_INPUT",
   CONFIRM: "CONFIRM",
-  READABLE: "READABLE",
+  PRE_BURN: "PRE_BURN",
   BURNING: "BURNING",
   BURNED: "BURNED",
 };
 
 const BURN_DURATION_MS = 3400; // 3.4s calibrated smooth natural crawl with zero post-burn lingering
+const BURN_START_DELAY_MS = 1000;
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return "";
@@ -321,6 +323,7 @@ function BurnLetterDialog({
   const sparksCanvasRef = useRef(null);
   const letterTextureCanvasRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const burnStartTimeoutRef = useRef(null);
   const burnTimeoutRef = useRef(null);
 
   // Clean up running animation and timers
@@ -332,6 +335,10 @@ function BurnLetterDialog({
     if (burnTimeoutRef.current) {
       clearTimeout(burnTimeoutRef.current);
       burnTimeoutRef.current = null;
+    }
+    if (burnStartTimeoutRef.current) {
+      clearTimeout(burnStartTimeoutRef.current);
+      burnStartTimeoutRef.current = null;
     }
     letterTextureCanvasRef.current = null;
   }, []);
@@ -357,7 +364,12 @@ function BurnLetterDialog({
   // Handle escape key
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && isOpen && stage !== STAGES.BURNING) {
+      if (
+        event.key === "Escape" &&
+        isOpen &&
+        stage !== STAGES.PRE_BURN &&
+        stage !== STAGES.BURNING
+      ) {
         onClose();
       }
     };
@@ -720,12 +732,16 @@ function BurnLetterDialog({
   };
 
   const handleCancelConfirm = () => {
-    // Dismiss confirmation dialog and keep letter intact in readable state
-    setStage(STAGES.READABLE);
+    // Cancel exits the entire burn flow so no letter preview remains behind.
+    onClose();
   };
 
   const handleProceedBurn = () => {
-    if (!targetLetter || stage === STAGES.BURNING) return;
+    if (
+      !targetLetter ||
+      stage === STAGES.PRE_BURN ||
+      stage === STAGES.BURNING
+    ) return;
 
     // Ensure texture is ready before transitioning to BURNING stage
     if (!letterTextureCanvasRef.current && targetLetter) {
@@ -745,54 +761,65 @@ function BurnLetterDialog({
     }
 
     const normalizedKey = burnKey.trim().toUpperCase();
-    // Instantly close confirmation dialog and begin the multi-corner creeping burn sequence
-    setStage(STAGES.BURNING);
+    // Hold on the intact letter for one second before starting the existing animation.
+    setStage(STAGES.PRE_BURN);
+    burnStartTimeoutRef.current = setTimeout(() => {
+      burnStartTimeoutRef.current = null;
+      setStage(STAGES.BURNING);
 
-    // Fire actual burn request to backend
-    const burnPromise = fetch(`${render_url}/burn`, {
-      method: "POST",
-      headers: {
-        "x-api-key": api_key,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ burnKey: normalizedKey }),
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || "Burn request failed.");
-        }
-        return response.json();
+      const burnPromise = fetch(`${render_url}/burn`, {
+        method: "POST",
+        headers: {
+          "x-api-key": api_key,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ burnKey: normalizedKey }),
       })
-      .catch((error) => {
-        console.error("Burn execution error:", error);
-        return { letterId: targetLetter._id };
-      });
+        .then(async (response) => {
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || "Burn request failed.");
+          }
+          return response.json();
+        })
+        .catch((error) => {
+          console.error("Burn execution error:", error);
+          return { letterId: targetLetter._id };
+        });
 
-    // Deliberate 4.8-second burn sequence finishes cleanly
-    burnTimeoutRef.current = setTimeout(async () => {
-      cancelBurnAnimation();
-      await burnPromise;
-      if (onBurnSuccess && targetLetter._id) {
-        onBurnSuccess(targetLetter._id);
-      }
-      setStage(STAGES.BURNED);
-      toast.info("Your Letter is Gone...", {
-        toastId: "burn-letter-toast",
-        autoClose: 4000,
-        position: "top-center",
-      });
-    }, BURN_DURATION_MS);
+      burnTimeoutRef.current = setTimeout(async () => {
+        cancelBurnAnimation();
+        await burnPromise;
+        if (onBurnSuccess && targetLetter._id) {
+          onBurnSuccess(targetLetter._id);
+        }
+        setStage(STAGES.BURNED);
+        toast.info("Your Letter is Gone...", {
+          toastId: "burn-letter-toast",
+          autoClose: 4000,
+          position: "top-center",
+        });
+      }, BURN_DURATION_MS);
+    }, BURN_START_DELAY_MS);
+  };
+
+  const handleMoveForward = () => {
+    displayDirectLinkAds();
+    onClose();
   };
 
   return (
     <div
-      className="burn-dialog-overlay"
+      className={`burn-dialog-overlay${
+        stage === STAGES.PRE_BURN || stage === STAGES.BURNING
+          ? " is-burn-stage"
+          : ""
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="burn-dialog-title"
       onClick={() => {
-        if (stage !== STAGES.BURNING) {
+        if (stage !== STAGES.PRE_BURN && stage !== STAGES.BURNING) {
           onClose();
         }
       }}
@@ -851,9 +878,9 @@ function BurnLetterDialog({
         </section>
       )}
 
-      {/* 2 & 3. CONFIRMATION, READABLE, & BURNING STAGES (ACTUAL LETTER VIEW) */}
+      {/* 2 & 3. CONFIRMATION, PRE-BURN, & BURNING STAGES (ACTUAL LETTER VIEW) */}
       {(stage === STAGES.CONFIRM ||
-        stage === STAGES.READABLE ||
+        stage === STAGES.PRE_BURN ||
         stage === STAGES.BURNING) &&
         targetLetter && (
           <div
@@ -862,30 +889,10 @@ function BurnLetterDialog({
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Action bar for readable state after cancel */}
-            {stage === STAGES.READABLE && (
-              <div className="burn-readable-controls">
-                <button
-                  type="button"
-                  className="burn-readable-btn"
-                  onClick={onClose}
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  className="burn-readable-btn is-danger"
-                  onClick={() => setStage(STAGES.CONFIRM)}
-                >
-                  <IoFlameOutline /> Burn This Letter
-                </button>
-              </div>
-            )}
-
             {/* The ACTUAL letter view matching the normal letter modal in Letters to Casper */}
             <div className="letter-modal">
               {/* Folded corner close button */}
-              {stage !== STAGES.BURNING && (
+              {stage === STAGES.CONFIRM && (
                 <button
                   type="button"
                   className="letter-modal__close"
@@ -1092,7 +1099,7 @@ function BurnLetterDialog({
           <button
             type="button"
             className="burn-completed-btn"
-            onClick={onClose}
+            onClick={handleMoveForward}
             autoFocus
           >
             Move Forward

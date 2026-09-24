@@ -95,6 +95,7 @@ export function useFeedVirtualizer({
   );
 
   const savedScrollY = useRef(0);
+  const lastKnownScrollY = useRef(scrollY);
   const rafId = useRef(null);
 
   // Resize listener to track window width and responsive breakpoints
@@ -211,13 +212,17 @@ export function useFeedVirtualizer({
 
   const updateBounds = useCallback(() => {
     if (typeof window !== "undefined") {
-      setScrollY(window.scrollY);
+      const nextScrollY = window.scrollY;
+      lastKnownScrollY.current = nextScrollY;
+      setScrollY(nextScrollY);
     }
   }, []);
 
   const saveScrollPosition = useCallback(() => {
     if (typeof window !== "undefined") {
-      savedScrollY.current = window.scrollY;
+      const currentScrollY = window.scrollY;
+      savedScrollY.current =
+        currentScrollY > 0 ? currentScrollY : lastKnownScrollY.current;
     }
   }, []);
 
@@ -230,6 +235,7 @@ export function useFeedVirtualizer({
       } catch (e) {
         window.scrollY = savedScrollY.current;
       }
+      lastKnownScrollY.current = savedScrollY.current;
       setScrollY(savedScrollY.current);
     }
   }, []);

@@ -44,7 +44,7 @@ export default function PinPaymentReturn({onConfirmed}) {
   }, [token, attempt]);
   if (dismissed || (!token && !cancelled)) return null;
   if (!cancelled && ['pinned', 'fulfilled'].includes(state)) {
-    return <PinThankYouDialog pinned={state === 'pinned'} onClose={() => setDismissed(true)} />;
+    return <PinThankYouDialog mode={state === 'pinned' ? 'pinned' : 'delivered'} onClose={() => setDismissed(true)} />;
   }
   const dismiss = () => {
     setDismissed(true);
@@ -60,7 +60,7 @@ export default function PinPaymentReturn({onConfirmed}) {
     <h2 id="pin-return-title">{cancelled ? 'Maybe another time.' : state === 'checking' ? 'A little moment…' : 'Still waiting for confirmation.'}</h2>
     <p>{cancelled ? 'Checkout was cancelled. You can choose a letter to support whenever you’re ready.'
       : state === 'checking' ? 'Confirming your payment and refreshing the feed…'
-      : 'We haven’t confirmed your pin yet. Please check again—there’s no need to pay twice.'}</p>
+      : 'We haven’t confirmed your payment yet. Please check again—there’s no need to pay twice.'}</p>
     {(cancelled || state !== 'checking') && <div className="pin-return-actions">
       <button type="button" aria-label="Dismiss payment status" onClick={dismiss}>{cancelled ? 'Back to the letters' : 'Dismiss'}</button>
       {!cancelled && token && ['pending', 'unverified'].includes(state) && <button type="button" onClick={() => setAttempt(value => value + 1)}>Check again</button>}
