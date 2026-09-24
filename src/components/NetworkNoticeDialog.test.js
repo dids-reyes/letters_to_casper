@@ -263,7 +263,7 @@ describe("Sequential Modal Flow in Home", () => {
     expect(SHOW_PLDT_NOTICE).toBe(true);
   });
 
-  test("the first Feed page includes the PLDT and Smart nationwide DNS advisory", async () => {
+  test("Feed page has 5 pages and does not include the network advisory", async () => {
     localStorage.setItem(UI_ANNOUNCEMENT_KEY, "seen");
     localStorage.setItem(PLDT_NOTICE_KEY, "seen");
 
@@ -276,14 +276,14 @@ describe("Sequential Modal Flow in Home", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: /Open updates feed/i }));
-    const firstPage = screen.getByRole("region", { name: /Network advisory, page 1 of 6/i });
-    expect(firstPage).toHaveTextContent("PLDT and Smart Communications DNS issue");
-    expect(firstPage).toHaveTextContent("Both networks are currently addressing the issue nationwide");
-    expect(firstPage).not.toHaveTextContent("We do not promote gambling");
-    expect(firstPage.querySelector(".feed-report__updates--scroll")).toBeNull();
+    expect(screen.queryByRole("region", { name: /Network advisory/i })).not.toBeInTheDocument();
+    const firstPage = screen.getByRole("region", { name: /About our advertisements, page 1 of 5/i });
+    expect(firstPage).toBeInTheDocument();
+    expect(firstPage).toHaveTextContent("We do not promote gambling");
 
-    fireEvent.click(screen.getByRole("button", { name: "Go to update page 6" }));
-    expect(screen.getByRole("button", { name: "Go to update page 6" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("region", { name: /Christmas countdown, page 6 of 6/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Go to update page 5" }));
+    expect(screen.getByRole("button", { name: "Go to update page 5" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("region", { name: /Christmas countdown, page 5 of 5/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Go to update page 6" })).not.toBeInTheDocument();
   });
 });

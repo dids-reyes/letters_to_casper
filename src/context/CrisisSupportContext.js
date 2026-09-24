@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useState, useCallback} from 'react';
+import React, {createContext, useContext, useState, useCallback, useEffect, useRef} from 'react';
 import {render_url, api_key} from '../data/keys';
 
 const CrisisSupportContext = createContext({
@@ -14,6 +14,11 @@ export const useCrisisSupport = () => useContext(CrisisSupportContext);
 export const CrisisSupportProvider = ({children}) => {
   const [isCrisisModalOpen, setIsCrisisModalOpen] = useState(false);
   const [crisisDetails, setCrisisDetails] = useState(null);
+  const activeChecksRef = useRef(new Set());
+
+  useEffect(() => () => {
+    activeChecksRef.current.clear();
+  }, []);
 
   const openCrisisModal = useCallback((details = null) => {
     setCrisisDetails(details);
@@ -24,35 +29,42 @@ export const CrisisSupportProvider = ({children}) => {
     setIsCrisisModalOpen(false);
   }, []);
 
-  const triggerBackgroundCrisisCheck = useCallback((message) => {
-    if (typeof message !== 'string' || !message.trim()) {
+  const triggerBackgroundCrisisCheck = useCallback(({letterId, burnKey} = {}) => {
+    if (!letterId || !burnKey) {
       return;
     }
 
-    // Run asynchronously in the background; never block UI or navigation
+    const checkId = `${letterId}:${burnKey}`;
+    if (activeChecksRef.current.has(checkId)) return;
+    activeChecksRef.current.add(checkId);
+
+    // Run asynchronously in the provider; never block submission or navigation.
     (async () => {
       try {
-        const response = await fetch(`${render_url}/crisis-check`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(api_key ? {'x-api-key': api_key} : {}),
-          },
-          body: JSON.stringify({message: message.trim()}),
-        });
+        // Covers three model attempts, two one-minute retry cooldowns, and
+        // provider/network overhead without blocking any user interaction.
+        const deadline = Date.now() + (5 * 60 * 1000);
+        while (activeChecksRef.current.has(checkId) && Date.now() < deadline) {
+          const response = await fetch(
+            `${render_url}/${encodeURIComponent(letterId)}/analysis-status?burnKey=${encodeURIComponent(burnKey)}`,
+            {headers: api_key ? {'x-api-key': api_key} : {}},
+          );
+          if (!response.ok) return;
 
-        if (!response.ok) {
-          // Quiet failure
-          return;
-        }
-
-        const data = await response.json();
-        if (data && data.requiresSupport === true) {
-          setCrisisDetails(data);
-          setIsCrisisModalOpen(true);
+          const data = await response.json();
+          if (!data.pending) {
+            if (data.crisis?.requiresSupport === true) {
+              setCrisisDetails(data.crisis);
+              setIsCrisisModalOpen(true);
+            }
+            return;
+          }
+          await new Promise(resolve => setTimeout(resolve, 2500));
         }
       } catch (err) {
         // Quiet failure: do not throw runtime exceptions or alert the user
+      } finally {
+        activeChecksRef.current.delete(checkId);
       }
     })();
   }, []);
@@ -73,4 +85,3 @@ export const CrisisSupportProvider = ({children}) => {
 };
 
 export default CrisisSupportContext;
-
