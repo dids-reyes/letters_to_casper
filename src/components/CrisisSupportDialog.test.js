@@ -4,7 +4,7 @@ import {MemoryRouter} from 'react-router-dom';
 import CrisisSupportDialog from './CrisisSupportDialog';
 import {CrisisSupportProvider, useCrisisSupport} from '../context/CrisisSupportContext';
 
-const TestHarness = ({initialMessage = null}) => {
+const TestHarness = ({analysisRequest = null}) => {
   const {openCrisisModal, triggerBackgroundCrisisCheck} = useCrisisSupport();
 
   return (
@@ -19,7 +19,7 @@ const TestHarness = ({initialMessage = null}) => {
       <button
         type="button"
         data-testid="trigger-btn"
-        onClick={() => triggerBackgroundCrisisCheck(initialMessage || 'Help me')}
+        onClick={() => triggerBackgroundCrisisCheck(analysisRequest || {letterId: 'letter-1', burnKey: 'LTC-1111-2222-3333-4444-5555-6666'})}
       >
         Trigger Check
       </button>
@@ -28,11 +28,11 @@ const TestHarness = ({initialMessage = null}) => {
   );
 };
 
-const renderWithContext = (ui, {initialMessage} = {}) => {
+const renderWithContext = (ui, {analysisRequest} = {}) => {
   return render(
     <MemoryRouter>
       <CrisisSupportProvider>
-        {ui || <TestHarness initialMessage={initialMessage} />}
+        {ui || <TestHarness analysisRequest={analysisRequest} />}
       </CrisisSupportProvider>
     </MemoryRouter>
   );
@@ -152,17 +152,20 @@ describe('CrisisSupportContext Background Execution', () => {
     global.fetch = originalFetch;
   });
 
-  test('triggers background crisis check and opens modal when requiresSupport is true', async () => {
+  test('polls background analysis and opens modal when requiresSupport is true', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        requiresSupport: true,
-        severity: 'crisis',
-        reason: 'Severe distress detected',
+        pending: false,
+        crisis: {
+          requiresSupport: true,
+          severity: 'crisis',
+          reason: 'Severe distress detected',
+        },
       }),
     });
 
-    renderWithContext(null, {initialMessage: 'I cannot go on anymore'});
+    renderWithContext();
 
     await act(async () => {
       fireEvent.click(screen.getByTestId('trigger-btn'));
@@ -172,10 +175,9 @@ describe('CrisisSupportContext Background Execution', () => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/crisis-check'),
+      expect.stringContaining('/letter-1/analysis-status?burnKey='),
       expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({'Content-Type': 'application/json'}),
+        headers: expect.objectContaining({'x-api-key': expect.any(String)}),
       })
     );
   });
@@ -184,12 +186,12 @@ describe('CrisisSupportContext Background Execution', () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        requiresSupport: false,
-        severity: 'none',
+        pending: false,
+        crisis: {requiresSupport: false, severity: 'none'},
       }),
     });
 
-    renderWithContext(null, {initialMessage: 'I miss you, heartbreak'});
+    renderWithContext();
 
     await act(async () => {
       fireEvent.click(screen.getByTestId('trigger-btn'));
@@ -201,7 +203,7 @@ describe('CrisisSupportContext Background Execution', () => {
   test('fails quietly without error when endpoint returns 500 or network error', async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
-    renderWithContext(null, {initialMessage: 'Test message'});
+    renderWithContext();
 
     await act(async () => {
       fireEvent.click(screen.getByTestId('trigger-btn'));

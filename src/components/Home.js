@@ -1063,7 +1063,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   });
 
   const goToFeedPage = page => {
-    const nextPage = Math.max(0, Math.min(5, page));
+    const nextPage = Math.max(0, Math.min(4, page));
     setFeedPage(nextPage);
     feedPagesRef.current?.scrollTo({
       left: feedPagesRef.current.clientWidth * nextPage,
@@ -1075,7 +1075,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     if (event.target !== event.currentTarget) return;
     const pageWidth = event.currentTarget.clientWidth;
     if (!pageWidth) return;
-    setFeedPage(Math.max(0, Math.min(5, Math.round(event.currentTarget.scrollLeft / pageWidth))));
+    setFeedPage(Math.max(0, Math.min(4, Math.round(event.currentTarget.scrollLeft / pageWidth))));
   };
 
   const christmasCountdownMatch = typeof daysLeftXmas === "string"
@@ -1318,25 +1318,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
               </header>
 
               <div className="feed-report__pages" ref={feedPagesRef} onScroll={handleFeedScroll}>
-                <section className="feed-report__page" aria-label="Network advisory, page 1 of 6">
-                  <div className="feed-report__lead">
-                    <span>Important Notice</span>
-                    <h3>Connection issues?</h3>
-                    <p>Some PLDT and Smart Communications customers may currently have difficulty connecting to our servers.</p>
-                  </div>
-                  <div className="feed-report__updates">
-                    <article className="feed-report__story is-featured">
-                      <IoServerOutline aria-hidden="true" />
-                      <div>
-                        <span className="feed-report__kicker">Nationwide network advisory</span>
-                        <h4>PLDT and Smart Communications DNS issue</h4>
-                        <p>Some customers may have trouble reaching our servers. Both networks are currently addressing the issue nationwide. In the meantime, switching networks or changing your DNS may help.</p>
-                      </div>
-                    </article>
-                  </div>
-                </section>
-
-                <section className="feed-report__page" aria-label="About our advertisements, page 2 of 6">
+                <section className="feed-report__page" aria-label="About our advertisements, page 1 of 5">
                   <div className="feed-report__lead">
                     <span>Important Notice</span>
                     <h3>A note about our advertisements.</h3>
@@ -1370,7 +1352,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                   </FeedUpdates>
                 </section>
 
-                <section className="feed-report__page" aria-label="Recent updates, page 3 of 6">
+                <section className="feed-report__page" aria-label="Recent updates, page 2 of 5">
                   <div className="feed-report__lead">
                     <span>From the desk</span>
                     <h3>A gentler way to read, feel, and let go.</h3>
@@ -1402,7 +1384,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                   </FeedUpdates>
                 </section>
 
-                <section className="feed-report__page" aria-label="Recent updates, page 4 of 6">
+                <section className="feed-report__page" aria-label="Recent updates, page 3 of 5">
                   <div className="feed-report__lead">
                     <span>More ways to share</span>
                     <h3>Give your words a place and a picture.</h3>
@@ -1420,7 +1402,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                   </div>
                 </section>
 
-                <section className="feed-report__page feed-report__page--care" aria-label="Community care and support, page 5 of 6">
+                <section className="feed-report__page feed-report__page--care" aria-label="Community care and support, page 4 of 5">
                   <div className="feed-report__lead">
                     <span>Community care</span>
                     <h3>A little support can make the page feel lighter.</h3>
@@ -1438,7 +1420,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                   </div>
                 </section>
 
-                <section className="feed-report__page feed-report__page--christmas" aria-label="Christmas countdown, page 6 of 6">
+                <section className="feed-report__page feed-report__page--christmas" aria-label="Christmas countdown, page 5 of 5">
                   <div className="feed-report__snow" aria-hidden="true">
                     {CHRISTMAS_SNOWFLAKES.map((flake, index) => (
                       <i
@@ -1477,8 +1459,8 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
               <nav className="feed-report__pagination" aria-label="Feed pages">
                 <button type="button" onClick={() => goToFeedPage(feedPage - 1)} disabled={feedPage === 0} aria-label="Previous update page"><IoChevronBackOutline /></button>
-                <div>{[0, 1, 2, 3, 4, 5].map(page => <button key={page} type="button" className={feedPage === page ? "is-active" : ""} onClick={() => goToFeedPage(page)} aria-label={`Go to update page ${page + 1}`} aria-current={feedPage === page ? "page" : undefined} />)}</div>
-                <button type="button" onClick={() => goToFeedPage(feedPage + 1)} disabled={feedPage === 5} aria-label="Next update page"><IoChevronForwardOutline /></button>
+                <div>{[0, 1, 2, 3, 4].map(page => <button key={page} type="button" className={feedPage === page ? "is-active" : ""} onClick={() => goToFeedPage(page)} aria-label={`Go to update page ${page + 1}`} aria-current={feedPage === page ? "page" : undefined} />)}</div>
+                <button type="button" onClick={() => goToFeedPage(feedPage + 1)} disabled={feedPage === 4} aria-label="Next update page"><IoChevronForwardOutline /></button>
               </nav>
             </div>
           )}

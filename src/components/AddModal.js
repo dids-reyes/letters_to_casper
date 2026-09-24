@@ -319,7 +319,10 @@ useEffect(() => {
     });
 
     if (submitted) {
-      triggerBackgroundCrisisCheck(updatedLetter.message);
+      triggerBackgroundCrisisCheck({
+        letterId: submitted.letterId,
+        burnKey: submitted.burnKey,
+      });
       setSubmittedBurnKey(submitted.burnKey || '');
       setSubmittedLetterId(submitted.letterId || '');
       setNotificationEmail('');
