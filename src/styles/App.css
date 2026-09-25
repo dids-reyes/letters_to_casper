@@ -526,6 +526,24 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
   cursor: pointer;
 }
 
+.night-mode-suggestion.is-day-mode {
+  width: min(220px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border-color: #d9d1bf;
+  background: #fffdf7;
+  box-shadow: 0 2px 8px rgba(32, 29, 20, 0.16);
+  color: #39352b;
+}
+
+.night-mode-suggestion.is-day-mode::before {
+  border-color: #d9d1bf;
+  background: #fffdf7;
+}
+
+.night-mode-suggestion.is-day-mode span {
+  color: #716b60;
+}
+
 @keyframes night-tip-in {
   from { opacity: 0; transform: translateY(-5px) scale(0.98); }
   to { opacity: 1; transform: none; }
@@ -5163,6 +5181,39 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   color: #ffffff;
 }
 
+.read-mode-boundary-tip {
+  position: fixed;
+  left: 50%;
+  z-index: 1011;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  background: rgba(24, 25, 27, 0.88);
+  color: #fffdf7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: read-mode-boundary-in 150ms ease-out both;
+}
+
+.read-mode-boundary-tip.is-beginning {
+  top: max(18px, env(safe-area-inset-top));
+}
+
+.read-mode-boundary-tip.is-end {
+  bottom: max(18px, env(safe-area-inset-bottom));
+}
+
+@keyframes read-mode-boundary-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(3px);
+  }
+}
+
 @keyframes readModeArrowBounce {
   0%, 100% {
     transform: translateY(0);
@@ -8326,4 +8377,225 @@ button.letter-paper__pin::after {
   .letter-card .letter-pin-indicator { flex-basis:14px; width:14px; height:14px; font-size:10px; }
   .letter-paper__age { gap:3px; }
   .letter-paper__pin { flex-basis:11px; width:11px; height:11px; }
+}
+
+/* Preserve the current mobile reader on modern phones; compact short screens only. */
+@media (max-width: 380px) and (max-height: 700px) {
+  .letter-share-dialog-overlay,
+  .letter-location-ad-overlay {
+    padding: 10px;
+  }
+
+  .letter-share-dialog {
+    width: min(100%, 342px);
+    max-height: calc(100dvh - 20px);
+    padding: 18px 14px 14px;
+    border-radius: 12px;
+  }
+
+  .letter-share-dialog__close {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+  }
+
+  .letter-share-dialog__eyebrow {
+    margin-bottom: 3px;
+    font-size: 0.61rem;
+  }
+
+  .letter-share-dialog h2 {
+    margin-right: 34px;
+    margin-bottom: 4px;
+    font-size: 1.08rem;
+  }
+
+  .letter-share-dialog > p {
+    margin-bottom: 12px;
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .letter-share-dialog__options {
+    gap: 6px;
+  }
+
+  .letter-share-dialog__options > button {
+    gap: 6px;
+    padding: 8px 7px;
+    border-radius: 8px;
+  }
+
+  .letter-share-dialog__option-icon {
+    width: 27px;
+    height: 27px;
+    border-radius: 7px;
+    font-size: 15px;
+  }
+
+  .letter-share-dialog__options strong {
+    font-size: 0.7rem;
+  }
+
+  .letter-share-dialog__options small {
+    font-size: 0.58rem;
+  }
+
+  .letter-share-dialog__qr {
+    gap: 5px;
+    margin-top: 9px;
+    padding: 9px;
+    border-radius: 9px;
+    font-size: 0.68rem;
+  }
+
+  .letter-share-dialog__qr-code {
+    width: min(154px, 100%);
+    padding: 5px;
+    border-radius: 8px;
+  }
+
+  .letter-share-dialog__download {
+    gap: 5px;
+    margin-top: 2px;
+    padding: 7px 11px;
+    font-size: 0.68rem;
+  }
+
+  .letter-location-ad-dialog {
+    width: min(100%, 310px);
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .letter-location-ad-title-row {
+    margin-bottom: 4px;
+  }
+
+  .letter-location-ad-title-row > svg {
+    flex-basis: 15px;
+    width: 15px;
+    height: 15px;
+  }
+
+  .letter-location-ad-dialog h2 {
+    font-size: 11.5px;
+  }
+
+  .letter-location-ad-dialog p {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .letter-location-ad-actions {
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .letter-location-ad-actions button {
+    min-height: 32px;
+    padding-inline: 9px;
+    font-size: 10.5px;
+  }
+
+  .letter-modal-overlay {
+    gap: 8px;
+    padding: 10px 4px;
+  }
+
+  .letter-modal,
+  .read-mode-stage {
+    width: min(100%, 350px);
+  }
+
+  .letter-paper {
+    max-height: calc(100dvh - 44px);
+    padding: 23px 15px 14px;
+    border-radius: 8px;
+  }
+
+  .letter-paper__head {
+    margin-bottom: 10px;
+  }
+
+  .letter-paper .letter-info {
+    font-size: clamp(11.5px, 3.35vw, 13px);
+    line-height: 1.4;
+  }
+
+  .letter-paper__date {
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .letter-paper__date-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .letter-paper__date .timestamp-text {
+    font-size: 9px;
+  }
+
+  .letter-paper__body {
+    max-height: calc(18 * 23px);
+    padding-inline: 1px;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 22px,
+      rgba(120, 100, 60, 0.1) 22px 23px
+    );
+    background-position: 0 -4px;
+    font-size: clamp(12px, 3.45vw, 13.25px);
+    line-height: 23px;
+  }
+
+  .letter-paper__body--scrollable {
+    max-height: calc(13 * 23px);
+  }
+
+  .letter-paper__media,
+  .letter-paper__photo {
+    margin-top: 11px;
+  }
+
+  .letter-paper__photo {
+    width: min(68%, 190px);
+  }
+
+  .letter-paper__meta {
+    gap: 3px;
+    margin-top: 10px;
+    font-size: 8.5px;
+  }
+
+  .letter-paper__actions,
+  .letter-reaction-cluster {
+    gap: 4px;
+  }
+
+  .letter-paper__reads {
+    gap: 3px;
+  }
+
+  .letter-paper__reads-eye,
+  .letter-paper__locate > svg,
+  .letter-paper__share > svg,
+  .letter-paper__echo > svg {
+    flex-basis: 10px;
+    width: 10px;
+    height: 10px;
+  }
+
+  .letter-modal .letter-modal__close {
+    width: 40px;
+    height: 40px;
+  }
+
+  .letter-fold-corner {
+    width: 20px;
+    height: 20px;
+  }
 }

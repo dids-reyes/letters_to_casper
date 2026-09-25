@@ -91,12 +91,32 @@ test('calculates pin expiry only for choices that include feed placement', () =>
   expect(expirationForTier(start, SUPPORT_TIERS[2]).toISOString()).toBe('2026-09-03T00:00:00.000Z');
 });
 
-test('shows GCash, Maya, and QRPH beneath the action', () => {
+test('shows the revised secure payment helper and supported payment modal', () => {
   render(<PinLetterDialog onClose={() => {}} />);
-  expect(screen.getByText('Secure payment via')).toBeTruthy();
+  expect(screen.getByText('Secure Payment')).toBeTruthy();
+  expect(screen.getByText('No Account Linking needed.')).toBeTruthy();
   expect(screen.getByAltText('GCash')).toBeTruthy();
   expect(screen.getByAltText('Maya')).toBeTruthy();
   expect(screen.getByAltText('QRPH')).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', {name: 'See All Banks/E-wallets'}));
+  const supportedDialog = screen.getByRole('dialog', {name: 'Banks and E-wallets'});
+  expect(supportedDialog).toBeTruthy();
+  const eWalletHeading = screen.getByRole('heading', {name: 'E-wallets'});
+  const bankHeading = screen.getByRole('heading', {name: 'Banks'});
+  expect(eWalletHeading).toBeTruthy();
+  expect(bankHeading).toBeTruthy();
+  for (const name of ['GCash', 'Maya', 'ShopeePay', 'GrabPay', 'GoTyme Bank', 'BPI', 'MariBank', 'Sterling Bank of Asia']) {
+    expect(supportedDialog).toHaveTextContent(name);
+  }
+  expect(eWalletHeading.compareDocumentPosition(bankHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', {name: 'See more supported banks/e-wallets'}));
+  expect(supportedDialog).toHaveTextContent('Asia United Bank Corporation (AUB)');
+  expect(supportedDialog).toHaveTextContent('PPS-PEPP Financial Services Corporation');
+  expect(supportedDialog.querySelector('#pin-additional-payment-methods')).not.toHaveTextContent('GCash');
+  expect(supportedDialog.querySelector('#pin-additional-payment-methods')).not.toHaveTextContent('Bank of the Philippine Islands');
+  fireEvent.click(screen.getByRole('button', {name: 'Close supported banks and e-wallets'}));
+  expect(screen.queryByRole('dialog', {name: 'Banks and E-wallets'})).toBeNull();
 });
 
 test('loads a one-line letter preview and summarizes the selected option before payment', async () => {

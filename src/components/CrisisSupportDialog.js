@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {Link} from 'react-router-dom';
 import {FaPhone, FaExternalLinkAlt} from 'react-icons/fa';
-import {IoHeartOutline} from 'react-icons/io5';
+import {IoCheckmarkOutline, IoHeartOutline, IoInformationCircleOutline} from 'react-icons/io5';
 import logo from '../lotties/ltc_logo_1.webp';
 import {useCrisisSupport} from '../context/CrisisSupportContext';
 import '../styles/CrisisSupportDialog.css';
@@ -14,6 +14,14 @@ const BREATH_CYCLE = [
 
 const TOTAL_CYCLE_SECONDS = BREATH_CYCLE.reduce((acc, step) => acc + step.duration, 0); // 19s
 
+const GROUNDING_STEPS = [
+  {count: 5, sense: 'See', instruction: 'Look around and notice 5 things you can see right now, such as a chair, the light, a shadow, or a cup.'},
+  {count: 4, sense: 'Feel', instruction: 'Notice 4 things you can physically touch, such as your clothes or the floor under your feet.'},
+  {count: 3, sense: 'Hear', instruction: 'Listen for 3 distinct sounds around you, such as a fan, distant cars, or the wind.'},
+  {count: 2, sense: 'Smell', instruction: 'Notice 2 things you can smell, or imagine 2 scents that feel calming and familiar.'},
+  {count: 1, sense: 'Taste', instruction: 'Focus on 1 taste in your mouth, or take a gentle sip of cold water.'},
+];
+
 function CrisisSupportDialog() {
   const {isCrisisModalOpen, closeCrisisModal} = useCrisisSupport();
   const [activeTab, setActiveTab] = useState('grounding'); // 'grounding' | 'breathing'
@@ -21,6 +29,9 @@ function CrisisSupportDialog() {
   // 4-7-8 Breathing State
   const [isBreathingActive, setIsBreathingActive] = useState(true);
   const [cycleTime, setCycleTime] = useState(0);
+  const [groundingStep, setGroundingStep] = useState(0);
+  const [groundingComplete, setGroundingComplete] = useState(false);
+  const [showPrankCallGuide, setShowPrankCallGuide] = useState(false);
 
   // Keyboard shortcut (Escape to close)
   useEffect(() => {
@@ -28,13 +39,17 @@ function CrisisSupportDialog() {
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
+        if (showPrankCallGuide) {
+          setShowPrankCallGuide(false);
+          return;
+        }
         closeCrisisModal();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCrisisModalOpen, closeCrisisModal]);
+  }, [isCrisisModalOpen, closeCrisisModal, showPrankCallGuide]);
 
   // Breathing timer
   useEffect(() => {
@@ -63,6 +78,20 @@ function CrisisSupportDialog() {
   }
 
   const secondsRemaining = currentStep.duration - timeInPhase;
+  const currentGroundingStep = GROUNDING_STEPS[groundingStep];
+
+  const completeGroundingStep = () => {
+    if (groundingStep === GROUNDING_STEPS.length - 1) {
+      setGroundingComplete(true);
+      return;
+    }
+    setGroundingStep((step) => step + 1);
+  };
+
+  const restartGrounding = () => {
+    setGroundingStep(0);
+    setGroundingComplete(false);
+  };
 
   if (!isCrisisModalOpen) {
     return null;
@@ -135,75 +164,74 @@ function CrisisSupportDialog() {
           </div>
         ) : (
           <div className="crisis-grounding-card">
-            <div className="crisis-grounding-item">
-              <div className="crisis-grounding-num">5</div>
-              <div className="crisis-grounding-text">
-                <strong>See</strong>
-                <p>Look around and notice 5 things you can see right now (a chair, the light, a shadow, a cup).</p>
+            {!groundingComplete ? (
+              <>
+                <div className="crisis-grounding-progress" aria-label={`Grounding step ${groundingStep + 1} of ${GROUNDING_STEPS.length}`}>
+                  {GROUNDING_STEPS.map((step, index) => (
+                    <span key={step.count} className={index <= groundingStep ? 'is-active' : ''} aria-hidden="true" />
+                  ))}
+                  <small>{groundingStep + 1} of {GROUNDING_STEPS.length}</small>
+                </div>
+                <div className="crisis-grounding-task" aria-live="polite">
+                  <div className="crisis-grounding-num">{currentGroundingStep.count}</div>
+                  <div className="crisis-grounding-text">
+                    <strong>{currentGroundingStep.sense}</strong>
+                    <p>{currentGroundingStep.instruction}</p>
+                  </div>
+                </div>
+                <button type="button" className="crisis-grounding-complete" onClick={completeGroundingStep}>
+                  <IoCheckmarkOutline aria-hidden="true" />
+                  {groundingStep === GROUNDING_STEPS.length - 1 ? 'Finish exercise' : 'Done, continue'}
+                </button>
+              </>
+            ) : (
+              <div className="crisis-grounding-finished" role="status">
+                <IoHeartOutline aria-hidden="true" />
+                <strong>You made it through the exercise.</strong>
+                <p>We hope you feel a little steadier. If you still need support, please reach out to one of the services below.</p>
+                <button type="button" onClick={restartGrounding}>Start again</button>
               </div>
-            </div>
-            <div className="crisis-grounding-item">
-              <div className="crisis-grounding-num">4</div>
-              <div className="crisis-grounding-text">
-                <strong>Feel</strong>
-                <p>Notice 4 things you can physically touch (the fabric of your clothes, the floor under your feet).</p>
-              </div>
-            </div>
-            <div className="crisis-grounding-item">
-              <div className="crisis-grounding-num">3</div>
-              <div className="crisis-grounding-text">
-                <strong>Hear</strong>
-                <p>Listen for 3 distinct sounds around you (a fan humming, distant cars, the wind).</p>
-              </div>
-            </div>
-            <div className="crisis-grounding-item">
-              <div className="crisis-grounding-num">2</div>
-              <div className="crisis-grounding-text">
-                <strong>Smell</strong>
-                <p>Notice 2 things you can smell, or 2 scents you find calming and familiar.</p>
-              </div>
-            </div>
-            <div className="crisis-grounding-item">
-              <div className="crisis-grounding-num">1</div>
-              <div className="crisis-grounding-text">
-                <strong>Taste</strong>
-                <p>Focus on 1 taste in your mouth, or take a gentle sip of cold water.</p>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
         <div className="crisis-hotlines-section">
-          <div className="crisis-section-subtitle">Confidential Crisis & Emotional Support</div>
+          <div className="crisis-section-heading">
+            <div className="crisis-section-subtitle">Confidential Crisis & Emotional Support</div>
+            <button type="button" className="crisis-prank-guide-trigger" onClick={() => setShowPrankCallGuide(true)} aria-label="About prank calls">
+              <IoInformationCircleOutline aria-hidden="true" />
+              <span>Prank calls</span>
+            </button>
+          </div>
           <div className="crisis-hotlines-grid">
-            <div className="crisis-hotline-box">
-              <h4>NCMH Crisis Helpline</h4>
-              <p>24/7 free, anonymous crisis intervention & mental health support.</p>
+            <div className="crisis-hotline-box crisis-hotline-box--priority">
+              <div className="crisis-hotline-heading">
+                <h4>Hopeline PH</h4>
+                <div className="crisis-hotline-badges">
+                  <span className="crisis-hotline-status"><i aria-hidden="true" />Online 24/7</span>
+                  <span className="crisis-hotline-free">Free</span>
+                </div>
+              </div>
+              <p>Immediate, confidential emotional and crisis support.</p>
               <div className="crisis-hotline-links">
-                <a href="tel:1553" className="crisis-hotline-link">
-                  <FaPhone /> 1553 (Toll-Free Luzon)
-                </a>
-                <a href="tel:09178998727" className="crisis-hotline-link">
-                  <FaPhone /> 0917-899-8727 (Globe/TM)
-                </a>
-                <a href="tel:09086392672" className="crisis-hotline-link">
-                  <FaPhone /> 0908-639-2672 (Smart/Sun)
+                <a href="tel:09175584673" className="crisis-hotline-link crisis-hotline-link--primary">
+                  <FaPhone /> Call 0917-558-4673
                 </a>
               </div>
             </div>
 
             <div className="crisis-hotline-box">
-              <h4>In Touch Community Services</h4>
-              <p>Free, confidential 24/7 emotional crisis helpline in the Philippines.</p>
+              <div className="crisis-hotline-heading">
+                <h4>NCMH Crisis Helpline</h4>
+                <div className="crisis-hotline-badges">
+                  <span className="crisis-hotline-status"><i aria-hidden="true" />Online 24/7</span>
+                  <span className="crisis-hotline-free">Free</span>
+                </div>
+              </div>
+              <p>Free nationwide crisis and mental-health support.</p>
               <div className="crisis-hotline-links">
-                <a href="tel:+63288937603" className="crisis-hotline-link">
-                  <FaPhone /> +63 2 8893 7603
-                </a>
-                <a href="tel:+639190560709" className="crisis-hotline-link">
-                  <FaPhone /> +63 919 056 0709
-                </a>
-                <a href="tel:+639178001123" className="crisis-hotline-link">
-                  <FaPhone /> +63 917 800 1123
+                <a href="tel:1553" className="crisis-hotline-link crisis-hotline-link--primary">
+                  <FaPhone /> Call 1553
                 </a>
               </div>
             </div>
@@ -248,10 +276,24 @@ function CrisisSupportDialog() {
             I'm okay right now
           </button>
         </div>
+
+        {showPrankCallGuide && (
+          <div className="crisis-prank-guide-overlay" role="presentation" onClick={() => setShowPrankCallGuide(false)}>
+            <section className="crisis-prank-guide" role="dialog" aria-modal="true" aria-labelledby="crisis-prank-guide-title" onClick={(event) => event.stopPropagation()}>
+              <button type="button" className="crisis-prank-guide-close" aria-label="Close prank call information" onClick={() => setShowPrankCallGuide(false)}>×</button>
+              <div className="crisis-prank-guide-heading">
+                <IoInformationCircleOutline className="crisis-prank-guide-icon" aria-hidden="true" />
+                <h3 id="crisis-prank-guide-title">Prank calls</h3>
+              </div>
+              <p>These lines are for people who may need immediate emotional or crisis support. Prank calls can delay help for someone in danger and will not be taken lightly.</p>
+              <p>Interactions initiated from this site may be recorded in security logs, and deliberate misuse may result in blocked access. If you opened this by mistake, please close this guide and do not place a prank call.</p>
+              <button type="button" className="crisis-prank-guide-dismiss" onClick={() => setShowPrankCallGuide(false)}>I understand</button>
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export default CrisisSupportDialog;
-

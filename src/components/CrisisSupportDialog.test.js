@@ -59,11 +59,14 @@ describe('CrisisSupportDialog Component', () => {
     expect(screen.getByText(/You don't have to carry this alone/i)).toBeInTheDocument();
 
     // Hotlines
+    const hopelineLink = screen.getByRole('link', {name: /0917-558-4673/i});
+    expect(hopelineLink).toHaveAttribute('href', 'tel:09175584673');
+    expect(screen.getAllByText(/Online 24\/7/i)).toHaveLength(2);
+    expect(screen.getAllByText(/^Free$/i)).toHaveLength(2);
+
     const ncmhLink = screen.getByRole('link', {name: /1553/i});
     expect(ncmhLink).toHaveAttribute('href', 'tel:1553');
-
-    const inTouchLink = screen.getByRole('link', {name: /\+63 2 8893 7603/i});
-    expect(inTouchLink).toHaveAttribute('href', 'tel:+63288937603');
+    expect(screen.queryByText(/In Touch Community Services/i)).not.toBeInTheDocument();
 
     // International directories
     const findAHelpline = screen.getByRole('link', {name: /Find A Helpline/i});
@@ -73,7 +76,7 @@ describe('CrisisSupportDialog Component', () => {
     expect(befrienders).toHaveAttribute('href', 'https://www.befrienders.org');
   });
 
-  test('displays 5-4-3-2-1 grounding tab by default with sensory steps', () => {
+  test('displays the first grounding task and reveals each remaining task in sequence', () => {
     renderWithContext();
     fireEvent.click(screen.getByTestId('open-btn'));
 
@@ -81,10 +84,18 @@ describe('CrisisSupportDialog Component', () => {
     expect(screen.getByRole('button', {name: /5-4-3-2-1 Grounding Method/i})).toBeInTheDocument();
 
     expect(screen.getByText(/^See$/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^Feel$/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', {name: /Done, continue/i}));
     expect(screen.getByText(/^Feel$/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: /Done, continue/i}));
     expect(screen.getByText(/^Hear$/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: /Done, continue/i}));
     expect(screen.getByText(/^Smell$/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: /Done, continue/i}));
     expect(screen.getByText(/^Taste$/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: /Finish exercise/i}));
+    expect(screen.getByText(/We hope you feel a little steadier/i)).toBeInTheDocument();
   });
 
   test('switches between 4-7-8 breathing pacer tab and 5-4-3-2-1 grounding method tab', () => {
@@ -133,6 +144,18 @@ describe('CrisisSupportDialog Component', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     expect(screen.queryByRole('button', {name: /Close dialog/i})).not.toBeInTheDocument();
+  });
+
+  test('opens and closes the prank call information dialog', () => {
+    renderWithContext();
+    fireEvent.click(screen.getByTestId('open-btn'));
+
+    fireEvent.click(screen.getByRole('button', {name: /About prank calls/i}));
+    expect(screen.getByRole('dialog', {name: /Prank calls/i})).toBeInTheDocument();
+    expect(screen.getByText(/Prank calls can delay help/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', {name: /I understand/i}));
+    expect(screen.queryByRole('dialog', {name: /Prank calls/i})).not.toBeInTheDocument();
   });
 
   test('pressing Escape key closes the dialog', () => {
