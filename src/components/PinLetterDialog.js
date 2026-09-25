@@ -192,6 +192,9 @@ export default function PinLetterDialog({
   const [recipientEmail, setRecipientEmail] = useState('');
   const [showDeliveryGuide, setShowDeliveryGuide] = useState(false);
   const [showFeaturedGuide, setShowFeaturedGuide] = useState(false);
+  const [featuredGuideTierId, setFeaturedGuideTierId] = useState('pin-24h');
+  const [tierTooltipId, setTierTooltipId] = useState(null);
+  const tierTooltipTimer = useRef(null);
   const [showSupportedPayments, setShowSupportedPayments] = useState(false);
   const [showMorePaymentNames, setShowMorePaymentNames] = useState(false);
   useEffect(() => {
@@ -206,6 +209,29 @@ export default function PinLetterDialog({
   const normalizedRecipientEmail = recipientEmail.trim();
   const recipientEmailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedRecipientEmail)
     && normalizedRecipientEmail.length <= 254;
+  const featuredGuideTier = SUPPORT_TIERS.find(option => option.id === featuredGuideTierId) || SUPPORT_TIERS[1];
+  const selectedLetterId = letterIdFromUrl(url);
+  const selectedLetterForGuide = (letters || []).find(letter => {
+    const id = letter?._id?.$oid || letter?._id;
+    return selectedLetterId && String(id) === selectedLetterId;
+  });
+  const selectedLetterTo = confirmation?.to || selectedLetterForGuide?.to || 'Recipient';
+  const showTierTooltip = (option) => {
+    if (!option.delivers) return;
+    window.clearTimeout(tierTooltipTimer.current);
+    setTierTooltipId(option.id);
+    tierTooltipTimer.current = window.setTimeout(() => setTierTooltipId(null), 3000);
+  };
+  useEffect(() => {
+    window.clearTimeout(tierTooltipTimer.current);
+    if (tier.delivers) {
+      setTierTooltipId(tier.id);
+      tierTooltipTimer.current = window.setTimeout(() => setTierTooltipId(null), 3000);
+    } else {
+      setTierTooltipId(null);
+    }
+    return () => window.clearTimeout(tierTooltipTimer.current);
+  }, [tier.id, tier.delivers]);
   const busy = useRef(false);
   const dialog = useRef(null);
   const headline = useRef(null);
@@ -430,6 +456,35 @@ export default function PinLetterDialog({
                     <span className="pin-letter-tier-heading">
                       <span className="pin-letter-radio" aria-hidden="true" />
                       <strong>{option.label}</strong>
+                      <button
+                        type="button"
+                        className="pin-tier-guide-button"
+                        aria-label={`Learn more about ${option.label}`}
+                        aria-haspopup="dialog"
+                        aria-describedby={tierTooltipId === option.id ? `pin-tier-tooltip-${option.id}` : undefined}
+                        onMouseEnter={() => showTierTooltip(option)}
+                        onFocus={() => showTierTooltip(option)}
+                        onBlur={() => setTierTooltipId(null)}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          window.clearTimeout(tierTooltipTimer.current);
+                          setTierTooltipId(null);
+                          setFeaturedGuideTierId(option.id);
+                          setShowFeaturedGuide(true);
+                        }}
+                      >
+                        <IoInformationCircleOutline aria-hidden="true" />
+                        {option.delivers && tierTooltipId === option.id && (
+                          <span
+                            id={`pin-tier-tooltip-${option.id}`}
+                            className="pin-tier-guide-tooltip"
+                            role="tooltip"
+                          >
+                            Preview how it will look in their email.
+                          </span>
+                        )}
+                      </button>
                       <span className="pin-letter-tier-price"><del aria-label={`Previously ₱${option.originalPrice}`}>₱{option.originalPrice}</del><b aria-label={`Now ₱${option.price}`}>₱{option.price}</b></span>
                     </span>
                     <span className="pin-letter-tier-badge">{option.badge}</span>
@@ -585,7 +640,7 @@ export default function PinLetterDialog({
                   <strong>Letters to Casper</strong>
                   <time>2:40 PM</time>
                 </div>
-                <b>Recipient, someone wrote a letter for you</b>
+                <b>{selectedLetterTo}, someone wrote a letter for you</b>
                 <span>Someone wrote to you. Open the letter when you’re ready…</span>
               </div>
             </div>
@@ -632,11 +687,34 @@ export default function PinLetterDialog({
           >
             ×
           </button>
-          <h3 id="pin-featured-guide-title">About Featured Letters</h3>
+          <h3 id="pin-featured-guide-title">About {featuredGuideTier.label}</h3>
+          {featuredGuideTier.delivers && (
+            <div className="pin-featured-email-preview">
+              <h4>Recipient Email Preview</h4>
+              <div className="pin-recipient-email-preview" aria-label="Example recipient inbox message">
+                <img src="/ltc_favicon.png" alt="" />
+                <div className="pin-recipient-email-preview__content">
+                  <div className="pin-recipient-email-preview__sender">
+                    <strong>Letters to Casper</strong>
+                    <time>2:40 PM</time>
+                  </div>
+                  <b>{selectedLetterTo}, someone wrote a letter for you</b>
+                  <span>Someone wrote to you. Open the letter when you’re ready…</span>
+                </div>
+              </div>
+            </div>
+          )}
           <p className="pin-delivery-guide-intro">
-            Pinning guarantees your letter stays highlighted at the top of the community. While featured status is 100% free and chosen based on content, pinned letters are brought straight to our moderators&apos; &amp; admin attention, giving your piece the best possible shot at being selected.
+            {featuredGuideTier.id === 'delivery'
+              ? 'Send to Inbox delivers your letter anonymously to the recipient’s email. It also brings your letter to our admins and moderators for review and prioritization as a possible featured letter.'
+              : featuredGuideTier.id === 'keepsake-48h'
+                ? 'The Keepsake anonymously delivers your letter to the recipient and pins it at the top of the public feed for 48 hours. It also notifies our admins and moderators for review and prioritization.'
+                : 'Pinning keeps your letter at the very top of the public feed until its 24-hour placement expires. It also notifies our admins and moderators for review and prioritization.'}
           </p>
-          <p className="pin-featured-criteria-label">Criterias are:</p>
+          <p className="pin-delivery-guide-intro pin-featured-disclaimer">
+            Featured placement is selected based on content, so we cannot guarantee that every reviewed or pinned letter will be featured.
+          </p>
+          <p className="pin-featured-criteria-label">Our criteria are:</p>
           <ul className="pin-featured-criteria">
             <li><strong>Genuine and vulnerable:</strong> Honest words written from the heart, not generic quotes.</li>
             <li><strong>Leaves a mark:</strong> Stirs real emotion, whether it is comfort, ache, or closure.</li>

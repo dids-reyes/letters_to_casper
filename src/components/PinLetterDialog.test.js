@@ -71,17 +71,65 @@ test('shows recipient email only for delivery choices and validates it before co
 });
 
 test('previews the anonymous email the recipient will receive', () => {
-  render(<PinLetterDialog onClose={() => {}} />);
+  render(<PinLetterDialog onClose={() => {}} defaultUrl={letterUrl} letters={[{_id: id, to: 'Casper'}]} />);
 
   fireEvent.click(screen.getByRole('button', {name: 'Preview the recipient email'}));
 
   const guide = screen.getByRole('dialog', {name: 'What will they receive?'});
   expect(guide).toHaveTextContent('Letters to Casper');
-  expect(guide).toHaveTextContent('Recipient, someone wrote a letter for you');
+  expect(guide).toHaveTextContent('Casper, someone wrote a letter for you');
   expect(guide).toHaveTextContent('Your identity stays private.');
 
   fireEvent.click(screen.getByRole('button', {name: 'Close delivery guide'}));
   expect(screen.queryByRole('dialog', {name: 'What will they receive?'})).toBeNull();
+});
+
+test('explains each upgrade and the featured-letter criteria', () => {
+  render(<PinLetterDialog onClose={() => {}} defaultUrl={letterUrl} letters={[{_id: id, to: 'Casper'}]} />);
+
+  expect(screen.getByRole('button', {name: 'Learn more about Send to Inbox'})).toBeTruthy();
+  expect(screen.getByRole('button', {name: 'Learn more about Pin to Feed'})).toBeTruthy();
+  expect(screen.getByRole('button', {name: 'Learn more about The Keepsake (Both)'})).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', {name: 'Learn more about Pin to Feed'}));
+  const guide = screen.getByRole('dialog', {name: 'About Pin to Feed'});
+  expect(guide).toHaveTextContent('very top of the public feed');
+  expect(guide).toHaveTextContent('cannot guarantee');
+  expect(guide).toHaveTextContent('Genuine and vulnerable');
+  expect(guide).toHaveTextContent('Leaves a mark');
+  expect(guide).toHaveTextContent('Meaningful, not filler');
+  expect(guide).toHaveTextContent('Intentional length');
+
+  fireEvent.click(screen.getByRole('button', {name: 'Close featured letters guide'}));
+  expect(screen.queryByRole('dialog', {name: 'About Pin to Feed'})).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', {name: 'Learn more about Send to Inbox'}));
+  const inboxGuide = screen.getByRole('dialog', {name: 'About Send to Inbox'});
+  expect(inboxGuide).toHaveTextContent('Recipient Email Preview');
+  expect(inboxGuide).toHaveTextContent('Casper, someone wrote a letter for you');
+  fireEvent.click(screen.getByRole('button', {name: 'Close featured letters guide'}));
+
+  fireEvent.click(screen.getByRole('button', {name: 'Learn more about The Keepsake (Both)'}));
+  const keepsakeGuide = screen.getByRole('dialog', {name: 'About The Keepsake (Both)'});
+  expect(keepsakeGuide).toHaveTextContent('Recipient Email Preview');
+  expect(keepsakeGuide).toHaveTextContent('Casper, someone wrote a letter for you');
+});
+
+test('briefly explains the email preview icons for delivery tiers', () => {
+  jest.useFakeTimers();
+  render(<PinLetterDialog onClose={() => {}} />);
+
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Preview how it will look in their email.');
+
+  act(() => jest.advanceTimersByTime(3000));
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  fireEvent.click(screen.getByRole('radio', {name: /Pin to Feed/i}));
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  fireEvent.click(screen.getByRole('radio', {name: /The Keepsake/i}));
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Preview how it will look in their email.');
+  jest.useRealTimers();
 });
 
 test('calculates pin expiry only for choices that include feed placement', () => {

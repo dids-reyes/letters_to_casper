@@ -361,6 +361,7 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
 }
 
 .pin-letter-tier-heading {
+  align-items: center;
   justify-content: flex-start;
   gap: 8px;
   white-space: normal;
@@ -368,8 +369,72 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
 
 .pin-letter-tier-heading strong {
   min-width: 0;
-  margin-right: auto;
+  line-height: 1.2;
 }
+
+.pin-tier-guide-button {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ltc-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.pin-tier-guide-button:hover {
+  background: var(--ltc-hover);
+  color: var(--ltc-primary);
+}
+
+.pin-tier-guide-button svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+}
+.pin-tier-guide-tooltip {
+  position:absolute;
+  z-index:4;
+  bottom:calc(100% + 8px);
+  left:50%;
+  width:max-content;
+  max-width:190px;
+  box-sizing:border-box;
+  padding:6px 8px;
+  border:1px solid var(--ltc-border);
+  border-radius:7px;
+  background:var(--ltc-surface);
+  color:var(--ltc-foreground);
+  box-shadow:0 2px 8px #0002;
+  font-size:10px;
+  font-weight:500;
+  line-height:1.35;
+  text-align:left;
+  white-space:normal;
+  transform:translateX(-50%);
+  pointer-events:none;
+  animation:pin-tier-tooltip-in .15s ease both;
+}
+.pin-tier-guide-tooltip::after {
+  position:absolute;
+  top:100%;
+  left:50%;
+  width:7px;
+  height:7px;
+  border-right:1px solid var(--ltc-border);
+  border-bottom:1px solid var(--ltc-border);
+  background:var(--ltc-surface);
+  content:"";
+  transform:translate(-50%,-4px) rotate(45deg);
+}
+@keyframes pin-tier-tooltip-in { from { opacity:0; transform:translate(-50%,3px); } to { opacity:1; transform:translate(-50%,0); } }
 
 .pin-letter-radio {
   position: relative;
@@ -389,6 +454,7 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
 
 .pin-letter-tier-price {
   flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .pin-letter-tier-heading b {
@@ -435,12 +501,16 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
 .pin-recipient-label-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  gap: 2px;
   margin-bottom: 6px;
 }
 
 .pin-recipient-label-row .pin-letter-url-label {
   margin: 0;
+  line-height: 1.25;
 }
 
 .pin-recipient-guide-button {
@@ -455,6 +525,7 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
   background: transparent;
   color: var(--ltc-muted);
   cursor: pointer;
+  line-height: 1;
 }
 
 .pin-recipient-guide-button:hover {
@@ -463,6 +534,7 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
 }
 
 .pin-recipient-guide-button svg {
+  display: block;
   width: 16px;
   height: 16px;
 }
@@ -812,6 +884,9 @@ html.night-shift .pin-supported-payments__item .pin-payment-brand--sterling {
 .pin-recipient-guide-note strong { display:block; margin-bottom:2px; color:var(--ltc-foreground); font-size:12px; }
 .pin-recipient-guide-note p { margin:0; color:var(--ltc-muted); font-size:11px; line-height:1.55; }
 .pin-featured-criteria-label { margin:0 0 7px; color:var(--ltc-foreground); font-size:12px; font-weight:600; }
+.pin-featured-email-preview { display:grid; gap:7px; }
+.pin-featured-email-preview h4 { margin:0; color:var(--ltc-foreground); font-size:12px; font-weight:600; }
+.pin-featured-disclaimer { margin-top:-7px; }
 .pin-delivery-guide-list { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
 .pin-delivery-guide-item { display:flex; align-items:flex-start; gap:11px; padding:12px 14px; border:1px solid var(--ltc-border); border-radius:14px; background:var(--ltc-subtle); }
 .pin-delivery-guide-item svg { flex-shrink:0; font-size:17px; color:var(--ltc-primary); margin-top:2px; }
@@ -873,6 +948,17 @@ html.night-shift .pin-supported-payments__item .pin-payment-brand--sterling {
   .pin-letter-tier-heading {
     gap: 6px;
     font-size: 11px;
+  }
+
+  .pin-tier-guide-button {
+    flex-basis: 15px;
+    width: 15px;
+    height: 15px;
+  }
+
+  .pin-tier-guide-button svg {
+    width: 13px;
+    height: 13px;
   }
 
   .pin-letter-radio {
@@ -996,5 +1082,55 @@ html.night-shift .pin-supported-payments__item .pin-payment-brand--sterling {
 
   .pin-payment-methods__help button {
     font-size: 7.5px;
+  }
+
+  .pin-delivery-guide-overlay {
+    padding: 6px;
+  }
+
+  .pin-delivery-guide {
+    max-height: calc(100dvh - 12px);
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .pin-delivery-guide h3 {
+    margin-bottom: 7px;
+    font-size: 16px;
+  }
+
+  .pin-delivery-guide-intro {
+    margin-bottom: 9px;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .pin-featured-disclaimer {
+    margin-top: -3px;
+  }
+
+  .pin-featured-criteria-label {
+    margin-bottom: 5px;
+    font-size: 10px;
+  }
+
+  .pin-featured-criteria {
+    padding-left: 16px;
+    font-size: 9.5px;
+    line-height: 1.4;
+  }
+
+  .pin-featured-criteria li + li {
+    margin-top: 5px;
+  }
+
+  .pin-delivery-guide-actions {
+    margin-top: 10px;
+  }
+
+  .pin-delivery-guide-dismiss {
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 10px;
   }
 }
