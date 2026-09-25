@@ -389,7 +389,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             setShowReadModeTooltip(false);
             setIsTooltipFading(false);
           }, 400);
-        }, 10000);
+        }, 3000);
       }
     }
 

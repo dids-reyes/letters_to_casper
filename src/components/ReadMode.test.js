@@ -1225,7 +1225,7 @@ describe('Read Mode FAB in Home', () => {
       jest.useRealTimers();
     });
 
-    test('Read Mode onboarding tooltip triggers after closing a letter and auto-dismisses after 30 seconds', async () => {
+    test('Read Mode onboarding tooltip triggers after closing a letter and auto-dismisses after 3 seconds', async () => {
       const mockFetch = jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
         if (typeof url === 'string' && url.includes('/public/letter-1')) {
           return {
@@ -1263,7 +1263,7 @@ describe('Read Mode FAB in Home', () => {
       // Still not shown while letter is open
       expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
 
-      // Switch to fake timers to test 30-second auto-dismiss
+      // Switch to fake timers to test the 3-second auto-dismiss
       jest.useFakeTimers();
 
       // 2. Close the letter by clicking the overlay backdrop
@@ -1281,9 +1281,9 @@ describe('Read Mode FAB in Home', () => {
       expect(tooltip).not.toHaveTextContent('💡');
       expect(screen.getByText(/Disable typing effects and scroll down to browse through letters/i)).toBeInTheDocument();
 
-      // 4. Advance time by 10 seconds (10000ms): starts fade out
+      // 4. Advance time by 3 seconds: starts fade out
       act(() => {
-        jest.advanceTimersByTime(10000);
+        jest.advanceTimersByTime(3000);
       });
       expect(screen.getByRole('status', { name: /Read Mode introduction/i })).toHaveClass('is-fading-out');
 
