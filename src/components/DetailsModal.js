@@ -768,6 +768,8 @@ function DetailsModal({
   const [isFoldTipFading, setIsFoldTipFading] = useState(false);
   const foldTipTimerRef = useRef(null);
   const foldTipFadeTimerRef = useRef(null);
+  const [readBoundary, setReadBoundary] = useState(null);
+  const readBoundaryTimerRef = useRef(null);
 
   const isTouchDevice = useMemo(() => {
     return (
@@ -801,10 +803,26 @@ function DetailsModal({
     }, 2000);
   }, []);
 
+  const showReadBoundary = useCallback((boundary) => {
+    setReadBoundary(boundary);
+    if (readBoundaryTimerRef.current) clearTimeout(readBoundaryTimerRef.current);
+    readBoundaryTimerRef.current = setTimeout(() => {
+      setReadBoundary(null);
+      readBoundaryTimerRef.current = null;
+    }, 2000);
+  }, []);
+
+  const dismissReadBoundary = useCallback(() => {
+    if (readBoundaryTimerRef.current) clearTimeout(readBoundaryTimerRef.current);
+    readBoundaryTimerRef.current = null;
+    setReadBoundary(null);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (foldTipTimerRef.current) clearTimeout(foldTipTimerRef.current);
       if (foldTipFadeTimerRef.current) clearTimeout(foldTipFadeTimerRef.current);
+      if (readBoundaryTimerRef.current) clearTimeout(readBoundaryTimerRef.current);
     };
   }, []);
 
@@ -925,7 +943,12 @@ function DetailsModal({
 
   const goToNext = useCallback((fromAdLock = false) => {
     setNavDirection("next");
-    if (closingRef.current || (showAdLock && !fromAdLock) || isTransitioningRef.current || !canGoNext) return;
+    if (closingRef.current || (showAdLock && !fromAdLock) || isTransitioningRef.current) return;
+    if (!canGoNext) {
+      showReadBoundary("end");
+      return;
+    }
+    dismissReadBoundary();
 
     if (showReadTip) {
       dismissReadTip();
@@ -970,11 +993,16 @@ function DetailsModal({
       setSlideDirection(null);
       isTransitioningRef.current = false;
     }, 520);
-  }, [showAdLock, showReadTip, dismissReadTip, canGoNext, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, onFetchMore]);
+  }, [showAdLock, showReadTip, dismissReadTip, canGoNext, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, onFetchMore, showReadBoundary, dismissReadBoundary]);
 
   const goToPrev = useCallback((fromAdLock = false) => {
     setNavDirection("prev");
-    if (closingRef.current || (showAdLock && !fromAdLock) || isTransitioningRef.current || !canGoPrev) return;
+    if (closingRef.current || (showAdLock && !fromAdLock) || isTransitioningRef.current) return;
+    if (!canGoPrev) {
+      showReadBoundary("beginning");
+      return;
+    }
+    dismissReadBoundary();
 
     if (showReadTip) {
       dismissReadTip();
@@ -1015,7 +1043,7 @@ function DetailsModal({
       setSlideDirection(null);
       isTransitioningRef.current = false;
     }, 520);
-  }, [showAdLock, showReadTip, dismissReadTip, canGoPrev, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate]);
+  }, [showAdLock, showReadTip, dismissReadTip, canGoPrev, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, showReadBoundary, dismissReadBoundary]);
 
   goToNextRef.current = goToNext;
   goToPrevRef.current = goToPrev;
@@ -2447,6 +2475,18 @@ function DetailsModal({
             >
               ✕
             </button>
+          </div>
+        )}
+
+        {readMode && opened && readBoundary && (
+          <div
+            className={`read-mode-boundary-tip is-${readBoundary}`}
+            role="status"
+            aria-live="polite"
+          >
+            {readBoundary === "beginning"
+              ? "This is where the letters begin"
+              : "No more letters beyond this point"}
           </div>
         )}
 

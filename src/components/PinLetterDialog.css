@@ -508,21 +508,60 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
 
 .pin-payment-methods {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: 11px;
+  color: var(--ltc-muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.pin-payment-methods__brands {
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   min-height: 20px;
-  margin-top: 11px;
-  color: var(--ltc-muted);
-  font-size: 10px;
-  line-height: 1;
   white-space: nowrap;
 }
 
-.pin-payment-methods > svg {
+.pin-payment-methods__brands > svg {
   flex: 0 0 auto;
   width: 12px;
   height: 12px;
+}
+
+.pin-payment-methods__help {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+  text-align: center;
+}
+
+.pin-payment-methods__help button {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: clamp(7px, 2.5vw, 10px);
+  letter-spacing: -0.015em;
+  text-overflow: clip;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pin-payment-methods__help button:hover {
+  color: var(--ltc-foreground);
 }
 
 .pin-payment-brand {
@@ -546,6 +585,155 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
 .pin-payment-brand--gcash img { height: 14px; }
 .pin-payment-brand--maya img { position:relative; top:1px; height:12px; }
 .pin-payment-brand--qrph img { height: 10px; }
+
+.pin-supported-payments {
+  width: min(100%, 420px);
+}
+
+.pin-supported-payments h3 {
+  width: calc(100% - 30px);
+  padding-right: 0;
+  font-size: clamp(11px, 3.35vw, 18px);
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
+
+.pin-supported-payments__list {
+  max-height: min(46vh, 340px);
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.pin-supported-payments__group + .pin-supported-payments__group {
+  margin-top: 18px;
+  padding-top: 17px;
+  border-top: 1px solid var(--ltc-border);
+}
+
+.pin-supported-payments__group h4 {
+  margin: 0 0 9px;
+  color: var(--ltc-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pin-supported-payments__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pin-supported-payments__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 76px;
+  padding: 10px;
+  border: 1px solid var(--ltc-border);
+  border-radius: 8px;
+  background: var(--ltc-subtle);
+  color: var(--ltc-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.pin-supported-payments__item .pin-payment-brand {
+  width: 100%;
+  height: 30px;
+}
+
+.pin-supported-payments__item .pin-payment-brand img {
+  width: auto;
+  max-width: 104px;
+  height: auto;
+  max-height: 27px;
+}
+
+.pin-supported-payments__name {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.pin-supported-payments__name--long {
+  font-size: clamp(9px, 2.65vw, 11px);
+  letter-spacing: -0.02em;
+}
+
+.pin-supported-payments__item .pin-payment-brand--sterling {
+  height: 36px;
+}
+
+.pin-supported-payments__item .pin-payment-brand--sterling img {
+  max-width: 116px;
+  max-height: 34px;
+}
+
+html.night-shift .pin-supported-payments__item .pin-payment-brand--gotyme,
+html.night-shift .pin-supported-payments__item .pin-payment-brand--sterling {
+  box-sizing: border-box;
+  width: min(100%, 126px);
+  padding: 3px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+html.night-shift .pin-supported-payments__item .pin-payment-brand--sterling {
+  width: min(100%, 132px);
+}
+
+.pin-supported-payments__more-toggle {
+  display: block;
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 9px 4px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ltc-muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.pin-supported-payments__more-toggle:hover {
+  color: var(--ltc-foreground);
+}
+
+.pin-supported-payments__more {
+  display: grid;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ltc-border);
+}
+
+.pin-supported-payments__more h5 {
+  margin: 0 0 7px;
+  color: var(--ltc-foreground);
+  font-size: 11px;
+  text-align: left;
+}
+
+.pin-supported-payments__more ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ltc-muted);
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.pin-supported-payments__more li + li {
+  margin-top: 5px;
+}
 
 .pin-upgrade-summary {
   display: grid;
@@ -641,4 +829,172 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
   .pin-delivery-guide { padding:20px 18px; max-height:calc(100dvh - 24px); }
   .pin-delivery-guide h3 { font-size:20px; }
   .pin-delivery-guide-item { padding:10px 12px; gap:9px; }
+}
+
+/* Compact only on short, narrow phones such as iPhone SE. */
+@media (max-width: 380px) and (max-height: 700px) {
+  .pin-letter-overlay {
+    padding: 6px;
+  }
+
+  .pin-letter-dialog {
+    max-height: calc(100dvh - 12px);
+    padding: 13px 14px;
+    border-radius: 10px;
+  }
+
+  .pin-letter-close {
+    top: 9px;
+    right: 9px;
+    width: 26px;
+    height: 26px;
+    font-size: 20px;
+  }
+
+  .pin-letter-dialog h2 {
+    margin-bottom: 4px;
+    font-size: 17px;
+  }
+
+  #pin-letter-subtext {
+    margin: 0 0 9px;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .pin-letter-tiers {
+    gap: 5px;
+  }
+
+  .pin-letter-tier {
+    padding: 7px 9px;
+  }
+
+  .pin-letter-tier-heading {
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .pin-letter-radio {
+    flex-basis: 13px;
+    width: 13px;
+    height: 13px;
+  }
+
+  .pin-letter-tier.is-selected .pin-letter-radio {
+    border-width: 4px;
+  }
+
+  .pin-letter-tier-heading b {
+    font-size: 11px;
+  }
+
+  .pin-letter-tier-price del,
+  .pin-letter-tier-badge {
+    font-size: 8px;
+  }
+
+  .pin-letter-tier-badge {
+    margin: 3px 0 0 19px;
+  }
+
+  .pin-letter-tier-note,
+  .pin-letter-tier-capacity {
+    margin: 1px 0 0 19px;
+    font-size: 9px;
+    line-height: 1.25;
+  }
+
+  .pin-tier-email-field {
+    margin: 6px 0 0 19px;
+    padding-top: 5px;
+  }
+
+  .pin-recipient-label-row {
+    margin-bottom: 3px;
+  }
+
+  .pin-tier-email-field .pin-letter-url-label,
+  .pin-receipt-section .pin-letter-url-label {
+    font-size: 9.5px;
+  }
+
+  .pin-recipient-guide-button {
+    width: 17px;
+    height: 17px;
+  }
+
+  .pin-recipient-guide-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .pin-tier-email-field #pin-recipient-email,
+  .pin-receipt-section input {
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+
+  .pin-letter-expiration,
+  .pin-receipt-section {
+    margin-top: 7px;
+  }
+
+  .pin-receipt-section .pin-letter-note {
+    margin-top: 3px;
+    font-size: 9px;
+    line-height: 1.25;
+  }
+
+  .pin-letter-actions {
+    gap: 6px;
+    margin-top: 9px;
+  }
+
+  .pin-letter-actions button {
+    padding: 8px 9px;
+    font-size: 10px;
+  }
+
+  .pin-payment-methods {
+    gap: 2px;
+    margin-top: 6px;
+    font-size: 8px;
+  }
+
+  .pin-payment-methods__brands {
+    min-height: 16px;
+    gap: 4px;
+  }
+
+  .pin-payment-methods__brands > svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .pin-payment-brand {
+    height: 13px;
+  }
+
+  .pin-payment-brand--gcash img {
+    height: 11px;
+  }
+
+  .pin-payment-brand--maya img {
+    top: 0.5px;
+    height: 9.5px;
+  }
+
+  .pin-payment-brand--qrph img {
+    height: 8px;
+  }
+
+  .pin-payment-methods__help {
+    gap: 2px 4px;
+    font-size: 7.5px;
+  }
+
+  .pin-payment-methods__help button {
+    font-size: 7.5px;
+  }
 }

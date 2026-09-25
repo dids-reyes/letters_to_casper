@@ -60,6 +60,10 @@ const SHOW_SKY_NAV = process.env.REACT_APP_SHOW_SKY_NAV === "true";
 export const SHOW_MAIN_FEED_ADS =
   process.env.REACT_APP_SHOW_MAIN_FEED_ADS === "true";
 const UI_ANNOUNCEMENT_KEY = "ltc-ui-update-announcement-v1";
+const isNightTime = (date = new Date()) => {
+  const hour = date.getHours();
+  return hour >= 22 || hour < 5;
+};
 const getLetterGridColumns = width => {
   if (width >= 1800) return 7;
   if (width > 1200) return 6;
@@ -192,20 +196,17 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   });
   const [nightShift, setNightShift] = useState(() => {
     try {
+      if (!isNightTime()) return false;
       const saved = localStorage.getItem("nightShift");
       if (saved !== null) return saved === "true";
-      return !!(
-        window.matchMedia &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches
-      );
+      return false;
     } catch (e) {
       return false;
     }
   });
-  const [isLateNight, setIsLateNight] = useState(() => {
-    const hour = new Date().getHours();
-    return hour >= 23 || hour < 5;
-  });
+  const [isLateNight, setIsLateNight] = useState(() => isNightTime());
+  const [showDayModeSuggestion, setShowDayModeSuggestion] = useState(false);
+  const dayModeSuggestionTimerRef = useRef(null);
   const [nightTipDismissed, setNightTipDismissed] = useState(() => {
     try {
       return sessionStorage.getItem("nightModeTipDismissed") === "true";
@@ -388,7 +389,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             setShowReadModeTooltip(false);
             setIsTooltipFading(false);
           }, 400);
-        }, 10000);
+        }, 3000);
       }
     }
 
@@ -425,12 +426,43 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
   useEffect(() => {
     const updateLateNight = () => {
-      const hour = new Date().getHours();
-      setIsLateNight(hour >= 23 || hour < 5);
+      const lateNight = isNightTime();
+      setIsLateNight((wasLateNight) => {
+        if (wasLateNight && !lateNight) setNightShift(false);
+        return lateNight;
+      });
     };
     const intervalId = window.setInterval(updateLateNight, 60000);
     return () => window.clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (dayModeSuggestionTimerRef.current) {
+        window.clearTimeout(dayModeSuggestionTimerRef.current);
+      }
+    };
+  }, []);
+
+  const toggleNightShift = () => {
+    setNightShift((current) => {
+      const next = !current;
+      if (dayModeSuggestionTimerRef.current) {
+        window.clearTimeout(dayModeSuggestionTimerRef.current);
+      }
+      if (next && !isNightTime()) {
+        setShowDayModeSuggestion(true);
+        dayModeSuggestionTimerRef.current = window.setTimeout(() => {
+          setShowDayModeSuggestion(false);
+          dayModeSuggestionTimerRef.current = null;
+        }, 3000);
+      } else {
+        setShowDayModeSuggestion(false);
+        dayModeSuggestionTimerRef.current = null;
+      }
+      return next;
+    });
+  };
 
   const dismissNightModeTip = () => {
     setNightTipDismissed(true);
@@ -1200,7 +1232,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             className="message-stat toolbar-trigger night-shift-toggle"
             aria-pressed={nightShift}
             aria-label="Toggle night shift"
-            onClick={() => setNightShift((value) => !value)}
+            onClick={toggleNightShift}
           >
             {nightShift ? (
               <IoSunnyOutline size={21} />
@@ -1258,6 +1290,12 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
               >
                 Turn on Night Mode
               </button>
+            </aside>
+          )}
+          {showDayModeSuggestion && nightShift && (
+            <aside className="night-mode-suggestion is-day-mode" role="status" aria-live="polite">
+              <strong>Daylight hours</strong>
+              <span>Day Mode may feel more natural right now.</span>
             </aside>
           )}
           {showOrigins && (

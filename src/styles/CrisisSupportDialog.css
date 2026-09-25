@@ -5,13 +5,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: #08090a;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 14px;
   z-index: 99999;
   animation: crisisFadeIn 0.25s ease-out;
 }
@@ -20,32 +18,32 @@
   background: #ffffff;
   color: #1e293b;
   width: 100%;
-  max-width: 580px;
-  max-height: 90vh;
+  max-width: 540px;
+  max-height: min(88dvh, 760px);
   overflow-y: auto;
-  border-radius: 20px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
   border: 1px solid #f1f5f9;
   position: relative;
-  padding: 28px 24px;
+  padding: 18px;
   box-sizing: border-box;
   animation: crisisSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .crisis-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .crisis-brand {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .crisis-logo {
-  width: min(170px, 45vw);
+  width: min(132px, 38vw);
   height: auto;
   display: block;
   object-fit: contain;
@@ -58,13 +56,13 @@
   background: #fef2f2;
   color: #dc2626;
   border: 1px solid #fecaca;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .crisis-badge svg {
@@ -73,17 +71,17 @@
 
 .crisis-title {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: #0f172a;
-  margin: 0 0 10px;
+  margin: 0 0 7px;
   line-height: 1.25;
 }
 
 .crisis-desc {
   color: #475569;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.45;
   margin: 0;
   padding: 0 8px;
 }
@@ -95,7 +93,7 @@
   background: #f8fafc;
   padding: 4px;
   border-radius: 12px;
-  margin: 20px 0 16px;
+  margin: 12px 0 10px;
   border: 1px solid #e2e8f0;
   box-sizing: border-box;
 }
@@ -103,7 +101,7 @@
 .crisis-tab {
   flex: 1 1 0;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 7px 8px;
   background: transparent;
   border: none;
   border-radius: 8px;
@@ -129,25 +127,25 @@
 .crisis-breathing-card {
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
-  border-radius: 16px;
-  padding: 24px 16px;
+  border-radius: 10px;
+  padding: 14px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .crisis-breathing-visual {
   position: relative;
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 16px;
+  width: 106px;
+  height: 106px;
+  margin: 0 auto 10px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .crisis-breathing-circle {
-  width: 130px;
-  height: 130px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   background: radial-gradient(circle, #86efac 0%, #4ade80 100%);
   opacity: 0.85;
@@ -181,16 +179,16 @@
 }
 
 .crisis-breathing-count {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1;
   margin-top: 4px;
 }
 
 .crisis-breathing-instruction {
-  font-size: 13px;
+  font-size: 11px;
   color: #166534;
-  margin: 0 0 14px;
+  margin: 0 0 9px;
   font-weight: 500;
 }
 
@@ -198,9 +196,9 @@
   background: #16a34a;
   color: #ffffff;
   border: none;
-  padding: 8px 20px;
-  border-radius: 9999px;
-  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -214,91 +212,262 @@
 .crisis-grounding-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 18px 20px;
-  margin-bottom: 20px;
+  border-radius: 10px;
+  padding: 8px 13px;
+  margin-bottom: 12px;
 }
 
-.crisis-grounding-item {
+.crisis-grounding-task {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px dashed #e2e8f0;
+  gap: 9px;
+  min-height: 64px;
+  padding: 7px 0 10px;
 }
 
-.crisis-grounding-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+.crisis-grounding-progress {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.crisis-grounding-progress > span {
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: #dce3ec;
+}
+
+.crisis-grounding-progress > span.is-active {
+  background: #2563eb;
+}
+
+.crisis-grounding-progress small {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 9px;
 }
 
 .crisis-grounding-num {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: #2563eb;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .crisis-grounding-text strong {
-  font-size: 13px;
+  font-size: 11px;
   color: #0f172a;
 }
 
 .crisis-grounding-text p {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: 10px;
   color: #64748b;
   line-height: 1.4;
+}
+
+.crisis-grounding-complete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 6px 11px;
+  border: 0;
+  border-radius: 7px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.crisis-grounding-complete svg {
+  width: 13px;
+  height: 13px;
+}
+
+.crisis-grounding-finished {
+  padding: 6px 3px 4px;
+  text-align: center;
+}
+
+.crisis-grounding-finished > svg {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 3px;
+  color: #2563eb;
+}
+
+.crisis-grounding-finished strong {
+  display: block;
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.crisis-grounding-finished p {
+  max-width: 390px;
+  margin: 5px auto 9px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.crisis-grounding-finished button {
+  padding: 5px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Hotline Section */
 .crisis-hotlines-section {
   border-top: 1px solid #f1f5f9;
-  padding-top: 18px;
+  padding-top: 11px;
 }
 
 .crisis-section-subtitle {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #64748b;
-  margin: 0 0 12px;
+  margin: 0;
+}
+
+.crisis-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.crisis-prank-guide-trigger {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.crisis-prank-guide-trigger svg {
+  width: 13px;
+  height: 13px;
 }
 
 .crisis-hotlines-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 9px;
 }
 
 .crisis-hotline-box {
   background: #fff5f5;
   border: 1px solid #fed7d7;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 8px;
+  padding: 9px;
   text-align: left;
 }
 
 .crisis-hotline-box h4 {
   margin: 0 0 4px;
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #991b1b;
 }
 
+.crisis-hotline-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+
+.crisis-hotline-heading h4 {
+  margin: 0;
+}
+
+.crisis-hotline-heading > span,
+.crisis-hotline-badges > span {
+  flex: 0 0 auto;
+  color: #7f1d1d;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.crisis-hotline-badges {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.crisis-hotline-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #166534 !important;
+}
+
+.crisis-hotline-status i {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+  animation: crisis-online-pulse 1.8s ease-out infinite;
+}
+
+.crisis-hotline-free {
+  padding: 2px 4px;
+  border: 1px solid #b9ddc2;
+  border-radius: 4px;
+  background: #f0fdf4;
+  color: #166534 !important;
+  line-height: 1;
+}
+
+@keyframes crisis-online-pulse {
+  70%, 100% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
+}
+
+.crisis-hotline-box--priority {
+  border-color: #f2b8b8;
+  background: #fffafa;
+}
+
 .crisis-hotline-box p {
   margin: 0 0 8px;
-  font-size: 10px;
+  font-size: 9px;
   color: #7f1d1d;
   line-height: 1.3;
 }
@@ -306,18 +475,18 @@
 .crisis-hotline-links {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
 }
 
 .crisis-hotline-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: #dc2626;
   text-decoration: none;
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 700;
-  padding: 4px 8px;
+  padding: 3px 5px;
   border-radius: 6px;
   background: rgba(220, 38, 38, 0.08);
   transition: background 0.2s ease;
@@ -328,17 +497,112 @@
   background: rgba(220, 38, 38, 0.16);
 }
 
+.crisis-hotline-link--primary {
+  background: #dc2626;
+  color: #fff;
+}
+
+.crisis-hotline-link--primary:hover {
+  background: #b91c1c;
+}
+
+.crisis-prank-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(20, 25, 38, 0.58);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.crisis-prank-guide {
+  position: relative;
+  box-sizing: border-box;
+  width: min(100%, 390px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid #e3dac6;
+  border-radius: 12px;
+  background: #fffdf5;
+  color: #39352b;
+  box-shadow: 0 8px 28px rgba(20, 31, 58, 0.22);
+}
+
+.crisis-prank-guide-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #716b60;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.crisis-prank-guide-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: #3772ff;
+}
+
+.crisis-prank-guide-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 32px 8px 0;
+}
+
+.crisis-prank-guide h3 {
+  margin: 0;
+  color: #29261f;
+  font-size: 17px;
+}
+
+.crisis-prank-guide p {
+  margin: 0;
+  color: #716b60;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.crisis-prank-guide p + p {
+  margin-top: 9px;
+}
+
+.crisis-prank-guide-dismiss {
+  width: 100%;
+  margin-top: 15px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #3772ff;
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .crisis-intl-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 8px;
-  padding: 10px 12px;
+  margin-top: 6px;
+  padding: 7px 9px;
   background: #f8fafc;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: 9.5px;
   color: #64748b;
 }
 
@@ -365,13 +629,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid #f1f5f9;
 }
 
 .crisis-seekhelp-link {
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 600;
   color: #2563eb;
   text-decoration: none;
@@ -388,9 +652,9 @@
   background: #f1f5f9;
   color: #475569;
   border: none;
-  padding: 9px 18px;
-  border-radius: 10px;
-  font-size: 13px;
+  padding: 8px 13px;
+  border-radius: 7px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -420,7 +684,7 @@
 
 /* Night Shift / Dark Mode */
 html.night-shift .crisis-overlay {
-  background: rgba(0, 0, 0, 0.82);
+  background: #08090a;
 }
 
 html.night-shift .crisis-modal {
@@ -480,9 +744,13 @@ html.night-shift .crisis-grounding-card {
   border-color: #353a33;
 }
 
-html.night-shift .crisis-grounding-item {
+html.night-shift .crisis-grounding-progress {
   border-color: #2e342a;
 }
+
+html.night-shift .crisis-grounding-progress > span { background:#3a4036; }
+html.night-shift .crisis-grounding-progress > span.is-active { background:#8ab4ff; }
+html.night-shift .crisis-grounding-progress small { color:#9e9e95; }
 
 html.night-shift .crisis-grounding-text strong {
   color: #f0eee2;
@@ -491,6 +759,11 @@ html.night-shift .crisis-grounding-text strong {
 html.night-shift .crisis-grounding-text p {
   color: #9e9e95;
 }
+
+html.night-shift .crisis-grounding-finished > svg { color:#8ab4ff; }
+html.night-shift .crisis-grounding-finished strong { color:#f0eee2; }
+html.night-shift .crisis-grounding-finished p { color:#9e9e95; }
+html.night-shift .crisis-grounding-finished button { border-color:#41483f; background:#292d26; color:#d0cec5; }
 
 html.night-shift .crisis-hotlines-section,
 html.night-shift .crisis-actions {
@@ -510,10 +783,23 @@ html.night-shift .crisis-hotline-box p {
   color: #d19a9a;
 }
 
+html.night-shift .crisis-hotline-heading > span { color:#d19a9a; }
+html.night-shift .crisis-hotline-badges > span { color:#d19a9a; }
+html.night-shift .crisis-hotline-status { color:#86efac !important; }
+html.night-shift .crisis-hotline-free { border-color:#355b3d; background:#1c3020; color:#86efac !important; }
+html.night-shift .crisis-hotline-box--priority { border-color:#633134; background:#301d1f; }
+
 html.night-shift .crisis-hotline-link {
   color: #fca5a5;
   background: rgba(239, 68, 68, 0.16);
 }
+
+html.night-shift .crisis-hotline-link--primary { background:#dc2626; color:#fff; }
+html.night-shift .crisis-prank-guide-trigger { color:#aaa99f; }
+html.night-shift .crisis-prank-guide { border-color:#3d4139; background:#20231d; color:#f0ecdf; }
+html.night-shift .crisis-prank-guide h3 { color:#f0ecdf; }
+html.night-shift .crisis-prank-guide p,
+html.night-shift .crisis-prank-guide-close { color:#b8b4a8; }
 
 html.night-shift .crisis-intl-row {
   background: #1f241c;
@@ -540,8 +826,9 @@ html.night-shift .crisis-dismiss-btn:hover {
     padding: 12px;
   }
   .crisis-modal {
-    padding: 20px 14px;
-    border-radius: 16px;
+    max-height: calc(100dvh - 20px);
+    padding: 14px 12px;
+    border-radius: 10px;
   }
   .crisis-tabs {
     gap: 4px;
@@ -553,15 +840,19 @@ html.night-shift .crisis-dismiss-btn:hover {
     font-size: clamp(10px, 2.7vw, 12px);
     letter-spacing: -0.01em;
   }
-  .crisis-hotlines-grid {
-    grid-template-columns: 1fr;
+  .crisis-hotline-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .crisis-hotline-badges {
+    justify-content: flex-start;
   }
   .crisis-actions {
-    flex-direction: column-reverse;
-    gap: 12px;
+    gap: 8px;
   }
   .crisis-dismiss-btn {
-    width: 100%;
+    flex: 0 0 auto;
   }
 }
 
@@ -570,7 +861,7 @@ html.night-shift .crisis-dismiss-btn:hover {
     padding: 8px;
   }
   .crisis-modal {
-    padding: 18px 10px;
+    padding: 12px 9px;
   }
   .crisis-tabs {
     gap: 3px;
@@ -582,6 +873,49 @@ html.night-shift .crisis-dismiss-btn:hover {
     font-size: clamp(9px, 2.6vw, 10.5px);
     letter-spacing: -0.02em;
   }
+  .crisis-header {
+    margin-bottom: 8px;
+  }
+  .crisis-logo {
+    width: 108px;
+  }
+  .crisis-title {
+    font-size: 17px;
+  }
+  .crisis-desc {
+    padding: 0 2px;
+    font-size: 10.5px;
+  }
+  .crisis-hotline-box {
+    padding: 7px;
+  }
+  .crisis-hotline-link {
+    font-size: 8.5px;
+  }
+  .crisis-section-subtitle {
+    font-size: 8.5px;
+    letter-spacing: .025em;
+    white-space: nowrap;
+  }
+  .crisis-prank-guide-trigger {
+    font-size: 8px;
+  }
+  .crisis-actions {
+    align-items: stretch;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .crisis-dismiss-btn {
+    width: auto;
+    white-space: nowrap;
+  }
+  .crisis-seekhelp-link {
+    min-width: 0;
+    font-size: 9px;
+    white-space: nowrap;
+  }
 }
 
-
+@media (prefers-reduced-motion: reduce) {
+  .crisis-hotline-status i { animation: none; }
+}

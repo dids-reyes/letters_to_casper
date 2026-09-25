@@ -8,6 +8,12 @@ import {render_url, api_key} from '../data/keys';
 import qrphLogo from '../assets/qrph_logo.png';
 import gcashLogo from '../assets/gcash-logo-vector.svg';
 import mayaLogo from '../assets/maya-seeklogo.svg';
+import shopeePayLogo from '../assets/payment-shopeepay.png';
+import goTymeLogo from '../assets/payment-gotyme.png';
+import grabPayLogo from '../assets/payment-grabpay.png';
+import bpiLogo from '../assets/payment-bpi.png';
+import mariBankLogo from '../assets/payment-maribank.png';
+import sterlingBankLogo from '../assets/payment-sterling-bank.png';
 import './PinLetterDialog.css';
 
 export function letterIdFromUrl(value) {
@@ -62,21 +68,88 @@ export function redirectToCheckout(url) {
   window.location.assign(url);
 }
 
-function PaymentMethods() {
+const FEATURED_PAYMENT_APPS = [
+  {name: 'GCash', logo: gcashLogo, className: 'pin-payment-brand--gcash'},
+  {name: 'Maya', logo: mayaLogo, className: 'pin-payment-brand--maya'},
+];
+const SUPPORTED_PAYMENT_GROUPS = [
+  {
+    label: 'E-wallets',
+    methods: [
+      ...FEATURED_PAYMENT_APPS,
+      {name: 'ShopeePay', logo: shopeePayLogo},
+      {name: 'GrabPay', logo: grabPayLogo},
+    ],
+  },
+  {
+    label: 'Banks',
+    methods: [
+      {name: 'GoTyme Bank', logo: goTymeLogo, className: 'pin-payment-brand--gotyme'},
+      {name: 'BPI', logo: bpiLogo},
+      {name: 'MariBank', logo: mariBankLogo},
+      {name: 'Sterling Bank of Asia', logo: sterlingBankLogo},
+    ],
+  },
+];
+const ADDITIONAL_PAYMENT_GROUPS = [
+  {
+    label: 'More banks',
+    methods: [
+      'Asia United Bank Corporation (AUB)',
+      'BDO Unibank Inc. (Available via BDO Pay App only)',
+      'Metropolitan Bank and Trust Company (MetroBank) (Available only on Metrobank Bank Online via web)',
+      'Philippine National Bank (PNB)',
+      'Rizal Commercial Banking Corporation (RCBC)',
+      'Robinsons Bank Corporation',
+      'Security Bank Corporation',
+      'Union Bank of the Philippines (UBP)',
+      'China Banking Corporation',
+      'Land Bank of the Philippines',
+      'AllBank (A Thrift Bank), Inc.',
+      'Queen City Development Bank, Inc. or QueenBank, A Thrift Bank',
+      'Philippine Savings Bank',
+      'Cebuana Lhuillier Rural Bank, Inc.',
+      'Rural Bank of Guinobatan, Inc.',
+    ],
+  },
+  {
+    label: 'More e-wallets and issuers',
+    methods: [
+      'PPS-PEPP Financial Services Corporation',
+      'Starpay Corporation',
+      'TayoCash, Inc.',
+      'Traxion Pay, Inc.',
+      'USSC Money Services, Inc.',
+      'Zybi Tech, Inc.',
+      'CIS Bayad Center, Inc.',
+      'DCPAY Philippines, Inc.',
+      'Home Credit Philippines',
+      'First Digital Finance Corporation (BillEase)',
+      'Salmon Group Ltd.',
+    ],
+  },
+];
+
+function PaymentMethods({onShowSupported}) {
   return (
-    <div className="pin-payment-methods" aria-label="Secure payment via GCash, Maya, or QRPH">
-      <IoLockClosedOutline aria-hidden="true" />
-      <span>Secure payment via</span>
-      <span className="pin-payment-brand pin-payment-brand--gcash">
-        <img src={gcashLogo} alt="GCash" />
-      </span>
-      <span className="pin-payment-brand pin-payment-brand--maya">
-        <img src={mayaLogo} alt="Maya" />
-      </span>
-      <span>or</span>
-      <span className="pin-payment-brand pin-payment-brand--qrph">
-        <img src={qrphLogo} alt="QRPH" />
-      </span>
+    <div className="pin-payment-methods">
+      <div className="pin-payment-methods__brands" aria-label="Secure payment with GCash or Maya via QRPH">
+        <IoLockClosedOutline aria-hidden="true" />
+        <span>Secure Payment</span>
+        {FEATURED_PAYMENT_APPS.map(method => (
+          <span key={method.name} className={`pin-payment-brand ${method.className}`}>
+            <img src={method.logo} alt={method.name} />
+          </span>
+        ))}
+        <span>via</span>
+        <span className="pin-payment-brand pin-payment-brand--qrph">
+          <img src={qrphLogo} alt="QRPH" />
+        </span>
+      </div>
+      <div className="pin-payment-methods__help">
+        <span>No Account Linking needed.</span>
+        <button type="button" onClick={onShowSupported}>See All Banks/E-wallets</button>
+      </div>
     </div>
   );
 }
@@ -119,6 +192,11 @@ export default function PinLetterDialog({
   const [recipientEmail, setRecipientEmail] = useState('');
   const [showDeliveryGuide, setShowDeliveryGuide] = useState(false);
   const [showFeaturedGuide, setShowFeaturedGuide] = useState(false);
+  const [showSupportedPayments, setShowSupportedPayments] = useState(false);
+  const [showMorePaymentNames, setShowMorePaymentNames] = useState(false);
+  useEffect(() => {
+    if (!showSupportedPayments) setShowMorePaymentNames(false);
+  }, [showSupportedPayments]);
   const [confirmation, setConfirmation] = useState(null);
   const emailInput = useRef(null);
   const recipientEmailInput = useRef(null);
@@ -171,6 +249,11 @@ export default function PinLetterDialog({
   const close = () => { if (!busy.current) setClosing(true); };
   const onKeyDown = event => {
     if (event.key === 'Escape') {
+      if (showSupportedPayments) {
+        event.stopPropagation();
+        setShowSupportedPayments(false);
+        return;
+      }
       if (showFeaturedGuide) {
         event.stopPropagation();
         setShowFeaturedGuide(false);
@@ -185,8 +268,8 @@ export default function PinLetterDialog({
       close();
     }
     if (event.key === 'Tab') {
-      if (showDeliveryGuide || showFeaturedGuide) {
-        const guide = document.querySelector(showFeaturedGuide ? '.pin-featured-guide' : '.pin-delivery-guide');
+      if (showDeliveryGuide || showFeaturedGuide || showSupportedPayments) {
+        const guide = document.querySelector(showSupportedPayments ? '.pin-supported-payments' : showFeaturedGuide ? '.pin-featured-guide' : '.pin-delivery-guide');
         if (guide) {
           const controls = [...guide.querySelectorAll('button:not(:disabled)')];
           if (!controls.length) { event.preventDefault(); return; }
@@ -322,7 +405,7 @@ export default function PinLetterDialog({
               </button>
             </div>
             {loading && <p role="status" className="pin-letter-note">Opening your secure checkout…</p>}
-            <PaymentMethods />
+            <PaymentMethods onShowSupported={() => setShowSupportedPayments(true)} />
           </form>
         ) : (
           <form onSubmit={preview} noValidate>
@@ -457,7 +540,7 @@ export default function PinLetterDialog({
                   : `Continue • ₱${tier.price}`}
               </button>
             </div>
-            <PaymentMethods />
+            <PaymentMethods onShowSupported={() => setShowSupportedPayments(true)} />
             {loading && (
               <p role="status" className="text-xs text-muted-foreground">
                 Loading your letter preview…
@@ -568,6 +651,74 @@ export default function PinLetterDialog({
             >
               Got it
             </button>
+          </div>
+        </section>
+      </div>
+    )}
+    {showSupportedPayments && (
+      <div
+        className="pin-delivery-guide-overlay"
+        onClick={(event) => {
+          event.stopPropagation();
+          setShowSupportedPayments(false);
+        }}
+        onKeyDown={onKeyDown}
+      >
+        <section
+          className="pin-delivery-guide pin-supported-payments"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pin-supported-payments-title"
+          onClick={event => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="pin-letter-close"
+            aria-label="Close supported banks and e-wallets"
+            onClick={() => setShowSupportedPayments(false)}
+          >
+            ×
+          </button>
+          <h3 id="pin-supported-payments-title">Banks and E-wallets</h3>
+          <p className="pin-delivery-guide-intro">Scan the QRPH code using a supported banking or e-wallet app. No account linking is required.</p>
+          <div className="pin-supported-payments__list">
+            {SUPPORTED_PAYMENT_GROUPS.map(group => (
+              <section className="pin-supported-payments__group" aria-labelledby={`payment-group-${group.label}`} key={group.label}>
+                <h4 id={`payment-group-${group.label}`}>{group.label}</h4>
+                <div className="pin-supported-payments__grid">
+                  {group.methods.map(method => (
+                    <div className="pin-supported-payments__item" key={method.name}>
+                      <span className={`pin-payment-brand ${method.className || ''}${method.name === 'Sterling Bank of Asia' ? ' pin-payment-brand--sterling' : ''}`}><img src={method.logo} alt="" /></span>
+                      <span className={method.name === 'Sterling Bank of Asia' ? 'pin-supported-payments__name pin-supported-payments__name--long' : 'pin-supported-payments__name'}>{method.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+            <button
+              type="button"
+              className="pin-supported-payments__more-toggle"
+              aria-expanded={showMorePaymentNames}
+              aria-controls="pin-additional-payment-methods"
+              onClick={() => setShowMorePaymentNames(value => !value)}
+            >
+              {showMorePaymentNames ? 'Show fewer banks/e-wallets' : 'See more supported banks/e-wallets'}
+            </button>
+            {showMorePaymentNames && (
+              <div id="pin-additional-payment-methods" className="pin-supported-payments__more">
+                {ADDITIONAL_PAYMENT_GROUPS.map(group => (
+                  <section key={group.label}>
+                    <h5>{group.label}</h5>
+                    <ul>
+                      {group.methods.map(method => <li key={method}>{method}</li>)}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="pin-delivery-guide-actions">
+            <button type="button" className="pin-delivery-guide-dismiss" onClick={() => setShowSupportedPayments(false)}>Done</button>
           </div>
         </section>
       </div>
