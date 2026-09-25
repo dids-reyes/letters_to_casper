@@ -84,7 +84,7 @@ const SUPPORTED_PAYMENT_GROUPS = [
   {
     label: 'Banks',
     methods: [
-      {name: 'GoTyme Bank', logo: goTymeLogo},
+      {name: 'GoTyme Bank', logo: goTymeLogo, className: 'pin-payment-brand--gotyme'},
       {name: 'BPI', logo: bpiLogo},
       {name: 'MariBank', logo: mariBankLogo},
       {name: 'Sterling Bank of Asia', logo: sterlingBankLogo},

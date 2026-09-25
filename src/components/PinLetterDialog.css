@@ -672,6 +672,20 @@ html.night-shift .pin-gcash-logo { filter:brightness(1.12); }
   max-height: 34px;
 }
 
+html.night-shift .pin-supported-payments__item .pin-payment-brand--gotyme,
+html.night-shift .pin-supported-payments__item .pin-payment-brand--sterling {
+  box-sizing: border-box;
+  width: min(100%, 126px);
+  padding: 3px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+html.night-shift .pin-supported-payments__item .pin-payment-brand--sterling {
+  width: min(100%, 132px);
+}
+
 .pin-supported-payments__more-toggle {
   display: block;
   width: 100%;
