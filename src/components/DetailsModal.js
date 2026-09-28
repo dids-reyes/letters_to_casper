@@ -35,6 +35,7 @@ import stringSplitter from "../data/splitLetterCharacters";
 import { toast } from "react-toastify";
 import { getOptimizedPhotoUrl } from "../data/cloudinary";
 import { displayDirectLinkAds } from "../data/direct_link";
+import { getGoogleMapsLocationUrl } from "../data/locationMap";
 import usePinTooltipOnboarding from "../hooks/usePinTooltipOnboarding";
 // Translation remains disabled until explicitly re-enabled.
 const TRANSLATION_ENABLED = false;
@@ -1180,12 +1181,8 @@ function DetailsModal({
   }, [showDetailsModal, readMode, showAdLock]);
 
 
-  const letterCity = selectedLetter?.loc?.city || "";
-  const hasLocation = Boolean(letterCity) && letterCity !== "Unknown";
-  const letterLocationMap = hasLocation
-    ? "https://www.google.com/maps/search/?api=1&query=" +
-      encodeURIComponent(letterCity)
-    : null;
+  const letterLocationMap = getGoogleMapsLocationUrl(selectedLetter?.loc);
+  const hasLocation = Boolean(letterLocationMap);
 
   // Location is revealed after the visitor explicitly accepts the ad step.
   const [isRevealed, setIsRevealed] = useState(false);
