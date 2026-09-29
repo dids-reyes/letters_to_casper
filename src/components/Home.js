@@ -82,10 +82,9 @@ const getLetterGridColumns = width => {
   return 3;
 };
 export const PLDT_NOTICE_KEY = "ltc-pldt-network-notice-v1";
+// Hidden by default; set to "true" at build time only when the advisory is needed again.
 export const SHOW_PLDT_NOTICE =
-  typeof process !== "undefined" && process.env?.REACT_APP_SHOW_PLDT_NOTICE === "false"
-    ? false
-    : true;
+  typeof process !== "undefined" && process.env?.REACT_APP_SHOW_PLDT_NOTICE === "true";
 const CHRISTMAS_SNOWFLAKES = Array.from({length: 30}, (_, index) => ({
   left: (index * 37 + 11) % 101,
   size: 2.4 + ((index * 13) % 36) / 10,
