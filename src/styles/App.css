@@ -1760,6 +1760,307 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
   overflow-wrap: anywhere;
 }
 
+.sensitive-message--compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+  color: #756d59;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.letter-card__preview.is-sensitive {
+  display: block;
+}
+
+.sensitive-message--compact svg {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+}
+
+.sensitive-message--covered {
+  display: flex;
+  min-height: 112px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 16px 12px;
+  color: #615b4e;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.sensitive-message--covered::before {
+  position: absolute;
+  inset: 5px 2px;
+  z-index: 0;
+  content: "";
+  background:
+    repeating-linear-gradient(0deg, rgba(126, 117, 95, 0.1) 0 2px, transparent 2px 8px),
+    rgba(240, 233, 215, 0.78);
+  filter: blur(2px);
+}
+
+.sensitive-message--covered > * {
+  position: relative;
+  z-index: 1;
+}
+
+.sensitive-message__icon {
+  width: 20px;
+  height: 20px;
+  color: #706854;
+}
+
+.sensitive-message__label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+}
+
+.sensitive-message--covered .sensitive-message__label {
+  color: #38342b;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.sensitive-message--covered > span {
+  max-width: 360px;
+  color: #77705f;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.sensitive-message--covered button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 6px 10px;
+  border: 1px solid #cfc5ad;
+  border-radius: 8px;
+  background: #fffaf0;
+  color: #514b3e;
+  font: 700 10px/1 "Courier New", Courier, monospace;
+  cursor: pointer;
+}
+
+.sensitive-message--covered button:focus-visible {
+  outline: 2px solid #7e755f;
+  outline-offset: 2px;
+}
+
+.sensitive-message--revealed {
+  position: relative;
+  min-height: inherit;
+}
+
+.sensitive-message__content {
+  min-height: inherit;
+}
+
+.adblock-support-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 16px;
+  background: rgba(28, 30, 34, 0.58);
+}
+
+.adblock-support-dialog {
+  position: relative;
+  width: min(360px, 100%);
+  box-sizing: border-box;
+  padding: 24px 22px 20px;
+  border: 1px solid #ded5c2;
+  border-radius: 12px;
+  background: #fffaf0;
+  box-shadow: 0 6px 20px rgba(37, 32, 23, 0.16);
+  color: #332f27;
+  text-align: center;
+}
+
+.adblock-support-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #766f61;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.adblock-support-heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 2px 24px 7px;
+}
+
+.adblock-support-icon {
+  flex: 0 0 auto;
+  width: 23px;
+  height: 23px;
+  color: #756d5d;
+}
+
+.adblock-support-dialog h2 {
+  margin: 0;
+  color: #302c24;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.adblock-support-dialog p {
+  margin: 0;
+  color: #716a5e;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.adblock-support-actions {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.adblock-support-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 39px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.adblock-support-cancel {
+  border: 1px solid #d8cfbd;
+  background: transparent;
+  color: #655f54;
+}
+
+.adblock-support-retry {
+  border: 1px solid #3772ff;
+  background: #3772ff;
+  color: #fff;
+}
+
+.adblock-support-actions button:focus-visible,
+.adblock-support-close:focus-visible {
+  outline: 2px solid #3772ff;
+  outline-offset: 2px;
+}
+
+html.night-shift .adblock-support-overlay {
+  background: rgba(0, 0, 0, 0.76);
+}
+
+html.night-shift .adblock-support-dialog {
+  border-color: #414238;
+  background: #20221b;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.34);
+  color: #eee8d8;
+}
+
+html.night-shift .adblock-support-dialog h2 {
+  color: #f1ecdf;
+}
+
+html.night-shift .adblock-support-dialog p,
+html.night-shift .adblock-support-close,
+html.night-shift .adblock-support-icon {
+  color: #aaa597;
+}
+
+html.night-shift .adblock-support-cancel {
+  border-color: #4a4b40;
+  color: #d3cec0;
+}
+
+@media (max-width: 380px) {
+  .adblock-support-dialog {
+    padding: 21px 16px 16px;
+  }
+
+  .adblock-support-dialog h2 {
+    font-size: 15px;
+  }
+
+  .adblock-support-actions {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+
+  .adblock-support-actions button {
+    padding-inline: 7px;
+    font-size: 9px;
+  }
+}
+
+html.night-shift .sensitive-message--compact {
+  color: #aaa38d;
+}
+
+html.night-shift .sensitive-message--covered {
+  color: #c8c1ae;
+}
+
+html.night-shift .sensitive-message--covered::before {
+  background:
+    repeating-linear-gradient(0deg, rgba(230, 223, 199, 0.07) 0 2px, transparent 2px 8px),
+    rgba(31, 31, 24, 0.88);
+}
+
+html.night-shift .sensitive-message__icon,
+html.night-shift .sensitive-message--covered > span {
+  color: #aaa38d;
+}
+
+html.night-shift .sensitive-message--covered .sensitive-message__label {
+  color: #eee8d6;
+}
+
+html.night-shift .sensitive-message--covered button {
+  border-color: #4a483b;
+  background: #25261e;
+}
+
+@media (max-width: 380px) {
+  .sensitive-message--covered {
+    min-height: 96px;
+    gap: 4px;
+    padding: 12px 8px;
+  }
+
+  .sensitive-message--covered > span {
+    font-size: 9px;
+  }
+}
+
 .letter-card--featured {
   align-items: center;
   justify-content: center;

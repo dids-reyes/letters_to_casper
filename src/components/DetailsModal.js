@@ -37,6 +37,7 @@ import { getOptimizedPhotoUrl } from "../data/cloudinary";
 import { displayDirectLinkAds } from "../data/direct_link";
 import { getGoogleMapsLocationUrl } from "../data/locationMap";
 import usePinTooltipOnboarding from "../hooks/usePinTooltipOnboarding";
+import SensitiveMessage from "./SensitiveMessage";
 // Translation remains disabled until explicitly re-enabled.
 const TRANSLATION_ENABLED = false;
 
@@ -535,6 +536,7 @@ function DetailsModal({
 
   const [showAttachments, setShowAttachments] = useState(false);
   const [completedLetterKey, setCompletedLetterKey] = useState("");
+  const [sensitiveMessageRevealed, setSensitiveMessageRevealed] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [translatedMessage, setTranslatedMessage] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
@@ -543,6 +545,9 @@ function DetailsModal({
     spotifyTrackId || youtubeVideoId || selectedLetter?.photo?.url
   );
   const messageBodyRef = useRef(null);
+  useEffect(() => {
+    setSensitiveMessageRevealed(false);
+  }, [selectedLetter?._id, showDetailsModal]);
   useEffect(() => {
     const body = messageBodyRef.current;
     if (!body || !showDetailsModal || !opened) return undefined;
@@ -1205,6 +1210,7 @@ function DetailsModal({
       selectedLetter.pin_expires_at &&
       new Date(selectedLetter.pin_expires_at).getTime() > Date.now()
     ) &&
+    (!selectedLetter.sensitiveContent || sensitiveMessageRevealed) &&
     completedLetterKey === getLetterId(selectedLetter)
   );
   const {
@@ -1610,7 +1616,9 @@ function DetailsModal({
         </div>
 
         <div className={`letter-paper__body letter-text${lHasAttachment ? " letter-paper__body--scrollable" : ""}`}>
-          <span>{lMessage}</span>
+          <SensitiveMessage sensitive={letter.sensitiveContent === true} interactive={false}>
+            <span>{lMessage}</span>
+          </SensitiveMessage>
         </div>
 
         {lSpotifyTrackId && (
@@ -1778,7 +1786,9 @@ function DetailsModal({
         </div>
 
         <div className={`letter-paper__body letter-text${lHasAttachment ? " letter-paper__body--scrollable" : ""}`}>
-          <span>{lMessage}</span>
+          <SensitiveMessage sensitive={letter.sensitiveContent === true} interactive={false}>
+            <span>{lMessage}</span>
+          </SensitiveMessage>
         </div>
 
         {lSpotifyTrackId && (
@@ -1964,7 +1974,7 @@ function DetailsModal({
       </div>
       <Tooltip id="timezone_tooltip" />
 
-      {TRANSLATION_ENABLED && detectedLanguage && (
+      {TRANSLATION_ENABLED && detectedLanguage && (!selectedLetter.sensitiveContent || sensitiveMessageRevealed) && (
         <div className="letter-paper__translation-control">
           <button
             type="button"
@@ -1986,25 +1996,31 @@ function DetailsModal({
       )}
 
       <div ref={messageBodyRef} className={`letter-paper__body letter-text${hasLetterAttachment ? " letter-paper__body--scrollable" : ""}`} tabIndex={0} role="region" aria-label="Letter message">
-        {showTranslation ? (
-          <span>{translatedMessage}</span>
-        ) : readMode ? (
-          <span>{message}</span>
-        ) : (
-          <Typewriter
-            options={{ delay: 40, loop: false, stringSplitter }}
-            onInit={(typewriter) => {
-              typewriter
-                .typeString(message)
-                .pauseFor(500)
-                .callFunction(() => {
-                  setShowAttachments(true);
-                  setCompletedLetterKey(getLetterId(selectedLetter));
-                })
-                .start();
-            }}
-          />
-        )}
+        <SensitiveMessage
+          sensitive={selectedLetter.sensitiveContent === true}
+          revealed={sensitiveMessageRevealed}
+          onReveal={() => setSensitiveMessageRevealed(true)}
+        >
+          {showTranslation ? (
+            <span>{translatedMessage}</span>
+          ) : readMode || completedLetterKey === getLetterId(selectedLetter) ? (
+            <span>{message}</span>
+          ) : (
+            <Typewriter
+              options={{ delay: 40, loop: false, stringSplitter }}
+              onInit={(typewriter) => {
+                typewriter
+                  .typeString(message)
+                  .pauseFor(500)
+                  .callFunction(() => {
+                    setShowAttachments(true);
+                    setCompletedLetterKey(getLetterId(selectedLetter));
+                  })
+                  .start();
+              }}
+            />
+          )}
+        </SensitiveMessage>
       </div>
 
       {showAttachments && spotifyTrackId && (

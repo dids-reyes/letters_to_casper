@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import {AiOutlinePushpin} from "react-icons/ai";
 import "./PinLetterDialog.css";
 import { useNavigate } from "react-router-dom";
+import SensitiveMessage from "./SensitiveMessage";
 
 const clip = (str, max) => {
   if (!str) return "";
@@ -120,7 +121,11 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter, maxWarmthScore 
         <span className="letter-card__label">To</span>
         <span className="letter-card__to-name">{clip(letter.to, 24)}</span>
       </div>
-      <p className="letter-card__preview">{previewMessage(letter.message)}</p>
+      <div className={`letter-card__preview${letter.sensitiveContent === true ? " is-sensitive" : ""}`}>
+        <SensitiveMessage sensitive={letter.sensitiveContent === true} compact>
+          {previewMessage(letter.message)}
+        </SensitiveMessage>
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import Admin from './components/Admin';
 import AdminPortal from './components/AdminPortal';
 import SeekHelp from './components/SeekHelp';
 import StatusPage from './components/StatusPage';
+import MentalHealthTest from './components/MentalHealthTest';
 import {AuthProvider} from './AuthContext';
 import {CrisisSupportProvider} from './context/CrisisSupportContext';
 import CrisisSupportDialog from './components/CrisisSupportDialog';
@@ -38,6 +39,7 @@ function App() {
             <Route path="/admin_portal" element={<AdminPortal />} />
             <Route path="/seek_help" element={<SeekHelp />} />
             <Route path="/status" element={<StatusPage />} />
+            <Route path="/mental_health_test" element={<MentalHealthTest />} />
           </Routes>
         </CrisisSupportProvider>
       </AuthProvider>

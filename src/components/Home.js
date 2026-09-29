@@ -54,8 +54,19 @@ import { useFeedVirtualizer } from "../hooks/useFeedVirtualizer";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
+import {useDetectAdBlock} from "adblock-detect-react";
+import AdBlockSupportDialog from "./AdBlockSupportDialog";
+import {
+  clearLeaveLetterIntent,
+  getSessionStorage,
+  hasFreshLeaveLetterIntent,
+  saveLeaveLetterIntent,
+} from "../data/adBlockGate";
 
 const SHOW_SKY_NAV = process.env.REACT_APP_SHOW_SKY_NAV === "true";
+const REQUIRE_ADBLOCK_OFF_FOR_LETTER =
+  process.env.REACT_APP_REQUIRE_ADBLOCK_OFF_FOR_LETTER !== "false";
+const ADBLOCK_SETTLE_DELAY = 1400;
 // Disabled by default; set to "true" at build time to restore both feed ad slots.
 export const SHOW_MAIN_FEED_ADS =
   process.env.REACT_APP_SHOW_MAIN_FEED_ADS === "true";
@@ -71,10 +82,9 @@ const getLetterGridColumns = width => {
   return 3;
 };
 export const PLDT_NOTICE_KEY = "ltc-pldt-network-notice-v1";
+// Hidden by default; set to "true" at build time only when the advisory is needed again.
 export const SHOW_PLDT_NOTICE =
-  typeof process !== "undefined" && process.env?.REACT_APP_SHOW_PLDT_NOTICE === "false"
-    ? false
-    : true;
+  typeof process !== "undefined" && process.env?.REACT_APP_SHOW_PLDT_NOTICE === "true";
 const CHRISTMAS_SNOWFLAKES = Array.from({length: 30}, (_, index) => ({
   left: (index * 37 + 11) % 101,
   size: 2.4 + ((index * 13) % 36) / 10,
@@ -99,12 +109,17 @@ export const READ_MODE_ENABLED = true;
 function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } = {}) {
   const navigate = useNavigate();
   const { messageId } = useParams();
+  const adBlockDetected = useDetectAdBlock();
   const [searchTerm, setSearchTerm] = useState("");
   const [letters, setLetters] = useState({
     messages: [],
     counts: { approved: 0, unapproved: 0 },
   });
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAdBlockSupport, setShowAdBlockSupport] = useState(false);
+  const [adBlockCheckReady, setAdBlockCheckReady] = useState(false);
+  const leaveLetterButtonRef = useRef(null);
+  const resumedLeaveIntentRef = useRef(false);
   const [showBugReport, setShowBugReport] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [feedPage, setFeedPage] = useState(0);
@@ -916,9 +931,51 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       theme: "light",
     });
 
-  const toggleAddModal = () => {
-    setShowAddModal(!showAddModal);
-  };
+  const toggleAddModal = () => setShowAddModal(current => !current);
+
+  useEffect(() => {
+    if (!REQUIRE_ADBLOCK_OFF_FOR_LETTER || adBlockDetected) {
+      setAdBlockCheckReady(true);
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setAdBlockCheckReady(true), ADBLOCK_SETTLE_DELAY);
+    return () => window.clearTimeout(timer);
+  }, [adBlockDetected]);
+
+  const closeAdBlockSupport = useCallback(() => {
+    clearLeaveLetterIntent(getSessionStorage());
+    setShowAdBlockSupport(false);
+    window.setTimeout(() => leaveLetterButtonRef.current?.focus(), 0);
+  }, []);
+
+  const retryAfterDisablingAdBlock = useCallback(() => {
+    saveLeaveLetterIntent(getSessionStorage());
+    setShowAdBlockSupport(false);
+    window.setTimeout(() => window.location.reload(), 0);
+  }, []);
+
+  const handleLeaveLetterClick = useCallback(() => {
+    if (!REQUIRE_ADBLOCK_OFF_FOR_LETTER || !adBlockDetected) {
+      clearLeaveLetterIntent(getSessionStorage());
+      setShowAddModal(true);
+      return;
+    }
+    saveLeaveLetterIntent(getSessionStorage());
+    setShowAdBlockSupport(true);
+  }, [adBlockDetected]);
+
+  useEffect(() => {
+    if (!adBlockCheckReady || resumedLeaveIntentRef.current) return;
+    resumedLeaveIntentRef.current = true;
+    const sessionStorage = getSessionStorage();
+    if (!hasFreshLeaveLetterIntent(sessionStorage)) return;
+    if (REQUIRE_ADBLOCK_OFF_FOR_LETTER && adBlockDetected) {
+      setShowAdBlockSupport(true);
+      return;
+    }
+    clearLeaveLetterIntent(sessionStorage);
+    setShowAddModal(true);
+  }, [adBlockCheckReady, adBlockDetected]);
 
   const [searchedLetters, setSearchedLetters] = useState({
     messages: [],
@@ -1134,7 +1191,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           isCompact={isHeaderCompact}
         />
         <div className="add-button">
-        <button className="btn btn-primary big-button" onClick={toggleAddModal}>
+        <button ref={leaveLetterButtonRef} className="btn btn-primary big-button" onClick={handleLeaveLetterClick}>
           <AiFillMessage className="button-icon" size="20px" />
           <span className="leave-letter-label">Leave a Letter</span>
         </button>
@@ -1535,6 +1592,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         theme="light"
       />
       <ToastContainer />
+      <AdBlockSupportDialog
+        open={showAdBlockSupport}
+        onClose={closeAdBlockSupport}
+        onRetry={retryAfterDisablingAdBlock}
+      />
       <AddModal
         showAddModal={showAddModal}
         toggleAddModal={toggleAddModal}

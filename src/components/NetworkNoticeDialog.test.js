@@ -259,8 +259,8 @@ describe("Sequential Modal Flow in Home", () => {
     expect(screen.queryByText("Network Notice")).not.toBeInTheDocument();
   });
 
-  test("SHOW_PLDT_NOTICE is exported as true by default so notice is active until toggled off", () => {
-    expect(SHOW_PLDT_NOTICE).toBe(true);
+  test("SHOW_PLDT_NOTICE is false by default so the notice stays hidden", () => {
+    expect(SHOW_PLDT_NOTICE).toBe(false);
   });
 
   test("Feed page has 5 pages and does not include the network advisory", async () => {

@@ -57,15 +57,15 @@ function AboutUs() {
           <span className="about-section-number">01 / The inspiration</span>
           <h2>Why Casper?</h2>
           <p>
-            The inspiration behind our platform comes from Casper, the friendly
-            ghost. Created by Seymour Reit and Joe Oriolo, Casper embodies
-            gentleness and compassion, an ideal symbol for connection and
-            understanding.
+            On Letters to Casper, Casper is the name we give to the person a
+            letter was meant for. It may be someone distant, someone from the
+            past, or someone who never had the chance to hear what needed to be
+            said.
           </p>
           <p>
-            Originally imagined for a children's storybook, Casper's journey
-            moved beyond the page. Here, that spirit lives on as a quiet
-            companion for thoughts that might otherwise remain unheard.
+            Casper is not one person or character here. It is a quiet place in
+            a letter for an intended recipient, and a way for honest words to
+            exist even when they cannot be delivered in person.
           </p>
         </div>
         <aside className="about-definition">
@@ -82,9 +82,9 @@ function AboutUs() {
         <h2>Writing can be its own kind of healing.</h2>
         <div className="about-purpose__columns">
           <p>
-            Just as Casper moves between worlds, our users move between past and
-            present, seeking closure, reconciliation, gratitude, or simply a way
-            to finally put a feeling into words.
+            Our users write across distance, memory, and time, seeking closure,
+            reconciliation, gratitude, or simply a way to finally put a feeling
+            into words.
           </p>
           <p>
             We believe in the transformative power of expression. By creating a
@@ -101,6 +101,11 @@ function AboutUs() {
         <p>
           Whether you are seeking closure, expressing gratitude, or reaching
           across time and distance, your letter has a place here.
+        </p>
+        <p>
+          Letters to Casper is an independently created platform. It is not
+          affiliated with, endorsed by, or sponsored by any entertainment
+          company, publisher, studio, or third-party character property.
         </p>
         <Link to="/">Read and write letters</Link>
       </section>
