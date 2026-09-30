@@ -154,6 +154,10 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     expect(ageElement).toBeInTheDocument();
     expect(ageElement).toHaveTextContent(/1d ago/i);
 
+    const readsElement = metaContainer.querySelector(".letter-paper__reads");
+    expect(readsElement).toBeInTheDocument();
+    expect(readsElement).toHaveTextContent(/42 reads/i);
+
     // The separator element between pin button and age
     const separators = metaContainer.querySelectorAll(".letter-meta-sep");
     expect(separators.length).toBeGreaterThanOrEqual(2); // pin · age · reads
@@ -209,9 +213,14 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     const pinButton = screen.getByRole("button", { name: /pin this letter/i });
     expect(pinButton).toBeInTheDocument();
     expect(pinButton).toHaveClass("letter-paper__pin");
+    expect(pinButton).not.toHaveAttribute("data-tooltip-id");
+    expect(pinButton).not.toHaveAttribute("data-tooltip-content");
 
     // Click pin button on unpinned letter
     fireEvent.click(pinButton);
+    if (screen.queryByText(/Email or deliver/i)) {
+      fireEvent.click(screen.getByText(/Email or deliver/i));
+    }
 
     // Should open PinLetterDialog with URL field automatically hidden
     expect(screen.getByRole("heading", { name: /Make Sure Your Words Are Felt/i })).toBeInTheDocument();
@@ -241,6 +250,9 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     expect(pinButton).toBeInTheDocument();
 
     fireEvent.click(pinButton);
+    if (screen.queryByText(/Email or deliver/i)) {
+      fireEvent.click(screen.getByText(/Email or deliver/i));
+    }
     expect(screen.getByRole("heading", { name: /Make Sure Your Words Are Felt/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/Which letter would you like to upgrade\?/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Continue • ₱9/i })).toBeInTheDocument();
@@ -262,6 +274,9 @@ describe("DetailsModal pinned letter indicator and separator", () => {
 
     const pinButton = screen.getByRole("button", { name: /pin this letter/i });
     fireEvent.click(pinButton);
+    if (screen.queryByText(/Email or deliver/i)) {
+      fireEvent.click(screen.getByText(/Email or deliver/i));
+    }
 
     const dialogHeading = screen.getByRole("heading", { name: /Make Sure Your Words Are Felt/i });
     expect(dialogHeading).toBeInTheDocument();

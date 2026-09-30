@@ -316,7 +316,7 @@ describe('Read Mode in DetailsModal', () => {
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
-  test('in normal mode (readMode=false), clicking background closes modal', () => {
+  test('in normal mode (readMode=false), clicking background shows the close hint without closing', () => {
     const handleClose = jest.fn();
     const { container } = render(
       <MemoryRouter>
@@ -325,6 +325,7 @@ describe('Read Mode in DetailsModal', () => {
           toggleDetailsModal={handleClose}
           selectedLetter={sampleLetters[0]}
           readMode={false}
+          initialOpened={true}
           letters={sampleLetters}
         />
       </MemoryRouter>
@@ -332,8 +333,8 @@ describe('Read Mode in DetailsModal', () => {
 
     const overlay = container.querySelector('.letter-modal-overlay');
     fireEvent.click(overlay);
-    finishFold(overlay);
-    expect(handleClose).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('status', { name: /Close letter hint/i })).toBeInTheDocument();
+    expect(handleClose).not.toHaveBeenCalled();
   });
 
   test('in readMode, first-timer tip is shown and dismisses on click', () => {
@@ -408,6 +409,28 @@ describe('Read Mode in DetailsModal', () => {
     expect(document.body.style.overflow).toBe('hidden');
     unmount();
     expect(document.body.style.overflow).toBe('');
+  });
+
+  test('in normal mode, document scrolling is locked while the letter modal is open', () => {
+    const {unmount} = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={sampleLetters[0]}
+          readMode={false}
+          initialOpened={true}
+          letters={sampleLetters}
+        />
+      </MemoryRouter>
+    );
+
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(document.body.style.touchAction).not.toBe('none');
+    unmount();
+    expect(document.body.style.overflow).toBe('');
+    expect(document.documentElement.style.overflow).toBe('');
   });
 
   test('pressing ArrowDown navigates to next letter in readMode', () => {
@@ -542,7 +565,7 @@ describe('Read Mode in DetailsModal', () => {
     expect(mockSetSelectedLetter).toHaveBeenCalledWith(sampleLetters[1]);
   });
 
-  test('in normal mode (readMode=false), envelope intro is shown and body overflow is untouched', () => {
+  test('in normal mode (readMode=false), envelope intro is shown while background overflow is locked', () => {
     const { container } = render(
       <MemoryRouter>
         <DetailsModal
@@ -557,7 +580,7 @@ describe('Read Mode in DetailsModal', () => {
 
     expect(container.querySelector('.letter-envelope')).not.toBeNull();
     expect(container.querySelector('.read-mode-tip')).toBeNull();
-    expect(document.body.style.overflow).toBe('');
+    expect(document.body.style.overflow).toBe('hidden');
   });
 
   test('triggers Ad lock intermission after viewing 20 letters and enables continue after countdown', () => {
@@ -1116,10 +1139,10 @@ describe('Read Mode FAB in Home', () => {
       position: 'top-center',
     }));
     expect(screen.queryByRole('dialog', { name: /Read Mode/i })).toBeNull();
-    expect(localStorage.getItem('readMode')).toBeNull();
+    expect(localStorage.getItem('readMode')).toBe('false');
   });
 
-  test('Read Mode is never persisted in storage and always defaults to OFF on visit/reload', () => {
+  test('Read Mode persists in storage and restores on a later visit or reload', () => {
     localStorage.setItem('readMode', 'true');
 
     const { unmount } = render(
@@ -1129,23 +1152,27 @@ describe('Read Mode FAB in Home', () => {
     );
 
     const fabButton = screen.getByRole('button', { name: /Toggle Read Mode/i });
+    expect(fabButton).toHaveAttribute('aria-pressed', 'true');
+    expect(localStorage.getItem('readMode')).toBe('true');
+
+    fireEvent.click(fabButton);
     expect(fabButton).toHaveAttribute('aria-pressed', 'false');
-    expect(localStorage.getItem('readMode')).toBeNull();
+    expect(localStorage.getItem('readMode')).toBe('false');
 
     fireEvent.click(fabButton);
     expect(fabButton).toHaveAttribute('aria-pressed', 'true');
-    expect(localStorage.getItem('readMode')).toBeNull();
+    expect(localStorage.getItem('readMode')).toBe('true');
 
     unmount();
 
-    // Fresh visit / reload must default to OFF
+    // A fresh visit / reload restores the saved preference.
     render(
       <MemoryRouter>
         <Home readModeEnabled={true} />
       </MemoryRouter>
     );
     const reloadedFab = screen.getByRole('button', { name: /Toggle Read Mode/i });
-    expect(reloadedFab).toHaveAttribute('aria-pressed', 'false');
+    expect(reloadedFab).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('introductory tooltip for Read Mode is completely removed so visitors can explore the site on their own', () => {
@@ -1163,10 +1190,11 @@ describe('Read Mode FAB in Home', () => {
   });
 
   describe('FAB Stack Ordering, Visibility, and Read Mode Onboarding Tooltip', () => {
-    beforeEach(() => {
-      localStorage.removeItem('hasSeenReadModeTooltip');
-      localStorage.removeItem('readMode');
-    });
+  beforeEach(() => {
+    localStorage.removeItem('hasSeenReadModeTooltip');
+    localStorage.removeItem('readMode');
+    localStorage.setItem('ltc-ui-update-announcement-v1', 'seen');
+  });
 
     test('Speed Dial FAB menu renders, expands sub-actions, auto-collapses after 15s, and disables Scroll to Top at scrollY 0', () => {
       jest.useFakeTimers();
@@ -1263,13 +1291,16 @@ describe('Read Mode FAB in Home', () => {
       // Still not shown while letter is open
       expect(screen.queryByRole('status', { name: /Read Mode introduction/i })).toBeNull();
 
-      // Switch to fake timers to test the 3-second auto-dismiss
-      jest.useFakeTimers();
-
-      // 2. Close the letter by clicking the overlay backdrop
+      // 2. Close the letter from its explicit close control. Normal mode keeps
+      // backdrop taps from accidentally closing a letter.
       const overlay = container.querySelector('.letter-modal-overlay');
+      const closeButton = await screen.findByRole('button', {name: /Close letter/i}, {timeout: 3000});
+
+      // Switch to fake timers only after the real envelope-opening timer has
+      // completed, then exercise the onboarding tooltip's own timers.
+      jest.useFakeTimers();
       act(() => {
-        fireEvent.click(overlay);
+        fireEvent.click(closeButton);
       });
       finishFold(overlay);
 
@@ -1329,7 +1360,8 @@ describe('Read Mode FAB in Home', () => {
       });
 
       const overlay = container.querySelector('.letter-modal-overlay');
-      fireEvent.click(overlay);
+      const closeButton = await screen.findByRole('button', {name: /Close letter/i}, {timeout: 3000});
+      fireEvent.click(closeButton);
       finishFold(overlay);
 
       // Tooltip appears for user
@@ -1348,13 +1380,12 @@ describe('Read Mode FAB in Home', () => {
       const readModeBtn = container.querySelector('.read-mode-fab');
       expect(readModeBtn).toHaveClass('is-highlighted');
 
-      // Clicking the highlighted Read Mode button dismisses the highlight and opens modal
+      // Clicking the highlighted Read Mode button dismisses the highlight and toggles Read Mode
       fireEvent.click(readModeBtn);
       expect(readModeBtn).not.toHaveClass('is-highlighted');
-      expect(screen.getByRole('dialog', { name: /Read Mode/i })).toBeInTheDocument();
+      expect(toast.info).toHaveBeenCalledWith('Read Mode On', expect.any(Object));
 
-      // Close modal and verify regular speed dial click does NOT highlight when tooltip wasn't active
-      fireEvent.click(screen.getByRole('button', { name: /Done/i }));
+      // Verify regular speed dial click does NOT highlight when tooltip wasn't active
       fireEvent.click(mainFab);
       expect(readModeBtn).not.toHaveClass('is-highlighted');
 
@@ -1791,7 +1822,7 @@ describe('Read Mode FAB in Home', () => {
 
 
 describe('Letter folding dismissal', () => {
-  test.each(['corner', 'Escape'])('%s waits for the exit and dismisses only once', trigger => {
+  test('corner waits for the exit and dismisses only once in readMode', () => {
     const close = jest.fn();
     const select = jest.fn();
     const {container} = render(
@@ -1799,8 +1830,7 @@ describe('Letter folding dismissal', () => {
         selectedLetter={sampleLetters[0]} readMode={true} initialOpened={true} letters={sampleLetters}
         setSelectedLetter={select} /></MemoryRouter>
     );
-    if (trigger === 'corner') fireEvent.click(screen.getByLabelText('Close letter'));
-    else fireEvent.keyDown(document, {key: 'Escape'});
+    fireEvent.click(screen.getByLabelText('Close letter'));
     const overlay = container.querySelector('.letter-modal-overlay');
     expect(overlay).toHaveClass('is-folding-closed');
     expect(close).not.toHaveBeenCalled();
@@ -1810,6 +1840,32 @@ describe('Letter folding dismissal', () => {
     expect(container.querySelector('.letter-envelope--closing .letter-envelope__seal')).toBeNull();
     expect(close).not.toHaveBeenCalled();
     finishFold(overlay);
+    finishFold(overlay);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  test('Escape in readMode shows fold hint tooltip and does not close modal', () => {
+    const close = jest.fn();
+    const {container} = render(
+      <MemoryRouter><DetailsModal showDetailsModal={true} toggleDetailsModal={close}
+        selectedLetter={sampleLetters[0]} readMode={true} initialOpened={true} letters={sampleLetters} /></MemoryRouter>
+    );
+    fireEvent.keyDown(document, {key: 'Escape'});
+    const overlay = container.querySelector('.letter-modal-overlay');
+    expect(overlay).not.toHaveClass('is-folding-closed');
+    expect(close).not.toHaveBeenCalled();
+    expect(screen.getByRole('status', { name: /Close letter hint/i })).toBeInTheDocument();
+  });
+
+  test('Escape in normal mode (readMode=false) waits for the exit and dismisses', () => {
+    const close = jest.fn();
+    const {container} = render(
+      <MemoryRouter><DetailsModal showDetailsModal={true} toggleDetailsModal={close}
+        selectedLetter={sampleLetters[0]} readMode={false} initialOpened={true} letters={sampleLetters} /></MemoryRouter>
+    );
+    fireEvent.keyDown(document, {key: 'Escape'});
+    const overlay = container.querySelector('.letter-modal-overlay');
+    expect(overlay).toHaveClass('is-folding-closed');
     finishFold(overlay);
     expect(close).toHaveBeenCalledTimes(1);
   });
@@ -1921,7 +1977,7 @@ describe('Read Mode background tap fold tooltip', () => {
     expect(overlay).toHaveClass('is-folding-closed');
   });
 
-  test('in normal mode (readMode=false), tapping background closes modal directly without showing fold tooltip', () => {
+  test('in normal mode (readMode=false), tapping the background shows the close hint and keeps the letter open', () => {
     const close = jest.fn();
     const { container } = render(
       <MemoryRouter>
@@ -1930,6 +1986,7 @@ describe('Read Mode background tap fold tooltip', () => {
           toggleDetailsModal={close}
           selectedLetter={sampleLetters[0]}
           readMode={false}
+          initialOpened={true}
           letters={sampleLetters}
         />
       </MemoryRouter>
@@ -1938,8 +1995,9 @@ describe('Read Mode background tap fold tooltip', () => {
     const overlay = container.querySelector('.letter-modal-overlay');
     fireEvent.click(overlay);
 
-    expect(screen.queryByRole('status', { name: /Close letter hint/i })).toBeNull();
-    expect(overlay).toHaveClass('is-folding-closed');
+    expect(screen.getByRole('status', { name: /Close letter hint/i })).toBeInTheDocument();
+    expect(overlay).not.toHaveClass('is-folding-closed');
+    expect(close).not.toHaveBeenCalled();
   });
 
   describe('Background pre-rendering of next unread letter in Read Mode', () => {

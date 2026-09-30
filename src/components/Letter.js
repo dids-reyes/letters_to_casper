@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {AiOutlinePushpin} from "react-icons/ai";
+import {BsReply} from "react-icons/bs";
 import "./PinLetterDialog.css";
 import { useNavigate } from "react-router-dom";
 import SensitiveMessage from "./SensitiveMessage";
@@ -87,14 +88,18 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter, maxWarmthScore 
     : sadCount > loveCount
       ? "sad"
       : "neutral";
+  const displayFrom = letter.from || letter.alias || "Anonymous";
+  const displayTo = letter.to || letter.parent_letter?.to || letter.parentLetter?.to || "a letter";
 
   const handleClick = () => {
+    const isReply = Boolean(letter.is_reply || letter.type === "reply" || letter.parent_letter_id || letter.parentLetterId);
     setSelectedLetter(letter);
     toggleDetailsModal();
-    navigate(`/letters/${letter._id}`);
+    navigate(`/letters/${letter._id}${isReply ? "?reply_context=1" : ""}`);
   };
 
-  if (!letter.approve) {
+  const isReplyResult = Boolean(letter.is_reply || letter.type === "reply" || letter.parent_letter_id || letter.parentLetterId);
+  if (!letter.approve && !isReplyResult) {
     return null; // If not approved, don't render the letter
   }
 
@@ -103,15 +108,16 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter, maxWarmthScore 
       className={`letter-card letter-card--warmth-${warmthLevel} letter-card--mood-${reactionMood}`}
       style={{"--letter-warmth": warmth.toFixed(3)}}
       data-warmth={warmthLabel}
-      aria-label={`Letter from ${letter.from} to ${letter.to}. ${warmthLabel}.`}
+      aria-label={`${isReplyResult ? "Reply" : "Letter"} from ${displayFrom} to ${displayTo}. ${warmthLabel}.`}
       onClick={handleClick}
     >
       <div className="letter-card__top">
         <div className="letter-card__from">
           <span className="letter-card__label">From</span>
-          <span className="letter-card__name">{clip(letter.from, 22)}</span>
+          <span className="letter-card__name">{clip(displayFrom, 22)}</span>
         </div>
         <span className="letter-card__time">
+          {isReplyResult && <span className="letter-reply-indicator" title="Reply to a letter"><BsReply aria-hidden="true" /></span>}
           {isPinned &&
             <span className="letter-pin-indicator" role="img" aria-label="Pinned memory" title={`Pinned until ${new Date(letter.pin_expires_at).toLocaleString()}`}><AiOutlinePushpin aria-hidden="true" /></span>}
           <span>{timeAgo(letter.timestamp)}</span>
@@ -119,7 +125,7 @@ function Letter({ letter, toggleDetailsModal, setSelectedLetter, maxWarmthScore 
       </div>
       <div className="letter-card__to">
         <span className="letter-card__label">To</span>
-        <span className="letter-card__to-name">{clip(letter.to, 24)}</span>
+        <span className="letter-card__to-name">{clip(displayTo, 24)}</span>
       </div>
       <div className={`letter-card__preview${letter.sensitiveContent === true ? " is-sensitive" : ""}`}>
         <SensitiveMessage sensitive={letter.sensitiveContent === true} compact>

@@ -157,7 +157,7 @@ describe("Sequential Modal Flow in Home", () => {
     );
   });
 
-  test("first-time visitor sees Dialog 1 ('New Chapter'), then clicking 'Move on' triggers Dialog 2 ('Network Notice')", async () => {
+  test("first-time visitor sees the current announcement without the retired network notice", async () => {
     await act(async () => {
       render(
         <MemoryRouter>
@@ -192,29 +192,13 @@ describe("Sequential Modal Flow in Home", () => {
     ).not.toBeInTheDocument();
     expect(localStorage.getItem(UI_ANNOUNCEMENT_KEY)).toBe("seen");
 
-    // Dialog 2 now appears immediately
-    expect(screen.getByText("Network Advisory")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Network Notice" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /If you are currently using PLDT or Smart Communications and experiencing issues loading the mailbox/i
-      )
-    ).toBeInTheDocument();
-
-    // User dismisses Dialog 2
-    const understoodBtn = screen.getByRole("button", { name: "Understood" });
-    await act(async () => {
-      fireEvent.click(understoodBtn);
-    });
-
-    // Dialog 2 is dismissed and saved to localStorage
+    // The retired network notice remains disabled.
+    expect(screen.queryByText("Network Advisory")).not.toBeInTheDocument();
     expect(screen.queryByText("Network Notice")).not.toBeInTheDocument();
-    expect(localStorage.getItem(PLDT_NOTICE_KEY)).toBe("seen");
+    expect(localStorage.getItem(PLDT_NOTICE_KEY)).toBeNull();
   });
 
-  test("user who already saw Dialog 1 sees Dialog 2 directly on page arrival", async () => {
+  test("user who already saw the announcement does not see the retired network notice", async () => {
     localStorage.setItem(UI_ANNOUNCEMENT_KEY, "seen");
 
     await act(async () => {
@@ -228,18 +212,9 @@ describe("Sequential Modal Flow in Home", () => {
     // Dialog 1 does not show
     expect(screen.queryByText("A new chapter")).not.toBeInTheDocument();
 
-    // Dialog 2 shows immediately
-    expect(screen.getByText("Network Advisory")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Network Notice" })
-    ).toBeInTheDocument();
-
-    // Dismiss Dialog 2
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Understood" }));
-    });
+    expect(screen.queryByText("Network Advisory")).not.toBeInTheDocument();
     expect(screen.queryByText("Network Notice")).not.toBeInTheDocument();
-    expect(localStorage.getItem(PLDT_NOTICE_KEY)).toBe("seen");
+    expect(localStorage.getItem(PLDT_NOTICE_KEY)).toBeNull();
   });
 
   test("user who has already seen both dialogs sees neither on page refresh", async () => {
