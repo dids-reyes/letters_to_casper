@@ -24,6 +24,80 @@ test('renders AddModal without crashing', () => {
   expect(screen.getByText(/Write your letter/i)).toBeInTheDocument();
 });
 
+test('keeps the reply submit button label as Reply while submitting', async () => {
+  let finishSubmission;
+  const handleAddLetter = jest.fn(() => new Promise(resolve => { finishSubmission = resolve; }));
+  render(
+    <AddModal
+      showAddModal={true}
+      toggleAddModal={jest.fn()}
+      newLetter={{from: 'Me', to: 'Casper', message: 'This is my reply message.', link: ''}}
+      handleAddLetter={handleAddLetter}
+      setNewLetter={jest.fn()}
+      variant="reply"
+      parentLetter={{_id: 'parent-1', from: 'Casper'}}
+    />
+  );
+
+  const replyButton = screen.getByRole('button', {name: /^Reply$/i});
+  fireEvent.click(replyButton);
+  await waitFor(() => expect(handleAddLetter).toHaveBeenCalled());
+  expect(replyButton).toHaveTextContent(/^Reply$/);
+
+  await act(async () => { finishSubmission(false); });
+});
+
+test.each([
+  ['leave a letter', undefined],
+  ['write your reply', 'reply'],
+])('keeps the pasted service icon fixed in the %s modal', (_label, variant) => {
+  jest.useFakeTimers();
+
+  const ModalHarness = () => {
+    const [letter, setLetter] = React.useState({
+      from: 'Me',
+      to: 'Casper',
+      message: 'A complete message for testing the media link.',
+      link: '',
+    });
+    return (
+      <AddModal
+        showAddModal
+        toggleAddModal={jest.fn()}
+        newLetter={letter}
+        setNewLetter={setLetter}
+        handleAddLetter={jest.fn()}
+        variant={variant}
+        parentLetter={variant === 'reply' ? {_id: 'parent-1', from: 'Casper'} : undefined}
+      />
+    );
+  };
+
+  const {container} = render(<ModalHarness />);
+  fireEvent.click(screen.getByRole('button', {name: /Add a song or photo/i}));
+  const linkInput = screen.getByPlaceholderText('Paste a link from YouTube or Spotify');
+
+  expect(container.querySelector('.compose-link-icon--youtube')).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(5000));
+  expect(container.querySelector('.compose-link-icon--spotify')).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(5000));
+  expect(container.querySelector('.compose-link-icon--youtube')).toBeInTheDocument();
+
+  fireEvent.change(linkInput, {target: {value: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'}});
+  expect(container.querySelector('.compose-link-icon--youtube')).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(10000));
+  expect(container.querySelector('.compose-link-icon--youtube')).toBeInTheDocument();
+  expect(container.querySelector('.compose-link-icon--spotify')).toBeNull();
+
+  fireEvent.change(linkInput, {target: {value: 'https://open.spotify.com/track/11dFghVXANMlKmJXsNCbNl'}});
+  expect(container.querySelector('.compose-link-icon--spotify')).toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(10000));
+  expect(container.querySelector('.compose-link-icon--spotify')).toBeInTheDocument();
+  expect(container.querySelector('.compose-link-icon--youtube')).toBeNull();
+
+  jest.useRealTimers();
+});
+
 test('renders Adsterra banner when celebration dialog is displayed', async () => {
   const dummyLetter = { from: 'Alice', to: 'Bob', message: 'Hello this is a test letter for Casper.' };
   const mockHandleAddLetter = jest.fn().mockResolvedValue({ burnKey: 'test-burn-key', letterId: 'letter-123' });
@@ -231,4 +305,3 @@ test('celebration close countdown pauses when user is redirected away and resume
 
   jest.useRealTimers();
 });
-

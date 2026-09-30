@@ -1,7 +1,7 @@
 import React, {useMemo, useRef, useState, useEffect} from 'react';
 import {createPortal} from 'react-dom';
 import {Tooltip} from 'react-tooltip';
-import {BsCheck2, BsClipboard, BsX} from 'react-icons/bs';
+import {BsCheck2, BsClipboard, BsReply, BsX} from 'react-icons/bs';
 import {RiMailSendLine} from 'react-icons/ri';
 import {VscPreview} from 'react-icons/vsc';
 import {
@@ -73,7 +73,12 @@ function AddModal({
   newLetter,
   handleAddLetter,
   setNewLetter,
+  variant = 'letter',
+  submitError = '',
+  parentLetter = null,
+  onPreview,
 }) {
+  const isReply = variant === 'reply';
   const {triggerBackgroundCrisisCheck} = useCrisisSupport();
   const fromInputRef = useRef(null);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
@@ -131,6 +136,9 @@ function AddModal({
   const focusTextareaRef = useRef(null);
   const linkGuidePagesRef = useRef(null);
   const songLinkValidation = validateSongLink(newLetter.link);
+  const displayedLinkIcon = songLinkValidation.valid && songLinkValidation.service
+    ? songLinkValidation.service
+    : activeLinkIcon;
 
   useEffect(() => {
     if (!showAddModal) {
@@ -162,6 +170,8 @@ function AddModal({
     if (!focusWriterMode) return undefined;
 
     focusTextareaRef.current?.focus();
+    focusTextareaRef.current.style.height = 'auto';
+    focusTextareaRef.current.style.height = `${focusTextareaRef.current.scrollHeight}px`;
     const leaveFocusMode = event => {
       if (event.key === 'Escape') setFocusWriterMode(false);
     };
@@ -170,14 +180,20 @@ function AddModal({
   }, [focusWriterMode]);
 
   useEffect(() => {
+    if (!focusWriterMode || !focusTextareaRef.current) return;
+    focusTextareaRef.current.style.height = 'auto';
+    focusTextareaRef.current.style.height = `${focusTextareaRef.current.scrollHeight}px`;
+  }, [focusWriterMode, newLetter.message]);
+
+  useEffect(() => {
     const shouldDisableSubmit =
-      !newLetter.from ||
+      (!isReply && !newLetter.from) ||
       !newLetter.to ||
       !newLetter.message ||
       newLetter.message.length < 10 ||
       !songLinkValidation.valid;
     setIsSubmitDisabled(shouldDisableSubmit);
-  }, [newLetter, songLinkValidation.valid]);
+  }, [isReply, newLetter, songLinkValidation.valid]);
 
 
 useEffect(() => {
@@ -290,6 +306,10 @@ useEffect(() => {
 
   const handleSubmit = () => {
     if (!isSubmitDisabled) {
+      if (isReply) {
+        confirmSubmit();
+        return;
+      }
       if (!previewSuggestionShown && !showPreview) {
         setPreviewSuggestionShown(true);
         setShowPreviewSuggestion(true);
@@ -302,7 +322,7 @@ useEffect(() => {
   };
 
   const confirmSubmit = async () => {
-    if (!retentionAgreed || isSubmitting) return;
+    if ((!isReply && !retentionAgreed) || isSubmitting) return;
     const updatedLetter = {
       ...newLetter,
       message: newLetter.link
@@ -312,13 +332,13 @@ useEffect(() => {
 
     setIsSubmitting(true);
     setSubmitProgress(5);
-    setSubmitStatus('Preparing letter…');
+    setSubmitStatus(isReply ? 'Preparing reply…' : 'Preparing letter…');
     const submitted = await handleAddLetter(updatedLetter, progress => {
       setSubmitProgress(progress.percent);
       setSubmitStatus(progress.label);
     });
 
-    if (submitted) {
+    if (submitted && !isReply) {
       triggerBackgroundCrisisCheck({
         letterId: submitted.letterId,
         burnKey: submitted.burnKey,
@@ -338,7 +358,7 @@ useEffect(() => {
     }
     setIsSubmitting(false);
 
-    if (submitted) {
+    if (submitted && !isReply) {
       setShowSubmitConfirm(false);
       if (newLetter.photoPreviewUrl) URL.revokeObjectURL(newLetter.photoPreviewUrl);
       setNewLetter({from: '', to: '', message: ''});
@@ -480,26 +500,70 @@ useEffect(() => {
   const togglePreview = () => {
     setPreviewSuggestionShown(true);
     setShowPreviewSuggestion(false);
+    if (isReply && onPreview) {
+      onPreview({
+        message: newLetter.message,
+        alias: newLetter.from,
+        to: newLetter.to,
+        link: newLetter.link,
+        photoPreviewUrl: newLetter.photoPreviewUrl,
+        photoFile: newLetter.photoFile,
+      });
+      return;
+    }
     setShowPreview(!showPreview);
   };
 
   const previewLetter = useMemo(
-    () => ({
-      from: newLetter.from,
-      to: newLetter.to,
-      message: newLetter.link
-        ? `${newLetter.message}\n\n${newLetter.link}`
-        : newLetter.message,
-      approve: newLetter.approve,
-      photo: newLetter.photoPreviewUrl
-        ? {url: newLetter.photoPreviewUrl}
-        : undefined,
-      timestamp: new Date().toLocaleString('en-US', {
-        timeZone: 'Asia/Manila',
-      }),
-      preview: true,
-    }),
+    () => {
+      if (isReply && parentLetter) {
+        const userDraftReply = {
+          _id: "preview-draft-reply",
+          message: newLetter.link
+            ? `${newLetter.message}\n\n${newLetter.link}`
+            : newLetter.message,
+          alias: newLetter.from || "Anonymous",
+          to: newLetter.to || parentLetter.from || "Anonymous",
+          timestamp: new Date().toISOString(),
+          photo: newLetter.photoPreviewUrl
+            ? {url: newLetter.photoPreviewUrl}
+            : undefined,
+          published: true,
+          isPreview: true,
+        };
+        const parentReplies = Array.isArray(parentLetter.replies)
+          ? parentLetter.replies.filter(reply => reply.published !== false)
+          : [];
+        const hasUserDraft = parentReplies.some(r => r._id === userDraftReply._id);
+        return {
+          ...parentLetter,
+          preview: true,
+          isReplyPreview: true,
+          previewReply: userDraftReply,
+          replies: hasUserDraft ? parentReplies : [...parentReplies, userDraftReply],
+          reply_count: Math.max(1, (parentLetter.reply_count || parentReplies.length) + (hasUserDraft ? 0 : 1)),
+          has_replies: true,
+        };
+      }
+      return {
+        from: newLetter.from,
+        to: newLetter.to,
+        message: newLetter.link
+          ? `${newLetter.message}\n\n${newLetter.link}`
+          : newLetter.message,
+        approve: newLetter.approve,
+        photo: newLetter.photoPreviewUrl
+          ? {url: newLetter.photoPreviewUrl}
+          : undefined,
+        timestamp: new Date().toLocaleString('en-US', {
+          timeZone: 'Asia/Manila',
+        }),
+        preview: true,
+      };
+    },
     [
+      isReply,
+      parentLetter,
       newLetter.from,
       newLetter.to,
       newLetter.message,
@@ -515,7 +579,7 @@ useEffect(() => {
         !showPreview && ( // Show AddModal only if it's not hidden and Preview is not shown
           <div className="modal compose-modal">
             <div
-              className="modal-add-dialog compose-dialog"
+              className={`modal-add-dialog compose-dialog${isReply ? ' compose-dialog--reply' : ''}`}
               role="dialog"
               aria-modal="true"
               aria-labelledby="compose-title"
@@ -524,11 +588,11 @@ useEffect(() => {
                 <div className="modal-header">
                   <div className="compose-heading">
                     <span className="compose-heading-icon">
-                      <RiMailSendLine size="22px" />
+                      {isReply ? <BsReply size="22px" /> : <RiMailSendLine size="22px" />}
                     </span>
                     <div>
-                      <h2 id="compose-title">Write your letter</h2>
-                      <p>Share what your heart has been holding.</p>
+                      <h2 id="compose-title">{isReply ? 'Write your reply' : 'Write your letter'}</h2>
+                      <p>{isReply ? 'Respond with the same care as a letter.' : 'Share what your heart has been holding.'}</p>
                     </div>
                   </div>
                   <button
@@ -548,7 +612,7 @@ useEffect(() => {
                     <span className="compose-short-field">
                       <input
                         autoComplete="off"
-                        required
+                        required={!isReply}
                         type="text"
                         id="from"
                         placeholder="Your name, nickname, or initial"
@@ -587,6 +651,8 @@ useEffect(() => {
                         className="form-control error full-width"
                         value={newLetter.to}
                         maxLength="20"
+                        data-tooltip-id={isReply ? "reply-to-tip" : undefined}
+                        data-tooltip-content={isReply ? "The name used by this letter’s sender. You can change it." : undefined}
                         onChange={(event) =>
                           setNewLetter({ ...newLetter, to: event.target.value })
                         }
@@ -595,6 +661,10 @@ useEffect(() => {
                         {newLetter.to.length}/20
                       </small>
                     </span>
+                    {isReply && createPortal(
+                      <Tooltip id="reply-to-tip" place="top" openOnClick className="preview-suggestion-tooltip" />,
+                      document.body,
+                    )}
                   </div>
                   <div className="form-group message-form-group">
                     <div className="compose-message-label">
@@ -684,7 +754,7 @@ useEffect(() => {
                             className="compose-link-icons"
                             aria-hidden="true"
                           >
-                            {activeLinkIcon === "youtube" ? (
+                            {displayedLinkIcon === "youtube" ? (
                               <FaYoutube
                                 key="youtube"
                                 className="compose-link-icon--youtube"
@@ -814,10 +884,17 @@ useEffect(() => {
                     </div>
                   </section>
                 </div>
+                {submitError && <p className="compose-submit-error" role="alert">{submitError}</p>}
                 <div className="modal-footer">
-                  {!showPreview && !isSubmitDisabled && (
+                  {isReply && (
+                    <p className="compose-reply-fee-note">
+                      A ₱2 fee is required to keep replies genuine and spam-free.
+                    </p>
+                  )}
+                  <div className={`compose-footer-actions${isReply ? '' : ' compose-footer-actions--letter'}`}>
+                  {!showPreview && (isReply || !isSubmitDisabled) && (
                     <span className="preview-suggestion-anchor">
-                      {showPreviewSuggestion &&
+                      {!isSubmitDisabled && showPreviewSuggestion &&
                         createPortal(
                           <Tooltip
                             id="compose-preview-tip"
@@ -828,7 +905,7 @@ useEffect(() => {
                             offset={11}
                             isOpen={showPreviewSuggestion}
                           >
-                            See how your letter looks before sending.
+                            See how your {isReply ? 'reply' : 'letter'} looks before sending.
                           </Tooltip>,
                           document.body,
                         )}
@@ -842,6 +919,7 @@ useEffect(() => {
                         }
                         className="preview-button"
                         onClick={togglePreview}
+                        disabled={isSubmitDisabled}
                       >
                         <strong>Preview</strong>
                         <VscPreview className="preview-icon" size="18px" />
@@ -857,12 +935,13 @@ useEffect(() => {
                     disabled={isSubmitDisabled || isSubmitting}
                   >
                     <strong>
-                      {isSubmitting
-                        ? `${submitStatus} ${submitProgress}%`
-                        : "Submit Letter"}
+                      {isReply
+                        ? "Reply"
+                        : isSubmitting ? `${submitStatus} ${submitProgress}%` : "Submit Letter"}
                     </strong>
-                    <RiMailSendLine className="submit-icon" size="18px" />
+                    {isReply ? <BsReply className="submit-icon" size="18px" /> : <RiMailSendLine className="submit-icon" size="18px" />}
                   </button>
+                  </div>
                 </div>
                 {isSubmitting && (
                   <div
@@ -904,6 +983,7 @@ useEffect(() => {
                       value={newLetter.message}
                       maxLength="500"
                       placeholder="Write freely. Take all the time you need…"
+                      style={{overflow: 'hidden'}}
                       onChange={(event) =>
                         setNewLetter({
                           ...newLetter,
@@ -926,6 +1006,7 @@ useEffect(() => {
           selectedLetter={previewLetter}
           toggleDetailsModal={togglePreview}
           showDetailsModal={true}
+          initialOpened={true}
         />
       )}
       {showLinkGuide && (

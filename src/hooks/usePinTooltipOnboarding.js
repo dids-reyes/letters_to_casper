@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export const PIN_TOOLTIP_VIEW_COUNT_KEY = "pin_tooltip_view_count";
 export const PIN_TOOLTIP_DISMISSED_KEY = "pin_tooltip_dismissed";
-export const PIN_TOOLTIP_MAX_VIEWS = 2;
+export const PIN_TOOLTIP_MAX_VIEWS = 1;
 
 const getStorage = (storage) => {
   if (storage) return storage;

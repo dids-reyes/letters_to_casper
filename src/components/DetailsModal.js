@@ -2,19 +2,20 @@ import {AiOutlinePushpin} from "react-icons/ai";
 import React from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
-import { BsX } from "react-icons/bs";
+import { BsReply, BsX } from "react-icons/bs";
 import { BsMailboxFlag } from "react-icons/bs";
 import Typewriter from "typewriter-effect";
 import { Tooltip } from "react-tooltip";
 import tc from "thousands-counter";
 import js_ago from "js-ago";
-import { FaEarlybirds } from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight, FaEarlybirds } from "react-icons/fa";
 import { BsBookmarkHeartFill } from "react-icons/bs";
 import { FaUserTie } from "react-icons/fa";
 import { PiShootingStarFill } from "react-icons/pi";
 import { PiHeartBreakFill } from "react-icons/pi";
 import { TbHeart, TbMoodSad } from "react-icons/tb";
 import { RiMailSendLine } from "react-icons/ri";
+import { MdAlternateEmail } from "react-icons/md";
 import {
   IoCopyOutline,
   IoDownloadOutline,
@@ -28,6 +29,7 @@ import {
 } from "react-icons/io5";
 import AdsterraBanner from "./AdsterraBanner";
 import PinLetterDialog from "./PinLetterDialog";
+import ReplyComposer, {replyDraftKey} from "./ReplyComposer";
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { render_url, api_key } from "../data/keys";
 import { adminId, targetDate } from "../data/target_letters";
@@ -40,6 +42,27 @@ import usePinTooltipOnboarding from "../hooks/usePinTooltipOnboarding";
 import SensitiveMessage from "./SensitiveMessage";
 // Translation remains disabled until explicitly re-enabled.
 const TRANSLATION_ENABLED = false;
+
+const LetterMessageTypewriter = React.memo(function LetterMessageTypewriter({
+  message,
+  letterKey,
+  onComplete,
+}) {
+  return (
+    <Typewriter
+      options={{ delay: 40, loop: false, stringSplitter }}
+      onInit={(typewriter) => {
+        typewriter
+          .typeString(message)
+          .pauseFor(500)
+          .callFunction(() => onComplete(letterKey))
+          .start();
+      }}
+    />
+  );
+}, (previous, next) => (
+  previous.message === next.message && previous.letterKey === next.letterKey
+));
 
 const languageCodes = {
   albanian: "sq", arabic: "ar", azeri: "az", bengali: "bn",
@@ -228,6 +251,24 @@ const loadImageFromUrl = (url) => new Promise((resolve, reject) => {
   image.src = url;
 });
 
+const qrPreloadCache = new Map();
+const preloadQrImage = (url) => {
+  if (!url) return;
+  if (qrPreloadCache.has(url)) return;
+
+  const image = new Image();
+  qrPreloadCache.set(url, image);
+  image.onload = () => {
+    // Keep a small set of decoded images alive so opening QR immediately after
+    // Share can reuse the exact letter-specific artwork.
+    while (qrPreloadCache.size > 12) {
+      qrPreloadCache.delete(qrPreloadCache.keys().next().value);
+    }
+  };
+  image.onerror = () => qrPreloadCache.delete(url);
+  image.src = url;
+};
+
 export const viewedLetterIds = new Set();
 export let unbilledNewLettersCount = 0;
 
@@ -304,6 +345,7 @@ function DetailsModal({
   letters = [],
   setSelectedLetter = () => {},
   onFetchMore = () => {},
+  onReplyPublished = () => {},
   initialOpened = false,
 }) {
   let letterId;
@@ -346,6 +388,8 @@ function DetailsModal({
   const [isClosing, setIsClosing] = useState(false);
   const closingRef = useRef(false);
   const closeCompletedRef = useRef(false);
+  const onReplyPublishedRef = useRef(onReplyPublished);
+  onReplyPublishedRef.current = onReplyPublished;
 
   useLayoutEffect(() => {
     closingRef.current = false;
@@ -450,10 +494,11 @@ function DetailsModal({
   const DominantReactionIcon = echoes.sad > echoes.love ? TbMoodSad : IoHeartOutline;
 
   const saveEcho = async (reaction, remove = false) => {
-    if (!selectedLetter?._id || selectedLetter.preview || savingEcho) return;
+    const reactionTarget = activeContextLetter;
+    if (!reactionTarget?._id || reactionTarget.preview || savingEcho) return;
     setSavingEcho(true);
     try {
-      const response = await fetch(`${render_url}/${selectedLetter._id}/echo`, {
+      const response = await fetch(`${render_url}/${reactionTarget._id}/echo`, {
         method: "POST",
         headers: {
           "x-api-key": api_key,
@@ -466,8 +511,8 @@ function DetailsModal({
       setEchoes(normalizeEchoes(result.echoes));
       setSelectedEcho(result.selected ?? reaction);
       const saved = JSON.parse(localStorage.getItem("letterEchoes") || "{}");
-      if (result.selected === "") delete saved[selectedLetter._id];
-      else saved[selectedLetter._id] = result.selected ?? reaction;
+      if (result.selected === "") delete saved[reactionTarget._id];
+      else saved[reactionTarget._id] = result.selected ?? reaction;
       localStorage.setItem("letterEchoes", JSON.stringify(saved));
       setShowEchoPicker(false);
       toast.info(result.selected === "" ? "Your reaction was removed." : "Your reaction was added.", {
@@ -837,7 +882,7 @@ function DetailsModal({
   }, [selectedLetter?._id, dismissFoldTip]);
 
   useEffect(() => {
-    if (!showDetailsModal || !readMode) return undefined;
+    if (!showDetailsModal) return undefined;
 
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
@@ -845,7 +890,7 @@ function DetailsModal({
 
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
+    if (readMode) document.body.style.touchAction = "none";
 
     return () => {
       document.body.style.overflow = originalBodyOverflow;
@@ -1068,15 +1113,82 @@ function DetailsModal({
   const touchStartY = useRef(null);
   const touchStartX = useRef(null);
   const touchInsideScrollable = useRef(false);
+  const replyComposerNavigationLockedRef = useRef(false);
+  const horizontalReplyNavigationRef = useRef(null);
+  const lastHorizontalWheelTime = useRef(0);
+  const pointerDragStartRef = useRef(null);
+  const didHorizontalPointerDragRef = useRef(false);
+
+  const handlePointerDown = (event) => {
+    if (
+      (event.pointerType && event.pointerType !== "mouse") ||
+      event.button !== 0 ||
+      replyComposerNavigationLockedRef.current
+    ) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (
+      !target?.closest(".letter-modal") ||
+      target.closest("button, a, input, textarea, select, [contenteditable='true']")
+    ) return;
+    pointerDragStartRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    didHorizontalPointerDragRef.current = false;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event) => {
+    const start = pointerDragStartRef.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    if (Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      if (event.cancelable) event.preventDefault();
+    }
+  };
+
+  const finishPointerDrag = (event) => {
+    const start = pointerDragStartRef.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+    pointerDragStartRef.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    if (Math.abs(deltaX) < 55 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+
+    const navigation = horizontalReplyNavigationRef.current;
+    const handled = deltaX < 0 ? navigation?.forward() : navigation?.back();
+    if (handled) didHorizontalPointerDragRef.current = true;
+  };
+
+  const cancelPointerDrag = (event) => {
+    if (pointerDragStartRef.current?.pointerId === event.pointerId) {
+      pointerDragStartRef.current = null;
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
+  };
 
   const handleTouchStart = (e) => {
-    if (!readMode || showAdLock) return;
+    const target = e.target instanceof Element ? e.target : null;
+    if (
+      showAdLock ||
+      replyComposerNavigationLockedRef.current ||
+      target?.closest("[role='dialog']")
+    ) {
+      touchStartY.current = null;
+      touchStartX.current = null;
+      touchInsideScrollable.current = false;
+      return;
+    }
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     touchInsideScrollable.current = Boolean(e.target.closest(".letter-paper__body--scrollable"));
   };
 
   const handleTouchMove = (e) => {
+    if (replyComposerNavigationLockedRef.current) return;
     if (!readMode) return;
     if (showAdLock) {
       if (e.cancelable) e.preventDefault();
@@ -1096,10 +1208,54 @@ function DetailsModal({
   };
 
   const handleTouchEnd = (e) => {
-    if (!readMode || showAdLock || touchStartY.current === null) return;
+    if (replyComposerNavigationLockedRef.current) {
+      touchStartY.current = null;
+      touchStartX.current = null;
+      return;
+    }
+    if (showAdLock || touchStartY.current === null) return;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     touchStartY.current = null;
+    touchStartX.current = null;
+
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.1) {
+      if (replyThreadIndex >= 0) {
+        const navigation = horizontalReplyNavigationRef.current;
+        if (deltaX < 0) navigation?.forward();
+        else navigation?.back();
+        return;
+      }
+      if (replyParentLetter) {
+        if (deltaX > 0 && !showReplyParent) {
+          slideToReplyParent();
+          return;
+        }
+        if (deltaX < 0 && showReplyParent) {
+          slideBackToFeedReply();
+          return;
+        }
+      }
+      if (deltaX < 0) {
+        if (replyViewingIndex === -1 && activeReplies.length > 0) {
+          slideToReply(0);
+          return;
+        } else if (replyViewingIndex >= 0 && replyViewingIndex < activeReplies.length - 1) {
+          slideToReply(replyViewingIndex + 1);
+          return;
+        }
+      } else if (deltaX > 0) {
+        if (replyViewingIndex > 0) {
+          slideToReply(replyViewingIndex - 1);
+          return;
+        } else if (replyViewingIndex === 0) {
+          slideToParent();
+          return;
+        }
+      }
+    }
+
+    if (!readMode) return;
 
     if (Math.abs(deltaY) < 15 && Math.abs(deltaX) < 15) {
       if (
@@ -1132,9 +1288,27 @@ function DetailsModal({
   };
 
   useEffect(() => {
-    if (!showDetailsModal || !readMode) return undefined;
+    if (!showDetailsModal) return undefined;
 
     const onWheel = (e) => {
+      if (replyComposerNavigationLockedRef.current) return;
+      const isHorizontalGesture =
+        Math.abs(e.deltaX) >= 24 &&
+        Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.15;
+      if (isHorizontalGesture) {
+        const navigation = horizontalReplyNavigationRef.current;
+        if (navigation) {
+          if (e.cancelable) e.preventDefault();
+          const now = Date.now();
+          if (now - lastHorizontalWheelTime.current < 550) return;
+          const handled = e.deltaX > 0
+            ? navigation.forward()
+            : navigation.back();
+          if (handled) lastHorizontalWheelTime.current = now;
+        }
+        return;
+      }
+      if (!readMode) return;
       if (e.cancelable) e.preventDefault();
       if (showAdLock) return;
 
@@ -1186,25 +1360,117 @@ function DetailsModal({
   }, [showDetailsModal, readMode, showAdLock]);
 
 
-  const letterLocationMap = getGoogleMapsLocationUrl(selectedLetter?.loc);
-  const hasLocation = Boolean(letterLocationMap);
-
+  const isReplyLetter = Boolean(selectedLetter?.is_reply || selectedLetter?.type === "reply" || selectedLetter?.parent_letter_id);
+  const [replyParentLetter, setReplyParentLetter] = useState(null);
+  const [showReplyParent, setShowReplyParent] = useState(false);
+  const [showReplyParentCue, setShowReplyParentCue] = useState(true);
+  const [replyThread, setReplyThread] = useState([]);
+  const [replyThreadIndex, setReplyThreadIndex] = useState(-1);
+  const [replyThreadBoundary, setReplyThreadBoundary] = useState("");
+  const [showReplyThreadCues, setShowReplyThreadCues] = useState(false);
   // Location is revealed after the visitor explicitly accepts the ad step.
   const [isRevealed, setIsRevealed] = useState(false);
   const [hasClickedAd, setHasClickedAd] = useState(false);
   const [showLocationAdConfirm, setShowLocationAdConfirm] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [showLetterActionChooser, setShowLetterActionChooser] = useState(false);
+  const [showReplyInfoDialog, setShowReplyInfoDialog] = useState(false);
+  const [showReplyComposer, setShowReplyComposer] = useState(false);
+  const [replyPaymentNotice, setReplyPaymentNotice] = useState(null);
+  const [showReplies, setShowReplies] = useState(false);
+  const [replies, setReplies] = useState([]);
+  const [repliesLoading, setRepliesLoading] = useState(false);
+  const [repliesError, setRepliesError] = useState("");
+  const [isReplyPreviewing, setIsReplyPreviewing] = useState(false);
+  const [replyPreviewData, setReplyPreviewData] = useState(null);
+  const [replyViewingIndex, setReplyViewingIndex] = useState(-1);
+  const [showReplySwipeTip, setShowReplySwipeTip] = useState(false);
+  const [isReplySwipeTipFading, setIsReplySwipeTipFading] = useState(false);
+  const replySwipeTipTimerRef = useRef(null);
+  const replySwipeTipFadeTimerRef = useRef(null);
+  const replyThreadBoundaryTimerRef = useRef(null);
+  const replyThreadCueTimerRef = useRef(null);
+  replyComposerNavigationLockedRef.current = showReplyComposer && !isReplyPreviewing;
+
+  useLayoutEffect(() => {
+    setShowReplyParent(false);
+    setReplyParentLetter(null);
+    setReplyThread([]);
+    setReplyThreadIndex(-1);
+    setReplyThreadBoundary("");
+    setShowReplyThreadCues(false);
+    if (!showDetailsModal || !isReplyLetter || !selectedLetter?.parent_letter_id) return undefined;
+
+    const embeddedParent = selectedLetter.parent_letter || selectedLetter.parentLetter;
+    if (embeddedParent?._id) {
+      setReplyParentLetter(embeddedParent);
+      return undefined;
+    }
+
+    let active = true;
+    fetch(`${render_url}/public/${encodeURIComponent(selectedLetter.parent_letter_id)}`, {
+      headers: {"x-api-key": api_key},
+    })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error("Parent letter unavailable")))
+      .then(data => {
+        if (active && data?.message) setReplyParentLetter(data.message);
+      })
+      .catch(() => {
+        // The existing association control remains available if the parent cannot be loaded.
+      });
+    return () => { active = false; };
+  }, [showDetailsModal, isReplyLetter, selectedLetter?._id, selectedLetter?.parent_letter_id, selectedLetter?.parent_letter, selectedLetter?.parentLetter]);
+
+  const selectedLetterId = getLetterId(selectedLetter);
+
+  useEffect(() => {
+    if (!showDetailsModal || selectedLetter?.preview || !selectedLetterId) return undefined;
+    let active = true;
+    fetch(`${render_url}/${encodeURIComponent(selectedLetterId)}/thread`, {
+      headers: {"x-api-key": api_key},
+    })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error("Thread unavailable")))
+      .then(data => {
+        if (!active || !Array.isArray(data?.letters) || data.letters.length < 2 || data.active_index < 0) return;
+        setReplyThread(data.letters);
+        setReplyThreadIndex(data.active_index);
+        setShowReplyThreadCues(true);
+        window.clearTimeout(replyThreadCueTimerRef.current);
+        replyThreadCueTimerRef.current = window.setTimeout(() => setShowReplyThreadCues(false), 3000);
+      })
+      .catch(() => {
+        // The existing direct parent navigation remains available as a fallback.
+      });
+    return () => { active = false; };
+  }, [showDetailsModal, selectedLetterId, selectedLetter?.preview]);
+
+  useEffect(() => {
+    if (!opened || !isReplyLetter || !replyParentLetter) {
+      setShowReplyParentCue(false);
+      return undefined;
+    }
+    setShowReplyParentCue(true);
+    const timer = setTimeout(() => setShowReplyParentCue(false), 3000);
+    return () => clearTimeout(timer);
+  }, [isReplyLetter, opened, replyParentLetter, showReplyParent]);
+
   useEffect(() => {
     setIsRevealed(false);
     setHasClickedAd(false);
     setShowLocationAdConfirm(false);
-  }, [selectedLetter?._id]);
+    setIsReplyPreviewing(false);
+    setReplyPreviewData(null);
+    setReplyViewingIndex(-1);
+    setShowReplySwipeTip(false);
+    setIsReplySwipeTipFading(false);
+  }, [selectedLetter?._id, selectedLetter?.replies]);
   const pinTooltipEligible = Boolean(
     showDetailsModal &&
     opened &&
     selectedLetter?._id &&
     !selectedLetter.preview &&
+    !isReplyLetter &&
     !(
       selectedLetter.is_pinned &&
       selectedLetter.pin_expires_at &&
@@ -1251,11 +1517,401 @@ function DetailsModal({
     setShowShareDialog(true);
   }, [showDetailsModal, selectedLetter?._id, selectedLetter?.preview, location.search]);
 
+  const loadReplies = useCallback(async () => {
+    if (!selectedLetter?._id || (selectedLetter.preview && !selectedLetter.isReplyPreview) || selectedLetter.is_reply || selectedLetter.type === "reply") return;
+    setRepliesLoading(true);
+    setRepliesError("");
+    try {
+      const response = await fetch(`${render_url}/${encodeURIComponent(getLetterId(selectedLetter))}/replies`, {headers: {"x-api-key": api_key}});
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Unable to load replies.");
+      const published = Array.isArray(data.replies) ? data.replies : [];
+      const filtered = published.filter(reply => reply.published !== false && reply.payment_status !== "unpaid");
+      if (selectedLetter.previewReply) {
+        const hasPreview = filtered.some(r => r._id === selectedLetter.previewReply._id);
+        setReplies(hasPreview ? filtered : [...filtered, selectedLetter.previewReply]);
+      } else {
+        setReplies(filtered);
+      }
+    } catch (error) {
+      const embedded = Array.isArray(selectedLetter.replies) ? selectedLetter.replies : [];
+      const filtered = embedded.filter(reply => reply.published !== false && reply.payment_status !== "unpaid");
+      if (selectedLetter.previewReply) {
+        const hasPreview = filtered.some(r => r._id === selectedLetter.previewReply._id);
+        setReplies(hasPreview ? filtered : [...filtered, selectedLetter.previewReply]);
+      } else {
+        setReplies(filtered);
+      }
+      if (!embedded.length && !selectedLetter.previewReply) setRepliesError("Replies couldn’t be loaded right now.");
+    } finally {
+      setRepliesLoading(false);
+    }
+  }, [selectedLetter]);
+
+  useEffect(() => {
+    const base = Array.isArray(selectedLetter?.replies) ? selectedLetter.replies.filter(reply => reply.published !== false) : [];
+    if (selectedLetter?.previewReply) {
+      const hasPreview = base.some(r => r._id === selectedLetter.previewReply._id);
+      setReplies(hasPreview ? base : [...base, selectedLetter.previewReply]);
+    } else {
+      setReplies(base);
+    }
+    setShowReplies(false);
+  }, [selectedLetter?._id, selectedLetter?.replies, selectedLetter?.previewReply]);
+
+  useEffect(() => {
+    if (showDetailsModal && selectedLetter?._id && (!selectedLetter.preview || selectedLetter.isReplyPreview) && !isReplyLetter) loadReplies();
+  }, [isReplyLetter, loadReplies, selectedLetter?._id, selectedLetter?.preview, selectedLetter?.isReplyPreview, showDetailsModal]);
+
+  useEffect(() => {
+    if (!showDetailsModal || !selectedLetter?._id) return;
+    const params = new URLSearchParams(location.search);
+    const requestedReply = params.get("reply");
+    if (!requestedReply) return;
+    setOpened(true);
+    setShowReplies(true);
+    loadReplies();
+  }, [loadReplies, location.search, selectedLetter?._id, showDetailsModal]);
+
+  useEffect(() => {
+    if (!showDetailsModal || !selectedLetter?._id) return undefined;
+    const params = new URLSearchParams(location.search);
+    if (params.get("status") === "reply_cancelled") {
+      setReplyPaymentNotice({
+        type: "cancelled",
+        title: "Payment canceled",
+        message: "Your reply was not published. Your draft is still saved.",
+      });
+      params.delete("status");
+      navigate({pathname: location.pathname, search: params.toString() ? `?${params}` : ""}, {replace: true});
+      return undefined;
+    }
+    const token = params.get("reply_payment");
+    if (params.get("status") !== "reply_success" || !token) return undefined;
+    let active = true;
+    let timer;
+    let attempts = 0;
+    const clearReturnParams = () => {
+      params.delete("status");
+      params.delete("reply_payment");
+      navigate({pathname: location.pathname, search: params.toString() ? `?${params}` : ""}, {replace: true});
+    };
+    const verify = async () => {
+      attempts += 1;
+      try {
+        const response = await fetch(new URL(`/api/reply-payment-status/${encodeURIComponent(token)}`, render_url).href, {method: "POST", headers: {"x-api-key": api_key}});
+        const data = await response.json().catch(() => ({}));
+        if (!active) return;
+        if (response.ok && data.status === "published") {
+          try { localStorage.removeItem(replyDraftKey(getLetterId(selectedLetter))); } catch { /* storage unavailable */ }
+          setReplyPaymentNotice({
+            type: "success",
+            title: "Reply sent",
+            message: "Your payment was confirmed and your reply is now published.",
+          });
+          setShowReplyComposer(false);
+          setShowReplies(false);
+          setIsReplyPreviewing(false);
+          setReplyPreviewData(null);
+          setReplyViewingIndex(-1);
+          await onReplyPublishedRef.current();
+          clearReturnParams();
+          return;
+        }
+      } catch { /* Retry while PayMongo confirmation is propagating. */ }
+      if (active && attempts < 10) timer = window.setTimeout(verify, 3000);
+      else if (active) {
+        setReplyPaymentNotice({
+          type: "error",
+          title: "Payment not confirmed",
+          message: "We couldn’t confirm the payment yet. Your draft is still saved.",
+        });
+        clearReturnParams();
+      }
+    };
+    verify();
+    return () => { active = false; if (timer) window.clearTimeout(timer); };
+  }, [location.pathname, location.search, navigate, selectedLetter, showDetailsModal]);
+
+  const triggerReplySwipeTip = useCallback((duration = 2000) => {
+    if (replySwipeTipTimerRef.current) clearTimeout(replySwipeTipTimerRef.current);
+    if (replySwipeTipFadeTimerRef.current) clearTimeout(replySwipeTipFadeTimerRef.current);
+
+    setShowReplySwipeTip(true);
+    setIsReplySwipeTipFading(false);
+
+    replySwipeTipTimerRef.current = setTimeout(() => {
+      setIsReplySwipeTipFading(true);
+      replySwipeTipFadeTimerRef.current = setTimeout(() => {
+        setShowReplySwipeTip(false);
+        setIsReplySwipeTipFading(false);
+        replySwipeTipFadeTimerRef.current = null;
+      }, 400);
+      replySwipeTipTimerRef.current = null;
+    }, duration);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (replySwipeTipTimerRef.current) clearTimeout(replySwipeTipTimerRef.current);
+      if (replySwipeTipFadeTimerRef.current) clearTimeout(replySwipeTipFadeTimerRef.current);
+    };
+  }, []);
+
+  const handleReplyPreview = useCallback((draftData) => {
+    const fullDraftReply = {
+      _id: "preview-draft-reply",
+      alias: draftData.alias || "Anonymous",
+      to: draftData.to || selectedLetter?.from || "Anonymous",
+      message: draftData.link
+        ? `${draftData.message}\n\n${draftData.link}`
+        : draftData.message,
+      timestamp: new Date().toISOString(),
+      photo: draftData.photoPreviewUrl ? { url: draftData.photoPreviewUrl } : undefined,
+      published: true,
+      isPreview: true,
+      reads: 0,
+    };
+    setReplyPreviewData(fullDraftReply);
+    setIsReplyPreviewing(true);
+    setReplyViewingIndex(-1);
+    setShowReplies(false);
+    triggerReplySwipeTip();
+  }, [selectedLetter?.from, triggerReplySwipeTip]);
+
+  const exitReplyPreview = useCallback(() => {
+    if (replySwipeTipTimerRef.current) clearTimeout(replySwipeTipTimerRef.current);
+    if (replySwipeTipFadeTimerRef.current) clearTimeout(replySwipeTipFadeTimerRef.current);
+    setShowReplySwipeTip(false);
+    setIsReplySwipeTipFading(false);
+    setIsReplyPreviewing(false);
+    setReplyPreviewData(null);
+    setReplyViewingIndex(-1);
+    setOutgoingLetter(null);
+    setSlideDirection(null);
+    isTransitioningRef.current = false;
+  }, []);
+
+  const activeReplies = useMemo(() => {
+    if (isReplyPreviewing && replyPreviewData) {
+      return [replyPreviewData];
+    }
+    const published = Array.isArray(replies)
+      ? replies.filter(r => r.published !== false && r.payment_status !== "unpaid")
+      : [];
+    if (published.length > 0) return published;
+    if (Array.isArray(selectedLetter?.replies)) {
+      return selectedLetter.replies.filter(r => r.published !== false && r.payment_status !== "unpaid");
+    }
+    return [];
+  }, [isReplyPreviewing, replyPreviewData, replies, selectedLetter?.replies]);
+
+  useEffect(() => {
+    if (opened && activeReplies.length > 0 && !showReplies) {
+      triggerReplySwipeTip(replyViewingIndex >= 0 ? 1000 : 2000);
+    }
+  }, [opened, activeReplies.length, showReplies, replyViewingIndex, triggerReplySwipeTip]);
+
+  const formatReplyAsLetter = useCallback((reply, parent) => {
+    const parentId = getLetterId(parent);
+    return {
+      _id: reply._id || "reply-preview",
+      from: reply.alias || reply.from || "Anonymous",
+      to: reply.to || parent?.from || "Anonymous",
+      message: reply.message || "",
+      timestamp: reply.timestamp || new Date().toISOString(),
+      photo: reply.photo,
+      loc: reply.loc || {},
+      echoes: normalizeEchoes(reply.echoes),
+      parent_letter_id: parentId,
+      parent_association: {
+        available: true,
+        from: parent?.from || "Anonymous",
+        to: parent?.to || "Anonymous",
+      },
+      is_reply: true,
+      type: "reply",
+      reads: Math.max(1, Number(reply.reads) || 1),
+      preview: Boolean(reply.isPreview || selectedLetter?.preview || isReplyPreviewing),
+      isPreview: Boolean(reply.isPreview || isReplyPreviewing),
+    };
+  }, [isReplyPreviewing, selectedLetter?.preview]);
+
+  const activeReplyLetter = replyViewingIndex >= 0 && activeReplies[replyViewingIndex]
+    ? formatReplyAsLetter(activeReplies[replyViewingIndex], selectedLetter)
+    : null;
+  const activeThreadLetter = replyThreadIndex >= 0 ? replyThread[replyThreadIndex] : null;
+  const activeContextLetter = activeThreadLetter || activeReplyLetter || (
+    showReplyParent && replyParentLetter ? replyParentLetter : selectedLetter
+  );
+  const activeContextLetterId = getLetterId(activeContextLetter);
+  const activeContextLoveEchoes = Math.max(0, Number(activeContextLetter?.echoes?.love) || 0);
+  const activeContextSadEchoes = Math.max(0, Number(activeContextLetter?.echoes?.sad) || 0);
+  const letterLocationMap = getGoogleMapsLocationUrl(activeContextLetter?.loc);
+  const hasLocation = Boolean(letterLocationMap);
+
+  useEffect(() => {
+    setEchoes({love: activeContextLoveEchoes, sad: activeContextSadEchoes});
+    setShowEchoPicker(false);
+    setShowEchoBreakdown(false);
+    setPendingEcho("");
+    try {
+      const saved = JSON.parse(localStorage.getItem("letterEchoes") || "{}");
+      setSelectedEcho(saved[activeContextLetterId] || "");
+    } catch (error) {
+      setSelectedEcho("");
+    }
+  }, [activeContextLetterId, activeContextLoveEchoes, activeContextSadEchoes]);
+
+  const slideTimerRef = useRef(null);
+  const showThreadBoundary = useCallback((boundary) => {
+    setReplyThreadBoundary(boundary);
+    window.clearTimeout(replyThreadBoundaryTimerRef.current);
+    replyThreadBoundaryTimerRef.current = window.setTimeout(() => setReplyThreadBoundary(""), 1800);
+  }, []);
+
+  useEffect(() => () => {
+    window.clearTimeout(replyThreadBoundaryTimerRef.current);
+    window.clearTimeout(replyThreadCueTimerRef.current);
+  }, []);
+
+  const slideThreadTo = useCallback((targetIndex) => {
+    if (!replyThread[targetIndex] || targetIndex === replyThreadIndex) return false;
+    if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
+    setCompletedLetterKey("");
+    setShowAttachments(false);
+    setOutgoingLetter(replyThread[replyThreadIndex]);
+    setSlideDirection(targetIndex > replyThreadIndex ? "left" : "right");
+    setReplyThreadIndex(targetIndex);
+    setReplyThreadBoundary("");
+    setShowReplyThreadCues(false);
+    window.clearTimeout(replyThreadCueTimerRef.current);
+    slideTimerRef.current = setTimeout(() => {
+      setOutgoingLetter(null);
+      setSlideDirection(null);
+      slideTimerRef.current = null;
+    }, 500);
+    return true;
+  }, [replyThread, replyThreadIndex]);
+  const slideToReply = useCallback((targetIndex = 0) => {
+    if (!activeReplies[targetIndex]) return;
+
+    if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
+    setCompletedLetterKey("");
+    setShowAttachments(false);
+    const currentLetter = replyViewingIndex >= 0 && activeReplies[replyViewingIndex]
+      ? formatReplyAsLetter(activeReplies[replyViewingIndex], selectedLetter)
+      : selectedLetter;
+
+    setOutgoingLetter(currentLetter);
+    setSlideDirection("left");
+    setReplyViewingIndex(targetIndex);
+
+    slideTimerRef.current = setTimeout(() => {
+      setOutgoingLetter(null);
+      setSlideDirection(null);
+      slideTimerRef.current = null;
+    }, 500);
+  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter]);
+
+  const slideToParent = useCallback(() => {
+    if (replyViewingIndex < 0) return;
+
+    if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
+    setCompletedLetterKey("");
+    setShowAttachments(false);
+    const currentReplyLetter = formatReplyAsLetter(activeReplies[replyViewingIndex], selectedLetter);
+
+    setOutgoingLetter(currentReplyLetter);
+    setSlideDirection("right");
+    setReplyViewingIndex(-1);
+
+    slideTimerRef.current = setTimeout(() => {
+      setOutgoingLetter(null);
+      setSlideDirection(null);
+      slideTimerRef.current = null;
+    }, 500);
+  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter]);
+
+  const slideToReplyParent = useCallback(() => {
+    if (!replyParentLetter || showReplyParent) return;
+    if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
+    setCompletedLetterKey("");
+    setShowAttachments(false);
+    setOutgoingLetter(selectedLetter);
+    setSlideDirection("right");
+    setShowReplyParent(true);
+    slideTimerRef.current = setTimeout(() => {
+      setOutgoingLetter(null);
+      setSlideDirection(null);
+      slideTimerRef.current = null;
+    }, 500);
+  }, [replyParentLetter, selectedLetter, showReplyParent]);
+
+  const slideBackToFeedReply = useCallback(() => {
+    if (!showReplyParent) return;
+    if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
+    setCompletedLetterKey("");
+    setShowAttachments(false);
+    setOutgoingLetter(replyParentLetter);
+    setSlideDirection("left");
+    setShowReplyParent(false);
+    slideTimerRef.current = setTimeout(() => {
+      setOutgoingLetter(null);
+      setSlideDirection(null);
+      slideTimerRef.current = null;
+    }, 500);
+  }, [replyParentLetter, showReplyParent]);
+
+  horizontalReplyNavigationRef.current = {
+    forward: () => {
+      if (replyThreadIndex >= 0) {
+        if (replyThreadIndex < replyThread.length - 1) return slideThreadTo(replyThreadIndex + 1);
+        showThreadBoundary("latest");
+        return true;
+      }
+      if (replyParentLetter && showReplyParent) {
+        slideBackToFeedReply();
+        return true;
+      }
+      if (!replyParentLetter && replyViewingIndex < activeReplies.length - 1) {
+        slideToReply(replyViewingIndex + 1);
+        return true;
+      }
+      return false;
+    },
+    back: () => {
+      if (replyThreadIndex >= 0) {
+        if (replyThreadIndex > 0) return slideThreadTo(replyThreadIndex - 1);
+        showThreadBoundary("start");
+        return true;
+      }
+      if (replyParentLetter && !showReplyParent) {
+        slideToReplyParent();
+        return true;
+      }
+      if (!replyParentLetter && replyViewingIndex >= 0) {
+        if (replyViewingIndex === 0) slideToParent();
+        else slideToReply(replyViewingIndex - 1);
+        return true;
+      }
+      return false;
+    },
+  };
+
   const [showQrCode, setShowQrCode] = useState(false);
   const [showQrAdConfirm, setShowQrAdConfirm] = useState(false);
   const [isDownloadingQr, setIsDownloadingQr] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
   const [showImageOptions, setShowImageOptions] = useState(false);
+  const shareTargetLetter = activeContextLetter;
+  const shareTargetMedia = extractMediaLinks(shareTargetLetter?.message || "");
+  const shareTargetSpotifyId = shareTargetMedia?.spotifyLink?.id || null;
+  const shareTargetYoutubeId = shareTargetMedia?.youtubeLink?.id || null;
+  const shareTargetMessage = shareTargetMedia?.newMessage || shareTargetLetter?.message || "";
+  const shareTargetHasAttachment = Boolean(
+    shareTargetSpotifyId || shareTargetYoutubeId || shareTargetLetter?.photo?.url
+  );
   const letterPaperRef = useRef(null);
   const handleDownloadImage = async (includeAttachments = false) => {
     if (isDownloadingImage || !letterPaperRef.current) return;
@@ -1263,18 +1919,18 @@ function DetailsModal({
     try {
       const {default: downloadLetterImage} = await import('../utils/downloadLetterImage');
       await downloadLetterImage(letterPaperRef.current, {
-        id: selectedLetter._id, from: selectedLetter.from, to: selectedLetter.to,
-        message: showTranslation ? translatedMessage : message,
-        date: formatTimestamp(selectedLetter.timestamp),
+        id: shareTargetLetter._id, from: shareTargetLetter.from, to: shareTargetLetter.to,
+        message: showTranslation && shareTargetLetter === selectedLetter ? translatedMessage : shareTargetMessage,
+        date: formatTimestamp(shareTargetLetter.timestamp),
         includeAttachments,
-        photoUrl: selectedLetter.photo?.url ? getOptimizedPhotoUrl(selectedLetter.photo.url) : null,
-        media: spotifyTrackId ? {
+        photoUrl: shareTargetLetter.photo?.url ? getOptimizedPhotoUrl(shareTargetLetter.photo.url) : null,
+        media: shareTargetSpotifyId ? {
           provider: 'Spotify',
-          url: `https://open.spotify.com/track/${spotifyTrackId}`,
-        } : (youtubeVideoId ? {
+          url: `https://open.spotify.com/track/${shareTargetSpotifyId}`,
+        } : (shareTargetYoutubeId ? {
           provider: 'YouTube',
-          url: `https://youtu.be/${youtubeVideoId}`,
-          thumbnail: `https://i.ytimg.com/vi/${encodeURIComponent(youtubeVideoId)}/hqdefault.jpg`,
+          url: `https://youtu.be/${shareTargetYoutubeId}`,
+          thumbnail: `https://i.ytimg.com/vi/${encodeURIComponent(shareTargetYoutubeId)}/hqdefault.jpg`,
         } : null),
       });
     } catch {
@@ -1285,19 +1941,19 @@ function DetailsModal({
   };
 
   const letterShareUrl =
-    selectedLetter?._id && !selectedLetter.preview
-      ? `${window.location.origin}/letters/${selectedLetter._id}`
+    shareTargetLetter?._id && !shareTargetLetter.preview
+      ? `${window.location.origin}/letters/${shareTargetLetter._id}`
       : "";
   const letterPinUrl =
-    selectedLetter?._id && !selectedLetter.preview
+    shareTargetLetter?._id && !shareTargetLetter.preview
       ? (typeof window !== "undefined" && window.location?.origin && window.location.origin !== "null"
-          ? `${window.location.origin}/letters/${selectedLetter._id}`
-          : `https://letterstocasper.com/letters/${selectedLetter._id}`)
+          ? `${window.location.origin}/letters/${shareTargetLetter._id}`
+          : `https://letterstocasper.com/letters/${shareTargetLetter._id}`)
       : "";
   const isLetterPinned = Boolean(
-    selectedLetter?.is_pinned &&
-    selectedLetter.pin_expires_at &&
-    new Date(selectedLetter.pin_expires_at).getTime() > Date.now()
+    shareTargetLetter?.is_pinned &&
+    shareTargetLetter.pin_expires_at &&
+    new Date(shareTargetLetter.pin_expires_at).getTime() > Date.now()
   );
   const letterQrUrl = letterShareUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&ecc=H&data=${encodeURIComponent(
@@ -1335,7 +1991,7 @@ function DetailsModal({
   };
 
   const handleCopyLetterLink = async () => {
-    if (!selectedLetter?._id || selectedLetter.preview) return;
+    if (!shareTargetLetter?._id || shareTargetLetter.preview) return;
 
     try {
       if (navigator.clipboard?.writeText) {
@@ -1360,7 +2016,7 @@ function DetailsModal({
       setShowShareDialog(false);
       setShowQrCode(false);
 
-      fetch(`${render_url}/${selectedLetter._id}/copy-link`, {
+      fetch(`${render_url}/${shareTargetLetter._id}/copy-link`, {
         method: "POST",
         headers: {"x-api-key": api_key},
       }).catch(error => console.error("Error recording link copy:", error));
@@ -1375,10 +2031,12 @@ function DetailsModal({
   const handleDownloadQr = async () => {
     if (!letterQrUrl || isDownloadingQr) return;
 
+    const qrUrlForDownload = letterQrUrl;
+    const letterIdForDownload = getLetterId(shareTargetLetter);
     setIsDownloadingQr(true);
     const temporaryUrls = [];
     try {
-      const downloadQrUrl = letterQrUrl.replace("size=240x240&margin=12", "size=720x720&margin=36");
+      const downloadQrUrl = qrUrlForDownload.replace("size=240x240&margin=12", "size=720x720&margin=36");
       const [qrResponse, logoResponse] = await Promise.all([
         fetch(downloadQrUrl),
         fetch("/ltc_favicon.png"),
@@ -1431,7 +2089,7 @@ function DetailsModal({
       temporaryUrls.push(downloadUrl);
       const downloadLink = document.createElement("a");
       downloadLink.href = downloadUrl;
-      downloadLink.download = `letter-to-casper-${selectedLetter._id}-qr.png`;
+      downloadLink.download = `letter-to-casper-${letterIdForDownload}-qr.png`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       downloadLink.remove();
@@ -1458,6 +2116,10 @@ function DetailsModal({
   };
 
   const handleCloseModal = () => {
+    if (isReplyPreviewing) {
+      exitReplyPreview();
+      return;
+    }
     if (closingRef.current) return;
     dismissFoldTip();
     closingRef.current = true;
@@ -1465,16 +2127,21 @@ function DetailsModal({
   };
 
   const handleOverlayClick = (event) => {
+    if (didHorizontalPointerDragRef.current) {
+      didHorizontalPointerDragRef.current = false;
+      return;
+    }
     if (event && event.target !== event.currentTarget) {
       return;
     }
-    if (!readMode) {
-      handleCloseModal();
+    if (isReplyPreviewing) {
+      exitReplyPreview();
       return;
     }
     if (opened) {
       triggerFoldTip();
     }
+    return;
   };
 
   const finishCloseModal = () => {
@@ -1490,6 +2157,10 @@ function DetailsModal({
     setShowLocationAdConfirm(false);
     setShowShareDialog(false);
     setShowPinModal(false);
+    setShowLetterActionChooser(false);
+    setShowReplyInfoDialog(false);
+    setShowReplyComposer(false);
+    setShowReplies(false);
     setShowQrCode(false);
     setShowQrAdConfirm(false);
     setIsDownloadingQr(false);
@@ -1508,10 +2179,10 @@ function DetailsModal({
   useEffect(() => {
     if (!isClosing) return undefined;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const timer = setTimeout(finishCloseModal, reduced ? 120 : 1380);
+    const timer = setTimeout(finishCloseModal, (reduced || selectedLetter?.preview) ? 120 : 1380);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClosing]);
+  }, [isClosing, selectedLetter?.preview]);
 
   const closeShareDialog = () => {
     setShowShareDialog(false);
@@ -1525,6 +2196,29 @@ function DetailsModal({
     const onKeyDown = (event) => {
       if (closingRef.current) return;
       if (event.key === "Escape") {
+        if (isReplyPreviewing) {
+          exitReplyPreview();
+          return;
+        }
+        if (showLetterActionChooser) {
+          setShowLetterActionChooser(false);
+          return;
+        }
+        if (showReplyInfoDialog) {
+          setShowReplyInfoDialog(false);
+          return;
+        }
+        if (showReplyComposer) {
+          if (document.querySelector('.letter-modal-overlay.is-preview-letter')) {
+            return;
+          }
+          setShowReplyComposer(false);
+          return;
+        }
+        if (showReplies) {
+          setShowReplies(false);
+          return;
+        }
         if (showPinModal) {
           setShowPinModal(false);
           return;
@@ -1540,10 +2234,31 @@ function DetailsModal({
         if (showAdLock) {
           return;
         }
+        if (readMode) {
+          if (opened) {
+            triggerFoldTip();
+          }
+          return;
+        }
         handleCloseModal();
         return;
       }
-      if (readMode && !showPhotoViewer && !showShareDialog && !showPinModal) {
+      if (!showPhotoViewer && !showShareDialog && !showPinModal && !showLetterActionChooser && !showReplyInfoDialog && !showReplyComposer && !showAdLock) {
+        if (event.key === "ArrowRight") {
+          if (replyViewingIndex === -1 && activeReplies.length > 0) {
+            slideToReply(0);
+          } else if (replyViewingIndex >= 0 && replyViewingIndex < activeReplies.length - 1) {
+            slideToReply(replyViewingIndex + 1);
+          }
+        } else if (event.key === "ArrowLeft") {
+          if (replyViewingIndex > 0) {
+            slideToReply(replyViewingIndex - 1);
+          } else if (replyViewingIndex === 0) {
+            slideToParent();
+          }
+        }
+      }
+      if (readMode && !showPhotoViewer && !showShareDialog && !showPinModal && !showLetterActionChooser && !showReplyInfoDialog && !showReplyComposer) {
         if (showAdLock) return;
         if (event.key === "ArrowDown" || event.key === "PageDown") {
           event.preventDefault();
@@ -1557,11 +2272,13 @@ function DetailsModal({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDetailsModal, showPhotoViewer, showShareDialog, showPinModal, readMode, showAdLock, goToNext, goToPrev]);
+  }, [showDetailsModal, showPhotoViewer, showShareDialog, showPinModal, showLetterActionChooser, showReplyInfoDialog, showReplyComposer, showReplies, readMode, showAdLock, goToNext, goToPrev, isReplyPreviewing, exitReplyPreview, replyViewingIndex, activeReplies, slideToReply, slideToParent, opened, triggerFoldTip]);
 
   const formatReadsCount = (readsCount) => {
     const parsed = parseInt(readsCount) || 0;
-    return parsed === 1 ? "1 read" : `${tc(parsed, 2)} reads`;
+    const formatted = tc(parsed, 2);
+    const label = parsed === 1 ? "read" : "reads";
+    return `${formatted} ${label}`;
   };
 
   const hasBadge =
@@ -1673,7 +2390,7 @@ function DetailsModal({
               <span className="letter-meta-sep">·</span>
             </>
           )}
-          {letter._id && !letter.preview && (
+          {letter._id && (!letter.preview || isReplyPreviewing) && (
             <>
               <span
                 className="letter-paper__pin"
@@ -1693,7 +2410,7 @@ function DetailsModal({
           <span className="letter-meta-sep">·</span>
           <span className="letter-paper__reads">
             <IoEyeOutline className="letter-paper__reads-eye" />
-            {formatReadsCount(lReads)}
+            <span>{formatReadsCount(lReads)}</span>
           </span>
 
           {(lHasLoc || (!letter.preview && letter._id)) && (
@@ -1868,7 +2585,7 @@ function DetailsModal({
           <span className="letter-meta-sep">·</span>
           <span className="letter-paper__reads">
             <IoEyeOutline className="letter-paper__reads-eye" />
-            {formatReadsCount(lReads)}
+            <span>{formatReadsCount(lReads)}</span>
           </span>
 
           {(lHasLoc || (!letter.preview && letter._id)) && (
@@ -1915,304 +2632,302 @@ function DetailsModal({
     );
   };
 
-  const renderActivePaper = () => (
-    <div className="letter-paper" ref={letterPaperRef}>
-      <div className="letter-paper__head">
-        <div className="letter-info" style={{ marginBottom: "4px" }}>
-          {readMode ? (
-            <span>
-              <strong>From:</strong> {selectedLetter.from}
-            </span>
-          ) : (
-            <Typewriter
-              options={{ delay: 50, loop: false, stringSplitter }}
-              onInit={(typewriter) => {
-                typewriter
-                  .typeString(
-                    `<strong>From:</strong> ${selectedLetter.from}`
-                  )
-                  .callFunction((state) => {
-                    state.elements.cursor.remove();
-                  })
-                  .start();
-              }}
-            />
-          )}
-        </div>
-        <div className="letter-info">
-          {readMode ? (
-            <span>
-              <strong>To:</strong> {selectedLetter.to}
-            </span>
-          ) : (
-            <Typewriter
-              options={{ delay: 50, loop: false, stringSplitter }}
-              onInit={(typewriter) => {
-                typewriter
-                  .typeString(`<strong>To:</strong> ${selectedLetter.to}`)
-                  .callFunction((state) => {
-                    state.elements.cursor.remove();
-                  })
-                  .start();
-              }}
-            />
-          )}
-        </div>
-      </div>
+  const renderActivePaper = () => {
+    const isReplyActive = replyViewingIndex >= 0;
+    const activeLetter = activeContextLetter;
 
-      <div
-        className="letter-paper__date"
-        data-tooltip-id="timezone_tooltip"
-        data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
-        data-tooltip-place="top"
-        data-tooltip-variant="info"
-      >
-        <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
-        <span className="timestamp-text">
-          <span>{formatTimestamp(selectedLetter.timestamp)}</span>
-        </span>
-      </div>
-      <Tooltip id="timezone_tooltip" />
+    const activeMedia = extractMediaLinks(activeLetter?.message || "");
+    const activeSpotifyTrackId = activeMedia?.spotifyLink?.id || null;
+    const activeYoutubeVideoId = activeMedia?.youtubeLink?.id || null;
+    const activeMessage = activeMedia?.newMessage || activeLetter?.message || "";
+    const activeHasAttachment = Boolean(activeSpotifyTrackId || activeYoutubeVideoId || activeLetter?.photo?.url);
 
-      {TRANSLATION_ENABLED && detectedLanguage && (!selectedLetter.sensitiveContent || sensitiveMessageRevealed) && (
-        <div className="letter-paper__translation-control">
-          <button
-            type="button"
-            onClick={handleTranslate}
-            disabled={isTranslating}
-            aria-pressed={showTranslation}
-          >
-            <IoLanguageOutline aria-hidden="true" />
-            <span>
-              {isTranslating
-                ? "Translating…"
-                : showTranslation
-                  ? "Show original"
-                  : "Translate to English"}
-            </span>
-          </button>
-          <small>{detectedLanguage.name}</small>
-        </div>
-      )}
-
-      <div ref={messageBodyRef} className={`letter-paper__body letter-text${hasLetterAttachment ? " letter-paper__body--scrollable" : ""}`} tabIndex={0} role="region" aria-label="Letter message">
-        <SensitiveMessage
-          sensitive={selectedLetter.sensitiveContent === true}
-          revealed={sensitiveMessageRevealed}
-          onReveal={() => setSensitiveMessageRevealed(true)}
-        >
-          {showTranslation ? (
-            <span>{translatedMessage}</span>
-          ) : readMode || completedLetterKey === getLetterId(selectedLetter) ? (
-            <span>{message}</span>
-          ) : (
-            <Typewriter
-              options={{ delay: 40, loop: false, stringSplitter }}
-              onInit={(typewriter) => {
-                typewriter
-                  .typeString(message)
-                  .pauseFor(500)
-                  .callFunction(() => {
-                    setShowAttachments(true);
-                    setCompletedLetterKey(getLetterId(selectedLetter));
-                  })
-                  .start();
-              }}
-            />
-          )}
-        </SensitiveMessage>
-      </div>
-
-      {showAttachments && spotifyTrackId && (
-        <div className="letter-paper__media">
-          <iframe
-            title="spotify-preview"
-            style={{ border: "12px" }}
-            src={`https://open.spotify.com/embed/track/${spotifyTrackId}?utm_source=generator&theme=1`}
-            width="100%"
-            height="152"
-            frameBorder="0"
-            allowFullScreen=""
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          ></iframe>
-        </div>
-      )}
-      {showAttachments && !spotifyTrackId && youtubeVideoId && (
-        <div className="letter-paper__media letter-paper__media--youtube">
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
-            title="YouTube video player"
-            frameBorder="0"
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-          ></iframe>
-        </div>
-      )}
-      {showAttachments && selectedLetter.photo?.url && (
-        <figure className="letter-paper__photo">
-          <img
-            src={getOptimizedPhotoUrl(selectedLetter.photo.url)}
-            alt={`Attached to the letter from ${selectedLetter.from} to ${selectedLetter.to}`}
-            loading="lazy"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPhotoViewer(true)}
-            aria-label="View attached photo full screen"
-          >
-            <IoExpandOutline />
-            <span>View full screen</span>
-          </button>
-        </figure>
-      )}
-
-      <div className="letter-paper__meta">
-        {hasBadge && (
-          <>
-            <span
-              className="letter-paper__badges"
-              data-tooltip-id="badges"
-              data-tooltip-html={`${
-                early_bird
-                  ? "<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>"
-                  : ""
-              } ${letterId === adminId ? "Admin" : ""} ${
-                eleven_eleven ? "<strong>11:11 PM</strong>" : ""
-              } ${twelve_fifty_one ? "<strong>12:51 AM</strong>" : ""}
-              `}
-              data-tooltip-place="bottom"
-            >
-              {early_bird && (
-                <>
-                  <FaEarlybirds size="15px" />
-                  <BsBookmarkHeartFill size="15px" />
-                </>
-              )}
-              {letterId === adminId && (
-                <>
-                  <FaUserTie size="15px" />
-                </>
-              )}
-              {eleven_eleven && (
-                <>
-                  <PiShootingStarFill size="15px" />
-                </>
-              )}
-              {twelve_fifty_one && (
-                <>
-                  <PiHeartBreakFill size="15px" />
-                </>
-              )}
-            </span>
-            <Tooltip id="badges" arrowColor="transparent" />
-            <span className="letter-meta-sep">·</span>
-          </>
-        )}
-        {selectedLetter?._id && !selectedLetter.preview && (
-          isLetterPinned ? (
-            <>
-              <button
-                type="button"
-                className="letter-paper__pin"
-                data-tooltip-id="pinned_letter_tooltip"
-                data-tooltip-content={formatPinTimeRemaining(selectedLetter.pin_expires_at)}
-                data-tooltip-place="bottom"
-                aria-label="Pinned letter remaining time"
-              >
-                <AiOutlinePushpin aria-hidden="true" />
-              </button>
-              {typeof document !== "undefined" &&
-                createPortal(
-                  <Tooltip
-                    id="pinned_letter_tooltip"
-                    place="bottom"
-                    positionStrategy="fixed"
-                    openOnClick={true}
-                    closeEvents={{ click: true }}
-                    globalCloseEvents={{ clickOutsideAnchor: true, escape: true }}
-                    arrowColor="transparent"
-                    className="pinned-letter-tooltip"
-                    render={() => formatPinTimeRemaining(selectedLetter.pin_expires_at)}
-                  />,
-                  document.body
-                )}
-              <span className="letter-meta-sep">·</span>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="letter-paper__pin"
-                id="pin-letter-action"
-                onClick={() => {
-                  dismissPinOnboarding();
-                  setShowPinModal(true);
+    return (
+      <div className="letter-paper" ref={letterPaperRef}>
+        <div className="letter-paper__head">
+          <div className="letter-info" style={{ marginBottom: "4px" }}>
+            {readMode || isReplyActive || isReplyPreviewing ? (
+              <span>
+                <strong>From:</strong> {activeLetter.from}
+              </span>
+            ) : (
+              <Typewriter
+                key={`${getLetterId(activeLetter)}-from`}
+                options={{ delay: 50, loop: false, stringSplitter }}
+                onInit={(typewriter) => {
+                  typewriter
+                    .typeString(
+                      `<strong>From:</strong> ${activeLetter.from}`
+                    )
+                    .callFunction((state) => {
+                      state.elements.cursor.remove();
+                    })
+                    .start();
                 }}
-                aria-label="Pin this letter"
-                data-tooltip-id="pin-letter-description"
-                data-tooltip-content="Email this letter directly to them, anonymously."
-                data-tooltip-place="bottom"
-              >
-                <RiMailSendLine aria-hidden="true" />
-              </button>
-              {mountPinOnboarding && typeof document !== "undefined" &&
-                createPortal(
-                  <Tooltip
-                    anchorSelect="#pin-letter-action"
-                    place="bottom"
-                    offset={11}
-                    positionStrategy="fixed"
-                    isOpen={showPinOnboarding}
-                    clickable={true}
-                    className="pin-letter-onboarding-tooltip"
-                    classNameArrow="pin-letter-onboarding-tooltip__arrow"
-                    role="status"
-                  >
-                    <span className="pin-letter-onboarding-tooltip__copy">
-                      Email this letter directly to them, anonymously.
-                    </span>
-                    <button
-                      type="button"
-                      className="pin-letter-onboarding-tooltip__close"
-                      aria-label="Dismiss Pin Letter tip"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        dismissPinOnboarding();
-                      }}
-                    >
-                      ×
-                    </button>
-                  </Tooltip>,
-                  document.body
-                )}
-              {!mountPinOnboarding && typeof document !== "undefined" &&
-                createPortal(
-                  <Tooltip
-                    id="pin-letter-description"
-                    place="bottom"
-                    offset={8}
-                    delayShow={450}
-                    positionStrategy="fixed"
-                    className="pin-letter-hover-tooltip"
-                  />,
-                  document.body
-                )}
-              <span className="letter-meta-sep">·</span>
-            </>
-          )
+              />
+            )}
+          </div>
+          <div className="letter-info">
+            {readMode || isReplyActive || isReplyPreviewing ? (
+              <span>
+                <strong>To:</strong> {activeLetter.to}
+              </span>
+            ) : (
+              <Typewriter
+                key={`${getLetterId(activeLetter)}-to`}
+                options={{ delay: 50, loop: false, stringSplitter }}
+                onInit={(typewriter) => {
+                  typewriter
+                    .typeString(`<strong>To:</strong> ${activeLetter.to}`)
+                    .callFunction((state) => {
+                      state.elements.cursor.remove();
+                    })
+                    .start();
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        <div
+          className="letter-paper__date"
+          data-tooltip-id="timezone_tooltip"
+          data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
+          data-tooltip-place="top"
+          data-tooltip-variant="info"
+        >
+          <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
+          <span className="timestamp-text">
+            <span>{formatTimestamp(activeLetter.timestamp)}</span>
+          </span>
+        </div>
+        <Tooltip id="timezone_tooltip" />
+
+        {TRANSLATION_ENABLED && !isReplyActive && detectedLanguage && (!activeLetter.sensitiveContent || sensitiveMessageRevealed) && (
+          <div className="letter-paper__translation-control">
+            <button
+              type="button"
+              onClick={handleTranslate}
+              disabled={isTranslating}
+              aria-pressed={showTranslation}
+            >
+              <IoLanguageOutline aria-hidden="true" />
+              <span>
+                {isTranslating
+                  ? "Translating…"
+                  : showTranslation
+                    ? "Show original"
+                    : "Translate to English"}
+              </span>
+            </button>
+            <small>{detectedLanguage.name}</small>
+          </div>
         )}
 
-        <span className="letter-paper__age" title={js_ago(new Date(selectedLetter.timestamp), {format: "long"})}>
-          {shortLetterAge(selectedLetter.timestamp)}
-        </span>
-        <span className="letter-meta-sep">·</span>
-        <span className="letter-paper__reads">
-          <IoEyeOutline className="letter-paper__reads-eye" />
-          {formatReadsCount(displayedReads)}
-        </span>
+        <div ref={messageBodyRef} className={`letter-paper__body letter-text${activeHasAttachment ? " letter-paper__body--scrollable" : ""}`} tabIndex={0} role="region" aria-label="Letter message">
+          <SensitiveMessage
+            sensitive={activeLetter.sensitiveContent === true}
+            revealed={sensitiveMessageRevealed}
+            onReveal={() => setSensitiveMessageRevealed(true)}
+          >
+            {showTranslation && !isReplyActive ? (
+              <span>{translatedMessage}</span>
+            ) : readMode || isReplyActive || isReplyPreviewing || completedLetterKey === getLetterId(activeLetter) ? (
+              <span>{activeMessage}</span>
+            ) : (
+              <LetterMessageTypewriter
+                key={`${getLetterId(activeLetter)}-message`}
+                message={activeMessage}
+                letterKey={getLetterId(activeLetter)}
+                onComplete={(completedKey) => {
+                  setShowAttachments(true);
+                  setCompletedLetterKey(completedKey);
+                }}
+              />
+            )}
+          </SensitiveMessage>
+        </div>
 
-        {(hasLocation ||
-          (!selectedLetter.preview && selectedLetter._id)) && (
+        {((showAttachments && !isReplyActive) || isReplyActive) && activeSpotifyTrackId && (
+          <div className="letter-paper__media">
+            <iframe
+              title="spotify-preview"
+              style={{ border: "12px" }}
+              src={`https://open.spotify.com/embed/track/${activeSpotifyTrackId}?utm_source=generator&theme=1`}
+              width="100%"
+              height="152"
+              frameBorder="0"
+              allowFullScreen=""
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            ></iframe>
+          </div>
+        )}
+        {((showAttachments && !isReplyActive) || isReplyActive) && !activeSpotifyTrackId && activeYoutubeVideoId && (
+          <div className="letter-paper__media letter-paper__media--youtube">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${activeYoutubeVideoId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+            ></iframe>
+          </div>
+        )}
+        {((showAttachments && !isReplyActive) || isReplyActive) && activeLetter.photo?.url && (
+          <figure className="letter-paper__photo">
+            <img
+              src={getOptimizedPhotoUrl(activeLetter.photo.url)}
+              alt={`Attached to the letter from ${activeLetter.from} to ${activeLetter.to}`}
+              loading="lazy"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPhotoViewer(true)}
+              aria-label="View attached photo full screen"
+            >
+              <IoExpandOutline />
+              <span>View full screen</span>
+            </button>
+          </figure>
+        )}
+
+        <div className="letter-paper__meta">
+          {!isReplyActive && hasBadge && (
+            <>
+              <span
+                className="letter-paper__badges"
+                data-tooltip-id="badges"
+                data-tooltip-html={`${
+                  early_bird
+                    ? "<strong>This open letter is an Early Bird! <br/> It was among the first letters to be shared.</strong>"
+                    : ""
+                } ${letterId === adminId ? "Admin" : ""} ${
+                  eleven_eleven ? "<strong>11:11 PM</strong>" : ""
+                } ${twelve_fifty_one ? "<strong>12:51 AM</strong>" : ""}
+                `}
+                data-tooltip-place="bottom"
+              >
+                {early_bird && (
+                  <>
+                    <FaEarlybirds size="15px" />
+                    <BsBookmarkHeartFill size="15px" />
+                  </>
+                )}
+                {letterId === adminId && (
+                  <>
+                    <FaUserTie size="15px" />
+                  </>
+                )}
+                {eleven_eleven && (
+                  <>
+                    <PiShootingStarFill size="15px" />
+                  </>
+                )}
+                {twelve_fifty_one && (
+                  <>
+                    <PiHeartBreakFill size="15px" />
+                  </>
+                )}
+              </span>
+              <Tooltip id="badges" arrowColor="transparent" />
+              <span className="letter-meta-sep">·</span>
+            </>
+          )}
+          {activeLetter?._id && (!activeLetter.preview || isReplyPreviewing) && (
+            (!isReplyActive && isLetterPinned) ? (
+              <>
+                <button
+                  type="button"
+                  className="letter-paper__pin"
+                  data-tooltip-id="pinned_letter_tooltip"
+                  data-tooltip-content={formatPinTimeRemaining(activeLetter.pin_expires_at)}
+                  data-tooltip-place="bottom"
+                  aria-label="Pinned letter remaining time: open delivery and reply options"
+                  onClick={() => setShowLetterActionChooser(true)}
+                >
+                  <AiOutlinePushpin aria-hidden="true" />
+                </button>
+                {typeof document !== "undefined" &&
+                  createPortal(
+                    <Tooltip
+                      id="pinned_letter_tooltip"
+                      place="bottom"
+                      positionStrategy="fixed"
+                      openOnClick={true}
+                      closeEvents={{ click: true }}
+                      globalCloseEvents={{ clickOutsideAnchor: true, escape: true }}
+                      arrowColor="transparent"
+                      className="pinned-letter-tooltip"
+                      render={() => formatPinTimeRemaining(activeLetter.pin_expires_at)}
+                    />,
+                    document.body
+                  )}
+                <span className="letter-meta-sep">·</span>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="letter-paper__pin"
+                  id="pin-letter-action"
+                  onClick={() => {
+                    dismissPinOnboarding();
+                    setShowLetterActionChooser(true);
+                  }}
+                  aria-label="Pin this letter, or open delivery and reply options"
+                >
+                  <RiMailSendLine aria-hidden="true" />
+                </button>
+                {mountPinOnboarding && typeof document !== "undefined" &&
+                  createPortal(
+                    <Tooltip
+                      anchorSelect="#pin-letter-action"
+                      place="bottom"
+                      offset={11}
+                      positionStrategy="fixed"
+                      isOpen={showPinOnboarding}
+                      clickable={true}
+                      className="pin-letter-onboarding-tooltip"
+                      classNameArrow="pin-letter-onboarding-tooltip__arrow"
+                      role="status"
+                    >
+                      <span className="pin-letter-onboarding-tooltip__copy">
+                        Email this letter directly to them, anonymously.
+                      </span>
+                      <button
+                        type="button"
+                        className="pin-letter-onboarding-tooltip__close"
+                        aria-label="Dismiss Pin Letter tip"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          dismissPinOnboarding();
+                        }}
+                      >
+                        ×
+                      </button>
+                    </Tooltip>,
+                    document.body
+                  )}
+                <span className="letter-meta-sep">·</span>
+              </>
+            )
+          )}
+
+          <span className="letter-paper__age" title={js_ago(new Date(activeLetter.timestamp), {format: "long"})}>
+            {shortLetterAge(activeLetter.timestamp)}
+          </span>
+          <span className="letter-meta-sep">·</span>
+          <span className="letter-paper__reads">
+            <IoEyeOutline className="letter-paper__reads-eye" />
+            <span>{formatReadsCount(
+              getLetterId(activeLetter) === getLetterId(selectedLetter)
+                ? displayedReads
+                : Math.max(1, Number(activeLetter.reads) || 1)
+            )}</span>
+          </span>
+
+          {(hasLocation ||
+            (!activeLetter.preview && activeLetter._id)) && (
           <>
             <span className="letter-meta-sep">·</span>
             <span className="letter-paper__actions">
@@ -2239,15 +2954,18 @@ function DetailsModal({
                 )
               )}
               {hasLocation &&
-                !selectedLetter.preview &&
-                selectedLetter._id && (
+                !activeLetter.preview &&
+                activeLetter._id && (
                   <span className="letter-meta-sep">·</span>
                 )}
-              {!selectedLetter.preview && selectedLetter._id && (
+              {!activeLetter.preview && activeLetter._id && (
                 <button
                   type="button"
                   className="letter-paper__share"
-                  onClick={() => setShowShareDialog(true)}
+                  onClick={() => {
+                    preloadQrImage(letterQrUrl);
+                    setShowShareDialog(true);
+                  }}
                   aria-label="Share this letter"
                   title="Share letter"
                 >
@@ -2255,7 +2973,7 @@ function DetailsModal({
                   <span>Share</span>
                 </button>
               )}
-              {!selectedLetter.preview && selectedLetter._id && (
+              {!activeLetter.preview && activeLetter._id && (
                 <>
                   <span className="letter-meta-sep">·</span>
                   <span className="letter-reaction-cluster">
@@ -2332,6 +3050,7 @@ function DetailsModal({
       </div>
     </div>
   );
+};
 
   const renderEnvelope = (closing = false) => (
     <div className={`letter-envelope${closing ? " letter-envelope--closing" : ""}`} aria-hidden="true">
@@ -2355,7 +3074,7 @@ function DetailsModal({
     showDetailsModal &&
     selectedLetter && (
       <div
-        className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}${isClosing ? " is-folding-closed" : ""}`}
+        className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}${isClosing ? " is-folding-closed" : ""}${selectedLetter?.preview ? " is-preview-letter" : ""}${replyPaymentNotice?.type === "success" ? " is-reply-payment-success" : ""}`}
         onAnimationEnd={(event) => {
           if (event.target === event.currentTarget &&
               ["letter-close-fade", "letter-close-reduced"].includes(event.animationName)) {
@@ -2366,103 +3085,113 @@ function DetailsModal({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={finishPointerDrag}
+        onPointerCancel={cancelPointerDrag}
       >
-        {readMode ? (
-          <div className="read-mode-stage">
-            {outgoingLetter && (
-              <div
-                className={`read-mode-card-wrapper is-exiting-${slideDirection}`}
-                aria-hidden="true"
-              >
-                <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    className="letter-modal__close"
-                    aria-hidden="true"
-                    tabIndex={-1}
-                  >
-                    <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
-                    </svg>
-                  </button>
-                  {renderOutgoingPaper(outgoingLetter)}
-                </div>
-              </div>
-            )}
+        <div className={`read-mode-stage${!readMode ? " letter-stage--modal" : ""}`}>
+          {outgoingLetter && (
             <div
-              className={`read-mode-card-wrapper${slideDirection ? ` is-entering-${slideDirection}` : ""}`}
-              onClick={(e) => e.stopPropagation()}
+              className={`read-mode-card-wrapper is-exiting-${slideDirection}`}
+              aria-hidden="true"
             >
-              <div className="letter-modal">
-                {opened && (
-                  <button
-                    type="button"
-                    className={`letter-modal__close${showFoldTip ? " is-hinted" : ""}`}
-                    onClick={handleCloseModal}
-                    aria-label="Close letter"
-                    title="Fold and close letter"
-                    disabled={isClosing}
-                  >
-                    <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
-                    </svg>
-                  </button>
-                )}
-                {readMode && opened && showFoldTip && (
-                  <aside
-                    className={`read-mode-fold-tip${isFoldTipFading ? " is-fading-out" : ""}`}
-                    role="status"
-                    aria-label="Close letter hint"
-                    onClick={handleCloseModal}
-                  >
-                    <span className="read-mode-fold-tip__text">
-                      {isTouchDevice ? "Tap the folded corner to close" : "Click the folded corner to close"}
-                    </span>
-                  </aside>
-                )}
-                {!opened ? (
-                  renderEnvelope()
-                ) : (
-                  renderActivePaper()
-                )}
-                {closingEnvelope}
+              <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  className="letter-modal__close"
+                  aria-hidden="true"
+                  tabIndex={-1}
+                >
+                  <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                    <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                  </svg>
+                </button>
+                {renderOutgoingPaper(outgoingLetter)}
               </div>
             </div>
-            {opened && prerenderLetter && (
-              <div
-                className="read-mode-prerender-wrapper"
-                aria-hidden="true"
-                tabIndex={-1}
-              >
-                {renderPrerenderPaper(prerenderLetter)}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
-            {opened && (
-              <button
-                type="button"
-                className="letter-modal__close"
-                onClick={handleCloseModal}
-                aria-label="Close letter"
-                  title="Fold and close letter"
+          )}
+          <div
+            className={`read-mode-card-wrapper${slideDirection ? ` is-entering-${slideDirection}` : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="letter-modal">
+              {opened && (
+                <button
+                  type="button"
+                  className={`letter-modal__close${showFoldTip ? " is-hinted" : ""}`}
+                  onClick={handleCloseModal}
+                  aria-label={isReplyPreviewing ? "Back to Editing" : "Close letter"}
+                  title={isReplyPreviewing ? "Back to Editing" : "Fold and close letter"}
                   disabled={isClosing}
-              >
-                <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
-                    </svg>
-              </button>
-            )}
-
-            {!opened ? (
-              renderEnvelope()
-            ) : (
-              renderActivePaper()
-            )}
-            {closingEnvelope}
+                >
+                  <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                    <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                  </svg>
+                </button>
+              )}
+              {opened && showFoldTip && (
+                <aside
+                  className={`read-mode-fold-tip${isFoldTipFading ? " is-fading-out" : ""}`}
+                  role="status"
+                  aria-label="Close letter hint"
+                  onClick={handleCloseModal}
+                >
+                  <span className="read-mode-fold-tip__text">
+                    {isTouchDevice ? "Tap the folded corner to close" : "Click the folded corner to close"}
+                  </span>
+                </aside>
+              )}
+              {!opened ? (
+                renderEnvelope()
+              ) : (
+                renderActivePaper()
+              )}
+              {closingEnvelope}
+            </div>
           </div>
-        )}
+          {readMode && opened && prerenderLetter && (
+            <div
+              className="read-mode-prerender-wrapper"
+              aria-hidden="true"
+              tabIndex={-1}
+            >
+              {renderPrerenderPaper(prerenderLetter)}
+            </div>
+          )}
+          {opened && isReplyPreviewing && activeReplies.length > 0 && !showReplies && showReplySwipeTip && (
+            <div
+              className={`read-mode-tip reply-swipe-tip ${replyViewingIndex < 0 ? "reply-swipe-tip--to-reply" : "reply-swipe-tip--to-parent"}${isReplySwipeTipFading ? " is-fading-out" : ""}`}
+              role="status"
+              id={isReplyPreviewing ? "reply-preview-replies-cue" : "letter-replies-cue"}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (replySwipeTipTimerRef.current) clearTimeout(replySwipeTipTimerRef.current);
+                if (replySwipeTipFadeTimerRef.current) clearTimeout(replySwipeTipFadeTimerRef.current);
+                setShowReplySwipeTip(false);
+                setIsReplySwipeTipFading(false);
+                if (replyViewingIndex < 0) {
+                  slideToReply(0);
+                } else {
+                  slideToParent();
+                }
+              }}
+            >
+              <div className="read-mode-tip__content">
+                {replyViewingIndex < 0 ? (
+                  <>
+                    <span>
+                      {activeReplies.length === 1 ? "Swipe to Read Reply" : "Swipe to Read Replies"}
+                    </span>
+                    <FaArrowRight className="read-mode-tip__arrow reply-navigation-arrow--right" aria-hidden="true" />
+                  </>
+                ) : (
+                  <FaArrowLeft className="read-mode-tip__arrow reply-navigation-arrow--left" aria-hidden="true" />
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {readMode && opened && showReadTip && (
           <div
@@ -2500,6 +3229,246 @@ function DetailsModal({
             {readBoundary === "beginning"
               ? "This is where the letters begin"
               : "No more letters beyond this point"}
+          </div>
+        )}
+
+        {opened && isReplyPreviewing && (
+          <button
+            type="button"
+            className="reply-preview-banner reply-preview-banner__btn"
+            aria-label="Back to Editing"
+            onClick={(e) => {
+              e.stopPropagation();
+              exitReplyPreview();
+            }}
+          >
+            <span>Back to Editing</span>
+          </button>
+        )}
+
+        {opened && isReplyLetter && !replyParentLetter && (
+          <>
+            <button
+              type="button"
+              className="letter-reply-association"
+              data-tooltip-id="reply-association-tooltip"
+              data-tooltip-content={selectedLetter.parent_association?.available
+                ? `This is a reply to the letter from ${selectedLetter.parent_association.from} to ${selectedLetter.parent_association.to}.`
+                : "This is a reply to a letter that is no longer publicly available."}
+              data-tooltip-place="right"
+              aria-label="Show the letter this reply is associated with"
+              onClick={() => {
+                if (selectedLetter.parent_association?.available && selectedLetter.parent_letter_id) navigate(`/letters/${selectedLetter.parent_letter_id}`);
+              }}
+            >
+              <BsReply /><span>Reply</span>
+            </button>
+            <Tooltip id="reply-association-tooltip" place="right" openOnClick />
+          </>
+        )}
+
+        {opened && replyThreadIndex >= 0 && !showReplies && replyThreadBoundary && (
+          <aside
+            className={`read-mode-tip reply-swipe-tip reply-thread-tip ${replyThreadBoundary === "start" ? "reply-swipe-tip--to-parent" : "reply-swipe-tip--to-reply"}`}
+            role="status"
+            aria-label="Reply thread boundary"
+          >
+            <div className="read-mode-tip__content">
+              <span>{replyThreadBoundary === "start" ? "Start of thread" : "Latest reply"}</span>
+            </div>
+          </aside>
+        )}
+        {opened && replyThreadIndex > 0 && !showReplies && showReplyThreadCues && !replyThreadBoundary && (
+          <button
+            type="button"
+            className="read-mode-tip reply-swipe-tip reply-swipe-tip--to-parent reply-thread-arrow-tip"
+            aria-label="View previous letter in reply thread"
+            onClick={(event) => { event.stopPropagation(); slideThreadTo(replyThreadIndex - 1); }}
+          >
+            <FaArrowLeft className="read-mode-tip__arrow reply-navigation-arrow--left" aria-hidden="true" />
+          </button>
+        )}
+        {opened && replyThreadIndex >= 0 && replyThreadIndex < replyThread.length - 1 && !showReplies && showReplyThreadCues && !replyThreadBoundary && (
+          <button
+            type="button"
+            className="read-mode-tip reply-swipe-tip reply-swipe-tip--to-reply reply-thread-arrow-tip"
+            aria-label="View next letter in reply thread"
+            onClick={(event) => { event.stopPropagation(); slideThreadTo(replyThreadIndex + 1); }}
+          >
+            <FaArrowRight className="read-mode-tip__arrow reply-navigation-arrow--right" aria-hidden="true" />
+          </button>
+        )}
+        {opened && isReplyLetter && replyThreadIndex < 0 && replyParentLetter && !showReplies && showReplyParentCue && (
+          <div
+            className={`read-mode-tip reply-swipe-tip ${showReplyParent ? "reply-swipe-tip--to-reply" : "reply-swipe-tip--to-parent"}`}
+            role="status"
+            aria-label={showReplyParent ? "Return to reply" : "View the letter this replies to"}
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowReplyParentCue(false);
+              if (showReplyParent) slideBackToFeedReply();
+              else slideToReplyParent();
+            }}
+          >
+            <div className="read-mode-tip__content">
+              {showReplyParent
+                ? <FaArrowRight className="read-mode-tip__arrow reply-navigation-arrow--right" aria-hidden="true" />
+                : <FaArrowLeft className="read-mode-tip__arrow reply-navigation-arrow--left" aria-hidden="true" />}
+            </div>
+          </div>
+        )}
+
+        {opened && showReplies && (
+          <aside className="letter-replies-drawer" aria-label="Replies to this letter" onClick={event => event.stopPropagation()}>
+            <div className="letter-replies-drawer__association"><BsReply /><span>Replying to <strong>{selectedLetter.to || "this letter"}</strong></span></div>
+            <div className="letter-replies-drawer__head"><h2>Replies</h2><button type="button" onClick={() => setShowReplies(false)} aria-label="Close replies"><BsX /></button></div>
+            {repliesLoading && <p role="status">Loading replies…</p>}
+            {!repliesLoading && repliesError && <p role="alert">{repliesError}</p>}
+            {!repliesLoading && !repliesError && replies.length === 0 && <p>Payment is still being confirmed. This reply will appear shortly.</p>}
+            <div className="letter-replies-list">
+              {replies.map(reply => (
+                <article
+                  key={reply._id}
+                  id={`reply-${reply._id}`}
+                  className={`${new URLSearchParams(location.search).get("reply") === String(reply._id) ? "is-targeted" : ""}${reply.isPreview ? " is-preview-reply" : ""}`}
+                >
+                  {reply.isPreview && <span className="reply-preview-badge">Your preview reply</span>}
+                  {reply.photo?.url && (
+                    <div className="reply-photo">
+                      <img src={reply.photo.url} alt="Attached reply" />
+                    </div>
+                  )}
+                  <p>{reply.message}</p>
+                  <footer><span>{reply.alias || "Anonymous"}</span>{reply.timestamp && <time dateTime={reply.timestamp}>{shortLetterAge(reply.timestamp)}</time>}</footer>
+                </article>
+              ))}
+            </div>
+          </aside>
+        )}
+
+        {showLetterActionChooser && (
+          <div className="letter-action-chooser-overlay" onClick={(event) => {event.stopPropagation(); setShowLetterActionChooser(false);}}>
+            <section className="letter-action-chooser" role="dialog" aria-modal="true" aria-labelledby="letter-action-chooser-title" onClick={(event) => event.stopPropagation()}>
+              <button type="button" className="letter-action-chooser__close" onClick={() => setShowLetterActionChooser(false)} aria-label="Close letter options"><BsX /></button>
+              <h2 id="letter-action-chooser-title">Choose an action</h2>
+              <div className="letter-action-chooser__options">
+                <button type="button" onClick={() => {setShowLetterActionChooser(false); setShowPinModal(true);}}>
+                  <MdAlternateEmail aria-hidden="true" />
+                  <span><strong>Email or Pin</strong><small>Make sure your words are felt</small></span>
+                </button>
+                <button type="button" onClick={() => {
+                  setShowLetterActionChooser(false);
+                  setShowReplyInfoDialog(true);
+                }}>
+                  <BsReply aria-hidden="true" />
+                  <span><strong>Reply to the letter</strong><small>Write and send a reply</small></span>
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {showReplyInfoDialog && (
+          <div
+            className="reply-info-overlay"
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowReplyInfoDialog(false);
+            }}
+          >
+            <section
+              className="reply-info-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="reply-info-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="reply-info-dialog__close"
+                onClick={() => setShowReplyInfoDialog(false)}
+                aria-label="Close reply information"
+              >
+                <BsX />
+              </button>
+              <h2 id="reply-info-title">How replies work</h2>
+              <p className="reply-info-dialog__intro">
+                Replies stay linked to the letter they answer. When someone opens either letter, the connected letters sit beside it so they can swipe left or right through the conversation.
+              </p>
+
+              <div className="reply-link-demo" aria-label="An original letter connected to its reply">
+                <div className="reply-link-demo__track">
+                  <article className="reply-link-demo__paper">
+                    <strong>Original letter</strong>
+                    <span />
+                    <span />
+                    <span />
+                  </article>
+                  <FaArrowRight className="reply-link-demo__arrow" aria-hidden="true" />
+                  <article className="reply-link-demo__paper">
+                    <strong>Reply</strong>
+                    <span />
+                    <span />
+                    <span />
+                  </article>
+                </div>
+              </div>
+
+              <p className="reply-info-dialog__detail">
+                If the conversation continues, each reply remains part of the same swipeable thread.
+              </p>
+              <div className="reply-info-dialog__actions">
+                <button type="button" onClick={() => setShowReplyInfoDialog(false)}>Not now</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReplyInfoDialog(false);
+                    if (isReplyPreviewing) exitReplyPreview();
+                    setShowReplyComposer(true);
+                  }}
+                >
+                  Write a reply
+                </button>
+              </div>
+              <p className="reply-info-dialog__paid-note">
+                This feature is paid to keep replies genuine and spam-free.
+              </p>
+            </section>
+          </div>
+        )}
+
+        {showReplyComposer && (
+          <ReplyComposer
+            letter={activeContextLetter}
+            onClose={() => {
+              setShowReplyComposer(false);
+              exitReplyPreview();
+            }}
+            onPreview={handleReplyPreview}
+            isHidden={isReplyPreviewing}
+          />
+        )}
+
+        {replyPaymentNotice && (
+          <div className="reply-payment-result-overlay" onClick={(event) => {event.stopPropagation();}}>
+            <section
+              className={`reply-payment-result reply-payment-result--${replyPaymentNotice.type}`}
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="reply-payment-result-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h2 id="reply-payment-result-title">{replyPaymentNotice.title}</h2>
+              <p>{replyPaymentNotice.message}</p>
+              <button type="button" onClick={() => {
+                const wasSuccessful = replyPaymentNotice.type === "success";
+                setReplyPaymentNotice(null);
+                if (wasSuccessful) {
+                  toggleDetailsModal();
+                  navigate("/", {replace: true});
+                }
+              }}>Close</button>
+            </section>
           </div>
         )}
 
@@ -2671,7 +3640,7 @@ function DetailsModal({
               {showImageOptions && (
                 <div id="letter-image-options" className="letter-image-options" role="group" aria-label="Choose image contents">
                   <button type="button" onClick={() => handleDownloadImage(false)} disabled={isDownloadingImage}><strong>Letter only</strong><small>Paper, message, and footer</small></button>
-                  <button type="button" onClick={() => handleDownloadImage(true)} disabled={isDownloadingImage || !hasLetterAttachment}><strong>With attachments</strong><small>{hasLetterAttachment ? 'Include photo and link previews' : 'This letter has no attachments'}</small></button>
+                  <button type="button" onClick={() => handleDownloadImage(true)} disabled={isDownloadingImage || !shareTargetHasAttachment}><strong>With attachments</strong><small>{shareTargetHasAttachment ? 'Include photo and link previews' : 'This letter has no attachments'}</small></button>
                   {isDownloadingImage && <span className="letter-image-progress" role="status"><span className="letter-image-spinner" aria-hidden="true" />Preparing your image…</span>}
                 </div>
               )}
@@ -2680,6 +3649,7 @@ function DetailsModal({
                 <div className="letter-share-dialog__qr">
                   <div className="letter-share-dialog__qr-code">
                     <img
+                      key={letterQrUrl}
                       className="letter-share-dialog__qr-image"
                       src={letterQrUrl}
                       alt="QR code for this letter"
@@ -2767,7 +3737,7 @@ function DetailsModal({
           </div>
         )}
 
-        {showPhotoViewer && selectedLetter.photo?.url && (
+        {showPhotoViewer && activeContextLetter.photo?.url && (
           <div
             className="letter-photo-viewer"
             role="dialog"
@@ -2787,8 +3757,8 @@ function DetailsModal({
               <BsX />
             </button>
             <img
-              src={getOptimizedPhotoUrl(selectedLetter.photo.url, 1800)}
-              alt={`Attached to the letter from ${selectedLetter.from} to ${selectedLetter.to}`}
+              src={getOptimizedPhotoUrl(activeContextLetter.photo.url, 1800)}
+              alt={`Attached to the letter from ${activeContextLetter.from} to ${activeContextLetter.to}`}
               onClick={(event) => event.stopPropagation()}
             />
           </div>

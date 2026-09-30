@@ -15,13 +15,12 @@ const createStorage = () => {
 };
 
 describe("Pin Letter tooltip storage", () => {
-  test("claims no more than two automatic views", () => {
+  test("claims only one automatic view for a new visitor", () => {
     const storage = createStorage();
 
     expect(claimPinTooltipView(storage)).toBe(true);
-    expect(claimPinTooltipView(storage)).toBe(true);
     expect(claimPinTooltipView(storage)).toBe(false);
-    expect(storage.getItem(PIN_TOOLTIP_VIEW_COUNT_KEY)).toBe("2");
+    expect(storage.getItem(PIN_TOOLTIP_VIEW_COUNT_KEY)).toBe("1");
   });
 
   test("a permanent dismissal prevents later automatic views", () => {

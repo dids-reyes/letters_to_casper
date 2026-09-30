@@ -239,16 +239,27 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     }
   }, [nightShift]);
 
-  const [readMode, setReadMode] = useState(() => Boolean(readModeEnabled && initialReadMode));
-
-  useEffect(() => {
+  const [readMode, setReadMode] = useState(() => {
+    if (!readModeEnabled) return false;
     try {
-      localStorage.removeItem("readMode");
-      localStorage.removeItem("readModeTipDismissed");
+      const savedReadMode = localStorage.getItem("readMode");
+      if (savedReadMode === "true" || savedReadMode === "false") {
+        return savedReadMode === "true";
+      }
     } catch (e) {
       /* storage unavailable */
     }
-  }, []);
+    return Boolean(initialReadMode);
+  });
+
+  useEffect(() => {
+    if (!readModeEnabled) return;
+    try {
+      localStorage.setItem("readMode", String(readMode));
+    } catch (e) {
+      /* storage unavailable */
+    }
+  }, [readMode, readModeEnabled]);
 
   useEffect(() => {
     if (!SHOW_SKY_NAV) return undefined;
@@ -1022,7 +1033,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   }, [searchTerm]);
 
   const searchedResults = searchedLetters.messages.filter((letter) => {
-    const { from, to, message } = letter;
+    const { from = "", to = "", message = "" } = letter;
     const lowerCasedSearchTerm = searchTerm.toLowerCase();
     return (
       from.toLowerCase().includes(lowerCasedSearchTerm) ||
@@ -1034,7 +1045,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const isSearchActive = searchTerm.trim() !== "";
   const activeLetters = useMemo(() => {
     const source = isSearchActive ? searchedResults : letters.messages;
-    const approved = source.filter((letter) => letter.approve);
+    const approved = source.filter((letter) => {
+      const isReply = Boolean(letter.is_reply || letter.type === "reply" || letter.parent_letter_id || letter.parentLetterId);
+      if (isReply) return letter.published !== false && letter.payment_status !== "unpaid";
+      return letter.approve;
+    });
 
     const now = new Date();
     const pinnedLetters = [];
@@ -1758,6 +1773,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             ? null
             : fetchMoreData
         }
+        onReplyPublished={fetchLetters}
       />
       {showUiAnnouncement && (
         <div
