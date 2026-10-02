@@ -47,7 +47,6 @@ html.night-shift {
 .pin-letter-tier:focus-within { outline:2px solid var(--ltc-primary); outline-offset:3px; }
 .pin-letter-tier-heading { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:nowrap; gap:6px; font-size:14px; white-space:nowrap; }
 .pin-letter-tier-price { display:flex; align-items:baseline; gap:8px; }
-.pin-letter-tier-price del { color:var(--ltc-muted); font-size:11px; }
 .pin-letter-tier-heading b { color:var(--ltc-primary); font-weight:500; }
 .pin-letter-tier-note { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; margin-top:7px; color:var(--ltc-muted); font-size:11px; line-height:1.5; }
 .pin-letter-expiration { margin:14px 0 6px; font-size:12px; color:var(--ltc-muted); }
@@ -111,13 +110,11 @@ html.night-shift {
   .pin-letter-tier { padding:12px 10px; }
   .pin-letter-tier-heading { font-size:12px; gap:4px; }
   .pin-letter-tier-price { gap:4px; }
-  .pin-letter-tier-price del { font-size:10px; }
 }
 @media(max-width:360px) {
   .pin-letter-tier { padding:10px 7px; }
   .pin-letter-tier-heading { font-size:11px; gap:3px; }
   .pin-letter-tier-price { gap:3px; }
-  .pin-letter-tier-price del { font-size:9px; }
 }
 
 .pin-delivery-card {
@@ -975,7 +972,6 @@ html.night-shift .pin-supported-payments__item .pin-payment-brand--sterling {
     font-size: 11px;
   }
 
-  .pin-letter-tier-price del,
   .pin-letter-tier-badge {
     font-size: 8px;
   }

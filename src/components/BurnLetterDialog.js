@@ -935,13 +935,7 @@ function BurnLetterDialog({
                   </div>
 
                   {targetLetter.timestamp && (
-                    <div
-                      className="letter-paper__date"
-                      data-tooltip-id="burn_timezone_tooltip"
-                      data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
-                      data-tooltip-place="top"
-                      data-tooltip-variant="info"
-                    >
+                    <div className="letter-paper__date">
                       <BsMailboxFlag
                         className="letter-paper__date-icon"
                         size="15px"

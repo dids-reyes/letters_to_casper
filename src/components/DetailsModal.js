@@ -43,6 +43,214 @@ import SensitiveMessage from "./SensitiveMessage";
 // Translation remains disabled until explicitly re-enabled.
 const TRANSLATION_ENABLED = false;
 
+let youtubeIframeApiPromise;
+const loadYoutubeIframeApi = () => {
+  if (typeof window === "undefined") return Promise.reject(new Error("YouTube API requires a browser"));
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (youtubeIframeApiPromise) return youtubeIframeApiPromise;
+
+  youtubeIframeApiPromise = new Promise((resolve, reject) => {
+    const previousReadyHandler = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof previousReadyHandler === "function") previousReadyHandler();
+      resolve(window.YT);
+    };
+
+    let script = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+    if (!script) {
+      script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+    script.addEventListener("error", () => {
+      youtubeIframeApiPromise = undefined;
+      reject(new Error("Unable to load the YouTube iframe API"));
+    }, {once: true});
+  });
+
+  return youtubeIframeApiPromise;
+};
+
+const MusicVisualizer = React.memo(function MusicVisualizer() {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return undefined;
+
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    let width = 0;
+    let height = 0;
+    let frameId;
+    let lastTime = performance.now();
+    let energy = 0.55;
+    let energyTarget = 0.75;
+    let nextSurge = 0;
+    let particles = [];
+    let isMobile = false;
+    const wavePhases = Array.from({length: 13}, () => Math.random() * Math.PI * 2);
+    const mobileExtraWavePhases = Array.from({length: 10}, () => Math.random() * Math.PI * 2);
+
+    const resetParticle = (particle, randomPosition = false) => {
+      particle.band = Math.random() < 0.5 ? -1 : 1;
+      if (isMobile) {
+        particle.x = width * (0.52 + (Math.random() - 0.5) * 0.3);
+        particle.y = randomPosition ? Math.random() * height : -30 - Math.random() * height * 0.08;
+      } else {
+        particle.x = randomPosition ? Math.random() * width : -30 - Math.random() * width * 0.08;
+        particle.y = height * (0.52 + (Math.random() - 0.5) * 0.3);
+      }
+      particle.previousX = particle.x;
+      particle.previousY = particle.y;
+      particle.speed = 0.35 + Math.random() * 1.35;
+      const transverseSize = isMobile ? width : height;
+      particle.offset = (Math.random() - 0.5) * transverseSize * (isMobile ? 0.42 : 0.18);
+      particle.phase = Math.random() * Math.PI * 2;
+      particle.alpha = 0.12 + Math.random() * 0.55;
+      particle.size = 0.45 + Math.random() * 1.8;
+    };
+
+    const resize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      isMobile = width <= 600;
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const particleCount = Math.min(460, Math.max(190, Math.round(width / 4)));
+      particles = Array.from({length: particleCount}, () => {
+        const particle = {};
+        resetParticle(particle, true);
+        return particle;
+      });
+    };
+
+    const draw = now => {
+      const delta = Math.min(32, now - lastTime);
+      const time = now / 1000;
+      lastTime = now;
+      let bass = energy;
+      let mids = energy;
+      let treble = energy;
+      if (now >= nextSurge) {
+        energyTarget = 0.35 + Math.random() * 0.65;
+        nextSurge = now + 180 + Math.random() * 720;
+      }
+      energy += (energyTarget - energy) * Math.min(1, delta * 0.0045);
+      canvas.parentElement?.style.setProperty("--music-glow-near", `${9 + energy * 13}px`);
+      canvas.parentElement?.style.setProperty("--music-glow-far", `${28 + energy * 28}px`);
+
+      context.clearRect(0, 0, width, height);
+      context.globalCompositeOperation = "lighter";
+
+      const waveGradient = isMobile
+        ? context.createLinearGradient(0, 0, 0, height)
+        : context.createLinearGradient(0, 0, width, 0);
+      waveGradient.addColorStop(0, "rgba(43, 91, 168, 0)");
+      waveGradient.addColorStop(0.18, `rgba(83, 145, 238, ${0.2 + energy * 0.16})`);
+      waveGradient.addColorStop(0.5, `rgba(174, 211, 255, ${0.38 + energy * 0.25})`);
+      waveGradient.addColorStop(0.82, `rgba(83, 145, 238, ${0.2 + energy * 0.16})`);
+      waveGradient.addColorStop(1, "rgba(43, 91, 168, 0)");
+
+      // On mobile, this same center band is rotated 90 degrees. The letter
+      // covers its middle, leaving the waveform visible above and below it.
+      const waveBands = [0.52];
+      const activeWavePhases = isMobile
+        ? [...wavePhases, ...mobileExtraWavePhases]
+        : wavePhases;
+      const centerWaveLayer = Math.floor(activeWavePhases.length / 2);
+      waveBands.forEach((bandCenter, bandIndex) => {
+        activeWavePhases.forEach((phase, layer) => {
+          const normalizedLayer = (layer - (activeWavePhases.length - 1) / 2) / activeWavePhases.length;
+          const direction = (layer + bandIndex) % 2 === 0 ? 1 : -1;
+          context.beginPath();
+          const pathLength = isMobile ? height : width;
+          for (let position = -12; position <= pathLength + 12; position += 12) {
+            const progress = position / pathLength;
+            const centerEnvelope = Math.pow(Math.sin(Math.PI * Math.max(0, Math.min(1, progress))), 0.72);
+            const swell =
+              Math.sin(progress * (7.2 + layer * 0.17) + time * (0.58 + layer * 0.025) * direction + phase) * 0.62 +
+              Math.sin(progress * (16.5 - layer * 0.11) - time * (0.34 + layer * 0.018) + phase * 1.7) * 0.27 +
+              Math.sin(progress * 31 + time * 0.16 + energy * 2.4 + bandIndex) * 0.11;
+            const transverseSize = isMobile ? width : height;
+            const mobileWidthScale = isMobile ? 2.35 : 1;
+            const spacing = transverseSize * 0.13 * mobileWidthScale;
+            const amplitude = transverseSize * (0.025 + bass * 0.11 + mids * 0.025) * mobileWidthScale;
+            const displacement = normalizedLayer * spacing + swell * amplitude * centerEnvelope;
+            const x = isMobile ? width * bandCenter + displacement : position;
+            const y = isMobile ? position : height * bandCenter + displacement;
+            if (position === -12) context.moveTo(x, y);
+            else context.lineTo(x, y);
+          }
+          context.strokeStyle = waveGradient;
+          context.lineWidth = layer === centerWaveLayer ? 1.8 : 0.55 + (1 - Math.abs(normalizedLayer)) * 0.65;
+          context.globalAlpha = 0.28 + (1 - Math.abs(normalizedLayer)) * 0.48;
+          context.shadowColor = "rgba(80, 145, 255, 0.72)";
+          context.shadowBlur = layer === centerWaveLayer ? 10 + bass * 24 : 2 + mids * 9;
+          context.stroke();
+        });
+      });
+      context.globalAlpha = 1;
+      context.shadowBlur = 0;
+
+      particles.forEach(particle => {
+        particle.previousX = particle.x;
+        particle.previousY = particle.y;
+        const progress = isMobile ? particle.y / height : particle.x / width;
+        const turbulence =
+          Math.sin(progress * 10.7 + time * 1.15 + particle.phase) * 0.62 +
+          Math.sin(progress * 24.3 - time * 0.73 + particle.phase * 0.4) * 0.25 +
+          Math.sin(progress * 47.1 + time * 0.31) * 0.13;
+        const envelope = Math.sin(Math.PI * Math.max(0, Math.min(1, progress)));
+        const particleAmplitude = (0.045 + energy * 0.075) * (isMobile ? 2.35 : 1);
+        if (isMobile) {
+          const targetX = width * 0.52 + particle.offset + turbulence * width * particleAmplitude * envelope;
+          particle.x += (targetX - particle.x) * (0.025 + energy * 0.018);
+          particle.y += particle.speed * delta * (0.035 + mids * 0.045 + treble * 0.035);
+        } else {
+          const targetY = height * 0.52 + particle.offset + turbulence * height * particleAmplitude * envelope;
+          particle.y += (targetY - particle.y) * (0.025 + energy * 0.018);
+          particle.x += particle.speed * delta * (0.035 + mids * 0.045 + treble * 0.035);
+        }
+
+        const edgePosition = isMobile ? particle.y : particle.x;
+        const edgeLength = isMobile ? height : width;
+        const edgeFade = Math.min(1, edgePosition / 170, (edgeLength - edgePosition) / 170);
+        const alpha = Math.max(0, edgeFade) * particle.alpha * (0.55 + energy * 0.65);
+        const gradient = context.createLinearGradient(particle.previousX, particle.previousY, particle.x, particle.y);
+        gradient.addColorStop(0, `rgba(67, 124, 222, ${alpha * 0.08})`);
+        gradient.addColorStop(1, `rgba(145, 194, 255, ${alpha})`);
+        context.strokeStyle = gradient;
+        context.lineWidth = particle.size * (0.65 + treble * 1.1);
+        context.beginPath();
+        context.moveTo(particle.previousX, particle.previousY);
+        context.lineTo(particle.x, particle.y);
+        context.stroke();
+
+        if (isMobile ? particle.y > height + 40 : particle.x > width + 40) resetParticle(particle);
+      });
+      context.globalCompositeOperation = "source-over";
+
+      if (!reducedMotion) frameId = requestAnimationFrame(draw);
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+    frameId = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="music-visualizer" aria-hidden="true" />;
+});
+
 const LetterMessageTypewriter = React.memo(function LetterMessageTypewriter({
   message,
   letterKey,
@@ -1749,6 +1957,47 @@ function DetailsModal({
   const activeContextSadEchoes = Math.max(0, Number(activeContextLetter?.echoes?.sad) || 0);
   const letterLocationMap = getGoogleMapsLocationUrl(activeContextLetter?.loc);
   const hasLocation = Boolean(letterLocationMap);
+  const activePlaybackYoutubeId = extractMediaLinks(activeContextLetter?.message || "").youtubeLink?.id || null;
+  const youtubePlayerRef = useRef(null);
+  const youtubePlayerInstanceRef = useRef(null);
+  const [isYoutubePlaying, setIsYoutubePlaying] = useState(false);
+  const activeYoutubePlayerVisible = Boolean(
+    activePlaybackYoutubeId && showDetailsModal && opened &&
+    (showAttachments || replyViewingIndex >= 0)
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsYoutubePlaying(false);
+    if (!activeYoutubePlayerVisible || !youtubePlayerRef.current) return undefined;
+
+    loadYoutubeIframeApi()
+      .then(YT => {
+        if (cancelled || !youtubePlayerRef.current || !YT?.Player) return;
+        youtubePlayerInstanceRef.current = new YT.Player(youtubePlayerRef.current, {
+          events: {
+            onStateChange: event => {
+              if (!cancelled) setIsYoutubePlaying(event.data === YT.PlayerState.PLAYING);
+            },
+            onError: () => {
+              if (!cancelled) setIsYoutubePlaying(false);
+            },
+          },
+        });
+      })
+      .catch(() => setIsYoutubePlaying(false));
+
+    return () => {
+      cancelled = true;
+      setIsYoutubePlaying(false);
+      try {
+        youtubePlayerInstanceRef.current?.destroy?.();
+      } catch {
+        // The iframe may already be gone during letter navigation.
+      }
+      youtubePlayerInstanceRef.current = null;
+    };
+  }, [activeContextLetterId, activePlaybackYoutubeId, activeYoutubePlayerVisible]);
 
   useEffect(() => {
     setEchoes({love: activeContextLoveEchoes, sad: activeContextSadEchoes});
@@ -2689,19 +2938,12 @@ function DetailsModal({
           </div>
         </div>
 
-        <div
-          className="letter-paper__date"
-          data-tooltip-id="timezone_tooltip"
-          data-tooltip-content="🇵🇭 Philippine Standard Time (UTC +08)"
-          data-tooltip-place="top"
-          data-tooltip-variant="info"
-        >
+        <div className="letter-paper__date">
           <BsMailboxFlag className="letter-paper__date-icon" size="15px" />
           <span className="timestamp-text">
             <span>{formatTimestamp(activeLetter.timestamp)}</span>
           </span>
         </div>
-        <Tooltip id="timezone_tooltip" />
 
         {TRANSLATION_ENABLED && !isReplyActive && detectedLanguage && (!activeLetter.sensitiveContent || sensitiveMessageRevealed) && (
           <div className="letter-paper__translation-control">
@@ -2765,7 +3007,8 @@ function DetailsModal({
         {((showAttachments && !isReplyActive) || isReplyActive) && !activeSpotifyTrackId && activeYoutubeVideoId && (
           <div className="letter-paper__media letter-paper__media--youtube">
             <iframe
-              src={`https://www.youtube-nocookie.com/embed/${activeYoutubeVideoId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0`}
+              ref={youtubePlayerRef}
+              src={`https://www.youtube-nocookie.com/embed/${activeYoutubeVideoId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
               title="YouTube video player"
               frameBorder="0"
               allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -3074,7 +3317,7 @@ function DetailsModal({
     showDetailsModal &&
     selectedLetter && (
       <div
-        className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}${isClosing ? " is-folding-closed" : ""}${selectedLetter?.preview ? " is-preview-letter" : ""}${replyPaymentNotice?.type === "success" ? " is-reply-payment-success" : ""}`}
+        className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}${isClosing ? " is-folding-closed" : ""}${selectedLetter?.preview ? " is-preview-letter" : ""}${replyPaymentNotice?.type === "success" ? " is-reply-payment-success" : ""}${isYoutubePlaying ? " is-youtube-playing" : ""}`}
         onAnimationEnd={(event) => {
           if (event.target === event.currentTarget &&
               ["letter-close-fade", "letter-close-reduced"].includes(event.animationName)) {
@@ -3090,6 +3333,7 @@ function DetailsModal({
         onPointerUp={finishPointerDrag}
         onPointerCancel={cancelPointerDrag}
       >
+        {isYoutubePlaying && <MusicVisualizer />}
         <div className={`read-mode-stage${!readMode ? " letter-stage--modal" : ""}`}>
           {outgoingLetter && (
             <div
@@ -3115,7 +3359,7 @@ function DetailsModal({
             className={`read-mode-card-wrapper${slideDirection ? ` is-entering-${slideDirection}` : ""}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="letter-modal">
+            <div className={`letter-modal${isYoutubePlaying ? " is-youtube-playing" : ""}`}>
               {opened && (
                 <button
                   type="button"
@@ -3350,18 +3594,19 @@ function DetailsModal({
           <div className="letter-action-chooser-overlay" onClick={(event) => {event.stopPropagation(); setShowLetterActionChooser(false);}}>
             <section className="letter-action-chooser" role="dialog" aria-modal="true" aria-labelledby="letter-action-chooser-title" onClick={(event) => event.stopPropagation()}>
               <button type="button" className="letter-action-chooser__close" onClick={() => setShowLetterActionChooser(false)} aria-label="Close letter options"><BsX /></button>
-              <h2 id="letter-action-chooser-title">Choose an action</h2>
+              <h2 id="letter-action-chooser-title">Show your Support</h2>
+              <p className="letter-action-chooser__intro">These paid actions help keep Letters to Casper going.</p>
               <div className="letter-action-chooser__options">
                 <button type="button" onClick={() => {setShowLetterActionChooser(false); setShowPinModal(true);}}>
                   <MdAlternateEmail aria-hidden="true" />
-                  <span><strong>Email or Pin</strong><small>Make sure your words are felt</small></span>
+                  <span><strong>Email or Pin <span className="letter-action-chooser__paid">Paid</span></strong><small>Make sure your words are felt</small></span>
                 </button>
                 <button type="button" onClick={() => {
                   setShowLetterActionChooser(false);
                   setShowReplyInfoDialog(true);
                 }}>
                   <BsReply aria-hidden="true" />
-                  <span><strong>Reply to the letter</strong><small>Write and send a reply</small></span>
+                  <span><strong>Reply to the letter <span className="letter-action-chooser__paid">Paid</span></strong><small>Write and send a personal reply</small></span>
                 </button>
               </div>
             </section>

@@ -102,11 +102,12 @@ describe("View letter footer timestamp and reads formatting", () => {
     const emailDeliverBtn = screen.getByRole("button", { name: /Open delivery and reply options/i });
     fireEvent.click(emailDeliverBtn);
 
-    expect(screen.getByRole("heading", { name: "Choose an action" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Show your Support" })).toBeInTheDocument();
+    expect(screen.getByText("These paid actions help keep Letters to Casper going.")).toBeInTheDocument();
     expect(screen.getByText("Email or Pin")).toBeInTheDocument();
     expect(screen.queryByText("Email or Deliver")).not.toBeInTheDocument();
-    expect(screen.getByText("Write and send a reply")).toBeInTheDocument();
-    expect(screen.queryByText(/paid reply/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Write and send a personal reply")).toBeInTheDocument();
+    expect(screen.getAllByText("Paid")).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", {name: /Reply to the letter/i}));
     expect(screen.getByRole("heading", {name: "How replies work"})).toBeInTheDocument();

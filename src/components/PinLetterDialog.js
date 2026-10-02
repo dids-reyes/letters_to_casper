@@ -29,7 +29,6 @@ export const SUPPORT_TIERS = [
     id: 'delivery',
     label: 'Send to Inbox',
     price: 9,
-    originalPrice: 19,
     badge: 'Direct',
     description: 'Deliver this letter anonymously straight to their email inbox.',
     delivers: true,
@@ -38,7 +37,6 @@ export const SUPPORT_TIERS = [
     id: 'pin-24h',
     label: 'Pin to Feed',
     price: 9,
-    originalPrice: 19,
     badge: 'Visibility',
     description: 'Pin at the top of the public feed for 24 hours.',
     hours: 24,
@@ -47,7 +45,6 @@ export const SUPPORT_TIERS = [
     id: 'keepsake-48h',
     label: 'The Keepsake (Both)',
     price: 29,
-    originalPrice: 49,
     badge: 'Most Meaningful',
     description: 'Inbox delivery + 48 hours pinned to the top of the feed.',
     hours: 48,
@@ -485,7 +482,7 @@ export default function PinLetterDialog({
                           </span>
                         )}
                       </button>
-                      <span className="pin-letter-tier-price"><del aria-label={`Previously ₱${option.originalPrice}`}>₱{option.originalPrice}</del><b aria-label={`Now ₱${option.price}`}>₱{option.price}</b></span>
+                      <span className="pin-letter-tier-price"><b>₱{option.price}</b></span>
                     </span>
                     <span className="pin-letter-tier-badge">{option.badge}</span>
                     <span className="pin-letter-tier-note">{option.description}</span>

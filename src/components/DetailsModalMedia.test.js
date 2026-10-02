@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import DetailsModal, { extractMediaLinks } from './DetailsModal';
 
@@ -12,6 +12,7 @@ jest.mock('../data/keys', () => ({
 }));
 
 beforeAll(() => {
+  HTMLCanvasElement.prototype.getContext = jest.fn(() => null);
   global.ResizeObserver = class {
     observe() {}
     unobserve() {}
@@ -102,6 +103,19 @@ describe('extractMediaLinks helper', () => {
 });
 
 describe('DetailsModal media preview rendering & isolation', () => {
+  let handleYoutubeStateChange;
+
+  beforeEach(() => {
+    handleYoutubeStateChange = null;
+    window.YT = {
+      PlayerState: {PLAYING: 1},
+      Player: jest.fn((iframe, options) => {
+        handleYoutubeStateChange = options.events.onStateChange;
+        return {destroy: jest.fn()};
+      }),
+    };
+  });
+
   const spotifyLetter = {
     _id: 'letter-spotify',
     from: 'Alice',
@@ -177,6 +191,39 @@ describe('DetailsModal media preview rendering & isolation', () => {
     expect(youtubeIframe).not.toBeNull();
     expect(youtubeIframe.src).toContain('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
     expect(spotifyIframe).toBeNull();
+  });
+
+  test('adds the letter glow only while the YouTube player is playing', async () => {
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={youtubeLetter}
+          readMode={true}
+          initialOpened={true}
+          letters={[youtubeLetter]}
+        />
+      </MemoryRouter>
+    );
+
+    const iframe = container.querySelector('iframe[title="YouTube video player"]');
+    const modal = container.querySelector('.letter-modal');
+    expect(iframe.src).toContain('enablejsapi=1');
+    expect(modal).not.toHaveClass('is-youtube-playing');
+
+    await waitFor(() => expect(handleYoutubeStateChange).toEqual(expect.any(Function)));
+    act(() => {
+      handleYoutubeStateChange({data: 1});
+    });
+    expect(modal).toHaveClass('is-youtube-playing');
+    expect(container.querySelector('.music-visualizer')).not.toBeNull();
+
+    act(() => {
+      handleYoutubeStateChange({data: 2});
+    });
+    expect(modal).not.toHaveClass('is-youtube-playing');
+    expect(container.querySelector('.music-visualizer')).toBeNull();
   });
 
   test('renders NO media player when letter has no song links', () => {
