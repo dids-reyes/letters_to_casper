@@ -5288,6 +5288,31 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
   animation: letter-overlay-in 0.25s ease;
 }
 
+.letter-modal-overlay.is-youtube-playing {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(28, 61, 119, 0.7) 0, rgba(8, 17, 31, 0.84) 42%, rgba(3, 8, 15, 0.97) 100%);
+  transition: background 500ms ease;
+}
+
+.music-visualizer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  animation: music-visualizer-in 700ms ease forwards;
+}
+
+@media (max-width: 600px) {
+  .letter-modal-overlay.is-folding-closed .music-visualizer {
+    display: none;
+  }
+}
+
+@keyframes music-visualizer-in { to { opacity: 1; } }
+
 @keyframes letter-overlay-in {
   from {
     opacity: 0;
@@ -5359,6 +5384,7 @@ html.night-shift .letter-modal-overlay.is-read-mode {
 
 .read-mode-stage {
   position: relative;
+  z-index: 2;
   width: 100%;
   max-width: 580px;
   margin: auto;
@@ -6163,6 +6189,22 @@ html.night-shift .reply-preview-banner {
   animation: letter-paper-in 0.4s ease;
 }
 
+.letter-modal.is-youtube-playing {
+  filter:
+    drop-shadow(0 0 var(--music-glow-near, 16px) rgba(89, 145, 255, 0.78))
+    drop-shadow(0 0 var(--music-glow-far, 43px) rgba(55, 114, 255, 0.62));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .letter-modal.is-youtube-playing {
+    animation: none;
+  }
+  .music-visualizer {
+    animation: none !important;
+    opacity: 1;
+  }
+}
+
 @keyframes letter-paper-in {
   from {
     opacity: 0;
@@ -6646,8 +6688,18 @@ html.night-shift .letter-paper__translation-control small {
 }
 
 .letter-action-chooser h2 {
-  margin: 0 36px 12px 0;
+  margin: 0 36px 4px;
   font-size: 18px;
+  text-align: center;
+}
+
+.letter-action-chooser__intro {
+  margin: 0 0 14px;
+  color: #766d5e;
+  font-size: clamp(10px, 3.4vw, 12px);
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .letter-action-chooser__close {
@@ -6706,7 +6758,21 @@ html.night-shift .letter-paper__translation-control small {
 }
 
 .letter-action-chooser__options strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
+}
+
+.letter-action-chooser__paid {
+  display: inline-block;
+  padding: 0 4px;
+  border: 1px solid #c9bfa7;
+  border-radius: 5px;
+  color: #766d5e;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .letter-action-chooser__options small {
@@ -6732,6 +6798,15 @@ html.night-shift .letter-action-chooser__options > button:hover {
 
 html.night-shift .letter-action-chooser__options small {
   color: #aaa28f;
+}
+
+html.night-shift .letter-action-chooser__intro,
+html.night-shift .letter-action-chooser__paid {
+  color: #aaa28f;
+}
+
+html.night-shift .letter-action-chooser__paid {
+  border-color: #5a5548;
 }
 
 .reply-info-overlay {
