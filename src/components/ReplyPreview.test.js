@@ -337,14 +337,14 @@ describe("Reply Preview and Swipe Navigation Flow", () => {
         <DetailsModal showDetailsModal selectedLetter={replyMe} readMode initialOpened toggleDetailsModal={jest.fn()} />
       </MemoryRouter>
     );
-    await waitFor(() => expect(screen.getByRole("button", {name: /view previous letter in reply thread/i}).querySelector(".reply-navigation-arrow--left")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", {name: /(view previous letter in reply thread|view reply on the left)/i}).querySelector(".reply-navigation-arrow--left")).toBeInTheDocument());
     expect(screen.getByRole("button", {name: /view next letter in reply thread/i}).querySelector(".reply-navigation-arrow--right")).toBeInTheDocument();
 
     const overlay = container.querySelector(".letter-modal-overlay");
     fireEvent.touchStart(overlay, {touches: [{clientX: 300, clientY: 200}]});
     fireEvent.touchEnd(overlay, {changedTouches: [{clientX: 100, clientY: 200}]});
     expect(document.querySelector(".read-mode-card-wrapper:not([class*='is-exiting']) .letter-paper")).toHaveTextContent(laterReply.message);
-    expect(screen.queryByRole("button", {name: /letter in reply thread/i})).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", {name: /(letter in reply thread|view reply on the left)/i})).not.toBeInTheDocument();
 
     fireEvent.touchStart(overlay, {touches: [{clientX: 300, clientY: 200}]});
     fireEvent.touchEnd(overlay, {changedTouches: [{clientX: 100, clientY: 200}]});
