@@ -218,8 +218,9 @@ describe("DetailsModal pinned letter indicator and separator", () => {
 
     // Click pin button on unpinned letter
     fireEvent.click(pinButton);
-    if (screen.queryByText(/Email or deliver/i)) {
-      fireEvent.click(screen.getByText(/Email or deliver/i));
+    const emailOrPinOption = screen.queryByRole("button", { name: /Email or Pin/i }) || screen.queryByText(/Email or deliver/i);
+    if (emailOrPinOption) {
+      fireEvent.click(emailOrPinOption);
     }
 
     // Should open PinLetterDialog with URL field automatically hidden
@@ -250,8 +251,9 @@ describe("DetailsModal pinned letter indicator and separator", () => {
     expect(pinButton).toBeInTheDocument();
 
     fireEvent.click(pinButton);
-    if (screen.queryByText(/Email or deliver/i)) {
-      fireEvent.click(screen.getByText(/Email or deliver/i));
+    const emailOrPinOption = screen.queryByRole("button", { name: /Email or Pin/i }) || screen.queryByText(/Email or deliver/i);
+    if (emailOrPinOption) {
+      fireEvent.click(emailOrPinOption);
     }
     expect(screen.getByRole("heading", { name: /Make Sure Your Words Are Felt/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/Which letter would you like to upgrade\?/i)).not.toBeInTheDocument();
@@ -274,8 +276,9 @@ describe("DetailsModal pinned letter indicator and separator", () => {
 
     const pinButton = screen.getByRole("button", { name: /pin this letter/i });
     fireEvent.click(pinButton);
-    if (screen.queryByText(/Email or deliver/i)) {
-      fireEvent.click(screen.getByText(/Email or deliver/i));
+    const emailOrPinOption = screen.queryByRole("button", { name: /Email or Pin/i }) || screen.queryByText(/Email or deliver/i);
+    if (emailOrPinOption) {
+      fireEvent.click(emailOrPinOption);
     }
 
     const dialogHeading = screen.getByRole("heading", { name: /Make Sure Your Words Are Felt/i });

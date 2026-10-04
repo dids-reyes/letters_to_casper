@@ -108,6 +108,23 @@ const formatCountry = (country) => {
 
 export const READ_MODE_ENABLED = true;
 
+export const isReplyLetter = (letter) =>
+  Boolean(
+    letter &&
+      (letter.is_reply ||
+        letter.type === "reply" ||
+        letter.parent_letter_id ||
+        letter.parentLetterId)
+  );
+
+export const isActivelyPinned = (letter, now = new Date()) =>
+  Boolean(
+    letter &&
+      letter.is_pinned &&
+      letter.pin_expires_at &&
+      new Date(letter.pin_expires_at) > now
+  );
+
 function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } = {}) {
   const navigate = useNavigate();
   const { messageId } = useParams();
@@ -597,8 +614,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     if (isReadModeActive || isFetchingMoreRef.current) return;
     isFetchingMoreRef.current = true;
     try {
+      const baseMessageCount = (letters.messages || []).filter(
+        (m) => m && !isReplyLetter(m) && String(m._id || "") !== adminId
+      ).length;
       const response = await fetch(
-        `${render_url}?offset=${letters.messages.length}&limit=50`,
+        `${render_url}?offset=${baseMessageCount}&limit=50`,
         {
           headers: {
             "x-api-key": api_key,
@@ -630,7 +650,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       setLoading(2);
       isFetchingMoreRef.current = false;
     }
-  }, [isReadModeActive, letters.messages.length]);
+  }, [isReadModeActive, letters.messages]);
 
   const fetchLetters = async () => {
     if (goBackToNotFeatured) {
@@ -1048,7 +1068,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const activeLetters = useMemo(() => {
     const source = isSearchActive ? searchedResults : letters.messages;
     const approved = source.filter((letter) => {
-      const isReply = Boolean(letter.is_reply || letter.type === "reply" || letter.parent_letter_id || letter.parentLetterId);
+      const isReply = isReplyLetter(letter);
       if (isReply) return letter.published !== false && letter.payment_status !== "unpaid";
       return letter.approve;
     });
@@ -1058,23 +1078,46 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     const regularLetters = [];
     const seenIds = new Set();
 
+    // Determine the oldest timestamp reached by the continuous base letters feed.
+    // Injected letters (like older replies or the legacy admin letter) should not appear
+    // prematurely before the feed has chronologically scrolled down to their timestamp.
+    const baseLetterTimestamps = approved
+      .filter((l) => !isReplyLetter(l) && String(l._id || "") !== adminId && l.timestamp)
+      .map((l) => new Date(l.timestamp).getTime())
+      .filter((t) => !Number.isNaN(t));
+
+    const oldestBaseTimestamp =
+      baseLetterTimestamps.length > 0 ? Math.min(...baseLetterTimestamps) : null;
+
     for (const letter of approved) {
       const id = String(letter._id || "");
       if (id && seenIds.has(id)) continue;
       if (id) seenIds.add(id);
 
+      const isPinnedActive = isActivelyPinned(letter, now);
+
       // The backend injects the admin letter (from 2023) into the offset=0 response.
       // If it is not actively pinned, ignore this legacy injection in the regular feed
       // so it does not appear prematurely at the very bottom of today's letters.
-      if (
-        !isSearchActive &&
-        id === adminId &&
-        !(letter.is_pinned && letter.pin_expires_at && new Date(letter.pin_expires_at) > now)
-      ) {
+      if (!isSearchActive && id === adminId && !isPinnedActive) {
         continue;
       }
 
-      if (letter.is_pinned && letter.pin_expires_at && new Date(letter.pin_expires_at) > now) {
+      // If an unpinned reply letter was injected prematurely before the feed has
+      // chronologically reached its timestamp, ignore it until the feed scrolls to it.
+      if (
+        !isSearchActive &&
+        isReplyLetter(letter) &&
+        !isPinnedActive &&
+        oldestBaseTimestamp !== null
+      ) {
+        const letterTime = letter.timestamp ? new Date(letter.timestamp).getTime() : 0;
+        if (letterTime < oldestBaseTimestamp) {
+          continue;
+        }
+      }
+
+      if (isPinnedActive) {
         pinnedLetters.push(letter);
       } else {
         regularLetters.push(letter);

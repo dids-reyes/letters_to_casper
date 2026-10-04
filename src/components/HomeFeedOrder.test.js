@@ -245,4 +245,223 @@ describe('Home Feed Letter Ordering and Deduplication', () => {
     const letterCards = document.querySelectorAll('.letter-card:not(.letter-card--featured)');
     expect(letterCards.length).toBe(1);
   });
+
+  test('unpinned older reply letter from offset=0 is not injected at the bottom of the feed', async () => {
+    const now = Date.now();
+
+    const regularNewerLetter = {
+      _id: 'newer-letter-today',
+      from: 'Today Sender',
+      to: 'Today Recipient',
+      message: 'Letter From Today',
+      timestamp: new Date(now - 1000).toISOString(),
+      approve: true,
+      reads: 0,
+      echoes: {},
+    };
+
+    // Reply letter from 1-2 days ago that was injected into offset 0
+    const olderReplyLetter = {
+      _id: 'reply-letter-older',
+      from: 'Reply Sender',
+      to: 'Reply Recipient',
+      message: 'Reply From Yesterday',
+      timestamp: new Date(now - 86400000 * 2).toISOString(),
+      approve: true,
+      published: true,
+      payment_status: 'paid',
+      is_reply: true,
+      type: 'reply',
+      parent_letter_id: 'parent-123',
+      reads: 0,
+      echoes: {},
+    };
+
+    const mockMessages = [regularNewerLetter, olderReplyLetter];
+
+    global.fetch = jest.fn(async (url) => {
+      if (typeof url === 'string' && url.includes('/featured')) {
+        return {
+          ok: true,
+          json: async () => [],
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          messages: mockMessages,
+          counts: { approved: mockMessages.length, unapproved: 0 },
+          featured: null,
+        }),
+      };
+    });
+
+    render(
+      <MemoryRouter>
+        <Home readModeEnabled={false} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Letter From Today')).toBeInTheDocument();
+    });
+
+    // The older reply must NOT be injected at the bottom of today's letters
+    expect(screen.queryByText('Reply From Yesterday')).not.toBeInTheDocument();
+
+    const letterCards = document.querySelectorAll('.letter-card:not(.letter-card--featured)');
+    expect(letterCards.length).toBe(1);
+    expect(letterCards[0]).toHaveTextContent('Letter From Today');
+  });
+
+  test('reply letter within the chronological range of the loaded feed is displayed in correct order', async () => {
+    const now = Date.now();
+
+    const newerLetter = {
+      _id: 'newer-letter',
+      from: 'Newer Sender',
+      to: 'Newer Recipient',
+      message: 'Newer Chrono Message',
+      timestamp: new Date(now - 1000).toISOString(),
+      approve: true,
+      reads: 0,
+      echoes: {},
+    };
+
+    const replyLetter = {
+      _id: 'reply-chrono-letter',
+      from: 'Chrono Reply Sender',
+      to: 'Chrono Reply Recipient',
+      message: 'Chronological Reply Message',
+      timestamp: new Date(now - 2000).toISOString(),
+      approve: true,
+      published: true,
+      payment_status: 'paid',
+      is_reply: true,
+      type: 'reply',
+      parent_letter_id: 'parent-123',
+      reads: 0,
+      echoes: {},
+    };
+
+    const olderLetter = {
+      _id: 'older-letter',
+      from: 'Older Sender',
+      to: 'Older Recipient',
+      message: 'Older Chrono Message',
+      timestamp: new Date(now - 3000).toISOString(),
+      approve: true,
+      reads: 0,
+      echoes: {},
+    };
+
+    const mockMessages = [newerLetter, olderLetter, replyLetter];
+
+    global.fetch = jest.fn(async (url) => {
+      if (typeof url === 'string' && url.includes('/featured')) {
+        return {
+          ok: true,
+          json: async () => [],
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          messages: mockMessages,
+          counts: { approved: mockMessages.length, unapproved: 0 },
+          featured: null,
+        }),
+      };
+    });
+
+    render(
+      <MemoryRouter>
+        <Home readModeEnabled={false} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Newer Chrono Message')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Chronological Reply Message')).toBeInTheDocument();
+    expect(screen.getByText('Older Chrono Message')).toBeInTheDocument();
+
+    const letterCards = document.querySelectorAll('.letter-card:not(.letter-card--featured)');
+    expect(letterCards.length).toBe(3);
+    expect(letterCards[0]).toHaveTextContent('Newer Chrono Message');
+    expect(letterCards[1]).toHaveTextContent('Chronological Reply Message');
+    expect(letterCards[2]).toHaveTextContent('Older Chrono Message');
+  });
+
+  test('pinned reply letter is displayed in top pinned letters', async () => {
+    const now = Date.now();
+    const futureDate = new Date(now + 86400000).toISOString();
+
+    const pinnedReplyLetter = {
+      _id: 'pinned-reply-1',
+      from: 'Pinned Reply Sender',
+      to: 'Pinned Reply Recipient',
+      message: 'Pinned Reply Message',
+      timestamp: new Date(now - 86400000).toISOString(),
+      pinned_at: new Date(now - 1000).toISOString(),
+      pin_expires_at: futureDate,
+      is_pinned: true,
+      approve: true,
+      published: true,
+      payment_status: 'paid',
+      is_reply: true,
+      type: 'reply',
+      parent_letter_id: 'parent-123',
+      reads: 0,
+      echoes: {},
+    };
+
+    const regularLetter = {
+      _id: 'regular-letter-today',
+      from: 'Regular Sender',
+      to: 'Regular Recipient',
+      message: 'Regular Today Message',
+      timestamp: new Date(now - 500).toISOString(),
+      approve: true,
+      reads: 0,
+      echoes: {},
+    };
+
+    const mockMessages = [pinnedReplyLetter, regularLetter];
+
+    global.fetch = jest.fn(async (url) => {
+      if (typeof url === 'string' && url.includes('/featured')) {
+        return {
+          ok: true,
+          json: async () => [],
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          messages: mockMessages,
+          counts: { approved: mockMessages.length, unapproved: 0 },
+          featured: null,
+        }),
+      };
+    });
+
+    render(
+      <MemoryRouter>
+        <Home readModeEnabled={false} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Pinned Reply Message')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Regular Today Message')).toBeInTheDocument();
+
+    const letterCards = document.querySelectorAll('.letter-card:not(.letter-card--featured)');
+    expect(letterCards.length).toBe(2);
+    expect(letterCards[0]).toHaveTextContent('Pinned Reply Message');
+    expect(letterCards[1]).toHaveTextContent('Regular Today Message');
+  });
 });
