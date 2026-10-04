@@ -1645,7 +1645,7 @@ function DetailsModal({
         setReplyThreadIndex(data.active_index);
         setShowReplyThreadCues(true);
         window.clearTimeout(replyThreadCueTimerRef.current);
-        replyThreadCueTimerRef.current = window.setTimeout(() => setShowReplyThreadCues(false), 3000);
+        replyThreadCueTimerRef.current = window.setTimeout(() => setShowReplyThreadCues(false), 3500);
       })
       .catch(() => {
         // The existing direct parent navigation remains available as a fallback.
@@ -1659,7 +1659,7 @@ function DetailsModal({
       return undefined;
     }
     setShowReplyParentCue(true);
-    const timer = setTimeout(() => setShowReplyParentCue(false), 3000);
+    const timer = setTimeout(() => setShowReplyParentCue(false), 3500);
     return () => clearTimeout(timer);
   }, [isReplyLetter, opened, replyParentLetter, showReplyParent]);
 
@@ -1841,7 +1841,7 @@ function DetailsModal({
     return () => { active = false; if (timer) window.clearTimeout(timer); };
   }, [location.pathname, location.search, navigate, selectedLetter, showDetailsModal]);
 
-  const triggerReplySwipeTip = useCallback((duration = 2000) => {
+  const triggerReplySwipeTip = useCallback((duration = 3500) => {
     if (replySwipeTipTimerRef.current) clearTimeout(replySwipeTipTimerRef.current);
     if (replySwipeTipFadeTimerRef.current) clearTimeout(replySwipeTipFadeTimerRef.current);
 
@@ -1916,7 +1916,7 @@ function DetailsModal({
 
   useEffect(() => {
     if (opened && activeReplies.length > 0 && !showReplies) {
-      triggerReplySwipeTip(replyViewingIndex >= 0 ? 1000 : 2000);
+      triggerReplySwipeTip(3500);
     }
   }, [opened, activeReplies.length, showReplies, replyViewingIndex, triggerReplySwipeTip]);
 
@@ -3430,7 +3430,10 @@ function DetailsModal({
                     <FaArrowRight className="read-mode-tip__arrow reply-navigation-arrow--right" aria-hidden="true" />
                   </>
                 ) : (
-                  <FaArrowLeft className="read-mode-tip__arrow reply-navigation-arrow--left" aria-hidden="true" />
+                  <>
+                    <FaArrowLeft className="read-mode-tip__arrow reply-navigation-arrow--left" aria-hidden="true" />
+                    <span>Swipe to View Original Letter</span>
+                  </>
                 )}
               </div>
             </div>
@@ -3526,10 +3529,11 @@ function DetailsModal({
           <button
             type="button"
             className="read-mode-tip reply-swipe-tip reply-swipe-tip--to-parent reply-thread-arrow-tip"
-            aria-label="View previous letter in reply thread"
+            aria-label="View reply on the left"
             onClick={(event) => { event.stopPropagation(); slideThreadTo(replyThreadIndex - 1); }}
           >
             <FaArrowLeft className="read-mode-tip__arrow reply-navigation-arrow--left" aria-hidden="true" />
+            {replyThreadIndex === replyThread.length - 1 && <span>Swipe to view reply</span>}
           </button>
         )}
         {opened && replyThreadIndex >= 0 && replyThreadIndex < replyThread.length - 1 && !showReplies && showReplyThreadCues && !replyThreadBoundary && (
@@ -3539,6 +3543,7 @@ function DetailsModal({
             aria-label="View next letter in reply thread"
             onClick={(event) => { event.stopPropagation(); slideThreadTo(replyThreadIndex + 1); }}
           >
+            {replyThreadIndex === 0 && <span>Swipe to view reply</span>}
             <FaArrowRight className="read-mode-tip__arrow reply-navigation-arrow--right" aria-hidden="true" />
           </button>
         )}
@@ -3556,8 +3561,8 @@ function DetailsModal({
           >
             <div className="read-mode-tip__content">
               {showReplyParent
-                ? <FaArrowRight className="read-mode-tip__arrow reply-navigation-arrow--right" aria-hidden="true" />
-                : <FaArrowLeft className="read-mode-tip__arrow reply-navigation-arrow--left" aria-hidden="true" />}
+                ? <><span>Swipe to return to reply</span><FaArrowRight className="read-mode-tip__arrow reply-navigation-arrow--right" aria-hidden="true" /></>
+                : <><FaArrowLeft className="read-mode-tip__arrow reply-navigation-arrow--left" aria-hidden="true" /><span>Swipe to view original letter</span></>}
             </div>
           </div>
         )}

@@ -2,7 +2,9 @@ import React, {useMemo, useRef, useState, useEffect} from 'react';
 import {createPortal} from 'react-dom';
 import {Tooltip} from 'react-tooltip';
 import {BsCheck2, BsClipboard, BsReply, BsX} from 'react-icons/bs';
+import {AiOutlinePushpin} from 'react-icons/ai';
 import {RiMailSendLine} from 'react-icons/ri';
+import {MdAlternateEmail} from 'react-icons/md';
 import {VscPreview} from 'react-icons/vsc';
 import {
   IoContractOutline,
@@ -77,6 +79,7 @@ function AddModal({
   submitError = '',
   parentLetter = null,
   onPreview,
+  showShareCelebrationOnMount = false,
 }) {
   const isReply = variant === 'reply';
   const {triggerBackgroundCrisisCheck} = useCrisisSupport();
@@ -88,7 +91,9 @@ function AddModal({
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [retentionAgreed, setRetentionAgreed] = useState(false);
   const [showSubmissionNotice, setShowSubmissionNotice] = useState(false);
-  const [showShareCelebration, setShowShareCelebration] = useState(false);
+  const [showShareCelebration, setShowShareCelebration] = useState(
+    showShareCelebrationOnMount
+  );
   const [siteShareStatus, setSiteShareStatus] = useState('');
   const [submittedBurnKey, setSubmittedBurnKey] = useState('');
   const [submittedLetterId, setSubmittedLetterId] = useState('');
@@ -1460,8 +1465,7 @@ useEffect(() => {
             <h2 id="share-celebration-title">Your words made it here.</h2>
             <p>
               Help more people find a place for the words they carry. Tell a
-              friend, share Letters to Casper, and follow along for what comes
-              next.
+              friend and share Letters to Casper.
             </p>
             <div
               className="adsterra-banner"
@@ -1474,6 +1478,17 @@ useEffect(() => {
               }}
             >
               <AdsterraBanner width={300} height={250} />
+            </div>
+            <div className="share-celebration-actions-note">
+              <span className="share-celebration-actions-note__icons" aria-hidden="true">
+                <MdAlternateEmail />
+                <AiOutlinePushpin />
+                <BsReply />
+              </span>
+              <span>
+                Support us by using a paid feature: email, pin, or reply to a
+                letter. Paid actions start at ₱2.
+              </span>
             </div>
 
             <button

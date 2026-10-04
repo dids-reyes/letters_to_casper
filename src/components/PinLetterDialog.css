@@ -241,8 +241,56 @@ html.night-shift {
 
 .pin-receipt-section {
   margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid var(--ltc-border);
+  border-radius: 13px;
+  background: var(--ltc-subtle);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.pin-receipt-section.is-open {
+  border-color: var(--ltc-primary);
+  box-shadow: 0 5px 16px rgba(42,58,84,.05);
+}
+
+.pin-receipt-section__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  border: 0;
+  background: transparent;
+  color: var(--ltc-foreground);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pin-receipt-section__toggle > span {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+
+.pin-receipt-section__toggle strong { font-size: 11px; font-weight: 700; }
+.pin-receipt-section__toggle small { color: var(--ltc-muted); font-size: 9.5px; }
+.pin-receipt-section__toggle > svg { flex: 0 0 auto; color: var(--ltc-muted); font-size: 16px; transition: transform .22s ease; }
+.pin-receipt-section.is-open .pin-receipt-section__toggle > svg { transform: rotate(180deg); }
+.pin-receipt-section__toggle:disabled { cursor: wait; }
+
+.pin-receipt-section__content {
+  padding: 11px 13px 13px;
+  border-top: 1px solid var(--ltc-border);
+  animation: pin-receipt-open .22s ease both;
+}
+
+.pin-receipt-section__content[hidden] { display: none; }
+
+@keyframes pin-receipt-open {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .pin-receipt-section .pin-letter-url-label {
