@@ -109,10 +109,10 @@ describe("Reply Preview and Swipe Navigation Flow", () => {
     expect(activePaper).not.toHaveTextContent("Reply to Casper");
     expect(activePaper.querySelector(".letter-paper__pin")).toBeInTheDocument();
 
-    // Tooltip now shows only the ← arrow (no text) pointing back to the original letter, no X / close button
+    // Tooltip points back to the original letter with a clear swipe instruction and no X / close button
     const backSwipeTip = screen.getByRole("status", { id: "reply-preview-replies-cue" });
     expect(backSwipeTip.querySelector(".reply-navigation-arrow--left")).toBeInTheDocument();
-    expect(backSwipeTip).not.toHaveTextContent("Swipe to View Original Letter");
+    expect(backSwipeTip).toHaveTextContent("Swipe to View Original Letter");
     expect(backSwipeTip.querySelector(".read-mode-tip__close")).toBeNull();
 
     // 7. Tap tooltip to slide back to the original parent letter
@@ -162,10 +162,10 @@ describe("Reply Preview and Swipe Navigation Flow", () => {
     // Slides to reply preview
     const activePaperAfterLeftSwipe = document.querySelector(".read-mode-card-wrapper:not([class*='is-exiting']) .letter-paper");
     expect(activePaperAfterLeftSwipe).toHaveTextContent("Swiping test reply.");
-    // Back-to-parent tooltip shows only ← arrow, no text
+    // Back-to-parent tooltip includes a clear swipe instruction
     const backTip = screen.getByRole("status", { id: "reply-preview-replies-cue" });
     expect(backTip.querySelector(".reply-navigation-arrow--left")).toBeInTheDocument();
-    expect(backTip).not.toHaveTextContent("Swipe to View Original Letter");
+    expect(backTip).toHaveTextContent("Swipe to View Original Letter");
 
     // Swipe right (clientX starts at 100, ends at 300 -> deltaX = +200)
     fireEvent.touchStart(overlay, { touches: [{ clientX: 100, clientY: 200 }] });
@@ -259,9 +259,9 @@ describe("Reply Preview and Swipe Navigation Flow", () => {
     expect(document.querySelector(".read-mode-card-wrapper:not([class*='is-exiting']) .letter-paper"))
       .toHaveTextContent(feedReply.message);
 
-    act(() => jest.advanceTimersByTime(1000));
+    act(() => jest.advanceTimersByTime(3499));
     expect(screen.getByRole("status", { name: /View the letter this replies to/i })).toBeInTheDocument();
-    act(() => jest.advanceTimersByTime(2000));
+    act(() => jest.advanceTimersByTime(1));
     expect(screen.queryByRole("status", { name: /View the letter this replies to/i })).toBeNull();
     jest.useRealTimers();
   });

@@ -24,6 +24,30 @@ test('renders AddModal without crashing', () => {
   expect(screen.getByText(/Write your letter/i)).toBeInTheDocument();
 });
 
+test('can show the thank-you modal on mount for design testing', () => {
+  render(
+    <AddModal
+      showAddModal={false}
+      toggleAddModal={jest.fn()}
+      newLetter={{from: '', to: '', message: ''}}
+      handleAddLetter={jest.fn()}
+      setNewLetter={jest.fn()}
+      showShareCelebrationOnMount
+    />
+  );
+
+  expect(
+    screen.getByRole('dialog', {name: /Your words made it here/i})
+  ).toBeInTheDocument();
+  expect(screen.getByText(/Thank you for sharing/i)).toBeInTheDocument();
+  expect(screen.getByText(/email, pin, or reply to a/i)).toHaveTextContent(
+    'Support us by using a paid feature:'
+  );
+  expect(screen.getByText(/email, pin, or reply to a/i)).toHaveTextContent(
+    'Paid actions start at ₱2.'
+  );
+});
+
 test('keeps the reply submit button label as Reply while submitting', async () => {
   let finishSubmission;
   const handleAddLetter = jest.fn(() => new Promise(resolve => { finishSubmission = resolve; }));

@@ -51,6 +51,19 @@ test('renders the three single-select upgrades and defaults to Send to Inbox', (
   expect(screen.getByText('Most Meaningful')).toBeTruthy();
 });
 
+test('keeps the optional receipt email collapsed until requested', () => {
+  render(<PinLetterDialog onClose={() => {}} />);
+
+  const toggle = screen.getByRole('button', {name: /Your Email For receipt only/i});
+  const emailField = screen.getByLabelText('Your Email (for receipt only)');
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  expect(emailField).not.toBeVisible();
+
+  fireEvent.click(toggle);
+  expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  expect(emailField).toBeVisible();
+});
+
 test('shows recipient email only for delivery choices and validates it before continuing', () => {
   render(<PinLetterDialog onClose={() => {}} />);
   const continueButton = screen.getByRole('button', {name: 'Continue • ₱9'});

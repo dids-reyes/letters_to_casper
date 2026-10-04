@@ -63,6 +63,8 @@ import {
   saveLeaveLetterIntent,
 } from "../data/adBlockGate";
 
+// Temporary redesign aid: set this back to false when the thank-you modal is finished.
+const SHOW_THANK_YOU_ON_REFRESH = false;
 const SHOW_SKY_NAV = process.env.REACT_APP_SHOW_SKY_NAV === "true";
 const REQUIRE_ADBLOCK_OFF_FOR_LETTER =
   process.env.REACT_APP_REQUIRE_ADBLOCK_OFF_FOR_LETTER !== "false";
@@ -1618,6 +1620,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         newLetter={newLetter}
         handleAddLetter={handleAddLetter}
         setNewLetter={setNewLetter}
+        showShareCelebrationOnMount={SHOW_THANK_YOU_ON_REFRESH}
       />
       {loading === 1 ? (
         <MailboxLoading />

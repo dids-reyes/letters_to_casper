@@ -1,5 +1,6 @@
 import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {
+  IoChevronDownOutline,
   IoInformationCircleOutline,
   IoLockClosedOutline,
 } from 'react-icons/io5';
@@ -186,6 +187,7 @@ export default function PinLetterDialog({
     }
   }, [defaultUrl, initialUrl]);
   const [email, setEmail] = useState('');
+  const [showReceiptEmail, setShowReceiptEmail] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [showDeliveryGuide, setShowDeliveryGuide] = useState(false);
   const [showFeaturedGuide, setShowFeaturedGuide] = useState(false);
@@ -548,30 +550,50 @@ export default function PinLetterDialog({
                 </p>
               </>
             )}
-            <div className="pin-receipt-section">
-              <label className="pin-letter-url-label" htmlFor="pin-letter-email">
-                Your Email (for receipt only)
-              </label>
-              <input
-                ref={emailInput}
-                id="pin-letter-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                inputMode="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                maxLength={254}
-                value={email}
+            <section className={`pin-receipt-section${showReceiptEmail ? ' is-open' : ''}`}>
+              <button
+                type="button"
+                className="pin-receipt-section__toggle"
+                aria-expanded={showReceiptEmail}
+                aria-controls="pin-receipt-section-content"
                 disabled={loading || closing}
-                onChange={event => { setEmail(event.target.value); setError(''); }}
-                placeholder="you@example.com"
-                aria-describedby="pin-letter-email-note"
-              />
-              <p id="pin-letter-email-note" className="pin-letter-note">
-                Enter your email only if you’d like a payment receipt and time-left details.
-              </p>
-            </div>
+                onClick={() => setShowReceiptEmail(current => !current)}
+              >
+                <span>
+                  <strong>Your Email</strong>
+                  <small>{email || 'For receipt only (optional)'}</small>
+                </span>
+                <IoChevronDownOutline aria-hidden="true" />
+              </button>
+              <div
+                id="pin-receipt-section-content"
+                className="pin-receipt-section__content"
+                hidden={!showReceiptEmail}
+              >
+                <label className="pin-letter-url-label" htmlFor="pin-letter-email">
+                  Your Email (for receipt only)
+                </label>
+                <input
+                  ref={emailInput}
+                  id="pin-letter-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  maxLength={254}
+                  value={email}
+                  disabled={loading || closing}
+                  onChange={event => { setEmail(event.target.value); setError(''); }}
+                  placeholder="you@example.com"
+                  aria-describedby="pin-letter-email-note"
+                />
+                <p id="pin-letter-email-note" className="pin-letter-note">
+                  Enter your email only if you’d like a payment receipt and time-left details.
+                </p>
+              </div>
+            </section>
 
             {error && (
               <p id="pin-letter-error" role="alert">
