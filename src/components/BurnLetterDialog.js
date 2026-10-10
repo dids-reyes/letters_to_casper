@@ -3,10 +3,10 @@ import PropTypes from "prop-types";
 import { IoFlameOutline, IoEyeOutline, IoLocationOutline } from "react-icons/io5";
 import { BsMailboxFlag } from "react-icons/bs";
 import { toast } from "react-toastify";
-import html2canvas from "html2canvas";
 import { render_url, api_key } from "../data/keys";
 import { displayDirectLinkAds } from "../data/direct_link";
-import { extractMediaLinks } from "./DetailsModal";
+import { extractMediaLinks, getLetterStampProps } from "./DetailsModal";
+import { LetterStamp } from "./LetterStamp";
 import "./BurnLetterDialog.css";
 
 const STAGES = {
@@ -63,7 +63,7 @@ const formatReadsCount = (readsCount) => {
   return parsed === 1 ? "1 read" : `${parsed} reads`;
 };
 
-// Asynchronously pre-cache the exact 1024x1024 RGB noise map from ykob's burn sketch
+// Asynchronously pre-cache the 512x512 RGB noise map from ykob's burn sketch
 let preloadedNoiseImage = null;
 const loadNoiseTextureImage = () => {
   if (preloadedNoiseImage && preloadedNoiseImage.complete) return;
@@ -79,7 +79,13 @@ const loadNoiseTextureImage = () => {
     // Ignore in non-browser environments
   }
 };
-loadNoiseTextureImage();
+if (typeof window !== "undefined") {
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => loadNoiseTextureImage(), { timeout: 3000 });
+  } else {
+    setTimeout(loadNoiseTextureImage, 2000);
+  }
+}
 
 // Instant 2D procedural noise map fallback for test/offline environments
 const createProceduralNoiseCanvas = (width = 256, height = 256) => {
@@ -210,8 +216,8 @@ const FS_SOURCE = `
 `;
 
 /**
- * Creates a crystal-clear 2D canvas fallback representing the letter.
- * Guarantees zero blank/invisible texture issues even if html2canvas is slow or unavailable.
+ * Creates a crystal-clear 2D canvas fallback matching the authentic .letter-paper design.
+ * Uses the exact same Courier New typography, ruled lines, vignette, and dog-ear corner.
  */
 const createLetterCanvasFallback = (letter, width, height, dpr, isNightShift = false) => {
   if (!letter) return null;
@@ -225,54 +231,138 @@ const createLetterCanvasFallback = (letter, width, height, dpr, isNightShift = f
 
   ctx.scale(dpr, dpr);
 
-  // Background
-  ctx.fillStyle = isNightShift ? "#23221c" : "#faf7ec";
-  ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(0, 0, width, height, 12);
-  } else {
-    ctx.rect(0, 0, width, height);
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 480;
+  const padX = isMobile ? 22 : 46;
+  const padTop = isMobile ? 30 : 44;
+  const foldSize = isMobile ? 20 : 24;
+
+  // 1. Authentic paper background
+  ctx.fillStyle = isNightShift ? "#23201a" : "#faf7ec";
+  ctx.fillRect(0, 0, width, height);
+
+  // Subtle aged paper vignette matching .letter-paper
+  if (!isNightShift) {
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.scale(1, height / width);
+    const maxR = width * 0.7;
+    const vig = ctx.createRadialGradient(0, 0, maxR * 0.74, 0, 0, maxR);
+    vig.addColorStop(0, "rgba(135, 78, 28, 0)");
+    vig.addColorStop(0.54, "rgba(135, 78, 28, 0.05)");
+    vig.addColorStop(0.85, "rgba(98, 52, 18, 0.14)");
+    vig.addColorStop(1, "rgba(68, 34, 10, 0.22)");
+    ctx.fillStyle = vig;
+    ctx.fillRect(-width / 2, -width / 2, width, width);
+    ctx.restore();
   }
-  ctx.fill();
 
-  // Header: From & To
-  ctx.fillStyle = isNightShift ? "#f4eee5" : "#080704";
-  ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillText(`From: ${letter.from || "Anonymous"}`, 24, 34);
-  ctx.fillText(`To: ${letter.to || "You"}`, 24, 56);
+  // Warm inset border matching .letter-paper box-shadow
+  ctx.strokeStyle = isNightShift ? "rgba(255, 240, 200, 0.14)" : "rgba(65, 32, 10, 0.28)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
 
-  // Date
+  // 2. Header: From & To in Courier New matching .letter-paper .letter-info
+  const infoFontSize = isMobile ? 14 : 16;
+  const fromY = padTop + infoFontSize;
+  const toY = fromY + Math.round(infoFontSize * 1.6) + 4;
+
+  ctx.font = `800 ${infoFontSize}px "Courier New", Courier, monospace`;
+  ctx.fillStyle = isNightShift ? "#f3efe2" : "#080704";
+  ctx.fillText("From: ", padX, fromY);
+  const fromLabelW = ctx.measureText("From: ").width;
+  ctx.font = `400 ${infoFontSize}px "Courier New", Courier, monospace`;
+  ctx.fillStyle = isNightShift ? "#e4decb" : "#332f24";
+  ctx.fillText(letter.from || "Anonymous", padX + fromLabelW, fromY);
+
+  ctx.font = `800 ${infoFontSize}px "Courier New", Courier, monospace`;
+  ctx.fillStyle = isNightShift ? "#f3efe2" : "#080704";
+  ctx.fillText("To: ", padX, toY);
+  const toLabelW = ctx.measureText("To: ").width;
+  ctx.font = `400 ${infoFontSize}px "Courier New", Courier, monospace`;
+  ctx.fillStyle = isNightShift ? "#e4decb" : "#332f24";
+  ctx.fillText(letter.to || "You", padX + toLabelW, toY);
+
+  // 3. Centered Date in Courier New matching .letter-paper__date .timestamp-text
+  let bodyStartY = toY + 26;
   if (letter.timestamp) {
-    ctx.fillStyle = isNightShift ? "#a89d91" : "#8a8264";
-    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText(formatTimestamp(letter.timestamp), 24, 82);
+    const dateY = toY + 28;
+    const dateStr = formatTimestamp(letter.timestamp);
+    ctx.font = '400 12px "Courier New", Courier, monospace';
+    ctx.fillStyle = isNightShift ? "#b8b09a" : "#393428";
+    const dateW = ctx.measureText(dateStr).width;
+    ctx.fillText(dateStr, Math.max(padX, (width - dateW) / 2), dateY);
+    bodyStartY = dateY + 26;
   }
 
-  // Message body text in typewriter font
-  ctx.fillStyle = isNightShift ? "#e5ded4" : "#2c2820";
-  ctx.font = '16px "Courier New", Courier, monospace';
-  const text = letter.message || "";
-  const maxWidth = width - 48;
-  const lineHeight = 24;
-  let y = 120;
+  // 4. Message body in Courier New with ruled stationery lines matching .letter-paper__body
+  const bodyFontSize = isMobile ? 13 : 14;
+  const lineHeight = isMobile ? 25 : 28;
+  ctx.font = `400 ${bodyFontSize}px "Courier New", Courier, monospace`;
+  const rawMessage = extractMediaLinks(letter.message)?.newMessage || letter.message || "";
+  const maxWidth = width - padX * 2 - 4;
+  const maxBodyY = height - 44;
 
-  const words = text.split(" ");
-  let line = "";
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + " ";
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && n > 0) {
-      ctx.fillText(line.trim(), 24, y);
-      line = words[n] + " ";
-      y += lineHeight;
-      if (y > height - 36) break;
-    } else {
-      line = testLine;
+  const paragraphs = String(rawMessage).split("\n");
+  const lines = [];
+  for (let p = 0; p < paragraphs.length; p++) {
+    const words = paragraphs[p].split(" ");
+    let line = "";
+    for (let n = 0; n < words.length; n++) {
+      const candidate = line ? `${line} ${words[n]}` : words[n];
+      if (ctx.measureText(candidate).width > maxWidth && line) {
+        lines.push(line);
+        line = words[n];
+      } else {
+        line = candidate;
+      }
     }
+    lines.push(line);
   }
-  if (line.trim() && y <= height - 36) {
-    ctx.fillText(line.trim(), 24, y);
+
+  let y = bodyStartY + lineHeight * 0.72;
+  const ruleColor = isNightShift
+    ? "rgba(255, 244, 214, 0.08)"
+    : "rgba(120, 100, 60, 0.12)";
+  const textColor = isNightShift ? "#e4decb" : "#332f24";
+
+  for (let i = 0; i < lines.length; i++) {
+    if (y > maxBodyY) break;
+    // Draw ruled line underneath text line
+    ctx.fillStyle = ruleColor;
+    ctx.fillRect(padX, Math.round(y + 5), width - padX * 2, 1);
+    // Draw text
+    ctx.fillStyle = textColor;
+    ctx.fillText(lines[i], padX + 2, y);
+    y += lineHeight;
   }
+
+  // 5. Cut out top-right dog-ear corner and draw folded paper flap
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath();
+  ctx.moveTo(width - foldSize, 0);
+  ctx.lineTo(width, 0);
+  ctx.lineTo(width, foldSize);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(width - foldSize, 0);
+  const s = foldSize / 48;
+  ctx.scale(s, s);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(48, 48);
+  ctx.quadraticCurveTo(24, 42, 3, 47);
+  ctx.quadraticCurveTo(7, 24, 0, 0);
+  ctx.closePath();
+  ctx.fillStyle = isNightShift ? "#505143" : "#e4d7b6";
+  ctx.fill();
+  ctx.strokeStyle = isNightShift ? "#77765d" : "#baa982";
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+  ctx.restore();
 
   return canvas;
 };
@@ -283,21 +373,234 @@ const createLetterCanvasFallback = (letter, width, height, dpr, isNightShift = f
 const capturePaperTexture = async (element) => {
   if (!element) return null;
   try {
+    const isNightShift =
+      typeof document !== "undefined" &&
+      document.documentElement?.classList?.contains("night-shift");
+    const computedPaper =
+      typeof window !== "undefined" && window.getComputedStyle
+        ? window.getComputedStyle(element)
+        : null;
+    const paperBgColor =
+      computedPaper?.backgroundColor &&
+      computedPaper.backgroundColor !== "rgba(0, 0, 0, 0)" &&
+      computedPaper.backgroundColor !== "transparent"
+        ? computedPaper.backgroundColor
+        : isNightShift
+        ? "#23201a"
+        : "#faf7ec";
+
+    // Pre-inline SVG <image> stamp assets as data URLs so SVG serialization renders them
+    const svgImages = Array.from(element.querySelectorAll?.("svg image") || []);
+    const dataUrlMap = new Map();
+    await Promise.all(
+      svgImages.map(async (svgImg) => {
+        const href =
+          svgImg.getAttribute("href") || svgImg.getAttribute("xlink:href");
+        if (!href || href.startsWith("data:")) return;
+        try {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = href;
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = img.naturalWidth || 78;
+          tempCanvas.height = img.naturalHeight || 98;
+          const tempCtx = tempCanvas.getContext("2d");
+          if (tempCtx) {
+            tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+            dataUrlMap.set(href, tempCanvas.toDataURL("image/png"));
+          }
+        } catch {
+          // Ignore stamp image load errors
+        }
+      })
+    );
+
+    // Pre-generate ruled stationery line tile because html2canvas drops multi-stop repeating-linear-gradient
+    let ruleTileDataUrl = null;
+    let bodyLineHeight = 28;
+    let bodyBgPosition = "0 0";
+    const bodyEl = element.querySelector?.(".letter-paper__body");
+    if (bodyEl && typeof window !== "undefined" && window.getComputedStyle) {
+      const computedBody = window.getComputedStyle(bodyEl);
+      bodyLineHeight = Math.max(
+        18,
+        Math.round(parseFloat(computedBody.lineHeight) || 28)
+      );
+      bodyBgPosition = computedBody.backgroundPosition || "0 0";
+      try {
+        const ruleCanvas = document.createElement("canvas");
+        ruleCanvas.width = 8;
+        ruleCanvas.height = bodyLineHeight;
+        const ruleCtx = ruleCanvas.getContext("2d");
+        if (ruleCtx) {
+          ruleCtx.fillStyle = isNightShift
+            ? "rgba(255, 244, 214, 0.08)"
+            : "rgba(120, 100, 60, 0.12)";
+          ruleCtx.fillRect(0, bodyLineHeight - 1, 8, 1);
+          ruleTileDataUrl = ruleCanvas.toDataURL("image/png");
+        }
+      } catch {
+        ruleTileDataUrl = null;
+      }
+    }
+
+    const scale = Math.min(
+      2,
+      (typeof window !== "undefined" && window.devicePixelRatio) || 1
+    );
+    const html2canvasModule = await import("html2canvas");
+    const html2canvas = html2canvasModule.default || html2canvasModule;
     const canvas = await html2canvas(element, {
-      scale: Math.min(2, window.devicePixelRatio || 1),
-      backgroundColor: null,
+      scale,
+      backgroundColor: paperBgColor,
       logging: false,
       useCORS: true,
       allowTaint: true,
       scrollX: 0,
       scrollY: 0,
-      ignoreElements: (el) =>
-        el.tagName === "IFRAME" ||
-        el.tagName === "BUTTON" ||
-        el.classList?.contains("burn-confirm-backdrop") ||
-        el.classList?.contains("burn-confirm-dialog-wrapper") ||
-        el.classList?.contains("burn-readable-controls"),
+      ignoreElements: (el) => {
+        if (
+          el.tagName === "IFRAME" ||
+          el.tagName === "BUTTON" ||
+          el.classList?.contains("burn-confirm-backdrop") ||
+          el.classList?.contains("burn-confirm-dialog-wrapper") ||
+          el.classList?.contains("burn-readable-controls")
+        ) {
+          return true;
+        }
+        // Skip cloning the entire background page outside the letter paper subtree
+        if (
+          typeof document !== "undefined" &&
+          document.body &&
+          document.body.contains(el) &&
+          el !== element &&
+          !el.contains?.(element) &&
+          !element.contains?.(el)
+        ) {
+          return true;
+        }
+        return false;
+      },
+      onclone: (_clonedDoc, clonedEl) => {
+        if (!clonedEl) return;
+        clonedEl.style.backgroundColor = paperBgColor;
+        clonedEl.style.backgroundImage = "none";
+        clonedEl.style.boxShadow = "none";
+        clonedEl.style.borderRadius = "0px";
+        clonedEl.style.clipPath = "none";
+        clonedEl.style.animation = "none";
+        clonedEl.style.transform = "none";
+        clonedEl.style.fontFamily = '"Courier New", Courier, monospace';
+
+        // Lock exact Courier New typography on all text nodes inside the cloned letter paper
+        const typoNodes = clonedEl.querySelectorAll?.(
+          ".letter-info, .letter-info span, .letter-info strong, .letter-paper__date, .timestamp-text, .timestamp-text span, .letter-paper__body, .letter-paper__body span, .letter-paper__meta, .letter-paper__meta span"
+        ) || [];
+        typoNodes.forEach((node) => {
+          node.style.fontFamily = '"Courier New", Courier, monospace';
+        });
+
+        const clonedBody = clonedEl.querySelector?.(".letter-paper__body");
+        if (clonedBody && ruleTileDataUrl) {
+          clonedBody.style.backgroundImage = `url("${ruleTileDataUrl}")`;
+          clonedBody.style.backgroundRepeat = "repeat";
+          clonedBody.style.backgroundSize = `8px ${bodyLineHeight}px`;
+          clonedBody.style.backgroundPosition = bodyBgPosition;
+        }
+
+        const clonedSvgImages = clonedEl.querySelectorAll?.("svg image") || [];
+        clonedSvgImages.forEach((imgNode) => {
+          const origHref =
+            imgNode.getAttribute("href") || imgNode.getAttribute("xlink:href");
+          const inlined = origHref ? dataUrlMap.get(origHref) : null;
+          if (inlined) {
+            imgNode.setAttribute("href", inlined);
+            imgNode.setAttributeNS(
+              "http://www.w3.org/1999/xlink",
+              "xlink:href",
+              inlined
+            );
+          }
+        });
+      },
     });
+
+    if (canvas && typeof canvas.getContext === "function") {
+      const ctx = canvas.getContext("2d");
+      if (ctx && canvas.width > 0 && canvas.height > 0) {
+        const w = canvas.width;
+        const h = canvas.height;
+        const foldCssSize =
+          typeof window !== "undefined" && window.innerWidth <= 480 ? 20 : 24;
+        const foldPx = foldCssSize * scale;
+
+        // Subtle aged paper vignette matching .letter-paper radial-gradient without html2canvas artifacts
+        if (!isNightShift) {
+          ctx.save();
+          ctx.translate(w / 2, h / 2);
+          ctx.scale(1, h / w);
+          const maxR = w * 0.7;
+          const vig = ctx.createRadialGradient(0, 0, maxR * 0.74, 0, 0, maxR);
+          vig.addColorStop(0, "rgba(135, 78, 28, 0)");
+          vig.addColorStop(0.54, "rgba(135, 78, 28, 0.05)");
+          vig.addColorStop(0.85, "rgba(98, 52, 18, 0.14)");
+          vig.addColorStop(1, "rgba(68, 34, 10, 0.22)");
+          ctx.fillStyle = vig;
+          ctx.fillRect(-w / 2, -w / 2, w, w);
+          ctx.restore();
+        }
+
+        // Subtle warm paper inset border matching .letter-paper box-shadow
+        ctx.save();
+        ctx.strokeStyle = isNightShift
+          ? "rgba(255, 240, 200, 0.14)"
+          : "rgba(65, 32, 10, 0.28)";
+        ctx.lineWidth = 1.5 * scale;
+        ctx.strokeRect(0, 0, w, h);
+        ctx.restore();
+
+        // Cut out top-right dog-ear corner silhouette
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.beginPath();
+        ctx.moveTo(w - foldPx, 0);
+        ctx.lineTo(w, 0);
+        ctx.lineTo(w, foldPx);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Draw folded dog-ear corner flap onto the captured paper texture
+        ctx.save();
+        ctx.translate(w - foldPx, 0);
+        const s = foldPx / 48;
+        ctx.scale(s, s);
+        ctx.shadowColor = isNightShift
+          ? "rgba(0, 0, 0, 0.6)"
+          : "rgba(70, 61, 41, 0.35)";
+        ctx.shadowBlur = 3 * scale;
+        ctx.shadowOffsetX = -2 * scale;
+        ctx.shadowOffsetY = 3 * scale;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(48, 48);
+        ctx.quadraticCurveTo(24, 42, 3, 47);
+        ctx.quadraticCurveTo(7, 24, 0, 0);
+        ctx.closePath();
+        ctx.fillStyle = isNightShift ? "#505143" : "#e4d7b6";
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+        ctx.strokeStyle = isNightShift ? "#77765d" : "#baa982";
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
     return canvas;
   } catch (err) {
     console.warn("html2canvas capture notice:", err);
@@ -322,6 +625,7 @@ function BurnLetterDialog({
   const webglCanvasRef = useRef(null);
   const sparksCanvasRef = useRef(null);
   const letterTextureCanvasRef = useRef(null);
+  const capturePromiseRef = useRef(null);
   const animationFrameRef = useRef(null);
   const burnStartTimeoutRef = useRef(null);
   const burnTimeoutRef = useRef(null);
@@ -341,12 +645,14 @@ function BurnLetterDialog({
       burnStartTimeoutRef.current = null;
     }
     letterTextureCanvasRef.current = null;
+    capturePromiseRef.current = null;
   }, []);
 
   // Reset state when modal is opened or closed
   useEffect(() => {
     if (isOpen) {
       loadNoiseTextureImage();
+      import("html2canvas").catch(() => {});
       setStage(STAGES.KEY_INPUT);
       setBurnKey("");
       setErrorMessage("");
@@ -387,24 +693,31 @@ function BurnLetterDialog({
   const cleanedMessage = media?.newMessage || targetLetter?.message || "";
   const hasLocation = Boolean(targetLetter?.loc?.city || targetLetter?.loc?.region);
 
-  // Pre-capture letter texture in the background while confirmation modal is shown
+  // Pre-capture letter texture once when targetLetter is mounted; do NOT cancel on stage transitions
   useEffect(() => {
-    if (stage === STAGES.CONFIRM && paperRef.current) {
-      let isMounted = true;
-      const doCapture = async () => {
-        const canvas = await capturePaperTexture(paperRef.current);
-        if (isMounted && canvas) {
-          letterTextureCanvasRef.current = canvas;
-        }
-      };
-      // Brief delay to let layout settle before snapshotting
-      const t = setTimeout(doCapture, 60);
-      return () => {
-        isMounted = false;
-        clearTimeout(t);
-      };
+    if (!targetLetter || letterTextureCanvasRef.current || capturePromiseRef.current) {
+      return undefined;
     }
-  }, [stage]);
+    let isCancelled = false;
+    const t = setTimeout(() => {
+      if (isCancelled || !paperRef.current) return;
+      const promise = capturePaperTexture(paperRef.current)
+        .then((canvas) => {
+          if (!isCancelled && canvas) {
+            letterTextureCanvasRef.current = canvas;
+          }
+          return canvas;
+        })
+        .finally(() => {
+          capturePromiseRef.current = null;
+        });
+      capturePromiseRef.current = promise;
+    }, 30);
+    return () => {
+      isCancelled = true;
+      clearTimeout(t);
+    };
+  }, [targetLetter]);
 
   // WebGL ykob-Style Organic Crawling Fire Engine + Atmospheric Sparks
   useEffect(() => {
@@ -412,6 +725,24 @@ function BurnLetterDialog({
 
     const webglCanvas = webglCanvasRef.current;
     const sparksCanvas = sparksCanvasRef.current;
+
+    const width = paperRef.current?.offsetWidth || 580;
+    const height = paperRef.current?.offsetHeight || 440;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    if (!letterTextureCanvasRef.current && targetLetter) {
+      const isNight =
+        typeof document !== "undefined" &&
+        document.documentElement?.classList?.contains("night-shift");
+      letterTextureCanvasRef.current = createLetterCanvasFallback(
+        targetLetter,
+        width,
+        height,
+        dpr,
+        isNight
+      );
+    }
+
     const textureSource = letterTextureCanvasRef.current;
 
     let gl = null;
@@ -419,13 +750,19 @@ function BurnLetterDialog({
     let uProgressLoc = null;
     let uTimeLoc = null;
 
-    const width = paperRef.current?.offsetWidth || 580;
-    const height = paperRef.current?.offsetHeight || 440;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-
     // 1. Initialize WebGL Shader if canvas and texture are available
     if (webglCanvas && textureSource) {
       try {
+        if (
+          paperRef.current &&
+          typeof window !== "undefined" &&
+          window.getComputedStyle
+        ) {
+          const paperClipPath = window.getComputedStyle(paperRef.current).clipPath;
+          if (paperClipPath && paperClipPath !== "none") {
+            webglCanvas.style.clipPath = paperClipPath;
+          }
+        }
         webglCanvas.width = width * dpr;
         webglCanvas.height = height * dpr;
         gl = webglCanvas.getContext("webgl", { alpha: true, premultipliedAlpha: false });
@@ -479,6 +816,26 @@ function BurnLetterDialog({
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureSource);
           gl.uniform1i(uLetterTexLoc, 0);
+
+          if (capturePromiseRef.current) {
+            capturePromiseRef.current.then((capturedCanvas) => {
+              if (!capturedCanvas || !gl || gl.isContextLost()) return;
+              try {
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, letterTex);
+                gl.texImage2D(
+                  gl.TEXTURE_2D,
+                  0,
+                  gl.RGBA,
+                  gl.RGBA,
+                  gl.UNSIGNED_BYTE,
+                  capturedCanvas
+                );
+              } catch {
+                // Ignore
+              }
+            });
+          }
 
           // Texture Unit 1: ykob Noise Map (with procedural fallback)
           const noiseSource =
@@ -664,6 +1021,7 @@ function BurnLetterDialog({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
 
   if (!isOpen) return null;
@@ -743,21 +1101,17 @@ function BurnLetterDialog({
       stage === STAGES.BURNING
     ) return;
 
-    // Ensure texture is ready before transitioning to BURNING stage
-    if (!letterTextureCanvasRef.current && targetLetter) {
-      const w = paperRef.current?.offsetWidth || 580;
-      const h = paperRef.current?.offsetHeight || 440;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      const isNight =
-        typeof document !== "undefined" &&
-        document.documentElement?.classList?.contains("night-shift");
-      letterTextureCanvasRef.current = createLetterCanvasFallback(
-        targetLetter,
-        w,
-        h,
-        dpr,
-        isNight
-      );
+    if (!letterTextureCanvasRef.current && !capturePromiseRef.current && paperRef.current) {
+      capturePromiseRef.current = capturePaperTexture(paperRef.current)
+        .then((canvas) => {
+          if (canvas) {
+            letterTextureCanvasRef.current = canvas;
+          }
+          return canvas;
+        })
+        .finally(() => {
+          capturePromiseRef.current = null;
+        });
     }
 
     const normalizedKey = burnKey.trim().toUpperCase();
@@ -891,46 +1245,67 @@ function BurnLetterDialog({
           >
             {/* The ACTUAL letter view matching the normal letter modal in Letters to Casper */}
             <div className="letter-modal">
-              {/* Folded corner close button */}
-              {stage === STAGES.CONFIRM && (
-                <button
-                  type="button"
-                  className="letter-modal__close"
-                  onClick={onClose}
-                  aria-label="Close letter"
-                  title="Fold and close letter"
-                >
-                  <svg
-                    className="letter-fold-corner"
-                    viewBox="0 0 48 48"
-                    aria-hidden="true"
-                    focusable="false"
+              <div
+                className={`burn-paper-stage${
+                  stage !== STAGES.BURNING ? " letter-paper-wrapper" : ""
+                } ${getLetterStampProps(targetLetter).paperClass || ""} ${
+                  getLetterStampProps(targetLetter).deckleClass || ""
+                }`}
+              >
+                {/* Folded corner close button (kept visible through PRE_BURN before WebGL canvas takes over) */}
+                {(stage === STAGES.CONFIRM || stage === STAGES.PRE_BURN) && (
+                  <button
+                    type="button"
+                    className="letter-modal__close"
+                    onClick={stage === STAGES.CONFIRM ? onClose : undefined}
+                    disabled={stage !== STAGES.CONFIRM}
+                    aria-label="Close letter"
+                    title="Fold and close letter"
                   >
-                    <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
-                  </svg>
-                </button>
-              )}
+                    <svg
+                      className="letter-fold-corner"
+                      viewBox="0 0 48 48"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                    </svg>
+                  </button>
+                )}
 
-              <div className="burn-paper-stage">
                 {/* The authentic letter-paper component: remains sharp until physically consumed */}
                 <div
                   ref={paperRef}
-                  className={`letter-paper${
+                  className={`letter-paper ${
+                    getLetterStampProps(targetLetter).paperClass || ""
+                  } ${getLetterStampProps(targetLetter).deckleClass || ""}${
                     stage === STAGES.BURNING
                       ? " is-center-burning is-letter-burning-hidden"
                       : ""
                   }`}
                 >
                   <div className="letter-paper__head">
-                    <div className="letter-info" style={{ marginBottom: "4px" }}>
-                      <span>
-                        <strong>From:</strong> {targetLetter.from || "Anonymous"}
-                      </span>
+                    <div className="letter-paper__addressee">
+                      <div className="letter-info" style={{ marginBottom: "4px" }}>
+                        <span>
+                          <strong>From:</strong> {targetLetter.from || "Anonymous"}
+                        </span>
+                      </div>
+                      <div className="letter-info">
+                        <span>
+                          <strong>To:</strong> {targetLetter.to || "You"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="letter-info">
-                      <span>
-                        <strong>To:</strong> {targetLetter.to || "You"}
-                      </span>
+                    <div className="letter-paper__stamp-slot">
+                      <LetterStamp
+                        className="letter-paper__stamp"
+                        city={targetLetter.loc?.city || targetLetter.city || ""}
+                        region={targetLetter.loc?.region || targetLetter.region || ""}
+                        country={targetLetter.loc?.country || targetLetter.country || ""}
+                        variant={getLetterStampProps(targetLetter).variant}
+                        isFeatured={getLetterStampProps(targetLetter).isFeatured}
+                      />
                     </div>
                   </div>
 
@@ -1021,7 +1396,9 @@ function BurnLetterDialog({
                   <div className="burn-canvas-container" aria-hidden="true">
                     <canvas
                       ref={webglCanvasRef}
-                      className="burn-webgl-canvas"
+                      className={`burn-webgl-canvas ${
+                        getLetterStampProps(targetLetter).deckleClass || ""
+                      }`}
                     />
                     <canvas
                       ref={sparksCanvasRef}

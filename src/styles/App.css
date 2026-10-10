@@ -2,6 +2,9 @@ html,
 body {
   background-color: #fff;
   overflow-anchor: none;
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* About */
@@ -1531,7 +1534,8 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
   max-width: 1400px;
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 4px;
+  padding: 10px 4px 6px;
+  contain: layout;
 }
 
 .letter-card {
@@ -1587,44 +1591,10 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
   padding: 12px 0 24px;
 }
 
-.letter-card {
-  --letter-card-rule-space: 19px;
-  --letter-warmth: 0.08;
-  --letter-warmth-rgb: 218 165 32;
-  --letter-surface: #fdfaef;
-  /* Keep the outline neutral; reaction color belongs to the traveling segment. */
-  --letter-border-track: #e7ddc4;
-  display: flex;
-  flex-direction: column;
-  height: 170px;
-  min-height: 170px;
-  box-sizing: border-box;
-  padding: 13px 14px 10px;
-  border: 1px solid transparent;
-  border-radius: 11px;
-  background:
-    linear-gradient(var(--letter-surface), var(--letter-surface)) padding-box,
-    conic-gradient(
-      from var(--letter-glow-angle),
-      var(--letter-border-track) 0deg,
-      var(--letter-border-track) 282deg,
-      rgb(var(--letter-warmth-rgb) / calc(0.16 + var(--letter-warmth) * 0.4)) 294deg,
-      rgb(var(--letter-warmth-rgb) / calc(0.68 + var(--letter-warmth) * 1.16)) 322deg,
-      rgb(var(--letter-warmth-rgb) / calc(0.16 + var(--letter-warmth) * 0.4)) 348deg,
-      var(--letter-border-track) 360deg
-    ) border-box;
-  box-shadow:
-    0 1px 2px rgba(60, 50, 30, 0.06),
-    0 0 calc(5px + var(--letter-warmth) * 17px)
-      rgb(var(--letter-warmth-rgb) / calc(0.07 + var(--letter-warmth) * 0.32));
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.16s ease, box-shadow 0.16s ease,
-    border-color 0.16s ease;
-  animation: letter-warmth-border-loop 9.6s linear infinite;
-}
+/* ==========================================================================
+   DIGITAL SKEUOMORPHISM VINTAGE LETTER CARDS
+   Authentic hand-torn deckle paper, aged fibers, stamps, and stationery
+   ========================================================================== */
 
 @property --letter-glow-angle {
   syntax: "<angle>";
@@ -1633,155 +1603,728 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
 }
 
 @keyframes letter-warmth-border-loop {
-  to { --letter-glow-angle: 360deg; }
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
-.letters-container .letter-card:nth-child(3n + 2) {
+.letter-card {
+  --letter-glow-angle: 0deg;
+  --letter-warmth-rgb: 228 148 28;
+  --letter-border-track: #e7ddc4;
+  --letter-card-bg: #faf7ec;
+  --letter-card-back-bg: #ecdcb9;
+  --letter-card-border: #ece2c9;
+  --letter-card-ink: #332f24;
+  --letter-card-muted: #6d624f;
+  --letter-card-sub: #7f7461;
+  --letter-warmth: 0.08;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 170px;
+  min-height: 170px;
+  box-sizing: border-box;
+  padding: 12px 14px 12px;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font-family: "Courier New", Courier, monospace;
+  text-align: left;
+  cursor: pointer;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+  contain: layout style;
+  filter: drop-shadow(0 2px 4px rgba(35, 25, 12, 0.18));
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .letter-card:hover {
+    transform: translateY(-2.5px);
+  }
+}
+
+/* Reaction mood color palettes (Red for 10+ Love, Blue for 10+ Sad, Amber for 50+ Reads without reaction) */
+.letter-card--mood-love {
+  --letter-warmth-rgb: 235 60 75;
+  --letter-border-track: rgb(235 60 75 / 0.18);
+}
+
+.letter-card--mood-sad {
+  --letter-warmth-rgb: 59 130 246;
+  --letter-border-track: rgb(59 130 246 / 0.18);
+}
+
+.letter-card--mood-amber,
+.letter-card--mood-neutral {
+  --letter-warmth-rgb: 228 148 28;
+  --letter-border-track: rgb(228 148 28 / 0.18);
+}
+
+/* Traveling animated border line along card perimeter ONLY when threshold is reached */
+.letter-card.letter-card--has-glow {
+  filter: none;
+  box-shadow: 0 2px 4px rgba(35, 25, 12, 0.18);
+}
+
+.letter-card__glow {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 8px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  contain: strict;
+}
+
+.letter-card__glow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 185%;
+  aspect-ratio: 1 / 1;
+  background: conic-gradient(
+    from 0deg,
+    var(--letter-border-track) 0deg,
+    var(--letter-border-track) 276deg,
+    rgb(var(--letter-warmth-rgb) / calc(0.35 + var(--letter-warmth) * 0.35)) 294deg,
+    rgb(var(--letter-warmth-rgb) / 1) 325deg,
+    rgb(var(--letter-warmth-rgb) / calc(0.35 + var(--letter-warmth) * 0.35)) 350deg,
+    var(--letter-border-track) 360deg
+  );
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: letter-warmth-border-loop 9.6s linear infinite;
+  will-change: transform;
+}
+
+.letter-card__glow::after {
+  content: "";
+  position: absolute;
+  inset: 1.5px;
+  border-radius: 6.5px;
+  background: var(--letter-card-bg, #faf7ec);
+}
+
+.letters-container .letter-card.letter-card--has-glow:nth-child(3n + 2) .letter-card__glow::before {
   animation-delay: -3.2s;
 }
 
-.letters-container .letter-card:nth-child(3n) {
+.letters-container .letter-card.letter-card--has-glow:nth-child(3n) .letter-card__glow::before {
   animation-delay: -6.4s;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .letter-card {
-    animation: none;
-  }
-
-  .feed-report__snow i {
+  .letter-card.letter-card--has-glow,
+  .letter-card__glow::before {
     animation: none;
   }
 }
 
-.letter-card:hover {
-  transform: translateY(-3px);
-  --letter-border-track: #d8c9a4;
-  box-shadow:
-    0 10px 24px rgba(60, 50, 30, 0.14),
-    0 0 calc(7px + var(--letter-warmth) * 19px)
-      rgb(var(--letter-warmth-rgb) / calc(0.09 + var(--letter-warmth) * 0.36));
+/* The physical paper sheet with universal cross-platform authentic paper tooth grain */
+.letter-card__paper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-color: var(--letter-card-bg);
+  background-image: url("data:image/png;base64,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");
+  background-repeat: repeat;
+  background-size: 64px 64px;
+  box-shadow: inset 0 0 16px rgba(120, 85, 45, 0.09), inset 0 0 2px rgba(95, 65, 30, 0.14);
 }
 
-.letter-card--mood-love {
-  --letter-warmth-rgb: 238 105 153;
+/* 8 distinct, subtly crinkled & weathered paper edge variants matching authentic stationery */
+.letter-card--deckle-0 .letter-card__paper {
+  clip-path: polygon(
+    0.4% 2.2%, 0.9% 1.2%, 1.6% 0.6%, 2.6% 0.3%, 8.0% 0.5%, 15.0% 0.3%, 22.0% 0.6%, 27.0% 0.4%, 28.2% 1.3%, 29.5% 0.4%, 38.0% 0.6%, 46.0% 0.3%, 55.0% 0.5%, 65.0% 0.4%, 75.0% 0.6%, 85.0% 0.3%, 93.0% 0.5%, 97.4% 0.3%,
+    98.4% 0.6%, 99.1% 1.2%, 99.6% 2.0%, 99.4% 9.0%, 99.6% 18.0%, 99.3% 27.0%, 99.6% 35.0%, 98.7% 36.5%, 99.5% 38.0%, 99.7% 48.0%, 99.4% 58.0%, 99.6% 68.0%, 99.3% 78.0%, 99.6% 88.0%, 99.4% 94.0%,
+    99.6% 97.8%, 99.0% 98.8%, 98.2% 99.5%, 97.2% 99.7%, 92.0% 99.4%, 86.0% 99.7%, 80.0% 99.4%, 74.0% 99.6%, 66.5% 99.5%, 65.0% 98.7%, 63.5% 99.6%, 58.0% 99.3%, 52.0% 99.7%, 46.0% 99.4%, 40.0% 99.6%, 34.0% 99.3%, 28.0% 99.7%, 22.0% 99.4%, 16.0% 99.6%, 10.0% 99.3%, 5.0% 99.6%,
+    2.8% 99.7%, 1.8% 99.4%, 1.0% 98.7%, 0.4% 97.6%, 0.6% 91.0%, 0.3% 82.0%, 0.5% 73.0%, 0.4% 62.5%, 1.3% 61.0%, 0.4% 59.5%, 0.6% 50.0%, 0.3% 41.0%, 0.5% 32.0%, 0.4% 23.0%, 0.6% 14.0%, 0.4% 6.0%
+  );
 }
 
-.letter-card--mood-sad {
-  --letter-warmth-rgb: 87 137 207;
+.letter-card--deckle-1 .letter-card__paper {
+  clip-path: polygon(
+    0.3% 1.8%, 0.8% 0.9%, 1.8% 0.4%, 2.8% 0.2%, 10.0% 0.4%, 20.0% 0.6%, 31.0% 0.3%, 41.5% 0.4%, 42.8% 1.3%, 44.2% 0.5%, 53.0% 0.3%, 63.0% 0.6%, 73.0% 0.4%, 83.0% 0.5%, 92.0% 0.3%, 97.2% 0.4%,
+    98.3% 0.7%, 99.0% 1.3%, 99.7% 2.2%, 99.4% 11.0%, 99.6% 22.0%, 99.3% 33.0%, 99.6% 45.0%, 99.4% 56.0%, 99.6% 67.0%, 99.6% 72.5%, 98.7% 74.0%, 99.5% 75.5%, 99.6% 85.0%, 99.4% 93.0%,
+    99.5% 97.6%, 98.9% 98.7%, 98.1% 99.4%, 97.0% 99.7%, 91.0% 99.4%, 85.0% 99.7%, 78.0% 99.4%, 71.0% 99.7%, 64.0% 99.4%, 57.0% 99.6%, 50.0% 99.3%, 43.0% 99.7%, 36.5% 99.5%, 35.0% 98.7%, 33.5% 99.6%, 27.0% 99.3%, 20.0% 99.6%, 14.0% 99.4%, 8.0% 99.7%, 4.5% 99.4%,
+    2.5% 99.7%, 1.6% 99.3%, 0.9% 98.6%, 0.3% 97.5%, 0.5% 89.0%, 0.3% 80.0%, 0.6% 70.0%, 0.4% 60.0%, 0.6% 50.0%, 0.3% 40.0%, 0.4% 29.5%, 1.3% 28.0%, 0.5% 26.5%, 0.3% 17.0%, 0.5% 8.0%
+  );
 }
 
-.letter-card--mood-neutral {
-  --letter-warmth-rgb: 218 165 32;
+.letter-card--deckle-2 .letter-card__paper {
+  clip-path: polygon(
+    0.5% 2.4%, 1.0% 1.3%, 1.7% 0.7%, 2.7% 0.3%, 14.8% 0.4%, 16.2% 1.3%, 17.5% 0.4%, 26.0% 0.6%, 36.0% 0.3%, 46.0% 0.5%, 56.0% 0.3%, 66.0% 0.6%, 77.0% 0.4%, 88.0% 0.5%, 97.0% 0.3%,
+    98.2% 0.6%, 99.0% 1.1%, 99.5% 1.9%, 99.4% 10.0%, 99.6% 21.0%, 99.3% 32.0%, 99.6% 44.0%, 99.6% 52.8%, 98.7% 54.2%, 99.5% 55.6%, 99.7% 66.0%, 99.4% 77.0%, 99.6% 87.0%, 99.3% 94.0%,
+    99.5% 97.9%, 98.9% 98.9%, 98.0% 99.5%, 97.1% 99.7%, 91.0% 99.4%, 86.0% 99.7%, 80.5% 99.5%, 79.0% 98.7%, 77.5% 99.6%, 71.0% 99.4%, 64.0% 99.7%, 57.0% 99.3%, 50.0% 99.6%, 43.0% 99.4%, 36.0% 99.7%, 29.0% 99.4%, 22.0% 99.6%, 15.0% 99.3%, 8.0% 99.6%, 4.0% 99.4%,
+    2.4% 99.7%, 1.5% 99.4%, 0.8% 98.7%, 0.4% 97.8%, 0.5% 90.0%, 0.3% 80.0%, 0.6% 69.0%, 0.4% 58.0%, 0.4% 46.5%, 1.3% 45.0%, 0.5% 43.5%, 0.3% 34.0%, 0.6% 23.0%, 0.4% 13.0%, 0.5% 5.0%
+  );
 }
 
-.letter-card__top {
+.letter-card--deckle-3 .letter-card__paper {
+  clip-path: polygon(
+    0.3% 1.9%, 0.7% 1.0%, 1.5% 0.5%, 2.5% 0.3%, 9.0% 0.5%, 19.0% 0.3%, 30.0% 0.6%, 41.0% 0.4%, 52.0% 0.6%, 62.0% 0.3%, 67.8% 0.4%, 69.2% 1.3%, 70.6% 0.5%, 80.0% 0.3%, 90.0% 0.5%, 97.3% 0.3%,
+    98.4% 0.6%, 99.1% 1.2%, 99.6% 2.0%, 99.4% 10.0%, 99.6% 20.0%, 99.6% 29.8%, 98.7% 31.2%, 99.5% 32.6%, 99.7% 43.0%, 99.4% 54.0%, 99.6% 66.0%, 99.3% 77.0%, 99.6% 87.0%, 99.4% 94.0%,
+    99.5% 97.7%, 98.9% 98.7%, 98.2% 99.4%, 97.2% 99.7%, 91.0% 99.4%, 84.0% 99.7%, 77.0% 99.4%, 70.0% 99.6%, 63.0% 99.3%, 56.0% 99.6%, 51.5% 99.5%, 50.0% 98.7%, 48.5% 99.6%, 42.0% 99.4%, 35.0% 99.7%, 28.0% 99.3%, 21.0% 99.6%, 14.0% 99.4%, 8.0% 99.7%, 4.5% 99.4%,
+    2.6% 99.7%, 1.7% 99.3%, 0.9% 98.6%, 0.3% 97.6%, 0.6% 89.0%, 0.3% 79.0%, 0.5% 68.0%, 0.4% 57.0%, 0.6% 47.0%, 0.4% 39.5%, 1.3% 38.0%, 0.5% 36.5%, 0.3% 27.0%, 0.6% 17.0%, 0.4% 7.0%
+  );
+}
+
+.letter-card--deckle-4 .letter-card__paper {
+  clip-path: polygon(
+    0.4% 2.3%, 0.9% 1.2%, 1.6% 0.6%, 2.6% 0.3%, 11.0% 0.5%, 22.0% 0.3%, 33.0% 0.6%, 44.0% 0.4%, 55.0% 0.6%, 67.0% 0.3%, 76.0% 0.5%, 79.8% 0.4%, 81.2% 1.3%, 82.6% 0.5%, 91.0% 0.3%, 97.1% 0.4%,
+    98.3% 0.7%, 99.1% 1.3%, 99.7% 2.2%, 99.4% 12.0%, 99.6% 24.0%, 99.3% 36.0%, 99.6% 48.0%, 99.4% 59.0%, 99.6% 69.0%, 99.6% 75.8%, 98.7% 77.2%, 99.5% 78.6%, 99.6% 88.0%, 99.4% 94.0%,
+    99.5% 97.8%, 98.9% 98.8%, 98.1% 99.5%, 97.0% 99.7%, 90.0% 99.4%, 83.0% 99.7%, 76.0% 99.4%, 69.0% 99.6%, 62.0% 99.3%, 58.5% 99.5%, 57.0% 98.7%, 55.5% 99.6%, 49.0% 99.3%, 42.0% 99.7%, 35.0% 99.4%, 28.0% 99.6%, 21.0% 99.3%, 14.0% 99.6%, 8.0% 99.4%, 4.0% 99.6%,
+    2.4% 99.7%, 1.5% 99.3%, 0.8% 98.6%, 0.3% 97.5%, 0.5% 89.0%, 0.3% 79.0%, 0.4% 68.5%, 1.3% 67.0%, 0.5% 65.5%, 0.3% 56.0%, 0.6% 45.0%, 0.4% 34.0%, 0.6% 23.0%, 0.4% 13.0%, 0.5% 5.0%
+  );
+}
+
+.letter-card--deckle-5 .letter-card__paper {
+  clip-path: polygon(
+    0.3% 1.8%, 0.8% 0.9%, 1.6% 0.4%, 2.6% 0.2%, 12.0% 0.4%, 22.8% 0.4%, 24.2% 1.3%, 25.6% 0.5%, 35.0% 0.3%, 46.0% 0.6%, 57.0% 0.4%, 68.0% 0.6%, 79.0% 0.3%, 89.0% 0.5%, 97.2% 0.3%,
+    98.3% 0.6%, 99.0% 1.2%, 99.6% 2.0%, 99.4% 9.0%, 99.6% 17.8%, 98.7% 19.2%, 99.5% 20.6%, 99.7% 32.0%, 99.4% 44.0%, 99.6% 56.0%, 99.3% 68.0%, 99.6% 80.0%, 99.4% 92.0%,
+    99.5% 97.6%, 98.8% 98.7%, 98.0% 99.4%, 97.1% 99.7%, 91.0% 99.4%, 84.0% 99.7%, 77.0% 99.4%, 70.0% 99.6%, 62.5% 99.5%, 61.0% 98.7%, 59.5% 99.6%, 53.0% 99.3%, 46.0% 99.7%, 39.0% 99.4%, 32.0% 99.6%, 25.0% 99.3%, 18.0% 99.6%, 11.0% 99.4%, 5.0% 99.7%,
+    2.7% 99.7%, 1.7% 99.3%, 0.9% 98.6%, 0.4% 97.6%, 0.5% 88.0%, 0.3% 78.0%, 0.6% 67.0%, 0.4% 56.0%, 0.6% 45.0%, 0.3% 34.0%, 0.5% 24.0%, 0.4% 16.5%, 1.3% 15.0%, 0.5% 13.5%, 0.3% 6.0%
+  );
+}
+
+.letter-card--deckle-6 .letter-card__paper {
+  clip-path: polygon(
+    0.4% 2.2%, 0.9% 1.2%, 1.7% 0.6%, 2.7% 0.3%, 12.0% 0.5%, 23.0% 0.3%, 34.8% 0.4%, 36.2% 1.3%, 37.6% 0.5%, 47.0% 0.3%, 58.0% 0.6%, 69.0% 0.4%, 80.0% 0.6%, 90.0% 0.3%, 97.1% 0.4%,
+    98.3% 0.7%, 99.0% 1.3%, 99.7% 2.1%, 99.4% 11.0%, 99.6% 23.0%, 99.3% 35.0%, 99.6% 46.8%, 98.7% 48.2%, 99.5% 49.6%, 99.7% 60.0%, 99.4% 71.0%, 99.6% 82.0%, 99.4% 93.0%,
+    99.5% 97.8%, 98.9% 98.8%, 98.1% 99.5%, 97.0% 99.7%, 91.0% 99.4%, 83.0% 99.7%, 75.0% 99.4%, 67.0% 99.6%, 59.0% 99.3%, 51.0% 99.6%, 44.5% 99.5%, 43.0% 98.7%, 41.5% 99.6%, 35.0% 99.3%, 28.0% 99.7%, 21.0% 99.4%, 14.0% 99.6%, 8.0% 99.4%, 4.0% 99.7%,
+    2.5% 99.7%, 1.6% 99.3%, 0.8% 98.6%, 0.3% 97.5%, 0.5% 89.0%, 0.3% 79.0%, 0.6% 68.0%, 0.4% 57.5%, 1.3% 56.0%, 0.5% 54.5%, 0.3% 44.0%, 0.6% 33.0%, 0.4% 22.0%, 0.6% 12.0%, 0.4% 5.0%
+  );
+}
+
+.letter-card--deckle-7 .letter-card__paper {
+  clip-path: polygon(
+    0.3% 1.8%, 0.8% 0.9%, 1.6% 0.4%, 2.6% 0.2%, 12.0% 0.4%, 24.0% 0.6%, 36.0% 0.3%, 48.0% 0.5%, 59.0% 0.3%, 62.8% 0.4%, 64.2% 1.3%, 65.6% 0.5%, 76.0% 0.3%, 87.0% 0.5%, 97.2% 0.3%,
+    98.3% 0.6%, 99.0% 1.2%, 99.6% 2.0%, 99.4% 10.0%, 99.6% 21.0%, 99.6% 25.8%, 98.7% 27.2%, 99.5% 28.6%, 99.7% 40.0%, 99.4% 52.0%, 99.6% 64.0%, 99.3% 76.0%, 99.6% 87.0%, 99.4% 94.0%,
+    99.5% 97.7%, 98.9% 98.7%, 98.1% 99.4%, 97.1% 99.7%, 90.0% 99.4%, 83.0% 99.7%, 76.0% 99.4%, 71.5% 99.5%, 70.0% 98.7%, 68.5% 99.6%, 61.0% 99.3%, 54.0% 99.6%, 47.0% 99.4%, 40.0% 99.7%, 33.0% 99.3%, 26.0% 99.6%, 19.0% 99.4%, 12.0% 99.7%, 5.0% 99.4%,
+    2.7% 99.7%, 1.7% 99.3%, 0.9% 98.6%, 0.4% 97.6%, 0.5% 88.0%, 0.3% 77.0%, 0.6% 66.0%, 0.4% 54.0%, 0.4% 42.5%, 1.3% 41.0%, 0.5% 39.5%, 0.3% 30.0%, 0.6% 19.0%, 0.4% 9.0%, 0.5% 4.0%
+  );
+}
+
+/* Procedural Stationery Color Palettes:
+   - Warm Parchment (#ede2cb): Aged darker brown for old letters (>= 6 months)
+   - Medium Cream (#f4eddb): Subtle warm medium-slight brown middle ground for fresh letters
+   - Light Ivory (#faf7ec): Crisp light ivory for fresh letters
+*/
+.letter-card--paper-parchment,
+.letter-card--paper-blue {
+  --letter-card-bg: #ede2cb;
+  --letter-card-back-bg: #dfcaa6;
+  --letter-card-border: #ded3bf;
+  --letter-card-ink: #2b241c;
+  --letter-card-muted: #6b604e;
+  --letter-card-sub: #7b7160;
+}
+
+.letter-card--paper-cream,
+.letter-card--paper-warm {
+  --letter-card-bg: #f4eddb;
+  --letter-card-back-bg: #e5d3af;
+  --letter-card-border: #e5dac4;
+  --letter-card-ink: #302a20;
+  --letter-card-muted: #6c614e;
+  --letter-card-sub: #7d7260;
+}
+
+.letter-card--paper-kraft,
+.letter-card--paper-ivory {
+  --letter-card-bg: #faf7ec;
+  --letter-card-back-bg: #ecdcb9;
+  --letter-card-border: #ece2c9;
+  --letter-card-ink: #332f24;
+  --letter-card-muted: #6d624f;
+  --letter-card-sub: #7f7461;
+}
+
+/* Decorative Washi Tape (Card 2) */
+.letter-card__washi-tape {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-0.6deg);
+  width: 46px;
+  height: 14px;
+  background: rgba(225, 216, 192, 0.82);
+  box-shadow: 0 1px 2px rgba(40, 30, 15, 0.16);
+  pointer-events: none;
+  z-index: 5;
+  clip-path: polygon(
+    0% 2px, 2px 0%, 44px 0%, 46px 2px,
+    45px 5px, 46px 8px, 45px 11px, 46px 14px,
+    44px 14px, 2px 14px, 0% 12px,
+    1px 9px, 0% 6px, 1px 3px
+  );
+}
+
+/* Tactile Skeuomorphic Red Pushpin for Pinned Letters (top center) */
+.letter-card__red-pin {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  transform-origin: 50% 80%;
+  width: 15px;
+  height: 22px;
+  z-index: 12;
+  pointer-events: none;
+  overflow: visible;
+  filter: drop-shadow(-1.5px 2.5px 3px rgba(40, 20, 10, 0.38));
+}
+
+html.night-shift .letter-card__red-pin {
+  filter: drop-shadow(-1.5px 2.5px 3.5px rgba(0, 0, 0, 0.65));
+}
+
+@media (max-width: 480px) {
+  .letter-card__red-pin {
+    top: -9px;
+    width: 13px;
+    height: 19px;
+  }
+}
+
+/* Postage Stamp Area */
+.letter-card__stamp-wrapper {
+  position: absolute;
+  top: 10px;
+  right: 12px;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 3;
+  pointer-events: none;
 }
 
-.letter-card__from {
+.letter-card__postmark-waves {
+  display: none !important;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-65%, -50%);
+  width: 18px;
+  height: 9px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.letter-card__main-stamp {
+  width: 23px;
+  height: 28px;
+  overflow: visible;
+}
+
+.letter-card__main-stamp--featured-star {
+  width: 25px;
+  height: 25px;
+  overflow: visible;
+}
+
+.letter-card__stamp-wrapper--variant-1 .letter-card__main-stamp,
+.letter-card__stamp-wrapper--variant-2 .letter-card__main-stamp,
+.letter-card__stamp-wrapper--variant-3 .letter-card__main-stamp,
+.letter-card__stamp-wrapper--variant-0 .letter-card__main-stamp {
+  width: 23px;
+  height: 28px;
+}
+
+.letter-card__main-stamp--wide {
+  width: 42px;
+  height: 22px;
+}
+
+.letter-card__botanical-stamp,
+.letter-card__airmail-stamp {
+  width: 24px;
+  height: 28px;
+  margin-top: 3px;
+}
+
+/* Inner card content wrapper */
+.letter-card__inner {
   display: flex;
-  align-items: baseline;
-  gap: 5px;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 3;
+  padding-bottom: 12px;
+}
+
+/* Card Header */
+.letter-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.letter-card--is-postcard .letter-card__header {
+  padding-right: 0;
+}
+
+.letter-card--is-postcard.letter-card--variant-3 .letter-card__header {
+  padding-right: 0;
+  max-width: calc(100% - 36px);
+  min-height: 28px;
+  height: auto;
+  box-sizing: border-box;
+}
+
+.letter-card__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  gap: 2px;
+}
+
+.letter-card--is-postcard .letter-card__meta,
+.letter-card--is-postcard.letter-card--variant-3 .letter-card__meta,
+.letter-card--is-featured .letter-card__meta {
+  max-width: calc(100% - 36px);
+}
+
+.letter-card__date-loc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+
+.letter-card__date {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--letter-card-muted);
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  white-space: nowrap;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.letter-card__featured-badge {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: #9e7520;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.letter-card__addressee {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.letter-card__from,
+.letter-card__to {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  line-height: 1.25;
+  min-height: 13px;
+  white-space: nowrap;
 }
 
 .letter-card__label {
   font-family: "Courier New", Courier, monospace;
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #a99e7e;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--letter-card-muted);
   flex-shrink: 0;
+  line-height: 1.25;
 }
 
-.letter-card__time {
-  font-family: "Courier New", Courier, monospace;
-  font-size: 10px;
-  color: #b0a689;
-  flex-shrink: 0;
-}
-
-.letter-card__name {
-  min-width: 0;
-  margin: 0;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 13px;
-  font-weight: 700;
-  color: #2f2b20;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.letter-card__to {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  min-width: 0;
-}
-
+.letter-card__name,
 .letter-card__to-name {
-  font-family: "Courier New", Courier, monospace;
-  font-size: 12px;
-  color: #6b6550;
+  font-family: "Courier New", Courier, monospace, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--letter-card-muted);
+  line-height: 1.25;
+  padding: 4px 0 3px 0;
+  margin: -4px 0 -3px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex: 1 1 auto;
 }
 
+/* Message Preview: Left-aligned, vertically centered in remaining card space, strictly 5 lines on authentic ruled paper lines */
 .letter-card__preview {
-  margin: 8px 0 0;
-  padding: 0 1px 1px;
-  height: calc(var(--letter-card-rule-space) * 5);
-  min-height: calc(var(--letter-card-rule-space) * 5);
-  flex-shrink: 0;
-  box-sizing: border-box;
+  margin: auto 0;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--letter-card-ink);
+  text-align: left;
   display: -webkit-box;
   -webkit-line-clamp: 5;
   line-clamp: 5;
   -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow: hidden !important;
+  word-break: break-word;
+  padding-right: 6px;
+  padding-bottom: 0 !important;
+  height: 90px;
+  min-height: 90px;
+  max-height: 90px !important;
+  box-sizing: border-box;
   background-image: repeating-linear-gradient(
     to bottom,
-    transparent 0 calc(var(--letter-card-rule-space) - 1px),
-    rgba(120, 100, 60, 0.09) calc(var(--letter-card-rule-space) - 1px)
-      var(--letter-card-rule-space)
+    transparent 0 17px,
+    rgba(120, 100, 60, 0.12) 17px 18px
   );
+  background-size: 100% 18px;
   background-position: 0 -3px;
+}
+
+.letter-card--is-postcard .letter-card__preview {
+  margin: auto 0;
+  padding-right: 6px;
+  padding-bottom: 0 !important;
+  height: 90px;
+  min-height: 90px;
+  max-height: 90px !important;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+}
+
+.letter-card--is-postcard.letter-card--variant-3 .letter-card__preview {
+  margin: auto 0;
+  padding-right: 6px;
+  padding-bottom: 0 !important;
+  height: 90px;
+  min-height: 90px;
+  max-height: 90px !important;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+}
+
+/* Plain old letters (with brass paperclip on right) */
+.letter-card--is-plain-letter .letter-card__preview {
+  margin: auto 0;
+  padding-right: 6px;
+  padding-bottom: 0 !important;
+  height: 90px;
+  min-height: 90px;
+  max-height: 90px !important;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+}
+
+.letter-card--is-featured .letter-card__preview {
+  margin: auto 0;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  height: 90px;
+  min-height: 90px;
+  max-height: 90px !important;
+  padding-bottom: 0 !important;
+}
+
+/* Footer: for featured cards with navigation arrow positioned like reply indicator */
+.letter-card__footer {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.letter-card__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--letter-card-muted);
+  opacity: 0.75;
+  transition: opacity 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.letter-card__arrow > svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.letter-card:hover .letter-card__arrow {
+  opacity: 1;
+  color: var(--letter-card-ink);
+  transform: translateX(2px);
+}
+
+/* Relative time indicator positioned at bottom left corner of card */
+.letter-card__time {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
   font-family: "Courier New", Courier, monospace;
-  font-size: 12px;
-  line-height: 1.55;
-  color: #423e30;
-  overflow-wrap: anywhere;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--letter-card-muted);
+  opacity: 0.75;
+  z-index: 4;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1.25;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.letter-card:hover .letter-card__time {
+  opacity: 1;
+  color: var(--letter-card-ink);
+}
+
+/* Reply indicator positioned at bottom right corner of card */
+.letter-reply-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--letter-card-muted);
+  opacity: 0.75;
+  z-index: 4;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.letter-card:hover .letter-reply-indicator {
+  opacity: 1;
+  color: var(--letter-card-ink);
+  transform: translateY(-1px);
+}
+
+.letter-reply-indicator > svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
 }
 
 .sensitive-message--compact {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  height: 100%;
-  color: #756d59;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
-  text-align: center;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  width: 100% !important;
+  text-align: center !important;
+  color: var(--letter-card-muted, #756d59);
 }
 
 .letter-card__preview.is-sensitive {
-  display: block;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: auto 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  background-image: none !important;
+}
+
+.letter-card--is-postcard .letter-card__preview.is-sensitive,
+.letter-card--is-postcard.letter-card--variant-3 .letter-card__preview.is-sensitive {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
 }
 
 .sensitive-message--compact svg {
   flex: 0 0 auto;
-  width: 17px;
-  height: 17px;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 4px;
+  color: var(--letter-card-muted, #756d59);
+  opacity: 0.85;
+}
+
+.sensitive-message--compact .sensitive-message__label {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  font-family: "Courier New", Courier, monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.03em !important;
+}
+
+.sensitive-message--compact .sensitive-message__label span {
+  display: block !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  text-align: center !important;
+  color: var(--letter-card-muted, #645a47) !important;
 }
 
 .sensitive-message--covered {
@@ -2062,14 +2605,8 @@ html.night-shift .sensitive-message--covered button {
 }
 
 .letter-card--featured {
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  text-align: center;
-  border-color: #e3c987;
-  background-image: none;
-  background-color: #fffdf3;
-  box-shadow: 0 1px 2px rgba(60, 50, 30, 0.06);
+  border: none;
+  background: transparent;
   animation: none;
 }
 
@@ -2078,8 +2615,33 @@ html.night-shift .sensitive-message--covered button {
 }
 
 .letter-card--featured.is-active {
-  border-color: transparent;
-  background-color: rgba(55, 114, 255, 0.9);
+  border: none;
+}
+
+.letter-card--featured .letter-card__inner {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  height: 100% !important;
+  width: 100% !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.letter-card--featured .letter-card__header,
+.letter-card--featured .letter-card__header--featured {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: unset !important;
+  height: auto !important;
+  margin: 0 0 16px 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
 }
 
 .letter-ad-slot {
@@ -2100,15 +2662,63 @@ html.night-shift .sensitive-message--covered button {
 
 .letter-card__featured-badge {
   font-family: "Courier New", Courier, monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #b8922f;
+  color: #9e7520;
+}
+
+.letter-card--featured .letter-card__featured-badge {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #b3842c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  line-height: 1;
+  text-align: center;
+}
+
+.letter-card--featured .letter-card__featured-star {
+  font-size: 13px;
+  line-height: 1;
+  display: inline-block;
 }
 
 .letter-card--featured.is-active .letter-card__featured-badge {
-  color: #fff;
+  color: #8c6418;
+  text-decoration: underline;
+  text-decoration-color: rgba(140, 100, 24, 0.45);
+  text-underline-offset: 3px;
+}
+
+.letter-card--featured .letter-card__preview {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  -webkit-line-clamp: unset !important;
+  line-clamp: unset !important;
+  display: block !important;
+  text-align: center !important;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--letter-card-ink, #332f24);
+  background-image: none !important;
+  background: transparent !important;
+}
+
+.letter-card--featured .letter-card__preview-line {
+  display: block;
+  white-space: nowrap;
 }
 
 .letter-card__featured-text {
@@ -2120,7 +2730,7 @@ html.night-shift .sensitive-message--covered button {
 }
 
 .letter-card--featured.is-active .letter-card__featured-text {
-  color: rgba(255, 255, 255, 0.92);
+  color: inherit;
 }
 
 .letter-search-loading { grid-column:1 / -1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:210px; padding:24px; box-sizing:border-box; color:#536071; text-align:center; }
@@ -3104,17 +3714,43 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     gap: 4px;
   }
 
+  .home-toolbar {
+    transition: padding 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease;
+  }
+
+  .header .logo,
+  .header .alt-logo,
+  .search-bar,
+  .add-button .big-button,
+  .messages-count {
+    transition: width 0.2s cubic-bezier(0.2, 0, 0, 1),
+      height 0.2s cubic-bezier(0.2, 0, 0, 1),
+      min-height 0.2s cubic-bezier(0.2, 0, 0, 1),
+      margin 0.2s cubic-bezier(0.2, 0, 0, 1),
+      padding 0.2s cubic-bezier(0.2, 0, 0, 1),
+      border-radius 0.2s ease;
+  }
+
   .home-toolbar.is-compact {
     grid-template-columns: 42px minmax(0, 1fr) 42px;
     gap: 7px 8px;
     margin: 0 -10px;
     padding: 8px 10px 7px;
     border-radius: 0 0 14px 14px;
+    animation-duration: 0.2s;
+  }
+
+  .home-toolbar.is-compact .header .logo {
+    animation-duration: 0.22s;
   }
 
   .home-toolbar.is-compact .header .logo--compact-mark {
     width: 40px;
     height: 40px;
+  }
+
+  .home-toolbar.is-compact .search-bar {
+    animation-duration: 0.22s;
   }
 
   .home-toolbar.is-compact .search-field {
@@ -3144,11 +3780,13 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   .home-toolbar.is-compact .big-button {
     width: 40px;
     min-height: 40px;
+    animation-duration: 0.22s;
   }
 
   .home-toolbar.is-compact .information-panel {
     width: fit-content;
     max-width: 100%;
+    animation-duration: 0.22s;
   }
 
   .home-toolbar.is-compact .messages-count {
@@ -3164,50 +3802,324 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     gap: 8px;
     max-width: 100%;
     align-items: start;
+    padding: 8px 3px 6px;
   }
 
   .letter-card {
-    --letter-card-rule-space: 15px;
-    height: 130px;
-    min-height: 130px;
+    height: 132px;
+    min-height: 132px;
+    padding: 8px 10px 8px;
+  }
+
+  .letter-card__inner {
+    padding-bottom: 8px;
+  }
+
+  .letter-card__washi-tape {
+    top: -4px;
+    width: 34px;
+    height: 11px;
+  }
+
+  .letter-card__stamp-wrapper {
+    top: 6px;
+    right: 8px;
+  }
+
+  .letter-card__main-stamp {
+    width: 19px;
+    height: 23px;
+    overflow: visible;
+  }
+
+  .letter-card__main-stamp--featured-star {
+    width: 20px;
+    height: 20px;
+    overflow: visible;
+  }
+
+  .letter-card__stamp-wrapper--variant-1 .letter-card__main-stamp,
+  .letter-card__stamp-wrapper--variant-2 .letter-card__main-stamp,
+  .letter-card__stamp-wrapper--variant-3 .letter-card__main-stamp,
+  .letter-card__stamp-wrapper--variant-0 .letter-card__main-stamp {
+    width: 19px;
+    height: 23px;
+  }
+
+  .letter-card__main-stamp--wide {
+    width: 36px;
+    height: 19px;
+  }
+
+  .letter-card__botanical-stamp,
+  .letter-card__airmail-stamp {
+    display: none;
+  }
+
+  .letter-card__postmark-waves {
+    display: none;
+  }
+
+  .letter-card__header {
+    padding-right: 0;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
     box-sizing: border-box;
-    padding: 9px 9px 7px;
-    border-radius: 9px;
-    box-shadow:
-      0 1px 2px rgba(60, 50, 30, 0.05),
-      0 0 calc(3px + var(--letter-warmth) * 10px)
-        rgb(var(--letter-warmth-rgb) / calc(0.025 + var(--letter-warmth) * 0.1));
+  }
+
+  .letter-card--is-postcard .letter-card__header {
+    padding-right: 0;
+    max-width: 100%;
+  }
+
+  .letter-card--is-postcard.letter-card--variant-3 .letter-card__header {
+    padding-right: 0;
+    max-width: 100%;
+    min-height: 25px;
+    height: auto;
+    box-sizing: border-box;
+  }
+
+  .letter-card__date-loc {
+    margin-bottom: 2px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+  }
+
+  .letter-card__date {
+    font-size: 8px;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    white-space: nowrap;
+    display: inline-block;
+    flex-shrink: 0;
+    color: var(--letter-card-muted);
+  }
+
+  .letter-card__featured-badge {
+    font-size: 8px;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+  }
+
+  .letter-card--featured {
+    padding: 8px 6px 8px !important;
+  }
+
+  .letter-card--featured .letter-card__header,
+  .letter-card--featured .letter-card__header--featured {
+    margin: 0 0 8px 0 !important;
+  }
+
+  .letter-card--featured .letter-card__featured-badge {
+    font-size: 9px !important;
+    letter-spacing: 0.12em !important;
+    gap: 5px !important;
+  }
+
+  .letter-card--featured .letter-card__featured-star {
+    font-size: 10px !important;
+  }
+
+  .letter-card__meta {
+    gap: 1px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .letter-card--is-postcard .letter-card__meta,
+  .letter-card--is-postcard.letter-card--variant-3 .letter-card__meta,
+  .letter-card--is-featured .letter-card__meta {
+    max-width: calc(100% - 28px);
+  }
+
+  .letter-card__addressee {
+    gap: 1px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .letter-card__from,
+  .letter-card__to {
+    gap: 3px;
+    align-items: center;
+    line-height: 1.2;
+    min-height: 12px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
+    display: flex;
   }
 
   .letter-card__label {
     font-size: 8px;
-    letter-spacing: 0.08em;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    line-height: 1.2;
+    flex-shrink: 0;
+    color: var(--letter-card-muted);
+  }
+
+  .letter-card__name,
+  .letter-card__to-name {
+    font-family: "Courier New", Courier, monospace, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+    font-size: 8px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    line-height: 1.2;
+    padding: 4px 0 3px 0;
+    margin: -4px 0 -3px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    color: var(--letter-card-muted);
   }
 
   .letter-card__time {
-    font-size: 9px;
+    bottom: 0px;
+    left: 0;
+    font-size: 8px;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
   }
 
-  .letter-card__name {
-    font-size: 10px;
+  .letter-reply-indicator {
+    bottom: 0px;
+    right: 3px;
   }
 
-  .letter-card__to-name {
-    font-size: 10px;
+  .letter-reply-indicator > svg {
+    width: 12px;
+    height: 12px;
+    flex: 0 0 12px;
   }
 
   .letter-card__preview {
-    margin-top: 6px;
+    margin: auto 0;
+    font-family: "Courier New", Courier, monospace;
     font-size: 10px;
-    line-height: 1.5;
+    line-height: 15px;
+    height: 75px;
+    min-height: 75px;
+    max-height: 75px !important;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    padding-right: 4px;
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 14px,
+      rgba(120, 100, 60, 0.12) 14px 15px
+    );
+    background-size: 100% 15px;
+    background-position: 0 -2px;
   }
 
-  .letter-card__featured-badge {
-    font-size: 9px;
+  .letter-card--is-postcard .letter-card__preview {
+    margin: auto 0;
+    padding-right: 4px;
+    padding-bottom: 0 !important;
+    height: 75px;
+    min-height: 75px;
+    max-height: 75px !important;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
   }
 
-  .letter-card__featured-text {
-    font-size: 10px;
+  .letter-card--is-postcard.letter-card--variant-3 .letter-card__preview,
+  .letter-card--variant-3 .letter-card__preview {
+    margin: auto 0;
+    padding-right: 4px;
+    padding-bottom: 0 !important;
+    height: 75px;
+    min-height: 75px;
+    max-height: 75px !important;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+  }
+
+  .letter-card--is-plain-letter .letter-card__preview {
+    margin: auto 0;
+    padding-right: 4px;
+    padding-bottom: 0 !important;
+    height: 75px;
+    min-height: 75px;
+    max-height: 75px !important;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+  }
+
+  .letter-card--is-featured .letter-card__preview {
+    margin: auto 0;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+    height: 75px;
+    min-height: 75px;
+    max-height: 75px !important;
+    padding-bottom: 0 !important;
+  }
+
+  .letter-card--featured .letter-card__preview {
+    font-size: clamp(7px, 2vw, 8.5px) !important;
+    line-height: 1.35 !important;
+    max-height: none !important;
+  }
+
+  .letter-card--featured .letter-card__preview-line {
+    display: block !important;
+    white-space: nowrap !important;
+  }
+
+  .letter-card__preview.is-sensitive {
+    padding: 0 !important;
+    margin: auto 0 !important;
+    background-image: none !important;
+  }
+
+  .sensitive-message--compact svg {
+    width: 17px !important;
+    height: 17px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .sensitive-message--compact .sensitive-message__label {
+    font-size: 10.5px !important;
+  }
+
+  .letter-card__footer {
+    position: absolute;
+    bottom: 0px;
+    right: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
+  }
+
+  .letter-card__arrow > svg {
+    width: 12px;
+    height: 12px;
+    flex: 0 0 12px;
   }
 
   .letter-info {
@@ -5381,16 +6293,16 @@ html.night-shift .song-guide-link-sample { color: #c5c6c3; }
 /* ---- Read Mode Stage & TikTok/Reels vertical slide transitions ---- */
 .letter-modal-overlay.is-read-mode {
   background: #4e4c4a !important;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   overflow: hidden;
   touch-action: pan-y;
 }
 
 html.night-shift .letter-modal-overlay.is-read-mode {
   background: #08090a !important;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .app.is-read-mode-active .home-toolbar,
@@ -5402,6 +6314,31 @@ html.night-shift .letter-modal-overlay.is-read-mode {
 .app.is-read-mode-active .footer {
   visibility: hidden !important;
   pointer-events: none !important;
+}
+
+.app.is-read-mode-active:has(.is-folding-closed) .home-toolbar,
+.app.is-read-mode-active:has(.is-folding-closed) .header,
+.app.is-read-mode-active:has(.is-folding-closed) .content,
+.app.is-read-mode-active:has(.is-folding-closed) .letters-container,
+.app.is-read-mode-active:has(.is-folding-closed) .fab-stack,
+.app.is-read-mode-active:has(.is-folding-closed) .fab,
+.app.is-read-mode-active:has(.is-folding-closed) .footer,
+.app.is-modal-closing .home-toolbar,
+.app.is-modal-closing .header,
+.app.is-modal-closing .content,
+.app.is-modal-closing .letters-container,
+.app.is-modal-closing .fab-stack,
+.app.is-modal-closing .fab,
+.app.is-modal-closing .footer {
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+.app:has(.is-folding-closed) .feed-main-container--suspended,
+.app.is-modal-closing .feed-main-container--suspended {
+  visibility: visible !important;
+  pointer-events: auto !important;
+  user-select: auto !important;
 }
 
 .read-mode-stage {
@@ -5425,7 +6362,7 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   width: 100%;
   align-self: center;
   justify-self: center;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
   border-radius: 12px;
 }
 
@@ -5488,6 +6425,27 @@ html.night-shift .letter-modal-overlay.is-read-mode {
 
 .read-mode-prerender-wrapper .letter-paper {
   animation: none !important;
+}
+
+@media (min-width: 769px) {
+  .read-mode-stage {
+    max-width: var(--letter-stage-max-width, 580px);
+  }
+
+  .read-mode-card-wrapper,
+  .letter-modal,
+  .read-mode-prerender-wrapper {
+    max-width: var(--letter-desktop-max-width, 580px);
+  }
+
+  .letter-modal--wide-desktop .letter-paper {
+    max-height: calc(100vh - 88px);
+  }
+
+  .letter-paper__media--youtube {
+    max-width: 488px;
+    margin-inline: auto;
+  }
 }
 
 @keyframes readModeExitNext {
@@ -6196,17 +7154,52 @@ html.night-shift .reply-preview-banner {
 }
 
 /* ---- Letter paper ---- */
+.letter-paper-wrapper {
+  position: relative;
+  width: 100%;
+  filter:
+    drop-shadow(0 1px 2.5px rgba(45, 24, 10, 0.28))
+    drop-shadow(0 20px 48px rgba(0, 0, 0, 0.35));
+}
+
+html.night-shift .letter-paper-wrapper {
+  filter:
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 24px 54px rgba(0, 0, 0, 0.7));
+}
+
+.letter-stage--modal .letter-paper-wrapper,
+.read-mode-stage .letter-paper-wrapper {
+  animation: letter-paper-in 0.4s ease;
+}
+
+.read-mode-card-wrapper[class*="is-exiting-"] .letter-paper-wrapper {
+  animation: none;
+}
+
 .letter-paper {
   position: relative;
   max-height: calc(100vh - 130px);
   overflow-y: auto;
   padding: 44px 46px 26px;
-  border-radius: 10px;
-  border: 1px solid #ece2c9;
-  background-color: #faf7ec;
-  background-image: none;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-  animation: letter-paper-in 0.4s ease;
+  border-radius: 0;
+  border: none;
+  background-color: var(--letter-card-bg, #faf7ec);
+  background-image:
+    radial-gradient(ellipse at 50% 50%, transparent 74%, rgba(135, 78, 28, 0.05) 88%, rgba(98, 52, 18, 0.15) 96%, rgba(68, 34, 10, 0.26) 100%),
+    url("data:image/png;base64,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");
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, 64px 64px;
+  background-position: center, 0 0;
+  box-shadow:
+    inset 0 0 1px 0.5px rgba(65, 32, 10, 0.38),
+    inset 0 0 4px 1.5px rgba(110, 56, 18, 0.22),
+    inset 0 0 12px 3px rgba(138, 80, 26, 0.12),
+    inset 0 0 28px 6px rgba(105, 60, 20, 0.05);
+}
+
+.letter-stage--modal .letter-paper {
+  animation: none;
 }
 
 .letter-modal.is-youtube-playing {
@@ -6216,6 +7209,9 @@ html.night-shift .reply-preview-banner {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .letter-paper-wrapper {
+    animation: none !important;
+  }
   .letter-modal.is-youtube-playing {
     animation: none;
   }
@@ -6237,7 +7233,128 @@ html.night-shift .reply-preview-banner {
 }
 
 .letter-paper__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 18px;
+  position: relative;
+}
+
+.letter-paper__addressee {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.letter-paper__stamp-slot {
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-left: 14px;
+}
+
+.letter-paper__stamp-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  border-radius: 3px;
+  pointer-events: auto;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), filter 0.15s ease;
+}
+
+.letter-paper__stamp-btn::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  pointer-events: auto;
+}
+
+@media (hover: hover) {
+  .letter-paper__stamp-btn:hover {
+    transform: translateY(-1px) scale(1.03);
+  }
+}
+
+.letter-paper__stamp-btn:active {
+  transform: scale(0.97);
+}
+
+.letter-paper__stamp-btn:focus-visible {
+  outline: 2px solid rgba(179, 132, 44, 0.6);
+  outline-offset: 3px;
+}
+
+.letter-stamp-tooltip.react-tooltip {
+  z-index: 2200;
+  width: max-content;
+  max-width: min(220px, 80vw);
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: #2b261f !important;
+  color: #f7f3e8 !important;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(180, 140, 60, 0.3);
+  pointer-events: none;
+}
+
+html.night-shift .letter-stamp-tooltip.react-tooltip {
+  background-color: #1a1813 !important;
+  color: #ede7d8 !important;
+  border-color: rgba(180, 140, 60, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+}
+
+.letter-paper__stamp {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  filter: drop-shadow(0 2px 5px rgba(50, 40, 25, 0.16));
+  user-select: none;
+  pointer-events: none;
+}
+
+.letter-paper__stamp .letter-card__main-stamp {
+  width: 34px;
+  height: 41px;
+}
+
+.letter-paper__stamp .letter-card__main-stamp--featured-star {
+  width: 34px;
+  height: 41px;
+}
+
+.letter-paper__stamp.letter-card__stamp-wrapper--variant-0 .letter-card__main-stamp {
+  width: 34px;
+  height: 34px;
+}
+
+.letter-paper__stamp .letter-card__postmark-waves {
+  display: none !important;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-55%, -50%);
+  width: 20px;
+  height: 10px;
 }
 
 .letter-paper .letter-info {
@@ -6296,7 +7413,7 @@ html.night-shift .reply-preview-banner {
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0 27px,
-    rgba(120, 100, 60, 0.1) 27px 28px
+    rgba(120, 100, 60, 0.12) 27px 28px
   );
   background-position: 0 -5px;
   font-family: "Courier New", Courier, monospace;
@@ -7217,12 +8334,13 @@ html.night-shift .reply-preview-badge {
   .reply-composer-overlay { padding:10px 4px; }
   .reply-composer { width:min(580px,calc(100vw - 8px)); min-height:calc(100dvh - 20px); padding:23px 15px 14px; border-radius:8px; }
   .reply-composer form { min-height:min(480px,calc(100dvh - 58px)); }
-  .reply-composer__from-row { font-size:13px; }
+  .reply-composer__from-row { font-size:16px; }
+  .reply-composer__from-row input { font-size:16px; }
   .reply-composer__to-row { min-height:25px; font-size:13px; }
   .reply-composer__date { gap:4px; margin:13px 0 12px; font-size:9px; }
   .reply-composer__date svg { width:12px; height:12px; flex-basis:12px; }
   .reply-composer__message-field { min-height:260px; }
-  .reply-composer__message-field textarea { min-height:260px; font-size:13px; line-height:23px; background-image:repeating-linear-gradient(to bottom,transparent 0 22px,rgba(120,100,60,.1) 22px 23px); }
+  .reply-composer__message-field textarea { min-height:260px; font-size:16px; line-height:24px; background-image:repeating-linear-gradient(to bottom,transparent 0 23px,rgba(120,100,60,.1) 23px 24px); }
   .reply-composer__footer { gap:10px; }
   .reply-composer__note { font-size:9px; }
   .letter-reply-association { top:auto; bottom:18px; left:12px; }
@@ -7512,6 +8630,67 @@ html.night-shift .letter-location-ad-actions button:first-child {
   color: #ddd8ca;
 }
 
+.letter-location-ad-dialog--origin {
+  width: min(352px, 100%);
+  text-align: center;
+}
+
+.letter-location-ad-stamp-showcase {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0 6px;
+  margin-bottom: 12px;
+}
+
+.letter-location-ad-stamp.letter-card__stamp-wrapper {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 6px 14px rgba(45, 35, 18, 0.22));
+  pointer-events: none;
+  user-select: none;
+}
+
+.letter-location-ad-stamp.letter-card__stamp-wrapper .letter-card__main-stamp {
+  width: 88px !important;
+  height: 106px !important;
+}
+
+.letter-location-ad-dialog--origin .letter-location-ad-title-row {
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.letter-location-ad-dialog--origin h2 {
+  font-size: 15px;
+  white-space: normal;
+}
+
+.letter-location-ad-dialog--origin p {
+  max-width: 296px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.letter-location-ad-disclaimer {
+  display: block;
+  max-width: 296px;
+  margin: 10px auto 0;
+  color: #8c8475;
+  font-size: 10.5px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+html.night-shift .letter-location-ad-disclaimer {
+  color: #969184;
+}
+
 @media (max-width: 380px) {
   .letter-location-ad-dialog {
     padding-inline: 16px;
@@ -7523,6 +8702,10 @@ html.night-shift .letter-location-ad-actions button:first-child {
 
   .letter-location-ad-dialog h2 {
     font-size: 13px;
+  }
+
+  .letter-location-ad-dialog--origin h2 {
+    font-size: 14px;
   }
 }
 
@@ -8017,7 +9200,7 @@ html.night-shift .alt-logo {
 
 /* Toolbar */
 html.night-shift .home-toolbar {
-  background: rgba(20, 22, 26, 0.96);
+  background: transparent;
 }
 
 html.night-shift .home-toolbar.is-compact {
@@ -8392,60 +9575,93 @@ html.night-shift .origins-list li {
 
 /* Letter cards */
 html.night-shift .letter-card {
-  --letter-surface: #1b1d16;
-  --letter-border-track: #3a3a2e;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 0 calc(5px + var(--letter-warmth) * 15px)
-      rgb(var(--letter-warmth-rgb) / calc(0.04 + var(--letter-warmth) * 0.14));
+  box-shadow: none;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
 }
 
 html.night-shift .letter-card:hover {
-  --letter-border-track: #55523f;
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.5),
-    0 0 calc(7px + var(--letter-warmth) * 17px)
-      rgb(var(--letter-warmth-rgb) / calc(0.05 + var(--letter-warmth) * 0.16));
+  box-shadow: none;
+}
+
+html.night-shift .letter-card.letter-card--has-glow,
+html.night-shift .letter-card.letter-card--has-glow:hover {
+  filter: none;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
 }
 
 html.night-shift .letter-card--mood-love {
-  --letter-warmth-rgb: 242 113 162;
+  --letter-warmth-rgb: 245 75 95;
+  --letter-border-track: rgb(245 75 95 / 0.22);
 }
 
 html.night-shift .letter-card--mood-sad {
-  --letter-warmth-rgb: 83 128 194;
+  --letter-warmth-rgb: 96 165 250;
+  --letter-border-track: rgb(96 165 250 / 0.22);
 }
 
+html.night-shift .letter-card--mood-amber,
 html.night-shift .letter-card--mood-neutral {
-  --letter-warmth-rgb: 222 171 92;
+  --letter-warmth-rgb: 245 168 45;
+  --letter-border-track: rgb(245 168 45 / 0.22);
 }
 
-html.night-shift .letter-card__name {
-  color: #efe9d7;
+html.night-shift .letter-card--paper-blue {
+  --letter-card-bg: #1c2326;
+  --letter-card-back-bg: #13191c;
+  --letter-card-border: #2c393d;
+  --letter-card-ink: #d4e0e2;
+  --letter-card-muted: #8d9fa3;
+  --letter-card-sub: #728387;
 }
 
-html.night-shift .letter-card__to-name {
-  color: #b7b199;
+html.night-shift .letter-card--paper-kraft {
+  --letter-card-bg: #241d16;
+  --letter-card-back-bg: #19140f;
+  --letter-card-border: #3d3023;
+  --letter-card-ink: #e2d7c8;
+  --letter-card-muted: #a59580;
+  --letter-card-sub: #887865;
 }
 
-html.night-shift .letter-card__label,
-html.night-shift .letter-card__time {
-  color: #8a8264;
+html.night-shift .letter-card,
+html.night-shift .letter-card--paper-parchment,
+html.night-shift .letter-card--paper-ivory,
+html.night-shift .letter-card--paper-cream {
+  --letter-card-bg: #23201a;
+  --letter-card-back-bg: #181611;
+  --letter-card-border: #3a3429;
+  --letter-card-ink: #e8e3d8;
+  --letter-card-muted: #a79e8e;
+  --letter-card-sub: #8b8374;
 }
 
-html.night-shift .letter-card__preview {
-  color: #cfc9b5;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0 calc(var(--letter-card-rule-space) - 1px),
-    rgba(255, 240, 200, 0.06)
-      calc(var(--letter-card-rule-space) - 1px) var(--letter-card-rule-space)
-  );
+html.night-shift .letter-card__postmark-waves path {
+  stroke: #c8bda8;
+  opacity: 0.35;
+}
+
+html.night-shift .letter-paper__stamp {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+html.night-shift .letter-card__washi-tape {
+  background: rgba(140, 130, 110, 0.45);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 html.night-shift .letter-card--featured {
-  background-color: #1d1c14;
-  border-color: #6a5a2e;
+  background-color: transparent;
+  border: none;
+}
+
+html.night-shift .letter-card--featured .letter-card__featured-badge {
+  color: #d4a74a;
+}
+
+html.night-shift .letter-card--featured .letter-card__preview {
+  background-image: none !important;
+  background: transparent !important;
+  color: #ecebdd;
 }
 
 html.night-shift .letter-card--featured .letter-card__featured-text {
@@ -8458,10 +9674,19 @@ html.night-shift .letter-modal-overlay {
 }
 
 html.night-shift .letter-paper {
-  background-color: #1d1c14;
-  background-image: none;
-  border-color: #3a3a2e;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+  background-color: var(--letter-card-bg, #1d1c14);
+  background-image:
+    radial-gradient(ellipse at 50% 50%, transparent 74%, rgba(0, 0, 0, 0.15) 88%, rgba(18, 10, 5, 0.32) 96%, rgba(0, 0, 0, 0.52) 100%),
+    url("data:image/png;base64,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");
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, 64px 64px;
+  background-position: center, 0 0;
+  border: none;
+  box-shadow:
+    inset 0 0 1px 0.5px rgba(0, 0, 0, 0.75),
+    inset 0 0 5px 1.5px rgba(28, 16, 8, 0.48),
+    inset 0 0 14px 3px rgba(0, 0, 0, 0.42),
+    inset 0 0 30px 6px rgba(0, 0, 0, 0.28);
 }
 
 html.night-shift .letter-paper .letter-info,
@@ -8483,8 +9708,36 @@ html.night-shift .letter-paper__body {
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0 27px,
-    rgba(255, 240, 200, 0.07) 27px 28px
+    rgba(255, 240, 200, 0.08) 27px 28px
   );
+}
+
+html.night-shift .letter-card__preview {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 17px,
+    rgba(255, 240, 200, 0.08) 17px 18px
+  );
+  background-size: 100% 18px;
+}
+
+html.night-shift .letter-card__preview.is-sensitive {
+  background-image: none !important;
+}
+
+@media (max-width: 768px) {
+  html.night-shift .letter-card__preview {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 14px,
+      rgba(255, 240, 200, 0.08) 14px 15px
+    );
+    background-size: 100% 15px;
+  }
+
+  html.night-shift .letter-card__preview.is-sensitive {
+    background-image: none !important;
+  }
 }
 
 html.night-shift .letter-paper__date .timestamp-text {
@@ -9324,6 +10577,9 @@ html.night-shift .letter-image-spinner { border-color: rgba(138,180,255,.25); bo
 @media (prefers-reduced-motion: reduce) { .letter-image-spinner { animation: none; } }
 
 /* Fold the reading sheet back into its envelope. */
+.letter-modal {
+  --letter-fold-size: 24px;
+}
 .letter-modal .letter-modal__close {
   top: 0;
   right: 0;
@@ -9333,37 +10589,152 @@ html.night-shift .letter-image-spinner { border-color: rgba(138,180,255,.25); bo
   background: transparent;
   box-shadow: none;
   perspective: 250px;
+  touch-action: manipulation !important;
+}
+.letter-modal .letter-modal__close::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  bottom: -8px;
+  left: -8px;
+  pointer-events: auto;
 }
 /* Cut away the original corner so the turned underside has a real silhouette. */
-.letter-modal > .letter-paper {
-  clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 24px, 100% 100%, 0 100%);
+.letter-modal > .letter-paper:not([class*="letter-card--deckle-"]),
+.letter-paper-wrapper:not([class*="letter-card--deckle-"]) > .letter-paper {
+  clip-path: polygon(0 0, calc(100% - var(--letter-fold-size, 24px)) 0, 100% var(--letter-fold-size, 24px), 100% 100%, 0 100%);
+}
+
+/* 8 authentic hand-torn deckle paper edge variants for opened letters, cut with the dog-ear corner */
+.letter-paper-wrapper.letter-card--deckle-0 > .letter-paper,
+.letter-paper.letter-card--deckle-0 {
+  clip-path: polygon(
+    0.32% 1.8%, 0.70% 0.9%, 1.4% 0.45%, 2.4% 0.25%, 6.2% 0.32%, 11.5% 0.22%, 16.8% 0.38%, 22.4% 0.25%, 27.6% 0.35%, 33.1% 0.20%, 38.5% 0.33%, 44.2% 0.26%, 49.8% 0.37%, 55.4% 0.22%, 61.2% 0.34%, 66.8% 0.25%, 72.5% 0.36%, 78.2% 0.24%, 84.0% 0.35%, 89.5% 0.22%,
+    calc(100% - var(--letter-fold-size, 24px)) 0.26%, 100% var(--letter-fold-size, 24px),
+    99.72% 8.5%, 99.64% 14.2%, 99.76% 20.1%, 99.65% 26.3%, 99.74% 32.5%, 99.62% 38.8%, 99.75% 45.2%, 99.63% 51.5%, 99.76% 57.8%, 99.64% 64.2%, 99.75% 70.6%, 99.62% 76.9%, 99.74% 83.2%, 99.63% 89.5%, 99.72% 94.5%,
+    99.65% 97.4%, 99.0% 98.7%, 98.1% 99.4%, 97.0% 99.72%, 91.5% 99.64%, 85.8% 99.76%, 80.2% 99.63%, 74.5% 99.75%, 68.8% 99.62%, 63.2% 99.76%, 57.5% 99.64%, 51.8% 99.75%, 46.2% 99.63%, 40.5% 99.74%, 34.8% 99.62%, 29.2% 99.75%, 23.5% 99.63%, 17.8% 99.76%, 12.2% 99.65%, 6.5% 99.74%,
+    2.5% 99.72%, 1.5% 99.4%, 0.8% 98.7%, 0.35% 97.4%, 0.26% 92.5%, 0.36% 86.8%, 0.24% 81.2%, 0.37% 75.5%, 0.25% 69.8%, 0.38% 64.2%, 0.23% 58.5%, 0.36% 52.8%, 0.25% 47.2%, 0.37% 41.5%, 0.24% 35.8%, 0.36% 30.2%, 0.23% 24.5%, 0.37% 18.8%, 0.25% 13.2%, 0.36% 7.5%
+  );
+}
+
+.letter-paper-wrapper.letter-card--deckle-1 > .letter-paper,
+.letter-paper.letter-card--deckle-1 {
+  clip-path: polygon(
+    0.28% 1.6%, 0.65% 0.8%, 1.3% 0.38%, 2.3% 0.22%, 7.4% 0.25%, 12.8% 0.36%, 18.2% 0.24%, 23.7% 0.35%, 29.1% 0.21%, 34.6% 0.37%, 40.2% 0.26%, 45.8% 0.34%, 51.3% 0.23%, 56.9% 0.38%, 62.4% 0.25%, 67.9% 0.33%, 73.5% 0.22%, 79.1% 0.36%, 84.6% 0.24%, 90.2% 0.35%,
+    calc(100% - var(--letter-fold-size, 24px)) 0.22%, 100% var(--letter-fold-size, 24px),
+    99.74% 9.2%, 99.63% 15.5%, 99.76% 21.8%, 99.64% 28.0%, 99.75% 34.4%, 99.62% 40.7%, 99.74% 47.1%, 99.65% 53.4%, 99.76% 59.8%, 99.63% 66.1%, 99.75% 72.5%, 99.64% 78.8%, 99.76% 85.2%, 99.63% 91.5%,
+    99.64% 97.2%, 98.9% 98.6%, 98.0% 99.35%, 96.8% 99.75%, 90.8% 99.63%, 85.2% 99.76%, 79.5% 99.64%, 73.8% 99.75%, 68.2% 99.63%, 62.5% 99.76%, 56.8% 99.65%, 51.2% 99.74%, 45.5% 99.62%, 39.8% 99.75%, 34.2% 99.63%, 28.5% 99.76%, 22.8% 99.64%, 17.2% 99.75%, 11.5% 99.63%, 5.8% 99.76%,
+    2.3% 99.74%, 1.4% 99.35%, 0.75% 98.6%, 0.3% 97.2%, 0.24% 91.8%, 0.37% 85.5%, 0.25% 79.2%, 0.36% 72.8%, 0.23% 66.5%, 0.38% 60.2%, 0.26% 53.8%, 0.35% 47.5%, 0.22% 41.2%, 0.37% 34.8%, 0.25% 28.5%, 0.36% 22.2%, 0.24% 15.8%, 0.35% 9.5%
+  );
+}
+
+.letter-paper-wrapper.letter-card--deckle-2 > .letter-paper,
+.letter-paper.letter-card--deckle-2 {
+  clip-path: polygon(
+    0.35% 1.9%, 0.72% 1.0%, 1.5% 0.5%, 2.5% 0.26%, 8.1% 0.36%, 13.5% 0.23%, 19.0% 0.37%, 24.5% 0.22%, 30.2% 0.35%, 35.8% 0.24%, 41.3% 0.38%, 46.9% 0.25%, 52.5% 0.36%, 58.0% 0.22%, 63.6% 0.35%, 69.1% 0.24%, 74.8% 0.37%, 80.3% 0.23%, 85.9% 0.36%, 91.2% 0.25%,
+    calc(100% - var(--letter-fold-size, 24px)) 0.28%, 100% var(--letter-fold-size, 24px),
+    99.75% 8.8%, 99.62% 14.8%, 99.74% 21.0%, 99.65% 27.2%, 99.76% 33.5%, 99.63% 39.8%, 99.75% 46.0%, 99.64% 52.3%, 99.76% 58.5%, 99.62% 64.8%, 99.74% 71.0%, 99.65% 77.3%, 99.76% 83.5%, 99.63% 89.8%, 99.75% 94.2%,
+    99.65% 97.5%, 98.9% 98.7%, 98.1% 99.4%, 97.0% 99.74%, 91.2% 99.62%, 85.5% 99.75%, 79.8% 99.64%, 74.2% 99.76%, 68.5% 99.63%, 62.8% 99.75%, 57.2% 99.62%, 51.5% 99.76%, 45.8% 99.64%, 40.2% 99.75%, 34.5% 99.63%, 28.8% 99.76%, 23.2% 99.62%, 17.5% 99.75%, 11.8% 99.64%, 6.2% 99.76%,
+    2.5% 99.75%, 1.5% 99.4%, 0.8% 98.7%, 0.35% 97.5%, 0.25% 92.2%, 0.38% 86.0%, 0.23% 79.8%, 0.36% 73.5%, 0.25% 67.2%, 0.37% 61.0%, 0.24% 54.8%, 0.36% 48.5%, 0.23% 42.2%, 0.38% 36.0%, 0.25% 29.8%, 0.37% 23.5%, 0.24% 17.2%, 0.36% 11.0%, 0.25% 6.0%
+  );
+}
+
+.letter-paper-wrapper.letter-card--deckle-3 > .letter-paper,
+.letter-paper.letter-card--deckle-3 {
+  clip-path: polygon(
+    0.3% 1.7%, 0.68% 0.85%, 1.35% 0.4%, 2.35% 0.24%, 7.0% 0.34%, 12.5% 0.23%, 17.9% 0.36%, 23.4% 0.22%, 28.8% 0.35%, 34.3% 0.25%, 39.8% 0.38%, 45.2% 0.24%, 50.7% 0.36%, 56.2% 0.23%, 61.7% 0.37%, 67.2% 0.25%, 72.7% 0.35%, 78.1% 0.22%, 83.6% 0.36%, 89.1% 0.24%,
+    calc(100% - var(--letter-fold-size, 24px)) 0.25%, 100% var(--letter-fold-size, 24px),
+    99.76% 9.5%, 99.64% 15.8%, 99.75% 22.2%, 99.63% 28.5%, 99.76% 34.8%, 99.65% 41.2%, 99.74% 47.5%, 99.62% 53.8%, 99.75% 60.2%, 99.64% 66.5%, 99.76% 72.8%, 99.63% 79.2%, 99.75% 85.5%, 99.64% 91.8%,
+    99.63% 97.3%, 98.8% 98.6%, 97.9% 99.35%, 96.9% 99.76%, 91.0% 99.64%, 85.2% 99.75%, 79.6% 99.63%, 73.9% 99.76%, 68.2% 99.64%, 62.6% 99.75%, 56.9% 99.62%, 51.2% 99.76%, 45.6% 99.64%, 39.9% 99.75%, 34.2% 99.63%, 28.6% 99.76%, 22.9% 99.64%, 17.2% 99.75%, 11.6% 99.63%, 5.9% 99.76%,
+    2.4% 99.74%, 1.4% 99.35%, 0.75% 98.6%, 0.32% 97.3%, 0.23% 91.5%, 0.37% 85.2%, 0.25% 78.8%, 0.36% 72.5%, 0.24% 66.2%, 0.38% 59.8%, 0.25% 53.5%, 0.36% 47.2%, 0.23% 40.8%, 0.37% 34.5%, 0.24% 28.2%, 0.36% 21.8%, 0.25% 15.5%, 0.35% 9.2%
+  );
+}
+
+.letter-paper-wrapper.letter-card--deckle-4 > .letter-paper,
+.letter-paper.letter-card--deckle-4 {
+  clip-path: polygon(
+    0.34% 1.85%, 0.72% 0.95%, 1.45% 0.48%, 2.45% 0.24%, 7.8% 0.26%, 13.2% 0.37%, 18.7% 0.24%, 24.1% 0.36%, 29.6% 0.22%, 35.1% 0.35%, 40.6% 0.24%, 46.1% 0.38%, 51.6% 0.25%, 57.1% 0.36%, 62.6% 0.23%, 68.1% 0.37%, 73.6% 0.25%, 79.0% 0.35%, 84.5% 0.22%, 90.0% 0.36%,
+    calc(100% - var(--letter-fold-size, 24px)) 0.24%, 100% var(--letter-fold-size, 24px),
+    99.73% 9.0%, 99.65% 15.2%, 99.76% 21.5%, 99.63% 27.8%, 99.75% 34.0%, 99.64% 40.3%, 99.76% 46.6%, 99.63% 52.8%, 99.75% 59.1%, 99.64% 65.4%, 99.76% 71.6%, 99.63% 77.9%, 99.75% 84.2%, 99.64% 90.5%, 99.73% 94.8%,
+    99.64% 97.4%, 98.9% 98.7%, 98.0% 99.4%, 97.0% 99.75%, 91.2% 99.63%, 85.5% 99.76%, 79.8% 99.64%, 74.2% 99.75%, 68.5% 99.62%, 62.8% 99.76%, 57.2% 99.64%, 51.5% 99.75%, 45.8% 99.63%, 40.2% 99.76%, 34.5% 99.64%, 28.8% 99.75%, 23.2% 99.63%, 17.5% 99.76%, 11.8% 99.64%, 6.1% 99.75%,
+    2.4% 99.73%, 1.45% 99.38%, 0.78% 98.65%, 0.33% 97.35%, 0.25% 92.0%, 0.36% 85.8%, 0.24% 79.5%, 0.38% 73.2%, 0.25% 66.8%, 0.36% 60.5%, 0.23% 54.2%, 0.37% 47.8%, 0.25% 41.5%, 0.36% 35.2%, 0.24% 28.8%, 0.38% 22.5%, 0.25% 16.2%, 0.36% 9.8%
+  );
+}
+
+.letter-paper-wrapper.letter-card--deckle-5 > .letter-paper,
+.letter-paper.letter-card--deckle-5 {
+  clip-path: polygon(
+    0.28% 1.65%, 0.66% 0.85%, 1.35% 0.42%, 2.3% 0.23%, 6.8% 0.35%, 12.2% 0.23%, 17.6% 0.37%, 23.1% 0.24%, 28.5% 0.36%, 34.0% 0.22%, 39.5% 0.35%, 45.0% 0.25%, 50.4% 0.38%, 55.9% 0.24%, 61.4% 0.36%, 66.8% 0.23%, 72.3% 0.37%, 77.8% 0.25%, 83.2% 0.35%, 88.7% 0.22%,
+    calc(100% - var(--letter-fold-size, 24px)) 0.25%, 100% var(--letter-fold-size, 24px),
+    99.75% 8.6%, 99.63% 14.6%, 99.76% 20.8%, 99.64% 27.0%, 99.75% 33.2%, 99.62% 39.5%, 99.74% 45.8%, 99.65% 52.0%, 99.76% 58.2%, 99.63% 64.5%, 99.75% 70.8%, 99.64% 77.0%, 99.76% 83.2%, 99.63% 89.5%, 99.74% 94.2%,
+    99.65% 97.3%, 98.8% 98.6%, 97.9% 99.35%, 96.9% 99.74%, 91.0% 99.62%, 85.4% 99.75%, 79.7% 99.64%, 74.0% 99.76%, 68.4% 99.63%, 62.7% 99.75%, 57.0% 99.62%, 51.4% 99.76%, 45.7% 99.64%, 40.0% 99.75%, 34.4% 99.63%, 28.7% 99.76%, 23.0% 99.62%, 17.4% 99.75%, 11.7% 99.64%, 6.0% 99.76%,
+    2.4% 99.74%, 1.4% 99.35%, 0.76% 98.6%, 0.3% 97.3%, 0.23% 92.2%, 0.37% 86.0%, 0.25% 79.8%, 0.36% 73.5%, 0.24% 67.2%, 0.38% 61.0%, 0.25% 54.8%, 0.36% 48.5%, 0.23% 42.2%, 0.37% 36.0%, 0.25% 29.8%, 0.36% 23.5%, 0.24% 17.2%, 0.37% 11.0%, 0.25% 5.8%
+  );
+}
+
+.letter-paper-wrapper.letter-card--deckle-6 > .letter-paper,
+.letter-paper.letter-card--deckle-6 {
+  clip-path: polygon(
+    0.32% 1.8%, 0.70% 0.9%, 1.42% 0.45%, 2.4% 0.25%, 7.5% 0.36%, 13.0% 0.22%, 18.4% 0.35%, 23.9% 0.24%, 29.4% 0.38%, 34.8% 0.25%, 40.3% 0.36%, 45.8% 0.23%, 51.2% 0.37%, 56.7% 0.25%, 62.2% 0.35%, 67.6% 0.22%, 73.1% 0.36%, 78.6% 0.24%, 84.0% 0.37%, 89.5% 0.23%,
+    calc(100% - var(--letter-fold-size, 24px)) 0.26%, 100% var(--letter-fold-size, 24px),
+    99.74% 9.4%, 99.63% 15.6%, 99.75% 22.0%, 99.64% 28.2%, 99.76% 34.5%, 99.63% 40.8%, 99.75% 47.0%, 99.64% 53.3%, 99.76% 59.6%, 99.62% 65.8%, 99.75% 72.1%, 99.63% 78.4%, 99.76% 84.6%, 99.64% 91.0%,
+    99.64% 97.4%, 98.9% 98.7%, 98.0% 99.4%, 97.0% 99.75%, 91.2% 99.63%, 85.6% 99.76%, 80.0% 99.64%, 74.3% 99.75%, 68.7% 99.62%, 63.0% 99.76%, 57.4% 99.64%, 51.7% 99.75%, 46.1% 99.63%, 40.4% 99.76%, 34.8% 99.64%, 29.1% 99.75%, 23.5% 99.63%, 17.8% 99.76%, 12.2% 99.64%, 6.5% 99.75%,
+    2.5% 99.73%, 1.5% 99.38%, 0.8% 98.65%, 0.33% 97.35%, 0.24% 91.8%, 0.38% 85.5%, 0.25% 79.2%, 0.36% 72.8%, 0.23% 66.5%, 0.37% 60.2%, 0.25% 53.8%, 0.36% 47.5%, 0.24% 41.2%, 0.38% 34.8%, 0.25% 28.5%, 0.36% 22.2%, 0.23% 15.8%, 0.37% 9.5%
+  );
+}
+
+.letter-paper-wrapper.letter-card--deckle-7 > .letter-paper,
+.letter-paper.letter-card--deckle-7 {
+  clip-path: polygon(
+    0.29% 1.68%, 0.67% 0.88%, 1.36% 0.43%, 2.32% 0.23%, 7.1% 0.34%, 12.6% 0.24%, 18.0% 0.37%, 23.5% 0.23%, 29.0% 0.36%, 34.4% 0.24%, 39.9% 0.38%, 45.4% 0.25%, 50.8% 0.36%, 56.3% 0.22%, 61.8% 0.37%, 67.2% 0.25%, 72.7% 0.35%, 78.2% 0.23%, 83.6% 0.36%, 89.1% 0.24%,
+    calc(100% - var(--letter-fold-size, 24px)) 0.24%, 100% var(--letter-fold-size, 24px),
+    99.75% 8.9%, 99.64% 15.1%, 99.76% 21.4%, 99.63% 27.6%, 99.75% 33.9%, 99.64% 40.2%, 99.76% 46.4%, 99.63% 52.7%, 99.75% 59.0%, 99.64% 65.2%, 99.76% 71.5%, 99.63% 77.8%, 99.75% 84.0%, 99.64% 90.4%, 99.74% 94.6%,
+    99.63% 97.3%, 98.8% 98.6%, 97.9% 99.35%, 96.9% 99.75%, 91.1% 99.63%, 85.5% 99.76%, 79.8% 99.64%, 74.2% 99.75%, 68.5% 99.63%, 62.9% 99.76%, 57.2% 99.64%, 51.6% 99.75%, 45.9% 99.62%, 40.3% 99.76%, 34.6% 99.64%, 29.0% 99.75%, 23.3% 99.63%, 17.7% 99.76%, 12.0% 99.64%, 6.3% 99.75%,
+    2.4% 99.74%, 1.4% 99.35%, 0.77% 98.6%, 0.32% 97.3%, 0.24% 92.0%, 0.37% 85.8%, 0.25% 79.5%, 0.36% 73.2%, 0.23% 66.8%, 0.38% 60.5%, 0.25% 54.2%, 0.36% 47.8%, 0.24% 41.5%, 0.37% 35.2%, 0.25% 28.8%, 0.36% 22.5%, 0.23% 16.2%, 0.37% 9.8%, 0.24% 5.2%
+  );
 }
 .letter-fold-corner {
   position: absolute;
   top: 0;
   right: 0;
-  width: 24px;
-  height: 24px;
+  width: var(--letter-fold-size, 24px);
+  height: var(--letter-fold-size, 24px);
   overflow: visible;
   fill: #e4d7b6;
   filter: drop-shadow(-2px 3px 2px #463d2959);
   transform-origin: center;
-  transform: rotate3d(1, -1, 0, 8deg);
+  transform: rotate3d(1, -1, 0, 8deg) translateZ(0);
+  -webkit-transform: rotate3d(1, -1, 0, 8deg) translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, filter;
   transition: transform 160ms ease, filter 160ms ease;
 }
 .letter-fold-corner path { stroke: #baa982; stroke-width: 0.6px; }
 .letter-modal .letter-modal__close:hover { transform: none; box-shadow: none; }
 .letter-modal__close:hover .letter-fold-corner {
-  transform: rotate3d(1, -1, 0, 24deg);
-  filter: drop-shadow(-3px 4px 2px #463d2966);
+  transform: rotate3d(1, -1, 0, 16deg) translateZ(0);
+  -webkit-transform: rotate3d(1, -1, 0, 16deg) translateZ(0);
+  filter: drop-shadow(-2.5px 3.5px 2px #463d2966);
 }
 .letter-modal .letter-modal__close {
   -webkit-tap-highlight-color: transparent;
   appearance: none;
   outline: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 .letter-modal .letter-modal__close:active,
 .letter-modal .letter-modal__close:focus { background: transparent; box-shadow: none; }
+.letter-modal .letter-modal__close:active .letter-fold-corner {
+  transform: rotate3d(1, -1, 0, 24deg) scale(0.92) translateZ(0) !important;
+  -webkit-transform: rotate3d(1, -1, 0, 24deg) scale(0.92) translateZ(0) !important;
+  filter: drop-shadow(-1px 2px 1.5px rgba(70, 61, 41, 0.6)) !important;
+  transition: transform 30ms ease-out, filter 30ms ease-out !important;
+}
 /* Keyboard focus follows the folded tip instead of drawing a button rectangle. */
 .letter-modal__close:focus-visible .letter-fold-corner path {
   stroke: #a66b42;
@@ -9371,6 +10742,9 @@ html.night-shift .letter-image-spinner { border-color: rgba(138,180,255,.25); bo
 }
 .letter-modal__close:disabled { cursor: default; }
 html.night-shift .letter-modal .letter-modal__close { background: transparent; }
+html.night-shift .letter-modal .letter-modal__close:active .letter-fold-corner {
+  filter: drop-shadow(-1px 2px 1.5px rgba(0, 0, 0, 0.8)) !important;
+}
 html.night-shift .letter-fold-corner { fill: #505143; filter: drop-shadow(-2px 3px 2px #0009); }
 html.night-shift .letter-fold-corner path { stroke: #77765d; }
 .letter-close-scene {
@@ -9380,6 +10754,12 @@ html.night-shift .letter-fold-corner path { stroke: #77765d; }
   display: grid;
   place-items: center;
   pointer-events: none;
+}
+.letter-modal-overlay.is-read-mode .letter-close-scene {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 /* Close the envelope: tuck note into pocket by 560ms, fold flap by 860ms, then hold before fading. */
 .letter-envelope--closing {
@@ -9423,14 +10803,40 @@ html.night-shift .letter-fold-corner path { stroke: #77765d; }
     visibility: hidden;
   }
 }
-.letter-modal-overlay.is-folding-closed { animation: letter-close-fade 1300ms cubic-bezier(0.4, 0, 0.2, 1) both; }
+.letter-modal-overlay.is-folding-closed {
+  animation: letter-close-fade 1300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none !important;
+}
+.letter-modal-overlay.is-read-mode.is-folding-closed {
+  animation: letter-close-fade-fast 80ms cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  pointer-events: none !important;
+}
+.letter-modal-overlay.is-read-mode.is-folding-closed * {
+  pointer-events: none !important;
+}
 .is-folding-closed .letter-modal { pointer-events: none; }
+.is-folding-closed .letter-paper-wrapper {
+  animation: none !important;
+}
 .is-folding-closed .letter-paper,
 .is-folding-closed .read-mode-stage .letter-paper,
 .read-mode-stage .is-folding-closed .letter-paper {
   animation: letter-paper-close 160ms cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
 }
-.is-folding-closed .letter-modal__close,
+.letter-modal-overlay.is-read-mode.is-folding-closed .letter-paper,
+.letter-modal-overlay.is-read-mode.is-folding-closed .read-mode-stage .letter-paper {
+  animation: letter-paper-close 70ms cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+@media (max-width: 768px) {
+  .letter-modal-overlay.is-read-mode.is-folding-closed {
+    animation: letter-close-fade-fast 50ms ease-out forwards !important;
+  }
+  .letter-modal-overlay.is-read-mode.is-folding-closed .letter-paper,
+  .letter-modal-overlay.is-read-mode.is-folding-closed .read-mode-stage .letter-paper {
+    animation: letter-paper-close 40ms ease-out forwards !important;
+  }
+}
+.letter-modal-overlay:not(.is-read-mode).is-folding-closed .letter-modal__close,
 .is-folding-closed .read-mode-tip,
 .is-folding-closed .read-mode-fold-tip,
 .is-folding-closed .reply-preview-banner,
@@ -9441,8 +10847,20 @@ html.night-shift .letter-fold-corner path { stroke: #77765d; }
   visibility: hidden;
   display: none !important;
 }
+.letter-modal-overlay.is-read-mode.is-folding-closed .letter-modal__close {
+  pointer-events: none !important;
+  animation: none !important;
+}
+.letter-modal-overlay.is-read-mode.is-folding-closed .letter-fold-corner {
+  animation: none !important;
+  transform: rotate3d(1, -1, 0, 18deg) scale(0.98) translateZ(0) !important;
+  -webkit-transform: rotate3d(1, -1, 0, 18deg) scale(0.98) translateZ(0) !important;
+  filter: drop-shadow(-3px 4px 3px rgba(70, 61, 41, 0.45));
+  transition: transform 120ms ease, filter 120ms ease;
+}
 .is-folding-closed .read-mode-card-wrapper { animation: none; }
 @keyframes letter-close-fade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes letter-close-fade-fast { 0% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes letter-close-reduced { from { opacity: 1; } to { opacity: 0; } }
 
 /* Read Mode Fold Tip (displayed when user taps background to exit) */
@@ -9454,9 +10872,7 @@ html.night-shift .letter-fold-corner path { stroke: #77765d; }
   display: flex;
   align-items: center;
   padding: 7px 16px;
-  background: rgba(15, 23, 42, 0.9);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: #0f172a;
   color: #f8fafc;
   font-size: 13px;
   font-weight: 500;
@@ -9469,6 +10885,7 @@ html.night-shift .letter-fold-corner path { stroke: #77765d; }
   user-select: none;
   pointer-events: auto;
   white-space: nowrap;
+  touch-action: manipulation;
 }
 
 /* Tooltip beak pointing down directly into the folded corner */
@@ -9481,7 +10898,7 @@ html.night-shift .letter-fold-corner path { stroke: #77765d; }
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 6px solid rgba(15, 23, 42, 0.9);
+  border-top: 6px solid #0f172a;
 }
 
 .read-mode-fold-tip.is-fading-out {
@@ -9507,27 +10924,44 @@ html.night-shift .letter-fold-corner path { stroke: #77765d; }
 
 @keyframes fold-corner-pulse {
   from {
-    transform: rotate3d(1, -1, 0, 10deg) scale(1);
+    transform: rotate3d(1, -1, 0, 8deg);
     filter: drop-shadow(-2px 3px 2px #463d2959);
   }
   to {
-    transform: rotate3d(1, -1, 0, 24deg) scale(1.15);
-    filter: drop-shadow(-3px 5px 6px rgba(55, 114, 255, 0.45));
+    transform: rotate3d(1, -1, 0, 16deg);
+    filter: drop-shadow(-2.5px 3.5px 3px rgba(55, 114, 255, 0.45));
   }
 }
 
 html.night-shift .read-mode-fold-tip {
-  background: rgba(20, 24, 33, 0.94);
+  background: #141821;
   border-color: rgba(138, 180, 255, 0.3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 html.night-shift .read-mode-fold-tip::after {
-  border-top-color: rgba(20, 24, 33, 0.94);
+  border-top-color: #141821;
 }
 
 html.night-shift .letter-modal__close.is-hinted .letter-fold-corner {
-  filter: drop-shadow(-3px 5px 6px rgba(138, 180, 255, 0.4));
+  filter: drop-shadow(-2.5px 3.5px 3px rgba(138, 180, 255, 0.4));
+}
+
+/* Suppress fold tip tooltip during card slide transitions, pre-rendering, and closing */
+.read-mode-card-wrapper[class*="is-entering-"] .read-mode-fold-tip,
+.read-mode-card-wrapper[class*="is-exiting-"] .read-mode-fold-tip,
+.is-folding-closed .read-mode-fold-tip {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  animation: none !important;
+}
+
+/* Pause corner pulse animation during slide transitions and when closing, keeping the corner fold fully visible */
+.read-mode-card-wrapper[class*="is-entering-"] .letter-modal__close .letter-fold-corner,
+.read-mode-card-wrapper[class*="is-exiting-"] .letter-modal__close .letter-fold-corner,
+.is-folding-closed .letter-modal__close .letter-fold-corner {
+  animation: none !important;
 }
 
 @media (max-width: 480px) {
@@ -9602,7 +11036,7 @@ html.night-shift .speed-dial-container .fab.speed-dial-action.read-mode-action.i
 /* Keep pin and age together without adding another column to letter headers. */
 .letter-card__time { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
 .letter-card__top { min-width:0; }
-.letter-card__from { flex:1 1 auto; overflow:hidden; }
+.letter-card__from { flex:1 1 auto; }
 .letter-paper__age { display:inline-flex; align-items:center; gap:4px; min-width:0; max-width:100%; }
 .letter-paper__pin { display:inline-flex; align-items:center; justify-content:center; flex:0 0 13px; width:13px; height:13px; line-height:1; }
 .letter-paper__pin svg { display:block; width:100%; height:100%; }
@@ -9729,7 +11163,6 @@ button.letter-paper__pin::after {
 @media(max-width:768px) {
   .letter-card__top { gap:4px; }
   .letter-card__time { gap:3px; }
-  .letter-card .letter-pin-indicator { flex-basis:14px; width:14px; height:14px; font-size:10px; }
   .letter-paper__age { gap:3px; }
   .letter-paper__pin { flex-basis:11px; width:11px; height:11px; }
 }
@@ -9855,6 +11288,22 @@ button.letter-paper__pin::after {
     font-size: 10.5px;
   }
 
+  .letter-location-ad-stamp-showcase {
+    padding: 2px 0 4px;
+    margin-bottom: 8px;
+  }
+
+  .letter-location-ad-stamp.letter-card__stamp-wrapper .letter-card__main-stamp {
+    width: 70px !important;
+    height: 85px !important;
+  }
+
+  .letter-location-ad-disclaimer {
+    margin-top: 8px;
+    font-size: 9.5px;
+    line-height: 1.35;
+  }
+
   .letter-modal-overlay {
     gap: 8px;
     padding: 10px 4px;
@@ -9872,7 +11321,33 @@ button.letter-paper__pin::after {
   }
 
   .letter-paper__head {
+    gap: 10px;
     margin-bottom: 10px;
+    align-items: center;
+  }
+
+  .letter-paper__stamp-slot {
+    padding-left: 8px;
+    align-items: center;
+  }
+
+  .letter-paper__stamp .letter-card__main-stamp {
+    width: 27px;
+    height: 33px;
+  }
+
+  .letter-paper__stamp .letter-card__main-stamp--featured-star {
+    width: 27px;
+    height: 33px;
+  }
+
+  .letter-paper__stamp.letter-card__stamp-wrapper--variant-0 .letter-card__main-stamp {
+    width: 27px;
+    height: 27px;
+  }
+
+  .letter-paper__stamp .letter-card__postmark-waves {
+    display: none !important;
   }
 
   .letter-paper .letter-info {
@@ -9900,7 +11375,7 @@ button.letter-paper__pin::after {
     background-image: repeating-linear-gradient(
       to bottom,
       transparent 0 22px,
-      rgba(120, 100, 60, 0.1) 22px 23px
+      rgba(120, 100, 60, 0.12) 22px 23px
     );
     background-position: 0 -4px;
     font-size: clamp(12px, 3.45vw, 13.25px);
@@ -9945,13 +11420,23 @@ button.letter-paper__pin::after {
     height: 10px;
   }
 
+  .letter-modal {
+    --letter-fold-size: 20px;
+  }
+
   .letter-modal .letter-modal__close {
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 52px;
+    touch-action: manipulation !important;
   }
 
   .letter-fold-corner {
-    width: 20px;
-    height: 20px;
+    width: var(--letter-fold-size, 20px);
+    height: var(--letter-fold-size, 20px);
+  }
+
+  .letter-modal > .letter-paper:not([class*="letter-card--deckle-"]),
+  .letter-paper-wrapper:not([class*="letter-card--deckle-"]) > .letter-paper {
+    clip-path: polygon(0 0, calc(100% - var(--letter-fold-size, 20px)) 0, 100% var(--letter-fold-size, 20px), 100% 100%, 0 100%);
   }
 }

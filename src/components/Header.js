@@ -73,6 +73,7 @@ function Header({
           alt="Letters to Casper"
           width="400"
           height="70"
+          fetchpriority="high"
         />
       ) : (
         <div className="alt-logo">

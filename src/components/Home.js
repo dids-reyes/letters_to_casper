@@ -1,27 +1,22 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import OriginsView from "./OriginsView";
+import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import FeedUpdates from "./FeedUpdates";
 import Header from "./Header";
 import Footer from "./Footer";
-import AddModal from "./AddModal";
 import BugReportModal from "./BugReportModal";
-import BurnLetterDialog from "./BurnLetterDialog";
 import NetworkNoticeDialog from "./NetworkNoticeDialog";
-import PinPaymentReturn from "./PinPaymentReturn";
 import { adminId } from "../data/target_letters";
 import Letter from "./Letter";
 import AdComponent from "./AdComponent";
 import AdsterraNativeBanner from "./AdsterraNativeBanner";
 import DetailsModal from "./DetailsModal";
+import ErrorBoundary from "./ErrorBoundary";
 import { AiFillMessage } from "react-icons/ai";
 import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
-import under_construction from "../lotties/under_construction.json";
 import empty from "../lotties/empty2.json";
 import lettersToCasperLogo from "../lotties/ltc_logo_1.webp";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { io } from "socket.io-client";
 import { PiStarFour } from "react-icons/pi";
 import { resolveSkySocketEndpoint } from "./sky/socketEndpoint";
 import MailboxLoading from "./MailboxLoading";
@@ -55,13 +50,18 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 import {useDetectAdBlock} from "adblock-detect-react";
-import AdBlockSupportDialog from "./AdBlockSupportDialog";
 import {
   clearLeaveLetterIntent,
   getSessionStorage,
   hasFreshLeaveLetterIntent,
   saveLeaveLetterIntent,
 } from "../data/adBlockGate";
+
+const OriginsView = lazy(() => import("./OriginsView"));
+const AddModal = lazy(() => import("./AddModal"));
+const BurnLetterDialog = lazy(() => import("./BurnLetterDialog"));
+const PinPaymentReturn = lazy(() => import("./PinPaymentReturn"));
+const AdBlockSupportDialog = lazy(() => import("./AdBlockSupportDialog"));
 
 // Temporary redesign aid: set this back to false when the thank-you modal is finished.
 const SHOW_THANK_YOU_ON_REFRESH = false;
@@ -147,32 +147,99 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const [countPopover, setCountPopover] = useState("");
   const countPopoverRef = useRef(null);
   const countTriggerRef = useRef(null);
+  const isClickPinnedRef = useRef(false);
+  const hoverCloseTimeoutRef = useRef(null);
+
   const closeCountPopover = () => {
+    if (hoverCloseTimeoutRef.current) {
+      clearTimeout(hoverCloseTimeoutRef.current);
+      hoverCloseTimeoutRef.current = null;
+    }
+    isClickPinnedRef.current = false;
     setCountPopover("");
     countTriggerRef.current?.focus();
   };
+
   const toggleCountPopover = (kind, event) => {
+    if (hoverCloseTimeoutRef.current) {
+      clearTimeout(hoverCloseTimeoutRef.current);
+      hoverCloseTimeoutRef.current = null;
+    }
     countTriggerRef.current = event.currentTarget;
-    setCountPopover(current => current === kind ? "" : kind);
+    setCountPopover((current) => {
+      if (current === kind && isClickPinnedRef.current) {
+        isClickPinnedRef.current = false;
+        return "";
+      }
+      isClickPinnedRef.current = true;
+      return kind;
+    });
     setShowOrigins(false);
     setShowAnnouncements(false);
   };
+
+  const handleCountPopoverHover = (kind, targetElement) => {
+    const isDesktopHover =
+      typeof window !== "undefined" &&
+      (window.innerWidth > 768 || window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+    if (!isDesktopHover) return;
+
+    if (hoverCloseTimeoutRef.current) {
+      clearTimeout(hoverCloseTimeoutRef.current);
+      hoverCloseTimeoutRef.current = null;
+    }
+    countTriggerRef.current = targetElement;
+    setCountPopover(kind);
+    setShowOrigins(false);
+    setShowAnnouncements(false);
+  };
+
+  const handleCountPopoverLeave = () => {
+    if (isClickPinnedRef.current) return;
+    if (hoverCloseTimeoutRef.current) {
+      clearTimeout(hoverCloseTimeoutRef.current);
+    }
+    hoverCloseTimeoutRef.current = setTimeout(() => {
+      if (!isClickPinnedRef.current) {
+        setCountPopover("");
+      }
+    }, 180);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverCloseTimeoutRef.current) {
+        clearTimeout(hoverCloseTimeoutRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (!countPopover) return;
     const panel = countPopoverRef.current;
     const trigger = countTriggerRef.current;
+    if (!panel || !trigger) return;
     const positionArrow = () => {
       const box = panel.getBoundingClientRect();
       const anchor = trigger.getBoundingClientRect();
       panel.style.setProperty('--count-arrow', `${Math.max(15, Math.min(box.width - 15, anchor.left + anchor.width / 2 - box.left))}px`);
     };
     positionArrow();
-    panel.querySelector('button')?.focus();
+    if (isClickPinnedRef.current) {
+      panel.querySelector('button')?.focus();
+    }
     const dismissOutside = event => {
-      if (!panel.contains(event.target) && !trigger.contains(event.target)) setCountPopover("");
+      if (!panel.contains(event.target) && !trigger.contains(event.target)) {
+        isClickPinnedRef.current = false;
+        setCountPopover("");
+      }
     };
     const dismissEscape = event => {
-      if (event.key === 'Escape') { setCountPopover(""); trigger.focus(); }
+      if (event.key === 'Escape') {
+        isClickPinnedRef.current = false;
+        setCountPopover("");
+        trigger.focus();
+      }
     };
     const observer = new ResizeObserver(positionArrow);
     observer.observe(panel);
@@ -196,8 +263,36 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   });
   const [selectedLetter, setSelectedLetter] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [isModalClosing, setIsModalClosing] = useState(false);
+  const selectedLetterRef = useRef(selectedLetter);
+  selectedLetterRef.current = selectedLetter;
   const [loading, setLoading] = useState(1);
+  const [underConstructionAnim, setUnderConstructionAnim] = useState(null);
+  const [hasOpenedAddModal, setHasOpenedAddModal] = useState(SHOW_THANK_YOU_ON_REFRESH);
+  const [hasPinPaymentReturn] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      (window.location.search.includes("pin_payment") ||
+        window.location.search.includes("pin_cancelled"))
+  );
+  useEffect(() => {
+    if (showAddModal) setHasOpenedAddModal(true);
+  }, [showAddModal]);
+  useEffect(() => {
+    if (loading !== 2 || underConstructionAnim) return undefined;
+    let active = true;
+    import("../lotties/under_construction.json")
+      .then(mod => {
+        if (active) setUnderConstructionAnim(mod.default || mod);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [loading, underConstructionAnim]);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+  const isHeaderCompactRef = useRef(false);
+  const isAtTopRef = useRef(true);
   const [showBurnLetter, setShowBurnLetter] = useState(false);
   const [showSkyConfirmation, setShowSkyConfirmation] = useState(false);
   const [skySoulCount, setSkySoulCount] = useState(0);
@@ -285,40 +380,50 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     const endpoint = resolveSkySocketEndpoint();
     if (!endpoint) return undefined;
 
-    const presenceSocket = io(endpoint, {
-      autoConnect: false,
-      transports: ["polling", "websocket"],
-      auth: { observer: true },
-    });
-    const updateCount = value => {
-      const nextCount = Math.max(0, Number(value) || 0);
-      if (nextCount !== skySoulCountRef.current) {
-        skySoulCountRef.current = nextCount;
-        setSkySoulCount(nextCount);
-        if (skyPresenceTimerRef.current) clearTimeout(skyPresenceTimerRef.current);
-        setShowSkyPresence(nextCount > 0);
-        if (nextCount > 0) {
-          skyPresenceTimerRef.current = setTimeout(() => {
-            setShowSkyPresence(false);
-            skyPresenceTimerRef.current = null;
-          }, 3000);
-        }
-      }
-    };
-    presenceSocket.on("sky_state", state => {
-      const activeParticipants = Array.isArray(state?.participants)
-        ? state.participants.filter(person => person.active !== false).length
-        : 0;
-      updateCount(state?.activeCount ?? activeParticipants);
-    });
-    presenceSocket.on("user_count", updateCount);
-    presenceSocket.on("disconnect", () => updateCount(0));
-    presenceSocket.on("connect_error", () => updateCount(0));
-    presenceSocket.connect();
+    let cancelled = false;
+    let presenceSocket = null;
+    import("socket.io-client")
+      .then(({ io }) => {
+        if (cancelled) return;
+        presenceSocket = io(endpoint, {
+          autoConnect: false,
+          transports: ["polling", "websocket"],
+          auth: { observer: true },
+        });
+        const updateCount = value => {
+          const nextCount = Math.max(0, Number(value) || 0);
+          if (nextCount !== skySoulCountRef.current) {
+            skySoulCountRef.current = nextCount;
+            setSkySoulCount(nextCount);
+            if (skyPresenceTimerRef.current) clearTimeout(skyPresenceTimerRef.current);
+            setShowSkyPresence(nextCount > 0);
+            if (nextCount > 0) {
+              skyPresenceTimerRef.current = setTimeout(() => {
+                setShowSkyPresence(false);
+                skyPresenceTimerRef.current = null;
+              }, 3000);
+            }
+          }
+        };
+        presenceSocket.on("sky_state", state => {
+          const activeParticipants = Array.isArray(state?.participants)
+            ? state.participants.filter(person => person.active !== false).length
+            : 0;
+          updateCount(state?.activeCount ?? activeParticipants);
+        });
+        presenceSocket.on("user_count", updateCount);
+        presenceSocket.on("disconnect", () => updateCount(0));
+        presenceSocket.on("connect_error", () => updateCount(0));
+        presenceSocket.connect();
+      })
+      .catch(() => {});
     return () => {
+      cancelled = true;
       if (skyPresenceTimerRef.current) clearTimeout(skyPresenceTimerRef.current);
-      presenceSocket.removeAllListeners();
-      presenceSocket.disconnect();
+      if (presenceSocket) {
+        presenceSocket.removeAllListeners();
+        presenceSocket.disconnect();
+      }
     };
   }, []);
 
@@ -331,7 +436,9 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     return () => document.removeEventListener("keydown", dismiss);
   }, [showSkyConfirmation]);
 
-  const isReadModeActive = Boolean(readModeEnabled && showDetailsModal && readMode);
+  const isReadModeActive = Boolean(
+    readModeEnabled && showDetailsModal && !isModalClosing && readMode && selectedLetter
+  );
 
   const [showReadModeTooltip, setShowReadModeTooltip] = useState(false);
   const [isTooltipFading, setIsTooltipFading] = useState(false);
@@ -527,12 +634,28 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       }
 
       scrollFrame.current = window.requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
         const isDesktop = typeof window !== "undefined" && window.innerWidth > 768;
+        const enterCompactThreshold = 160;
         const exitCompactThreshold = isDesktop ? 25 : 60;
-        setIsHeaderCompact((isCompact) =>
-          isCompact ? window.scrollY > exitCompactThreshold : window.scrollY > 160
-        );
-        setIsAtTop(window.scrollY === 0);
+
+        const currentCompact = isHeaderCompactRef.current;
+        const nextCompact = currentCompact
+          ? scrollY > exitCompactThreshold
+          : scrollY > enterCompactThreshold;
+
+        if (nextCompact !== currentCompact) {
+          isHeaderCompactRef.current = nextCompact;
+          setIsHeaderCompact(nextCompact);
+        }
+
+        const currentAtTop = isAtTopRef.current;
+        const nextAtTop = scrollY === 0;
+        if (nextAtTop !== currentAtTop) {
+          isAtTopRef.current = nextAtTop;
+          setIsAtTop(nextAtTop);
+        }
+
         scrollFrame.current = null;
       });
     };
@@ -571,6 +694,40 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const [goBackToNotFeatured, setGoBackToNotFeatured] = useState(false);
   const [daysLeftXmas, setDaysLeftXmas] = useState(0);
 
+  const featuredLettersRef = useRef(null);
+  const featuredPromiseRef = useRef(null);
+  const nonFeaturedLettersRef = useRef(null);
+
+  const preloadFeatured = useCallback(async () => {
+    if (featuredLettersRef.current || featuredPromiseRef.current) return;
+    try {
+      const promise = fetch(`${render_url}/featured`, {
+        headers: {
+          "x-api-key": api_key,
+        },
+      }).then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch featured letters");
+        }
+        return await response.json();
+      });
+
+      featuredPromiseRef.current = promise;
+      const data = await promise;
+      const formatted = Array.isArray(data)
+        ? { messages: data, counts: { approved: data.length, unapproved: 0 } }
+        : data;
+      featuredLettersRef.current = formatted;
+      return formatted;
+    } catch (error) {
+      console.error("Error preloading featured letters:", error);
+      featuredLettersRef.current = null;
+      return null;
+    } finally {
+      featuredPromiseRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       const newDaysLeft = daysUntilChristmasPH();
@@ -583,11 +740,43 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const fetchFeatured = async () => {
     if (isFeatured) {
       // Re-fetch the initial letters
-      fetchLetters();
       setIsFeatured(false);
+      if (nonFeaturedLettersRef.current) {
+        setLetters(nonFeaturedLettersRef.current);
+      }
+      fetchLetters();
       return;
     }
 
+    // 1. If already preloaded when the site loaded, display immediately
+    if (featuredLettersRef.current) {
+      setLoading(0);
+      setLetters(featuredLettersRef.current);
+      setIsFeatured(true);
+      setGoBackToNotFeatured(true);
+      return;
+    }
+
+    // 2. If preloading is currently in-flight, await the pending response
+    if (featuredPromiseRef.current) {
+      try {
+        const data = await featuredPromiseRef.current;
+        if (data) {
+          const formatted = Array.isArray(data)
+            ? { messages: data, counts: { approved: data.length, unapproved: 0 } }
+            : data;
+          setLoading(0);
+          setLetters(formatted);
+          setIsFeatured(true);
+          setGoBackToNotFeatured(true);
+          return;
+        }
+      } catch (error) {
+        // Fall back to direct fetch below
+      }
+    }
+
+    // 3. Fallback direct fetch if preload was not available
     try {
       const response = await fetch(`${render_url}/featured`, {
         headers: {
@@ -598,8 +787,12 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         throw new Error("Failed to fetch featured letters");
       }
       const data = await response.json();
+      const formatted = Array.isArray(data)
+        ? { messages: data, counts: { approved: data.length, unapproved: 0 } }
+        : data;
+      featuredLettersRef.current = formatted;
       setLoading(0);
-      setLetters(data);
+      setLetters(formatted);
       setIsFeatured(true);
       setGoBackToNotFeatured(true);
     } catch (error) {
@@ -611,7 +804,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const isFetchingMoreRef = useRef(false);
 
   const fetchMoreData = useCallback(async () => {
-    if (isReadModeActive || isFetchingMoreRef.current) return;
+    if (isFetchingMoreRef.current) return;
     isFetchingMoreRef.current = true;
     try {
       const baseMessageCount = (letters.messages || []).filter(
@@ -647,10 +840,9 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       }, 1500);
     } catch (error) {
       console.error("Error fetching more letters:", error);
-      setLoading(2);
       isFetchingMoreRef.current = false;
     }
-  }, [isReadModeActive, letters.messages]);
+  }, [letters.messages]);
 
   const fetchLetters = async () => {
     if (goBackToNotFeatured) {
@@ -668,6 +860,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         throw new Error("Failed to fetch letters");
       }
       const data = await response.json();
+      nonFeaturedLettersRef.current = data;
       setLetters(data);
       setLoading(0);
     } catch (error) {
@@ -678,6 +871,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
   useEffect(() => {
     fetchLetters();
+    preloadFeatured();
     // eslint-disable-next-line
   }, []);
 
@@ -841,29 +1035,78 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     }
   };
 
-  const toggleDetailsModal = () => {
-    if (showDetailsModal && messageId) {
-      navigate("/");
-    }
-    setShowDetailsModal(!showDetailsModal);
-  };
+  const toggleDetailsModal = useCallback(() => {
+    setShowDetailsModal((prev) => {
+      const next = !prev;
+      if (!next) {
+        setIsModalClosing(false);
+        selectedLetterRef.current = null;
+        setSelectedLetter(null);
+        if (messageId) {
+          navigate("/", { replace: true });
+        }
+      }
+      return next;
+    });
+  }, [messageId, navigate]);
 
   useEffect(() => {
     if (!messageId) {
       setShowDetailsModal(false);
+      setIsModalClosing(false);
+      selectedLetterRef.current = null;
+      setSelectedLetter(null);
       return;
     }
 
+    const currentLetter = selectedLetterRef.current;
     const currentSelectedId =
-      typeof selectedLetter?._id === "string"
-        ? selectedLetter._id
-        : selectedLetter?._id?.$oid
-        ? selectedLetter._id.$oid
-        : String(selectedLetter?._id || "");
-    if (selectedLetter && currentSelectedId === String(messageId)) {
+      typeof currentLetter?._id === "string"
+        ? currentLetter._id
+        : currentLetter?._id?.$oid
+        ? currentLetter._id.$oid
+        : String(currentLetter?._id || "");
+    if (currentLetter && currentSelectedId === String(messageId)) {
+      setShowDetailsModal(true);
       return;
     }
 
+    // Check if letter already exists in locally loaded letters (feed / active / searched)
+    const existing = (letters.messages || []).find((l) => {
+      if (!l) return false;
+      const lId =
+        typeof l._id === "string"
+          ? l._id
+          : l._id?.$oid
+          ? l._id.$oid
+          : String(l._id || "");
+      return lId === String(messageId);
+    });
+
+    if (existing) {
+      setSelectedLetter(existing);
+      setShowDetailsModal(true);
+      return;
+    }
+
+    const existingInFeatured = (featuredLettersRef.current?.messages || []).find((l) => {
+      if (!l) return false;
+      const lId =
+        typeof l._id === "string"
+          ? l._id
+          : l._id?.$oid
+          ? l._id.$oid
+          : String(l._id || "");
+      return lId === String(messageId);
+    });
+
+    if (existingInFeatured) {
+      setSelectedLetter(existingInFeatured);
+      setShowDetailsModal(true);
+      return;
+    }
+
+    let active = true;
     const fetchLinkedLetter = async () => {
       try {
         const response = await fetch(
@@ -880,19 +1123,37 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         }
 
         const data = await response.json();
-        setSelectedLetter(data.message);
-        setShowDetailsModal(true);
+        const linkedMsg =
+          data && typeof data === "object" && data.message && typeof data.message === "object"
+            ? data.message
+            : data && typeof data === "object" && (data._id || data.timestamp)
+            ? data
+            : null;
+
+        if (active) {
+          if (linkedMsg) {
+            setSelectedLetter(linkedMsg);
+            setShowDetailsModal(true);
+          } else {
+            throw new Error("Invalid letter payload");
+          }
+        }
       } catch (error) {
-        console.error("Error fetching linked letter:", error);
-        setSelectedLetter(null);
-        setShowDetailsModal(false);
-        toast.error("This letter could not be found or is not available.");
+        if (active) {
+          console.error("Error fetching linked letter:", error);
+          setSelectedLetter(null);
+          setShowDetailsModal(false);
+          navigate("/", { replace: true });
+          toast.error("This letter could not be found or is not available.");
+        }
       }
     };
 
     fetchLinkedLetter();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messageId]);
+    return () => {
+      active = false;
+    };
+  }, [messageId, letters.messages, navigate]);
 
   const scrollToTop = () => {
     const prefersReducedMotion =
@@ -1088,7 +1349,6 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
     const oldestBaseTimestamp =
       baseLetterTimestamps.length > 0 ? Math.min(...baseLetterTimestamps) : null;
-
     for (const letter of approved) {
       const id = String(letter._id || "");
       if (id && seenIds.has(id)) continue;
@@ -1208,7 +1468,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     containerRef: feedContainerRef,
     onNearEnd: fetchMoreData,
     hasMore: hasMoreLetters,
-    overscanRows: 4,
+    overscanRows: letterGridColumns <= 3 ? 12 : 6,
   });
 
   const goToFeedPage = page => {
@@ -1240,7 +1500,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     : null;
 
   return (
-    <div className={`app${isReadModeActive ? " is-read-mode-active" : ""}`}>
+    <div className={`app${isReadModeActive ? " is-read-mode-active" : ""}${isModalClosing ? " is-modal-closing" : ""}`}>
       <div
         className={`home-toolbar${isHeaderCompact ? " is-compact" : ""}`}
       >
@@ -1265,6 +1525,8 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             aria-expanded={countPopover === "opened"}
             aria-controls={countPopover === "opened" ? "letter-count-popover" : undefined}
             onClick={event => toggleCountPopover("opened", event)}
+            onMouseEnter={event => handleCountPopoverHover("opened", event.currentTarget)}
+            onMouseLeave={handleCountPopoverLeave}
           >
             <IoMailOpenOutline size={21} />
             <span className="message-stat__label">Open</span>
@@ -1340,6 +1602,8 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             aria-expanded={countPopover === "pending"}
             aria-controls={countPopover === "pending" ? "letter-count-popover" : undefined}
             onClick={event => toggleCountPopover("pending", event)}
+            onMouseEnter={event => handleCountPopoverHover("pending", event.currentTarget)}
+            onMouseLeave={handleCountPopoverLeave}
           >
             <IoMailUnreadOutline size={21} />
             <span className="message-stat__label">Pending</span>
@@ -1362,7 +1626,14 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           {countPopover && (
             <section id="letter-count-popover" ref={countPopoverRef}
               className={`letter-count-popover is-${countPopover}`} role="dialog"
-              aria-labelledby="letter-count-title" aria-describedby="letter-count-description">
+              aria-labelledby="letter-count-title" aria-describedby="letter-count-description"
+              onMouseEnter={() => {
+                if (hoverCloseTimeoutRef.current) {
+                  clearTimeout(hoverCloseTimeoutRef.current);
+                  hoverCloseTimeoutRef.current = null;
+                }
+              }}
+              onMouseLeave={handleCountPopoverLeave}>
               <button type="button" className="letter-count-popover__close" aria-label="Close letter count" onClick={closeCountPopover}>×</button>
               <h2 id="letter-count-title">{countPopover === "opened" ? "Open Letters" : "Pending Letters for Approval"}</h2>
               <strong className="letter-count-popover__number">{Number(countPopover === "opened" ? letters.counts.approved : letters.counts.unapproved).toLocaleString()}</strong>
@@ -1416,41 +1687,43 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             </aside>
           )}
           {showOrigins && (
-            <OriginsView onClose={closeOrigins}>
-              <h2>Top Letter Origins</h2>
-              <p className="origins-caption">
-                Ranked from the most letters to the least
-              </p>
-              {locations.length > 0 ? (
-                <ol className="origins-list">
-                  {locations.map((location, index) => (
-                    <li key={`${location}-${index}`}>
-                      <span className="origin-rank">#{index + 1}</span>
-                      <span>{location}</span>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="announcements-empty">Origins are loading...</p>
-              )}
-              {internationalOrigins.length > 0 && (
-                <div className="international-origins">
-                  <strong>Letters from around the world</strong>
-                  <ul>
-                    {internationalOrigins.map((origin, index) => (
-                      <li key={`${origin.country}-${origin.city}-${index}`}>
-                        <span>
-                          {origin.city
-                            ? `${origin.city}, ${formatCountry(origin.country)}`
-                            : formatCountry(origin.country)}
-                        </span>
-                        <span>{origin.count}</span>
+            <Suspense fallback={null}>
+              <OriginsView onClose={closeOrigins}>
+                <h2>Top Letter Origins</h2>
+                <p className="origins-caption">
+                  Ranked from the most letters to the least
+                </p>
+                {locations.length > 0 ? (
+                  <ol className="origins-list">
+                    {locations.map((location, index) => (
+                      <li key={`${location}-${index}`}>
+                        <span className="origin-rank">#{index + 1}</span>
+                        <span>{location}</span>
                       </li>
                     ))}
-                  </ul>
-                </div>
-              )}
-            </OriginsView>
+                  </ol>
+                ) : (
+                  <p className="announcements-empty">Origins are loading...</p>
+                )}
+                {internationalOrigins.length > 0 && (
+                  <div className="international-origins">
+                    <strong>Letters from around the world</strong>
+                    <ul>
+                      {internationalOrigins.map((origin, index) => (
+                        <li key={`${origin.country}-${origin.city}-${index}`}>
+                          <span>
+                            {origin.city
+                              ? `${origin.city}, ${formatCountry(origin.country)}`
+                              : formatCountry(origin.country)}
+                          </span>
+                          <span>{origin.count}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </OriginsView>
+            </Suspense>
           )}
           {showAnnouncements && (
             <div
@@ -1622,22 +1895,26 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         </div>
       </div>
       </div>
-      <BurnLetterDialog
-        isOpen={showBurnLetter}
-        onClose={() => setShowBurnLetter(false)}
-        onBurnSuccess={burnedId => {
-          setLetters(previous => ({
-            ...previous,
-            messages: previous.messages.filter(letter => letter._id !== burnedId),
-            counts: {
-              ...previous.counts,
-              approved: Math.max(0, previous.counts.approved - 1),
-              unapproved: previous.counts.unapproved + 1,
-            },
-          }));
-        }}
-        cachedMessages={letters.messages}
-      />
+      {showBurnLetter && (
+        <Suspense fallback={null}>
+          <BurnLetterDialog
+            isOpen={showBurnLetter}
+            onClose={() => setShowBurnLetter(false)}
+            onBurnSuccess={burnedId => {
+              setLetters(previous => ({
+                ...previous,
+                messages: previous.messages.filter(letter => letter._id !== burnedId),
+                counts: {
+                  ...previous.counts,
+                  approved: Math.max(0, previous.counts.approved - 1),
+                  unapproved: previous.counts.unapproved + 1,
+                },
+              }));
+            }}
+            cachedMessages={letters.messages}
+          />
+        </Suspense>
+      )}
       <ToastContainer
         containerId="notify"
         position="top-right"
@@ -1652,30 +1929,40 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         theme="light"
       />
       <ToastContainer />
-      <AdBlockSupportDialog
-        open={showAdBlockSupport}
-        onClose={closeAdBlockSupport}
-        onRetry={retryAfterDisablingAdBlock}
-      />
-      <AddModal
-        showAddModal={showAddModal}
-        toggleAddModal={toggleAddModal}
-        newLetter={newLetter}
-        handleAddLetter={handleAddLetter}
-        setNewLetter={setNewLetter}
-        showShareCelebrationOnMount={SHOW_THANK_YOU_ON_REFRESH}
-      />
+      {showAdBlockSupport && (
+        <Suspense fallback={null}>
+          <AdBlockSupportDialog
+            open={showAdBlockSupport}
+            onClose={closeAdBlockSupport}
+            onRetry={retryAfterDisablingAdBlock}
+          />
+        </Suspense>
+      )}
+      {(showAddModal || hasOpenedAddModal) && (
+        <Suspense fallback={null}>
+          <AddModal
+            showAddModal={showAddModal}
+            toggleAddModal={toggleAddModal}
+            newLetter={newLetter}
+            handleAddLetter={handleAddLetter}
+            setNewLetter={setNewLetter}
+            showShareCelebrationOnMount={SHOW_THANK_YOU_ON_REFRESH}
+          />
+        </Suspense>
+      )}
       {loading === 1 ? (
         <MailboxLoading />
       ) : loading === 2 ? (
         <>
           <center>
-            <Lottie
-              loop
-              animationData={under_construction}
-              play
-              style={{ width: 300, height: 300 }}
-            />
+            {underConstructionAnim && (
+              <Lottie
+                loop
+                animationData={underConstructionAnim}
+                play
+                style={{ width: 300, height: 300 }}
+              />
+            )}
           </center>
           <p>
             Our service is temporarily unavailable as we're making improvements
@@ -1743,17 +2030,43 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                     return (
                       <div
                         key={item.key}
-                        className={`letter-card letter-card--featured${
+                        className={`letter-card letter-card--featured letter-card--paper-ivory letter-card--deckle-3${
                           isFeatured ? " is-active" : ""
                         }`}
+                        title={
+                          isFeatured
+                            ? "Showing featured letters. Tap to go back."
+                            : "Featured letters. Tap to read the featured letters."
+                        }
+                        aria-label={
+                          isFeatured
+                            ? "Showing featured letters. Tap to go back."
+                            : "Featured letters. Tap to read the featured letters."
+                        }
                         onClick={fetchFeatured}
                       >
-                        <span className="letter-card__featured-badge">★ Featured</span>
-                        <p className="letter-card__featured-text">
-                          {isFeatured
-                            ? "Showing featured letters — tap to go back"
-                            : "Tap to read the featured letters"}
-                        </p>
+                        <div className="letter-card__paper" aria-hidden="true" />
+                        <div className="letter-card__inner">
+                          <div className="letter-card__header letter-card__header--featured">
+                            <span className="letter-card__featured-badge">
+                              <span className="letter-card__featured-star" aria-hidden="true">★</span>
+                              <span>FEATURED</span>
+                            </span>
+                          </div>
+                          <div className="letter-card__preview">
+                            {isFeatured ? (
+                              <>
+                                <span className="letter-card__preview-line">Showing featured</span>
+                                <span className="letter-card__preview-line">tap to go back</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="letter-card__preview-line">Tap to read the</span>
+                                <span className="letter-card__preview-line">featured letters</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
                   }
@@ -1807,20 +2120,32 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           <h4>‎ </h4>
         </div>
       ) : null}
-      <DetailsModal
-        showDetailsModal={showDetailsModal}
-        toggleDetailsModal={toggleDetailsModal}
-        selectedLetter={selectedLetter}
-        readMode={readModeEnabled && readMode}
-        letters={activeLetters}
-        setSelectedLetter={setSelectedLetter}
-        onFetchMore={
-          isFeatured || isSearchActive || isReadModeActive
-            ? null
-            : fetchMoreData
-        }
-        onReplyPublished={fetchLetters}
-      />
+      <ErrorBoundary
+        fallback={null}
+        onError={(error) => {
+          console.error("Error in DetailsModal:", error);
+          setShowDetailsModal(false);
+          setSelectedLetter(null);
+          setIsModalClosing(false);
+          navigate("/", { replace: true });
+        }}
+      >
+        <DetailsModal
+          showDetailsModal={showDetailsModal}
+          toggleDetailsModal={toggleDetailsModal}
+          selectedLetter={selectedLetter}
+          readMode={readModeEnabled && readMode}
+          letters={activeLetters}
+          setSelectedLetter={setSelectedLetter}
+          onFetchMore={
+            isFeatured || isSearchActive
+              ? null
+              : fetchMoreData
+          }
+          onReplyPublished={fetchLetters}
+          onClosingChange={setIsModalClosing}
+        />
+      </ErrorBoundary>
       {showUiAnnouncement && (
         <div
           className="ui-announcement-overlay"
@@ -1871,7 +2196,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           onDismiss={dismissPldtNotice}
         />
       )}
-      <PinPaymentReturn onConfirmed={fetchLetters} />
+      {hasPinPaymentReturn && (
+        <Suspense fallback={null}>
+          <PinPaymentReturn onConfirmed={fetchLetters} />
+        </Suspense>
+      )}
       {showBugReport && <BugReportModal onClose={() => setShowBugReport(false)} />}
 
       <div

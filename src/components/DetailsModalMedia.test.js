@@ -302,3 +302,71 @@ describe('DetailsModal media preview rendering & isolation', () => {
     expect(container.querySelector('iframe[title="YouTube video player"]')).toBeNull();
   });
 });
+
+describe('Stamp tooltip placement', () => {
+  const sampleLetter = {
+    _id: 'sample-stamp-1',
+    to: 'Casper',
+    message: 'Hello Casper',
+    timestamp: '2026-03-20T10:00:00Z',
+    reads: 5,
+  };
+
+  test('places stamp tooltip on the left side in desktop view and on bottom in mobile view', () => {
+    window.matchMedia = jest.fn().mockImplementation((query) => ({
+      matches: query.includes('min-width: 769px'),
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }));
+
+    let container;
+    let rerender;
+    act(() => {
+      const res = render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetter}
+            initialOpened={true}
+          />
+        </MemoryRouter>
+      );
+      container = res.container;
+      rerender = res.rerender;
+    });
+
+    const stampBtnDesktop = container.querySelector('.letter-paper__stamp-btn');
+    expect(stampBtnDesktop).not.toBeNull();
+    expect(stampBtnDesktop.getAttribute('data-tooltip-place')).toBe('left');
+
+    window.matchMedia = jest.fn().mockImplementation(() => ({
+      matches: false,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    }));
+    window.innerWidth = 500;
+
+    act(() => {
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={sampleLetter}
+            initialOpened={true}
+          />
+        </MemoryRouter>
+      );
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    const stampBtnMobile = container.querySelector('.letter-paper__stamp-btn');
+    expect(stampBtnMobile.getAttribute('data-tooltip-place')).toBe('bottom');
+  });
+});
+
