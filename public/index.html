@@ -54,7 +54,54 @@
       type="image/png"
     />
     <meta name="admaven-placement" content="BrHk9pjC7" />
-    <meta name="viewport" content="width=device-width, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <script>
+      (function() {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+        // Block Safari gesture zoom
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
+        document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
+
+        // Block multi-touch pinch zoom
+        document.addEventListener('touchstart', function(e) {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        // Block double-tap zoom on non-interactive content
+        var lastTouch = 0;
+        document.addEventListener('touchend', function(e) {
+          var now = Date.now();
+          if (now - lastTouch <= 300) {
+            var t = e.target;
+            var isFormEl = t && (
+              t.tagName === 'INPUT' ||
+              t.tagName === 'TEXTAREA' ||
+              t.tagName === 'SELECT' ||
+              t.tagName === 'BUTTON' ||
+              t.tagName === 'A' ||
+              (t.closest && t.closest('button, a, input, textarea, select, [role="button"]'))
+            );
+            if (!isFormEl) {
+              e.preventDefault();
+            }
+          }
+          lastTouch = now;
+        }, { passive: false });
+      })();
+    </script>
     <meta name="theme-color" content="#ffffff" />
     <meta name="author" content="Dids Irwyn T. Reyes" />
     <meta

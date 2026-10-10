@@ -90,17 +90,18 @@ export function useFeedVirtualizer({
   const [windowWidth, setWindowWidth] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
-  const [scrollY, setScrollY] = useState(() =>
-    typeof window !== "undefined" ? window.scrollY : 0
-  );
 
   const savedScrollY = useRef(0);
-  const lastKnownScrollY = useRef(scrollY);
+  const lastKnownScrollY = useRef(
+    typeof window !== "undefined" ? window.scrollY : 0
+  );
+  const cachedContainerTop = useRef(null);
   const rafId = useRef(null);
 
   // Resize listener to track window width and responsive breakpoints
   useEffect(() => {
     const handleResize = () => {
+      cachedContainerTop.current = null;
       setWindowWidth(window.innerWidth);
     };
     window.addEventListener("resize", handleResize, { passive: true });
@@ -117,66 +118,105 @@ export function useFeedVirtualizer({
     [items, columns]
   );
 
+  useEffect(() => {
+    cachedContainerTop.current = null;
+  }, [items, columns]);
+
   const { offsets, totalHeight } = useMemo(
     () => computeRowOffsets(rows, dimensions),
     [rows, dimensions]
   );
 
-  // Calculate visible row range based on current scroll position
-  const visibleRange = useMemo(() => {
-    if (rows.length === 0) {
-      return { startRow: 0, endRow: -1 };
-    }
-
-    // When total rows is small (<= 8 rows, e.g. ~24-48 cards), render all rows directly
-    if (rows.length <= 8) {
-      return { startRow: 0, endRow: rows.length - 1 };
-    }
-
-    const viewportHeight =
-      typeof window !== "undefined" ? window.innerHeight : 800;
-
-    let viewTop = scrollY;
-    if (
-      containerRef &&
-      containerRef.current &&
-      typeof containerRef.current.getBoundingClientRect === "function"
-    ) {
-      const rect = containerRef.current.getBoundingClientRect();
-      if (rect.top === 0 && scrollY > 0) {
-        viewTop = scrollY;
-      } else {
-        viewTop = Math.max(0, -rect.top);
+  // Compute visible row range based on scroll position
+  const calculateRange = useCallback(
+    (currentScrollY) => {
+      if (rows.length === 0) {
+        return { startRow: 0, endRow: -1, lastVisible: -1 };
       }
-    }
 
-    const viewBottom = viewTop + viewportHeight;
+      const viewportHeight =
+        typeof window !== "undefined" ? window.innerHeight : 800;
 
-    // Find first visible row
-    let firstVisible = 0;
-    for (let i = 0; i < rows.length; i++) {
-      const rowH = rows[i].isAd ? dimensions.adHeight : dimensions.cardHeight;
-      if (offsets[i] + rowH >= viewTop) {
-        firstVisible = i;
-        break;
+      let viewTop = currentScrollY;
+      if (
+        containerRef &&
+        containerRef.current &&
+        typeof containerRef.current.getBoundingClientRect === "function"
+      ) {
+        if (cachedContainerTop.current === null) {
+          const rect = containerRef.current.getBoundingClientRect();
+          if (rect.top === 0 && currentScrollY > 0) {
+            cachedContainerTop.current = 0;
+          } else {
+            cachedContainerTop.current = Math.max(0, rect.top + currentScrollY);
+          }
+        }
+        viewTop = Math.max(0, currentScrollY - cachedContainerTop.current);
       }
-    }
 
-    // Find last visible row
-    let lastVisible = firstVisible;
-    for (let i = firstVisible; i < rows.length; i++) {
-      if (offsets[i] <= viewBottom) {
-        lastVisible = i;
-      } else {
-        break;
+      const viewBottom = viewTop + viewportHeight;
+
+      // Fast binary search for first visible row in sorted offsets array
+      let low = 0;
+      let high = rows.length - 1;
+      let firstVisible = 0;
+      while (low <= high) {
+        const mid = (low + high) >> 1;
+        const rowH = rows[mid].isAd ? dimensions.adHeight : dimensions.cardHeight;
+        if (offsets[mid] + rowH >= viewTop) {
+          firstVisible = mid;
+          high = mid - 1;
+        } else {
+          low = mid + 1;
+        }
       }
-    }
 
-    const startRow = Math.max(0, firstVisible - overscanRows);
-    const endRow = Math.min(rows.length - 1, lastVisible + overscanRows);
+      // Fast binary search for last visible row
+      low = firstVisible;
+      high = rows.length - 1;
+      let lastVisible = firstVisible;
+      while (low <= high) {
+        const mid = (low + high) >> 1;
+        if (offsets[mid] <= viewBottom) {
+          lastVisible = mid;
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
 
-    return { startRow, endRow };
-  }, [rows, dimensions, offsets, scrollY, containerRef, overscanRows]);
+      if (items.length < 300) {
+        return { startRow: 0, endRow: rows.length - 1, lastVisible };
+      }
+
+      const startRow = Math.max(0, firstVisible - overscanRows);
+      const endRow = Math.min(rows.length - 1, lastVisible + overscanRows);
+
+      return { startRow, endRow, lastVisible };
+    },
+    [rows, dimensions, offsets, containerRef, overscanRows, items.length]
+  );
+
+  const [visibleRange, setVisibleRange] = useState(() =>
+    calculateRange(typeof window !== "undefined" ? window.scrollY : 0)
+  );
+
+  // Sync visible range when grid layout/items/offsets change
+  useEffect(() => {
+    const currentScrollY =
+      typeof window !== "undefined" ? window.scrollY : 0;
+    const nextRange = calculateRange(currentScrollY);
+    setVisibleRange((prev) => {
+      if (
+        prev.startRow === nextRange.startRow &&
+        prev.endRow === nextRange.endRow &&
+        prev.lastVisible === nextRange.lastVisible
+      ) {
+        return prev;
+      }
+      return nextRange;
+    });
+  }, [calculateRange]);
 
   // Compute top and bottom spacer heights ensuring exact zero-CLS parity with unvirtualized grid
   const { topSpacerHeight, bottomSpacerHeight } = useMemo(() => {
@@ -198,7 +238,7 @@ export function useFeedVirtualizer({
       topSpacerHeight: topSpacer,
       bottomSpacerHeight: bottomSpacer,
     };
-  }, [rows.length, visibleRange, offsets, dimensions.gap, totalHeight]);
+  }, [rows.length, visibleRange.startRow, visibleRange.endRow, offsets, dimensions.gap, totalHeight]);
 
   // Extract items to mount in the DOM
   const virtualItems = useMemo(() => {
@@ -208,15 +248,39 @@ export function useFeedVirtualizer({
       visibleRange.endRow + 1
     );
     return slicedRows.flatMap((r) => r.items);
-  }, [rows, visibleRange]);
+  }, [rows, visibleRange.startRow, visibleRange.endRow]);
+
+  const lastFetchedRowCount = useRef(0);
 
   const updateBounds = useCallback(() => {
     if (typeof window !== "undefined") {
       const nextScrollY = window.scrollY;
       lastKnownScrollY.current = nextScrollY;
-      setScrollY(nextScrollY);
+      const nextRange = calculateRange(nextScrollY);
+
+      if (
+        !isSuspended &&
+        hasMore &&
+        onNearEnd &&
+        rows.length > 0 &&
+        nextRange.lastVisible >= rows.length - 3 &&
+        lastFetchedRowCount.current !== rows.length
+      ) {
+        lastFetchedRowCount.current = rows.length;
+        onNearEnd();
+      }
+
+      setVisibleRange((prev) => {
+        if (
+          prev.startRow === nextRange.startRow &&
+          prev.endRow === nextRange.endRow
+        ) {
+          return prev;
+        }
+        return nextRange;
+      });
     }
-  }, []);
+  }, [calculateRange, isSuspended, hasMore, onNearEnd, rows.length]);
 
   const saveScrollPosition = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -228,17 +292,30 @@ export function useFeedVirtualizer({
 
   const restoreScrollPosition = useCallback(() => {
     if (typeof window !== "undefined") {
-      try {
-        if (typeof window.scrollTo === "function") {
-          window.scrollTo({ top: savedScrollY.current, behavior: "instant" });
+      const targetY = savedScrollY.current;
+      const applyScroll = () => {
+        if (Math.abs(window.scrollY - targetY) > 1) {
+          try {
+            if (typeof window.scrollTo === "function") {
+              window.scrollTo({ top: targetY, behavior: "instant" });
+            }
+          } catch (e) {
+            window.scrollY = targetY;
+          }
         }
-      } catch (e) {
-        window.scrollY = savedScrollY.current;
+        lastKnownScrollY.current = targetY;
+        updateBounds();
+      };
+
+      applyScroll();
+      if (process.env.NODE_ENV !== "test") {
+        window.requestAnimationFrame(() => {
+          applyScroll();
+          window.requestAnimationFrame(updateBounds);
+        });
       }
-      lastKnownScrollY.current = savedScrollY.current;
-      setScrollY(savedScrollY.current);
     }
-  }, []);
+  }, [updateBounds]);
 
   // Handle suspension and resumption (Read Mode decoupling)
   const prevSuspended = useRef(isSuspended);
@@ -290,19 +367,23 @@ export function useFeedVirtualizer({
   }, [isSuspended, updateBounds]);
 
   // Trigger onNearEnd when approaching the bottom of loaded items (dormant while suspended)
-  const lastFetchedRowCount = useRef(0);
   useEffect(() => {
     if (isSuspended || !hasMore || !onNearEnd) return;
 
+    const nearEnd =
+      visibleRange.lastVisible !== undefined && visibleRange.lastVisible >= 0
+        ? visibleRange.lastVisible >= rows.length - 3
+        : visibleRange.endRow >= rows.length - 3;
+
     if (
       rows.length > 0 &&
-      visibleRange.endRow >= rows.length - 3 &&
+      nearEnd &&
       lastFetchedRowCount.current !== rows.length
     ) {
       lastFetchedRowCount.current = rows.length;
       onNearEnd();
     }
-  }, [visibleRange.endRow, rows.length, isSuspended, hasMore, onNearEnd]);
+  }, [visibleRange.lastVisible, visibleRange.endRow, rows.length, isSuspended, hasMore, onNearEnd]);
 
   return {
     virtualItems,

@@ -13,6 +13,7 @@ import MentalHealthTest from './components/MentalHealthTest';
 import {AuthProvider} from './AuthContext';
 import {CrisisSupportProvider} from './context/CrisisSupportContext';
 import CrisisSupportDialog from './components/CrisisSupportDialog';
+import ErrorBoundary from './components/ErrorBoundary';
 import './styles/App.css';
 
 const Sky = lazy(() => import('./components/sky/Sky'));
@@ -23,7 +24,8 @@ function App() {
       <AuthProvider>
         <CrisisSupportProvider>
           <CrisisSupportDialog />
-          <Routes>
+          <ErrorBoundary>
+            <Routes>
             <Route path="/sky" element={<Suspense fallback={<div role="status">Opening Sky…</div>}><Sky /></Suspense>} />
             <Route path="/" element={<Home />} />
             <Route path="/letters/:messageId" element={<Home />} />
@@ -41,6 +43,7 @@ function App() {
             <Route path="/status" element={<StatusPage />} />
             <Route path="/mental_health_test" element={<MentalHealthTest />} />
           </Routes>
+          </ErrorBoundary>
         </CrisisSupportProvider>
       </AuthProvider>
     </div>

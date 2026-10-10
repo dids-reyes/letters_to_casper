@@ -40,8 +40,66 @@ import { displayDirectLinkAds } from "../data/direct_link";
 import { getGoogleMapsLocationUrl } from "../data/locationMap";
 import usePinTooltipOnboarding from "../hooks/usePinTooltipOnboarding";
 import SensitiveMessage from "./SensitiveMessage";
+import { LetterStamp, getPaperClassForLetter } from "./LetterStamp";
 // Translation remains disabled until explicitly re-enabled.
 const TRANSLATION_ENABLED = false;
+
+export const getLetterStampProps = (letter) => {
+  if (!letter) return {
+    city: "",
+    region: "",
+    country: "",
+    variant: 0,
+    isFeatured: false,
+    paperClass: "letter-card--paper-ivory",
+    deckleClass: "letter-card--deckle-0",
+    clipIndex: 0,
+  };
+
+  const idStr = String(letter._id || letter.id || letter.timestamp || "");
+  let hash = 0;
+  for (let i = 0; i < idStr.length; i++) {
+    hash = (hash << 5) - hash + idStr.charCodeAt(i);
+    hash |= 0;
+  }
+  const posHash = Math.abs(hash);
+  const isPinned = Boolean(
+    letter.is_pinned &&
+    letter.pin_expires_at &&
+    new Date(letter.pin_expires_at).getTime() > Date.now()
+  );
+  const clipIndex = isPinned ? 3 : (posHash >> 2) % 8;
+  const stampVariant = clipIndex % 3;
+  const paperClass = getPaperClassForLetter(letter);
+  const deckleClass = `letter-card--deckle-${clipIndex}`;
+
+  const city =
+    letter.loc?.city ||
+    letter.location?.city ||
+    letter.city ||
+    "";
+  const region =
+    letter.loc?.region ||
+    letter.location?.region ||
+    letter.region ||
+    "";
+  const country =
+    letter.loc?.country ||
+    letter.location?.country ||
+    letter.country ||
+    "";
+
+  return {
+    city,
+    region,
+    country,
+    variant: stampVariant,
+    isFeatured: Boolean(letter.isFeatured || letter.featured),
+    paperClass,
+    deckleClass,
+    clipIndex,
+  };
+};
 
 let youtubeIframeApiPromise;
 const loadYoutubeIframeApi = () => {
@@ -555,6 +613,7 @@ function DetailsModal({
   onFetchMore = () => {},
   onReplyPublished = () => {},
   initialOpened = false,
+  onClosingChange,
 }) {
   let letterId;
   let letterDate;
@@ -598,12 +657,65 @@ function DetailsModal({
   const closeCompletedRef = useRef(false);
   const onReplyPublishedRef = useRef(onReplyPublished);
   onReplyPublishedRef.current = onReplyPublished;
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia
+      ? window.matchMedia("(min-width: 769px)").matches
+      : window.innerWidth > 768;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkDesktop = () => {
+      const matches = window.matchMedia
+        ? window.matchMedia("(min-width: 769px)").matches
+        : window.innerWidth > 768;
+      setIsDesktop(matches);
+    };
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
+
+  const [stampTooltipOpen, setStampTooltipOpen] = useState(false);
+  const stampTooltipTimerRef = useRef(null);
+
+  const handleStampTooltipToggle = useCallback((open) => {
+    if (stampTooltipTimerRef.current) {
+      clearTimeout(stampTooltipTimerRef.current);
+      stampTooltipTimerRef.current = null;
+    }
+    setStampTooltipOpen(open);
+    if (open) {
+      stampTooltipTimerRef.current = setTimeout(() => {
+        setStampTooltipOpen(false);
+      }, 5000);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (stampTooltipTimerRef.current) {
+        clearTimeout(stampTooltipTimerRef.current);
+        stampTooltipTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setStampTooltipOpen(false);
+    if (stampTooltipTimerRef.current) {
+      clearTimeout(stampTooltipTimerRef.current);
+      stampTooltipTimerRef.current = null;
+    }
+  }, [selectedLetter?._id]);
 
   useLayoutEffect(() => {
     closingRef.current = false;
     closeCompletedRef.current = false;
     setIsClosing(false);
-  }, [showDetailsModal, selectedLetter?._id]);
+    if (onClosingChange) onClosingChange(false);
+  }, [showDetailsModal, selectedLetter?._id, onClosingChange]);
 
   useEffect(() => {
     setDisplayedReads(parseInt(selectedLetter?.reads, 10) || 0);
@@ -1029,6 +1141,7 @@ function DetailsModal({
   const foldTipFadeTimerRef = useRef(null);
   const [readBoundary, setReadBoundary] = useState(null);
   const readBoundaryTimerRef = useRef(null);
+  const closeTouchStartRef = useRef(null);
 
   const isTouchDevice = useMemo(() => {
     return (
@@ -1039,14 +1152,20 @@ function DetailsModal({
   }, []);
 
   const dismissFoldTip = useCallback(() => {
-    if (foldTipTimerRef.current) clearTimeout(foldTipTimerRef.current);
-    if (foldTipFadeTimerRef.current) clearTimeout(foldTipFadeTimerRef.current);
+    if (foldTipTimerRef.current) {
+      clearTimeout(foldTipTimerRef.current);
+      foldTipTimerRef.current = null;
+    }
+    if (foldTipFadeTimerRef.current) {
+      clearTimeout(foldTipFadeTimerRef.current);
+      foldTipFadeTimerRef.current = null;
+    }
     setShowFoldTip(false);
     setIsFoldTipFading(false);
   }, []);
 
   const triggerFoldTip = useCallback(() => {
-    if (closingRef.current) return;
+    if (closingRef.current || isTransitioningRef.current || slideDirection || outgoingLetter || !opened) return;
     setShowFoldTip(true);
     setIsFoldTipFading(false);
 
@@ -1060,7 +1179,7 @@ function DetailsModal({
         setIsFoldTipFading(false);
       }, 400);
     }, 2000);
-  }, []);
+  }, [opened, slideDirection, outgoingLetter]);
 
   const showReadBoundary = useCallback((boundary) => {
     setReadBoundary(boundary);
@@ -1087,7 +1206,7 @@ function DetailsModal({
 
   useEffect(() => {
     dismissFoldTip();
-  }, [selectedLetter?._id, dismissFoldTip]);
+  }, [showDetailsModal, selectedLetter, dismissFoldTip]);
 
   useEffect(() => {
     if (!showDetailsModal) return undefined;
@@ -1098,12 +1217,17 @@ function DetailsModal({
 
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    if (readMode) document.body.style.touchAction = "none";
 
     return () => {
-      document.body.style.overflow = originalBodyOverflow;
-      document.documentElement.style.overflow = originalHtmlOverflow;
-      document.body.style.touchAction = originalBodyTouchAction;
+      if (closingRef.current) {
+        document.body.style.overflow = "";
+        document.documentElement.style.overflow = "";
+        document.body.style.touchAction = "";
+      } else {
+        document.body.style.overflow = (originalBodyOverflow === "hidden" ? "" : originalBodyOverflow) || "";
+        document.documentElement.style.overflow = (originalHtmlOverflow === "hidden" ? "" : originalHtmlOverflow) || "";
+        document.body.style.touchAction = (originalBodyTouchAction === "none" ? "" : originalBodyTouchAction) || "";
+      }
     };
   }, [showDetailsModal, readMode]);
 
@@ -1208,6 +1332,7 @@ function DetailsModal({
       return;
     }
     dismissReadBoundary();
+    dismissFoldTip();
 
     if (showReadTip) {
       dismissReadTip();
@@ -1252,7 +1377,7 @@ function DetailsModal({
       setSlideDirection(null);
       isTransitioningRef.current = false;
     }, 520);
-  }, [showAdLock, showReadTip, dismissReadTip, canGoNext, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, onFetchMore, showReadBoundary, dismissReadBoundary]);
+  }, [showAdLock, showReadTip, dismissReadTip, dismissFoldTip, canGoNext, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, onFetchMore, showReadBoundary, dismissReadBoundary]);
 
   const goToPrev = useCallback((fromAdLock = false) => {
     setNavDirection("prev");
@@ -1262,6 +1387,7 @@ function DetailsModal({
       return;
     }
     dismissReadBoundary();
+    dismissFoldTip();
 
     if (showReadTip) {
       dismissReadTip();
@@ -1302,7 +1428,7 @@ function DetailsModal({
       setSlideDirection(null);
       isTransitioningRef.current = false;
     }, 520);
-  }, [showAdLock, showReadTip, dismissReadTip, canGoPrev, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, showReadBoundary, dismissReadBoundary]);
+  }, [showAdLock, showReadTip, dismissReadTip, dismissFoldTip, canGoPrev, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, showReadBoundary, dismissReadBoundary]);
 
   goToNextRef.current = goToNext;
   goToPrevRef.current = goToPrev;
@@ -1328,6 +1454,7 @@ function DetailsModal({
   const didHorizontalPointerDragRef = useRef(false);
 
   const handlePointerDown = (event) => {
+    if (closingRef.current || isClosing) return;
     if (
       (event.pointerType && event.pointerType !== "mouse") ||
       event.button !== 0 ||
@@ -1348,6 +1475,7 @@ function DetailsModal({
   };
 
   const handlePointerMove = (event) => {
+    if (closingRef.current || isClosing) return;
     const start = pointerDragStartRef.current;
     if (!start || start.pointerId !== event.pointerId) return;
     const deltaX = event.clientX - start.x;
@@ -1358,6 +1486,10 @@ function DetailsModal({
   };
 
   const finishPointerDrag = (event) => {
+    if (closingRef.current || isClosing) {
+      pointerDragStartRef.current = null;
+      return;
+    }
     const start = pointerDragStartRef.current;
     if (!start || start.pointerId !== event.pointerId) return;
     pointerDragStartRef.current = null;
@@ -1379,11 +1511,16 @@ function DetailsModal({
   };
 
   const handleTouchStart = (e) => {
+    if (closingRef.current || isClosing) return;
     const target = e.target instanceof Element ? e.target : null;
     if (
       showAdLock ||
+      showLocationAdConfirm ||
+      showQrAdConfirm ||
       replyComposerNavigationLockedRef.current ||
-      target?.closest("[role='dialog']")
+      target?.closest(
+        "[role='dialog'], [role='alertdialog'], .letter-location-ad-overlay, .letter-location-ad-dialog, .letter-action-chooser-overlay, .reply-info-overlay, .letter-share-dialog-overlay, .reply-payment-result-overlay"
+      )
     ) {
       touchStartY.current = null;
       touchStartX.current = null;
@@ -1392,13 +1529,15 @@ function DetailsModal({
     }
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
-    touchInsideScrollable.current = Boolean(e.target.closest(".letter-paper__body--scrollable"));
+    touchInsideScrollable.current = Boolean(e.target.closest(".letter-paper__body--scrollable, .letter-paper"));
   };
 
   const handleTouchMove = (e) => {
+    if (closingRef.current || isClosing) return;
     if (replyComposerNavigationLockedRef.current) return;
     if (!readMode) return;
-    if (showAdLock) {
+    dismissFoldTip();
+    if (showAdLock || showLocationAdConfirm || showQrAdConfirm) {
       if (e.cancelable) e.preventDefault();
       return;
     }
@@ -1416,12 +1555,22 @@ function DetailsModal({
   };
 
   const handleTouchEnd = (e) => {
+    if (closingRef.current || isClosing) return;
     if (replyComposerNavigationLockedRef.current) {
       touchStartY.current = null;
       touchStartX.current = null;
       return;
     }
-    if (showAdLock || touchStartY.current === null) return;
+    if (
+      showAdLock ||
+      showLocationAdConfirm ||
+      showQrAdConfirm ||
+      touchStartY.current === null
+    ) {
+      touchStartY.current = null;
+      touchStartX.current = null;
+      return;
+    }
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     touchStartY.current = null;
@@ -1466,10 +1615,16 @@ function DetailsModal({
     if (!readMode) return;
 
     if (Math.abs(deltaY) < 15 && Math.abs(deltaX) < 15) {
+      if (touchInsideScrollable.current) return;
+      if (isTransitioningRef.current || slideDirection || outgoingLetter || !opened) return;
       if (
         !e.target.closest(".letter-modal") &&
         !e.target.closest(".read-mode-tip") &&
-        !e.target.closest(".read-mode-ad-lock-overlay")
+        !e.target.closest(".read-mode-ad-lock-overlay") &&
+        !e.target.closest(".letter-location-ad-overlay") &&
+        !e.target.closest(".letter-location-ad-dialog") &&
+        !e.target.closest("[role='dialog']") &&
+        !e.target.closest("[role='alertdialog']")
       ) {
         triggerFoldTip();
         return;
@@ -1499,6 +1654,7 @@ function DetailsModal({
     if (!showDetailsModal) return undefined;
 
     const onWheel = (e) => {
+      if (closingRef.current) return;
       if (replyComposerNavigationLockedRef.current) return;
       const isHorizontalGesture =
         Math.abs(e.deltaX) >= 24 &&
@@ -1517,6 +1673,7 @@ function DetailsModal({
         return;
       }
       if (!readMode) return;
+      dismissFoldTip();
       if (e.cancelable) e.preventDefault();
       if (showAdLock) return;
 
@@ -1565,7 +1722,7 @@ function DetailsModal({
     return () => {
       window.removeEventListener("wheel", onWheel);
     };
-  }, [showDetailsModal, readMode, showAdLock]);
+  }, [showDetailsModal, readMode, showAdLock, dismissFoldTip]);
 
 
   const isReplyLetter = Boolean(selectedLetter?.is_reply || selectedLetter?.type === "reply" || selectedLetter?.parent_letter_id);
@@ -1953,6 +2110,7 @@ function DetailsModal({
     showReplyParent && replyParentLetter ? replyParentLetter : selectedLetter
   );
   const activeContextLetterId = getLetterId(activeContextLetter);
+  const activeStampProps = getLetterStampProps(activeContextLetter);
   const activeContextLoveEchoes = Math.max(0, Number(activeContextLetter?.echoes?.love) || 0);
   const activeContextSadEchoes = Math.max(0, Number(activeContextLetter?.echoes?.sad) || 0);
   const letterLocationMap = getGoogleMapsLocationUrl(activeContextLetter?.loc);
@@ -2026,6 +2184,7 @@ function DetailsModal({
 
   const slideThreadTo = useCallback((targetIndex) => {
     if (!replyThread[targetIndex] || targetIndex === replyThreadIndex) return false;
+    dismissFoldTip();
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
     setCompletedLetterKey("");
     setShowAttachments(false);
@@ -2041,9 +2200,10 @@ function DetailsModal({
       slideTimerRef.current = null;
     }, 500);
     return true;
-  }, [replyThread, replyThreadIndex]);
+  }, [replyThread, replyThreadIndex, dismissFoldTip]);
   const slideToReply = useCallback((targetIndex = 0) => {
     if (!activeReplies[targetIndex]) return;
+    dismissFoldTip();
 
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
     setCompletedLetterKey("");
@@ -2061,10 +2221,11 @@ function DetailsModal({
       setSlideDirection(null);
       slideTimerRef.current = null;
     }, 500);
-  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter]);
+  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter, dismissFoldTip]);
 
   const slideToParent = useCallback(() => {
     if (replyViewingIndex < 0) return;
+    dismissFoldTip();
 
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
     setCompletedLetterKey("");
@@ -2080,10 +2241,11 @@ function DetailsModal({
       setSlideDirection(null);
       slideTimerRef.current = null;
     }, 500);
-  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter]);
+  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter, dismissFoldTip]);
 
   const slideToReplyParent = useCallback(() => {
     if (!replyParentLetter || showReplyParent) return;
+    dismissFoldTip();
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
     setCompletedLetterKey("");
     setShowAttachments(false);
@@ -2095,10 +2257,11 @@ function DetailsModal({
       setSlideDirection(null);
       slideTimerRef.current = null;
     }, 500);
-  }, [replyParentLetter, selectedLetter, showReplyParent]);
+  }, [replyParentLetter, selectedLetter, showReplyParent, dismissFoldTip]);
 
   const slideBackToFeedReply = useCallback(() => {
     if (!showReplyParent) return;
+    dismissFoldTip();
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
     setCompletedLetterKey("");
     setShowAttachments(false);
@@ -2110,7 +2273,7 @@ function DetailsModal({
       setSlideDirection(null);
       slideTimerRef.current = null;
     }, 500);
-  }, [replyParentLetter, showReplyParent]);
+  }, [replyParentLetter, showReplyParent, dismissFoldTip]);
 
   horizontalReplyNavigationRef.current = {
     forward: () => {
@@ -2373,6 +2536,40 @@ function DetailsModal({
     dismissFoldTip();
     closingRef.current = true;
     setIsClosing(true);
+    if (onClosingChange) onClosingChange(true);
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+    document.body.style.touchAction = "";
+  };
+
+  const handleCloseTouchStart = (e) => {
+    e.stopPropagation();
+    if (e.touches && e.touches.length === 1) {
+      closeTouchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      };
+    }
+  };
+
+  const handleCloseTouchEnd = (e) => {
+    e.stopPropagation();
+    if (!closeTouchStartRef.current) return;
+    const touch = e.changedTouches?.[0];
+    if (touch) {
+      const dx = Math.abs(touch.clientX - closeTouchStartRef.current.x);
+      const dy = Math.abs(touch.clientY - closeTouchStartRef.current.y);
+      closeTouchStartRef.current = null;
+      if (dx < 14 && dy < 14) {
+        if (e.cancelable) e.preventDefault();
+        handleCloseModal();
+      }
+    }
+  };
+
+  const handleCloseTouchCancel = (e) => {
+    e.stopPropagation();
+    closeTouchStartRef.current = null;
   };
 
   const handleOverlayClick = (event) => {
@@ -2383,13 +2580,17 @@ function DetailsModal({
     if (event && event.target !== event.currentTarget) {
       return;
     }
+    if (showLocationAdConfirm || showQrAdConfirm || showAdLock) {
+      return;
+    }
     if (isReplyPreviewing) {
       exitReplyPreview();
       return;
     }
-    if (opened) {
-      triggerFoldTip();
+    if (isTransitioningRef.current || slideDirection || outgoingLetter || !opened) {
+      return;
     }
+    triggerFoldTip();
     return;
   };
 
@@ -2397,7 +2598,11 @@ function DetailsModal({
     if (!closingRef.current || closeCompletedRef.current) return;
     dismissFoldTip();
     closeCompletedRef.current = true;
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+    document.body.style.touchAction = "";
     toggleDetailsModal();
+    if (onClosingChange) onClosingChange(false);
     setShowAttachments(false);
     setShowPhotoViewer(false);
     setOpened(false);
@@ -2428,10 +2633,17 @@ function DetailsModal({
   useEffect(() => {
     if (!isClosing) return undefined;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const timer = setTimeout(finishCloseModal, (reduced || selectedLetter?.preview) ? 120 : 1380);
+    const isMobileDevice = typeof window !== "undefined" && (
+      window.innerWidth <= 768 ||
+      (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0)
+    );
+    const closeDelay = (reduced || selectedLetter?.preview)
+      ? 40
+      : (readMode ? (isMobileDevice ? 50 : 80) : 1380);
+    const timer = setTimeout(finishCloseModal, closeDelay);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClosing, selectedLetter?.preview]);
+  }, [isClosing, selectedLetter?.preview, readMode]);
 
   const closeShareDialog = () => {
     setShowShareDialog(false);
@@ -2447,6 +2659,14 @@ function DetailsModal({
       if (event.key === "Escape") {
         if (isReplyPreviewing) {
           exitReplyPreview();
+          return;
+        }
+        if (showLocationAdConfirm) {
+          setShowLocationAdConfirm(false);
+          return;
+        }
+        if (showQrAdConfirm) {
+          setShowQrAdConfirm(false);
           return;
         }
         if (showLetterActionChooser) {
@@ -2492,7 +2712,7 @@ function DetailsModal({
         handleCloseModal();
         return;
       }
-      if (!showPhotoViewer && !showShareDialog && !showPinModal && !showLetterActionChooser && !showReplyInfoDialog && !showReplyComposer && !showAdLock) {
+      if (!showPhotoViewer && !showShareDialog && !showPinModal && !showLetterActionChooser && !showReplyInfoDialog && !showReplyComposer && !showAdLock && !showLocationAdConfirm && !showQrAdConfirm) {
         if (event.key === "ArrowRight") {
           if (replyViewingIndex === -1 && activeReplies.length > 0) {
             slideToReply(0);
@@ -2507,7 +2727,7 @@ function DetailsModal({
           }
         }
       }
-      if (readMode && !showPhotoViewer && !showShareDialog && !showPinModal && !showLetterActionChooser && !showReplyInfoDialog && !showReplyComposer) {
+      if (readMode && !showPhotoViewer && !showShareDialog && !showPinModal && !showLetterActionChooser && !showReplyInfoDialog && !showReplyComposer && !showLocationAdConfirm && !showQrAdConfirm) {
         if (showAdLock) return;
         if (event.key === "ArrowDown" || event.key === "PageDown") {
           event.preventDefault();
@@ -2521,7 +2741,7 @@ function DetailsModal({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showDetailsModal, showPhotoViewer, showShareDialog, showPinModal, showLetterActionChooser, showReplyInfoDialog, showReplyComposer, showReplies, readMode, showAdLock, goToNext, goToPrev, isReplyPreviewing, exitReplyPreview, replyViewingIndex, activeReplies, slideToReply, slideToParent, opened, triggerFoldTip]);
+  }, [showDetailsModal, showPhotoViewer, showShareDialog, showPinModal, showLetterActionChooser, showReplyInfoDialog, showReplyComposer, showReplies, readMode, showAdLock, showLocationAdConfirm, showQrAdConfirm, goToNext, goToPrev, isReplyPreviewing, exitReplyPreview, replyViewingIndex, activeReplies, slideToReply, slideToParent, opened, triggerFoldTip]);
 
   const formatReadsCount = (readsCount) => {
     const parsed = parseInt(readsCount) || 0;
@@ -2563,14 +2783,28 @@ function DetailsModal({
     const lEchoTotal = Object.values(lEchoes).reduce((a, b) => a + b, 0);
     const LDominantIcon = lEchoes.sad > lEchoes.love ? TbMoodSad : IoHeartOutline;
 
+    const lStampProps = getLetterStampProps(letter);
+
     return (
-      <div className="letter-paper" aria-hidden="true">
+      <div className={`letter-paper ${lStampProps.paperClass || ""} ${lStampProps.deckleClass || ""}`} aria-hidden="true">
         <div className="letter-paper__head">
-          <div className="letter-info" style={{ marginBottom: "4px" }}>
-            <span><strong>From:</strong> {letter.from}</span>
+          <div className="letter-paper__addressee">
+            <div className="letter-info" style={{ marginBottom: "4px" }}>
+              <span><strong>From:</strong> {letter.from}</span>
+            </div>
+            <div className="letter-info">
+              <span><strong>To:</strong> {letter.to}</span>
+            </div>
           </div>
-          <div className="letter-info">
-            <span><strong>To:</strong> {letter.to}</span>
+          <div className="letter-paper__stamp-slot">
+            <LetterStamp
+              className="letter-paper__stamp"
+              city={lStampProps.city}
+              region={lStampProps.region}
+              country={lStampProps.country}
+              variant={lStampProps.variant}
+              isFeatured={lStampProps.isFeatured}
+            />
           </div>
         </div>
 
@@ -2733,14 +2967,28 @@ function DetailsModal({
     const lEchoTotal = Object.values(lEchoes).reduce((a, b) => a + b, 0);
     const LDominantIcon = lEchoes.sad > lEchoes.love ? TbMoodSad : IoHeartOutline;
 
+    const lStampProps = getLetterStampProps(letter);
+
     return (
-      <div className="letter-paper letter-paper--prerender" aria-hidden="true" tabIndex={-1}>
+      <div className={`letter-paper letter-paper--prerender ${lStampProps.paperClass || ""} ${lStampProps.deckleClass || ""}`} aria-hidden="true" tabIndex={-1}>
         <div className="letter-paper__head">
-          <div className="letter-info" style={{ marginBottom: "4px" }}>
-            <span><strong>From:</strong> {letter.from}</span>
+          <div className="letter-paper__addressee">
+            <div className="letter-info" style={{ marginBottom: "4px" }}>
+              <span><strong>From:</strong> {letter.from}</span>
+            </div>
+            <div className="letter-info">
+              <span><strong>To:</strong> {letter.to}</span>
+            </div>
           </div>
-          <div className="letter-info">
-            <span><strong>To:</strong> {letter.to}</span>
+          <div className="letter-paper__stamp-slot">
+            <LetterStamp
+              className="letter-paper__stamp"
+              city={lStampProps.city}
+              region={lStampProps.region}
+              country={lStampProps.country}
+              variant={lStampProps.variant}
+              isFeatured={lStampProps.isFeatured}
+            />
           </div>
         </div>
 
@@ -2891,50 +3139,104 @@ function DetailsModal({
     const activeMessage = activeMedia?.newMessage || activeLetter?.message || "";
     const activeHasAttachment = Boolean(activeSpotifyTrackId || activeYoutubeVideoId || activeLetter?.photo?.url);
 
+    const activeStampProps = getLetterStampProps(activeLetter);
+
     return (
-      <div className="letter-paper" ref={letterPaperRef}>
+      <div
+        className={`letter-paper ${activeStampProps.paperClass || ""} ${activeStampProps.deckleClass || ""}`}
+        ref={letterPaperRef}
+        onScroll={dismissFoldTip}
+      >
         <div className="letter-paper__head">
-          <div className="letter-info" style={{ marginBottom: "4px" }}>
-            {readMode || isReplyActive || isReplyPreviewing ? (
-              <span>
-                <strong>From:</strong> {activeLetter.from}
-              </span>
-            ) : (
-              <Typewriter
-                key={`${getLetterId(activeLetter)}-from`}
-                options={{ delay: 50, loop: false, stringSplitter }}
-                onInit={(typewriter) => {
-                  typewriter
-                    .typeString(
-                      `<strong>From:</strong> ${activeLetter.from}`
-                    )
-                    .callFunction((state) => {
-                      state.elements.cursor.remove();
-                    })
-                    .start();
-                }}
-              />
-            )}
+          <div className="letter-paper__addressee">
+            <div className="letter-info" style={{ marginBottom: "4px" }}>
+              {readMode || isReplyActive || isReplyPreviewing ? (
+                <span>
+                  <strong>From:</strong> {activeLetter.from}
+                </span>
+              ) : (
+                <Typewriter
+                  key={`${getLetterId(activeLetter)}-from`}
+                  options={{ delay: 50, loop: false, stringSplitter }}
+                  onInit={(typewriter) => {
+                    typewriter
+                      .typeString(
+                        `<strong>From:</strong> ${activeLetter.from}`
+                      )
+                      .callFunction((state) => {
+                        state.elements.cursor.remove();
+                      })
+                      .start();
+                  }}
+                />
+              )}
+            </div>
+            <div className="letter-info">
+              {readMode || isReplyActive || isReplyPreviewing ? (
+                <span>
+                  <strong>To:</strong> {activeLetter.to}
+                </span>
+              ) : (
+                <Typewriter
+                  key={`${getLetterId(activeLetter)}-to`}
+                  options={{ delay: 50, loop: false, stringSplitter }}
+                  onInit={(typewriter) => {
+                    typewriter
+                      .typeString(`<strong>To:</strong> ${activeLetter.to}`)
+                      .callFunction((state) => {
+                        state.elements.cursor.remove();
+                      })
+                      .start();
+                  }}
+                />
+              )}
+            </div>
           </div>
-          <div className="letter-info">
-            {readMode || isReplyActive || isReplyPreviewing ? (
-              <span>
-                <strong>To:</strong> {activeLetter.to}
-              </span>
-            ) : (
-              <Typewriter
-                key={`${getLetterId(activeLetter)}-to`}
-                options={{ delay: 50, loop: false, stringSplitter }}
-                onInit={(typewriter) => {
-                  typewriter
-                    .typeString(`<strong>To:</strong> ${activeLetter.to}`)
-                    .callFunction((state) => {
-                      state.elements.cursor.remove();
-                    })
-                    .start();
-                }}
+          <div className="letter-paper__stamp-slot">
+            <button
+              type="button"
+              className="letter-paper__stamp-btn"
+              data-tooltip-id="letter_stamp_tooltip"
+              data-tooltip-content={
+                activeStampProps.isFeatured
+                  ? "A commemorative postage stamp for this featured letter."
+                  : "A vintage postage stamp marking where this letter was sent from."
+              }
+              data-tooltip-place={isDesktop ? "left" : "bottom"}
+              aria-label="Postage stamp: tap to learn more"
+            >
+              <LetterStamp
+                className="letter-paper__stamp"
+                city={activeStampProps.city}
+                region={activeStampProps.region}
+                country={activeStampProps.country}
+                variant={activeStampProps.variant}
+                isFeatured={activeStampProps.isFeatured}
               />
-            )}
+            </button>
+            {typeof document !== "undefined" &&
+              createPortal(
+                <Tooltip
+                  id="letter_stamp_tooltip"
+                  place={isDesktop ? "left" : "bottom"}
+                  offset={isDesktop ? 10 : 8}
+                  positionStrategy="fixed"
+                  openOnClick={true}
+                  isOpen={stampTooltipOpen}
+                  setIsOpen={handleStampTooltipToggle}
+                  closeEvents={{ click: true }}
+                  globalCloseEvents={{ clickOutsideAnchor: true, escape: true }}
+                  noArrow={true}
+                  arrowColor="transparent"
+                  className="letter-stamp-tooltip"
+                  render={() =>
+                    activeStampProps.isFeatured
+                      ? "A commemorative postage stamp for this featured letter."
+                      : "A vintage postage stamp marking where this letter was sent from."
+                  }
+                />,
+                document.body
+              )}
           </div>
         </div>
 
@@ -3320,7 +3622,7 @@ function DetailsModal({
         className={`letter-modal-overlay${readMode ? " is-read-mode" : ""}${isClosing ? " is-folding-closed" : ""}${selectedLetter?.preview ? " is-preview-letter" : ""}${replyPaymentNotice?.type === "success" ? " is-reply-payment-success" : ""}${isYoutubePlaying ? " is-youtube-playing" : ""}`}
         onAnimationEnd={(event) => {
           if (event.target === event.currentTarget &&
-              ["letter-close-fade", "letter-close-reduced"].includes(event.animationName)) {
+              ["letter-close-fade", "letter-close-fade-fast", "letter-close-reduced"].includes(event.animationName)) {
             finishCloseModal();
           }
         }}
@@ -3341,17 +3643,24 @@ function DetailsModal({
               aria-hidden="true"
             >
               <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  className="letter-modal__close"
-                  aria-hidden="true"
-                  tabIndex={-1}
-                >
-                  <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                    <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
-                  </svg>
-                </button>
-                {renderOutgoingPaper(outgoingLetter)}
+                {(() => {
+                  const outStampProps = getLetterStampProps(outgoingLetter);
+                  return (
+                    <div className={`letter-paper-wrapper ${outStampProps.paperClass || ""} ${outStampProps.deckleClass || ""}`}>
+                      <button
+                        type="button"
+                        className="letter-modal__close"
+                        aria-hidden="true"
+                        tabIndex={-1}
+                      >
+                        <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                          <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                        </svg>
+                      </button>
+                      {renderOutgoingPaper(outgoingLetter)}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -3361,25 +3670,34 @@ function DetailsModal({
           >
             <div className={`letter-modal${isYoutubePlaying ? " is-youtube-playing" : ""}`}>
               {opened && (
-                <button
-                  type="button"
-                  className={`letter-modal__close${showFoldTip ? " is-hinted" : ""}`}
-                  onClick={handleCloseModal}
-                  aria-label={isReplyPreviewing ? "Back to Editing" : "Close letter"}
-                  title={isReplyPreviewing ? "Back to Editing" : "Fold and close letter"}
-                  disabled={isClosing}
-                >
-                  <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                    <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
-                  </svg>
-                </button>
+                <div className={`letter-paper-wrapper ${activeStampProps.paperClass || ""} ${activeStampProps.deckleClass || ""}`}>
+                  <button
+                    type="button"
+                    className={`letter-modal__close${showFoldTip && !slideDirection && !outgoingLetter ? " is-hinted" : ""}`}
+                    onClick={handleCloseModal}
+                    onTouchStart={handleCloseTouchStart}
+                    onTouchEnd={handleCloseTouchEnd}
+                    onTouchCancel={handleCloseTouchCancel}
+                    aria-label={isReplyPreviewing ? "Back to Editing" : "Close letter"}
+                    title={isReplyPreviewing ? "Back to Editing" : "Fold and close letter"}
+                    disabled={isClosing}
+                  >
+                    <svg className="letter-fold-corner" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                    </svg>
+                  </button>
+                  {renderActivePaper()}
+                </div>
               )}
-              {opened && showFoldTip && (
+              {opened && showFoldTip && !slideDirection && !outgoingLetter && (
                 <aside
                   className={`read-mode-fold-tip${isFoldTipFading ? " is-fading-out" : ""}`}
                   role="status"
                   aria-label="Close letter hint"
                   onClick={handleCloseModal}
+                  onTouchStart={handleCloseTouchStart}
+                  onTouchEnd={handleCloseTouchEnd}
+                  onTouchCancel={handleCloseTouchCancel}
                 >
                   <span className="read-mode-fold-tip__text">
                     {isTouchDevice ? "Tap the folded corner to close" : "Click the folded corner to close"}
@@ -3388,9 +3706,7 @@ function DetailsModal({
               )}
               {!opened ? (
                 renderEnvelope()
-              ) : (
-                renderActivePaper()
-              )}
+              ) : null}
               {closingEnvelope}
             </div>
           </div>
@@ -3771,6 +4087,12 @@ function DetailsModal({
               event.stopPropagation();
               setShowLocationAdConfirm(false);
             }}
+            onTouchStart={(event) => event.stopPropagation()}
+            onTouchMove={(event) => event.stopPropagation()}
+            onTouchEnd={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerMove={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
           >
             <section
               className="letter-location-ad-dialog"
@@ -3778,6 +4100,12 @@ function DetailsModal({
               aria-modal="true"
               aria-labelledby="letter-location-ad-title"
               onClick={(event) => event.stopPropagation()}
+              onTouchStart={(event) => event.stopPropagation()}
+              onTouchMove={(event) => event.stopPropagation()}
+              onTouchEnd={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerMove={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
             >
               <div className="letter-location-ad-title-row">
                 <IoLocationOutline aria-hidden="true" />
@@ -3787,10 +4115,23 @@ function DetailsModal({
               </div>
               <p>The origin will be available when you return to this letter.</p>
               <div className="letter-location-ad-actions">
-                <button type="button" onClick={() => setShowLocationAdConfirm(false)}>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setShowLocationAdConfirm(false);
+                  }}
+                >
                   Not now
                 </button>
-                <button type="button" onClick={confirmLocationAd} autoFocus>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    confirmLocationAd();
+                  }}
+                  autoFocus
+                >
                   Yes
                 </button>
               </div>
@@ -3805,6 +4146,12 @@ function DetailsModal({
               event.stopPropagation();
               setShowQrAdConfirm(false);
             }}
+            onTouchStart={(event) => event.stopPropagation()}
+            onTouchMove={(event) => event.stopPropagation()}
+            onTouchEnd={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerMove={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
           >
             <section
               className="letter-location-ad-dialog"
@@ -3812,6 +4159,12 @@ function DetailsModal({
               aria-modal="true"
               aria-labelledby="letter-qr-ad-title"
               onClick={(event) => event.stopPropagation()}
+              onTouchStart={(event) => event.stopPropagation()}
+              onTouchMove={(event) => event.stopPropagation()}
+              onTouchEnd={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerMove={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
             >
               <div className="letter-location-ad-title-row">
                 <IoQrCodeOutline aria-hidden="true" />
@@ -3819,10 +4172,23 @@ function DetailsModal({
               </div>
               <p>Your download will begin after the ad opens.</p>
               <div className="letter-location-ad-actions">
-                <button type="button" onClick={() => setShowQrAdConfirm(false)}>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setShowQrAdConfirm(false);
+                  }}
+                >
                   Not now
                 </button>
-                <button type="button" onClick={confirmQrDownloadAd} autoFocus>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    confirmQrDownloadAd();
+                  }}
+                  autoFocus
+                >
                   Yes
                 </button>
               </div>

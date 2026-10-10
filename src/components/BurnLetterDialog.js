@@ -6,7 +6,8 @@ import { toast } from "react-toastify";
 import html2canvas from "html2canvas";
 import { render_url, api_key } from "../data/keys";
 import { displayDirectLinkAds } from "../data/direct_link";
-import { extractMediaLinks } from "./DetailsModal";
+import { extractMediaLinks, getLetterStampProps } from "./DetailsModal";
+import { LetterStamp } from "./LetterStamp";
 import "./BurnLetterDialog.css";
 
 const STAGES = {
@@ -915,22 +916,34 @@ function BurnLetterDialog({
                 {/* The authentic letter-paper component: remains sharp until physically consumed */}
                 <div
                   ref={paperRef}
-                  className={`letter-paper${
+                  className={`letter-paper ${getLetterStampProps(targetLetter).paperClass || ""}${
                     stage === STAGES.BURNING
                       ? " is-center-burning is-letter-burning-hidden"
                       : ""
                   }`}
                 >
                   <div className="letter-paper__head">
-                    <div className="letter-info" style={{ marginBottom: "4px" }}>
-                      <span>
-                        <strong>From:</strong> {targetLetter.from || "Anonymous"}
-                      </span>
+                    <div className="letter-paper__addressee">
+                      <div className="letter-info" style={{ marginBottom: "4px" }}>
+                        <span>
+                          <strong>From:</strong> {targetLetter.from || "Anonymous"}
+                        </span>
+                      </div>
+                      <div className="letter-info">
+                        <span>
+                          <strong>To:</strong> {targetLetter.to || "You"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="letter-info">
-                      <span>
-                        <strong>To:</strong> {targetLetter.to || "You"}
-                      </span>
+                    <div className="letter-paper__stamp-slot">
+                      <LetterStamp
+                        className="letter-paper__stamp"
+                        city={targetLetter.loc?.city || targetLetter.city || ""}
+                        region={targetLetter.loc?.region || targetLetter.region || ""}
+                        country={targetLetter.loc?.country || targetLetter.country || ""}
+                        variant={getLetterStampProps(targetLetter).variant}
+                        isFeatured={getLetterStampProps(targetLetter).isFeatured}
+                      />
                     </div>
                   </div>
 
