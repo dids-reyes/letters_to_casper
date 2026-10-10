@@ -64,7 +64,7 @@ const formatReadsCount = (readsCount) => {
   return parsed === 1 ? "1 read" : `${parsed} reads`;
 };
 
-// Asynchronously pre-cache the exact 1024x1024 RGB noise map from ykob's burn sketch
+// Asynchronously pre-cache the 512x512 RGB noise map from ykob's burn sketch
 let preloadedNoiseImage = null;
 const loadNoiseTextureImage = () => {
   if (preloadedNoiseImage && preloadedNoiseImage.complete) return;
@@ -80,7 +80,13 @@ const loadNoiseTextureImage = () => {
     // Ignore in non-browser environments
   }
 };
-loadNoiseTextureImage();
+if (typeof window !== "undefined") {
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => loadNoiseTextureImage(), { timeout: 3000 });
+  } else {
+    setTimeout(loadNoiseTextureImage, 2000);
+  }
+}
 
 // Instant 2D procedural noise map fallback for test/offline environments
 const createProceduralNoiseCanvas = (width = 256, height = 256) => {
@@ -284,9 +290,88 @@ const createLetterCanvasFallback = (letter, width, height, dpr, isNightShift = f
 const capturePaperTexture = async (element) => {
   if (!element) return null;
   try {
+    const isNightShift =
+      typeof document !== "undefined" &&
+      document.documentElement?.classList?.contains("night-shift");
+    const computedPaper =
+      typeof window !== "undefined" && window.getComputedStyle
+        ? window.getComputedStyle(element)
+        : null;
+    const paperBgColor =
+      computedPaper?.backgroundColor &&
+      computedPaper.backgroundColor !== "rgba(0, 0, 0, 0)" &&
+      computedPaper.backgroundColor !== "transparent"
+        ? computedPaper.backgroundColor
+        : isNightShift
+        ? "#23201a"
+        : "#faf7ec";
+
+    // Pre-inline SVG <image> stamp assets as data URLs so SVG serialization renders them
+    const svgImages = Array.from(element.querySelectorAll?.("svg image") || []);
+    const dataUrlMap = new Map();
+    await Promise.all(
+      svgImages.map(async (svgImg) => {
+        const href =
+          svgImg.getAttribute("href") || svgImg.getAttribute("xlink:href");
+        if (!href || href.startsWith("data:")) return;
+        try {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = href;
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = img.naturalWidth || 78;
+          tempCanvas.height = img.naturalHeight || 98;
+          const tempCtx = tempCanvas.getContext("2d");
+          if (tempCtx) {
+            tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+            dataUrlMap.set(href, tempCanvas.toDataURL("image/png"));
+          }
+        } catch {
+          // Ignore stamp image load errors
+        }
+      })
+    );
+
+    // Pre-generate ruled stationery line tile because html2canvas drops multi-stop repeating-linear-gradient
+    let ruleTileDataUrl = null;
+    let bodyLineHeight = 28;
+    let bodyBgPosition = "0 0";
+    const bodyEl = element.querySelector?.(".letter-paper__body");
+    if (bodyEl && typeof window !== "undefined" && window.getComputedStyle) {
+      const computedBody = window.getComputedStyle(bodyEl);
+      bodyLineHeight = Math.max(
+        18,
+        Math.round(parseFloat(computedBody.lineHeight) || 28)
+      );
+      bodyBgPosition = computedBody.backgroundPosition || "0 0";
+      try {
+        const ruleCanvas = document.createElement("canvas");
+        ruleCanvas.width = 8;
+        ruleCanvas.height = bodyLineHeight;
+        const ruleCtx = ruleCanvas.getContext("2d");
+        if (ruleCtx) {
+          ruleCtx.fillStyle = isNightShift
+            ? "rgba(255, 244, 214, 0.08)"
+            : "rgba(120, 100, 60, 0.12)";
+          ruleCtx.fillRect(0, bodyLineHeight - 1, 8, 1);
+          ruleTileDataUrl = ruleCanvas.toDataURL("image/png");
+        }
+      } catch {
+        ruleTileDataUrl = null;
+      }
+    }
+
+    const scale = Math.min(
+      2,
+      (typeof window !== "undefined" && window.devicePixelRatio) || 1
+    );
     const canvas = await html2canvas(element, {
-      scale: Math.min(2, window.devicePixelRatio || 1),
-      backgroundColor: null,
+      scale,
+      backgroundColor: paperBgColor,
       logging: false,
       useCORS: true,
       allowTaint: true,
@@ -298,7 +383,104 @@ const capturePaperTexture = async (element) => {
         el.classList?.contains("burn-confirm-backdrop") ||
         el.classList?.contains("burn-confirm-dialog-wrapper") ||
         el.classList?.contains("burn-readable-controls"),
+      onclone: (_clonedDoc, clonedEl) => {
+        if (!clonedEl) return;
+        clonedEl.style.backgroundColor = paperBgColor;
+        clonedEl.style.backgroundImage = "none";
+        clonedEl.style.boxShadow = "none";
+        clonedEl.style.borderRadius = "0px";
+        clonedEl.style.clipPath = "none";
+        clonedEl.style.animation = "none";
+        clonedEl.style.transform = "none";
+
+        const clonedBody = clonedEl.querySelector?.(".letter-paper__body");
+        if (clonedBody && ruleTileDataUrl) {
+          clonedBody.style.backgroundImage = `url("${ruleTileDataUrl}")`;
+          clonedBody.style.backgroundRepeat = "repeat";
+          clonedBody.style.backgroundSize = `8px ${bodyLineHeight}px`;
+          clonedBody.style.backgroundPosition = bodyBgPosition;
+        }
+
+        const clonedSvgImages = clonedEl.querySelectorAll?.("svg image") || [];
+        clonedSvgImages.forEach((imgNode) => {
+          const origHref =
+            imgNode.getAttribute("href") || imgNode.getAttribute("xlink:href");
+          const inlined = origHref ? dataUrlMap.get(origHref) : null;
+          if (inlined) {
+            imgNode.setAttribute("href", inlined);
+            imgNode.setAttributeNS(
+              "http://www.w3.org/1999/xlink",
+              "xlink:href",
+              inlined
+            );
+          }
+        });
+      },
     });
+
+    if (canvas && typeof canvas.getContext === "function") {
+      const ctx = canvas.getContext("2d");
+      if (ctx && canvas.width > 0 && canvas.height > 0) {
+        const w = canvas.width;
+        const h = canvas.height;
+        const foldCssSize =
+          typeof window !== "undefined" && window.innerWidth <= 480 ? 20 : 24;
+        const foldPx = foldCssSize * scale;
+
+        // Subtle aged paper vignette matching .letter-paper radial-gradient without html2canvas artifacts
+        if (!isNightShift) {
+          ctx.save();
+          ctx.translate(w / 2, h / 2);
+          ctx.scale(1, h / w);
+          const maxR = w * 0.7;
+          const vig = ctx.createRadialGradient(0, 0, maxR * 0.74, 0, 0, maxR);
+          vig.addColorStop(0, "rgba(135, 78, 28, 0)");
+          vig.addColorStop(0.54, "rgba(135, 78, 28, 0.05)");
+          vig.addColorStop(0.85, "rgba(98, 52, 18, 0.14)");
+          vig.addColorStop(1, "rgba(68, 34, 10, 0.22)");
+          ctx.fillStyle = vig;
+          ctx.fillRect(-w / 2, -w / 2, w, w);
+          ctx.restore();
+        }
+
+        // Cut out top-right dog-ear corner silhouette
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.beginPath();
+        ctx.moveTo(w - foldPx, 0);
+        ctx.lineTo(w, 0);
+        ctx.lineTo(w, foldPx);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Draw folded dog-ear corner flap onto the captured paper texture
+        ctx.save();
+        ctx.translate(w - foldPx, 0);
+        const s = foldPx / 48;
+        ctx.scale(s, s);
+        ctx.shadowColor = isNightShift
+          ? "rgba(0, 0, 0, 0.6)"
+          : "rgba(70, 61, 41, 0.35)";
+        ctx.shadowBlur = 3 * scale;
+        ctx.shadowOffsetX = -2 * scale;
+        ctx.shadowOffsetY = 3 * scale;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(48, 48);
+        ctx.quadraticCurveTo(24, 42, 3, 47);
+        ctx.quadraticCurveTo(7, 24, 0, 0);
+        ctx.closePath();
+        ctx.fillStyle = isNightShift ? "#505143" : "#e4d7b6";
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+        ctx.strokeStyle = isNightShift ? "#77765d" : "#baa982";
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
     return canvas;
   } catch (err) {
     console.warn("html2canvas capture notice:", err);
@@ -388,24 +570,29 @@ function BurnLetterDialog({
   const cleanedMessage = media?.newMessage || targetLetter?.message || "";
   const hasLocation = Boolean(targetLetter?.loc?.city || targetLetter?.loc?.region);
 
-  // Pre-capture letter texture in the background while confirmation modal is shown
+  // Pre-capture letter texture in the background as soon as targetLetter is rendered
   useEffect(() => {
-    if (stage === STAGES.CONFIRM && paperRef.current) {
-      let isMounted = true;
+    if (
+      (stage === STAGES.CONFIRM || stage === STAGES.PRE_BURN) &&
+      targetLetter &&
+      paperRef.current &&
+      !letterTextureCanvasRef.current
+    ) {
+      let isCancelled = false;
       const doCapture = async () => {
+        if (!paperRef.current) return;
         const canvas = await capturePaperTexture(paperRef.current);
-        if (isMounted && canvas) {
+        if (!isCancelled && canvas) {
           letterTextureCanvasRef.current = canvas;
         }
       };
-      // Brief delay to let layout settle before snapshotting
-      const t = setTimeout(doCapture, 60);
+      const t = setTimeout(doCapture, 50);
       return () => {
-        isMounted = false;
+        isCancelled = true;
         clearTimeout(t);
       };
     }
-  }, [stage]);
+  }, [targetLetter, stage]);
 
   // WebGL ykob-Style Organic Crawling Fire Engine + Atmospheric Sparks
   useEffect(() => {
@@ -413,6 +600,24 @@ function BurnLetterDialog({
 
     const webglCanvas = webglCanvasRef.current;
     const sparksCanvas = sparksCanvasRef.current;
+
+    const width = paperRef.current?.offsetWidth || 580;
+    const height = paperRef.current?.offsetHeight || 440;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    if (!letterTextureCanvasRef.current && targetLetter) {
+      const isNight =
+        typeof document !== "undefined" &&
+        document.documentElement?.classList?.contains("night-shift");
+      letterTextureCanvasRef.current = createLetterCanvasFallback(
+        targetLetter,
+        width,
+        height,
+        dpr,
+        isNight
+      );
+    }
+
     const textureSource = letterTextureCanvasRef.current;
 
     let gl = null;
@@ -420,13 +625,19 @@ function BurnLetterDialog({
     let uProgressLoc = null;
     let uTimeLoc = null;
 
-    const width = paperRef.current?.offsetWidth || 580;
-    const height = paperRef.current?.offsetHeight || 440;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-
     // 1. Initialize WebGL Shader if canvas and texture are available
     if (webglCanvas && textureSource) {
       try {
+        if (
+          paperRef.current &&
+          typeof window !== "undefined" &&
+          window.getComputedStyle
+        ) {
+          const paperClipPath = window.getComputedStyle(paperRef.current).clipPath;
+          if (paperClipPath && paperClipPath !== "none") {
+            webglCanvas.style.clipPath = paperClipPath;
+          }
+        }
         webglCanvas.width = width * dpr;
         webglCanvas.height = height * dpr;
         gl = webglCanvas.getContext("webgl", { alpha: true, premultipliedAlpha: false });
@@ -744,23 +955,6 @@ function BurnLetterDialog({
       stage === STAGES.BURNING
     ) return;
 
-    // Ensure texture is ready before transitioning to BURNING stage
-    if (!letterTextureCanvasRef.current && targetLetter) {
-      const w = paperRef.current?.offsetWidth || 580;
-      const h = paperRef.current?.offsetHeight || 440;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      const isNight =
-        typeof document !== "undefined" &&
-        document.documentElement?.classList?.contains("night-shift");
-      letterTextureCanvasRef.current = createLetterCanvasFallback(
-        targetLetter,
-        w,
-        h,
-        dpr,
-        isNight
-      );
-    }
-
     const normalizedKey = burnKey.trim().toUpperCase();
     // Hold on the intact letter for one second before starting the existing animation.
     setStage(STAGES.PRE_BURN);
@@ -892,31 +1086,40 @@ function BurnLetterDialog({
           >
             {/* The ACTUAL letter view matching the normal letter modal in Letters to Casper */}
             <div className="letter-modal">
-              {/* Folded corner close button */}
-              {stage === STAGES.CONFIRM && (
-                <button
-                  type="button"
-                  className="letter-modal__close"
-                  onClick={onClose}
-                  aria-label="Close letter"
-                  title="Fold and close letter"
-                >
-                  <svg
-                    className="letter-fold-corner"
-                    viewBox="0 0 48 48"
-                    aria-hidden="true"
-                    focusable="false"
+              <div
+                className={`burn-paper-stage${
+                  stage !== STAGES.BURNING ? " letter-paper-wrapper" : ""
+                } ${getLetterStampProps(targetLetter).paperClass || ""} ${
+                  getLetterStampProps(targetLetter).deckleClass || ""
+                }`}
+              >
+                {/* Folded corner close button (kept visible through PRE_BURN before WebGL canvas takes over) */}
+                {(stage === STAGES.CONFIRM || stage === STAGES.PRE_BURN) && (
+                  <button
+                    type="button"
+                    className="letter-modal__close"
+                    onClick={stage === STAGES.CONFIRM ? onClose : undefined}
+                    disabled={stage !== STAGES.CONFIRM}
+                    aria-label="Close letter"
+                    title="Fold and close letter"
                   >
-                    <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
-                  </svg>
-                </button>
-              )}
+                    <svg
+                      className="letter-fold-corner"
+                      viewBox="0 0 48 48"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M 0 0 L 48 48 Q 24 42 3 47 Q 7 24 0 0 Z" />
+                    </svg>
+                  </button>
+                )}
 
-              <div className="burn-paper-stage">
                 {/* The authentic letter-paper component: remains sharp until physically consumed */}
                 <div
                   ref={paperRef}
-                  className={`letter-paper ${getLetterStampProps(targetLetter).paperClass || ""}${
+                  className={`letter-paper ${
+                    getLetterStampProps(targetLetter).paperClass || ""
+                  } ${getLetterStampProps(targetLetter).deckleClass || ""}${
                     stage === STAGES.BURNING
                       ? " is-center-burning is-letter-burning-hidden"
                       : ""
@@ -1034,7 +1237,9 @@ function BurnLetterDialog({
                   <div className="burn-canvas-container" aria-hidden="true">
                     <canvas
                       ref={webglCanvasRef}
-                      className="burn-webgl-canvas"
+                      className={`burn-webgl-canvas ${
+                        getLetterStampProps(targetLetter).deckleClass || ""
+                      }`}
                     />
                     <canvas
                       ref={sparksCanvasRef}

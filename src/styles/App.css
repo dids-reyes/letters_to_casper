@@ -2124,6 +2124,7 @@ html.night-shift .letter-card__red-pin {
     transparent 0 17px,
     rgba(120, 100, 60, 0.12) 17px 18px
   );
+  background-size: 100% 18px;
   background-position: 0 -3px;
 }
 
@@ -4030,6 +4031,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
       transparent 0 14px,
       rgba(120, 100, 60, 0.12) 14px 15px
     );
+    background-size: 100% 15px;
     background-position: 0 -2px;
   }
 
@@ -6425,6 +6427,27 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   animation: none !important;
 }
 
+@media (min-width: 769px) {
+  .read-mode-stage {
+    max-width: var(--letter-stage-max-width, 580px);
+  }
+
+  .read-mode-card-wrapper,
+  .letter-modal,
+  .read-mode-prerender-wrapper {
+    max-width: var(--letter-desktop-max-width, 580px);
+  }
+
+  .letter-modal--wide-desktop .letter-paper {
+    max-height: calc(100vh - 88px);
+  }
+
+  .letter-paper__media--youtube {
+    max-width: 488px;
+    margin-inline: auto;
+  }
+}
+
 @keyframes readModeExitNext {
   0% {
     transform: translateY(0);
@@ -8607,6 +8630,67 @@ html.night-shift .letter-location-ad-actions button:first-child {
   color: #ddd8ca;
 }
 
+.letter-location-ad-dialog--origin {
+  width: min(352px, 100%);
+  text-align: center;
+}
+
+.letter-location-ad-stamp-showcase {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0 6px;
+  margin-bottom: 12px;
+}
+
+.letter-location-ad-stamp.letter-card__stamp-wrapper {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 6px 14px rgba(45, 35, 18, 0.22));
+  pointer-events: none;
+  user-select: none;
+}
+
+.letter-location-ad-stamp.letter-card__stamp-wrapper .letter-card__main-stamp {
+  width: 88px !important;
+  height: 106px !important;
+}
+
+.letter-location-ad-dialog--origin .letter-location-ad-title-row {
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.letter-location-ad-dialog--origin h2 {
+  font-size: 15px;
+  white-space: normal;
+}
+
+.letter-location-ad-dialog--origin p {
+  max-width: 296px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.letter-location-ad-disclaimer {
+  display: block;
+  max-width: 296px;
+  margin: 10px auto 0;
+  color: #8c8475;
+  font-size: 10.5px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+html.night-shift .letter-location-ad-disclaimer {
+  color: #969184;
+}
+
 @media (max-width: 380px) {
   .letter-location-ad-dialog {
     padding-inline: 16px;
@@ -8618,6 +8702,10 @@ html.night-shift .letter-location-ad-actions button:first-child {
 
   .letter-location-ad-dialog h2 {
     font-size: 13px;
+  }
+
+  .letter-location-ad-dialog--origin h2 {
+    font-size: 14px;
   }
 }
 
@@ -9630,19 +9718,21 @@ html.night-shift .letter-card__preview {
     transparent 0 17px,
     rgba(255, 240, 200, 0.08) 17px 18px
   );
+  background-size: 100% 18px;
 }
 
 html.night-shift .letter-card__preview.is-sensitive {
   background-image: none !important;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   html.night-shift .letter-card__preview {
     background-image: repeating-linear-gradient(
       to bottom,
-      transparent 0 15px,
-      rgba(255, 240, 200, 0.08) 15px 16px
+      transparent 0 14px,
+      rgba(255, 240, 200, 0.08) 14px 15px
     );
+    background-size: 100% 15px;
   }
 
   html.night-shift .letter-card__preview.is-sensitive {
@@ -11196,6 +11286,22 @@ button.letter-paper__pin::after {
     min-height: 32px;
     padding-inline: 9px;
     font-size: 10.5px;
+  }
+
+  .letter-location-ad-stamp-showcase {
+    padding: 2px 0 4px;
+    margin-bottom: 8px;
+  }
+
+  .letter-location-ad-stamp.letter-card__stamp-wrapper .letter-card__main-stamp {
+    width: 70px !important;
+    height: 85px !important;
+  }
+
+  .letter-location-ad-disclaimer {
+    margin-top: 8px;
+    font-size: 9.5px;
+    line-height: 1.35;
   }
 
   .letter-modal-overlay {

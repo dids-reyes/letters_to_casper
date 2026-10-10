@@ -603,6 +603,105 @@ export const extractMediaLinks = (rawMessage) => {
   };
 };
 
+const BASE_DESKTOP_LETTER_WIDTH = 580;
+const MAX_DESKTOP_LETTER_WIDTH = 720;
+
+const estimateDesktopPaperHeight = (letter, modalWidth, overrideBodyText = null) => {
+  if (!letter) return 0;
+  const media = extractMediaLinks(letter.message || "");
+  const rawBody =
+    typeof overrideBodyText === "string" && overrideBodyText.length > 0
+      ? overrideBodyText
+      : media.newMessage || letter.message || "";
+  const hasSpotify = Boolean(media.spotifyLink?.id);
+  const hasYoutube = !hasSpotify && Boolean(media.youtubeLink?.id);
+  const hasPhoto = Boolean(letter.photo?.url);
+
+  // Desktop .letter-paper vertical chrome:
+  // padding (44 top + 26 bottom = 70) + head (~74) + date (~36) + meta (~42) = 222px
+  const baseChromeHeight = 222;
+  let attachmentHeight = 0;
+  if (hasSpotify) attachmentHeight += 170;
+  if (hasYoutube) attachmentHeight += 293;
+  if (hasPhoto) attachmentHeight += 275;
+
+  // Desktop .letter-paper horizontal padding (46*2 = 92) + body padding (2*2 = 4) = 96px
+  const textAreaWidth = Math.max(200, modalWidth - 96);
+  // 14px "Courier New" char advance is 8.4px
+  const charsPerLine = Math.max(20, Math.floor(textAreaWidth / 8.4));
+  const paragraphs = String(rawBody).replace(/\r\n/g, "\n").split("\n");
+  let lineCount = 0;
+
+  for (let i = 0; i < paragraphs.length; i++) {
+    const para = paragraphs[i];
+    if (!para || para.length === 0) {
+      lineCount += 1;
+      continue;
+    }
+    const words = para.split(" ");
+    let currentLen = 0;
+    let paraLines = 1;
+    for (let j = 0; j < words.length; j++) {
+      const wordLen = words[j].length;
+      if (wordLen > charsPerLine) {
+        if (currentLen > 0) {
+          paraLines += 1;
+          currentLen = 0;
+        }
+        paraLines += Math.floor((wordLen - 1) / charsPerLine);
+        currentLen = ((wordLen - 1) % charsPerLine) + 1;
+      } else if (currentLen === 0) {
+        currentLen = wordLen;
+      } else if (currentLen + 1 + wordLen <= charsPerLine) {
+        currentLen += 1 + wordLen;
+      } else {
+        paraLines += 1;
+        currentLen = wordLen;
+      }
+    }
+    lineCount += paraLines;
+  }
+
+  const bodyHeight = Math.max(40, lineCount * 28 + 2);
+  return baseChromeHeight + attachmentHeight + bodyHeight;
+};
+
+const computeDesktopLetterWidth = (
+  letter,
+  viewportW,
+  viewportH,
+  overrideBodyText = null
+) => {
+  if (!letter || !viewportW || viewportW <= 768) {
+    return BASE_DESKTOP_LETTER_WIDTH;
+  }
+  const maxAllowedWidth = Math.min(viewportW - 64, MAX_DESKTOP_LETTER_WIDTH);
+  if (maxAllowedWidth <= BASE_DESKTOP_LETTER_WIDTH) {
+    return BASE_DESKTOP_LETTER_WIDTH;
+  }
+  const baseMaxPaperHeight = Math.max(320, (viewportH || 800) - 130);
+  if (
+    estimateDesktopPaperHeight(letter, BASE_DESKTOP_LETTER_WIDTH, overrideBodyText) <=
+    baseMaxPaperHeight
+  ) {
+    return BASE_DESKTOP_LETTER_WIDTH;
+  }
+  const expandedMaxPaperHeight = Math.max(320, (viewportH || 800) - 88);
+  for (
+    let candidateWidth = BASE_DESKTOP_LETTER_WIDTH + 15;
+    candidateWidth <= maxAllowedWidth;
+    candidateWidth += 15
+  ) {
+    if (
+      estimateDesktopPaperHeight(letter, candidateWidth, overrideBodyText) <=
+      expandedMaxPaperHeight
+    ) {
+      return candidateWidth;
+    }
+  }
+  return maxAllowedWidth;
+};
+
 function DetailsModal({
   showDetailsModal,
   toggleDetailsModal,
@@ -663,6 +762,10 @@ function DetailsModal({
       ? window.matchMedia("(min-width: 769px)").matches
       : window.innerWidth > 768;
   });
+  const [viewportSize, setViewportSize] = useState(() => ({
+    width: typeof window !== "undefined" ? window.innerWidth || 1280 : 1280,
+    height: typeof window !== "undefined" ? window.innerHeight || 800 : 800,
+  }));
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -671,6 +774,10 @@ function DetailsModal({
         ? window.matchMedia("(min-width: 769px)").matches
         : window.innerWidth > 768;
       setIsDesktop(matches);
+      setViewportSize({
+        width: window.innerWidth || 1280,
+        height: window.innerHeight || 800,
+      });
     };
     checkDesktop();
     window.addEventListener("resize", checkDesktop);
@@ -3615,6 +3722,82 @@ function DetailsModal({
     </div>
   );
 
+  const isReplyActiveForWidth = replyViewingIndex >= 0;
+  const activeDesktopWidth = isDesktop
+    ? computeDesktopLetterWidth(
+        activeContextLetter,
+        viewportSize.width,
+        viewportSize.height,
+        showTranslation && !isReplyActiveForWidth ? translatedMessage : null
+      )
+    : BASE_DESKTOP_LETTER_WIDTH;
+  const outgoingDesktopWidth =
+    isDesktop && outgoingLetter
+      ? computeDesktopLetterWidth(
+          outgoingLetter,
+          viewportSize.width,
+          viewportSize.height
+        )
+      : BASE_DESKTOP_LETTER_WIDTH;
+  const prerenderDesktopWidth =
+    isDesktop && prerenderLetter
+      ? computeDesktopLetterWidth(
+          prerenderLetter,
+          viewportSize.width,
+          viewportSize.height
+        )
+      : BASE_DESKTOP_LETTER_WIDTH;
+
+  const [domRefinedDesktopWidth, setDomRefinedDesktopWidth] = useState(null);
+
+  useLayoutEffect(() => {
+    setDomRefinedDesktopWidth(null);
+  }, [activeContextLetter, showDetailsModal, showTranslation]);
+
+  useLayoutEffect(() => {
+    if (!isDesktop || !showDetailsModal || !opened || !letterPaperRef.current) {
+      return;
+    }
+    const paperEl = letterPaperRef.current;
+    const maxAllowedWidth = Math.min(
+      viewportSize.width - 64,
+      MAX_DESKTOP_LETTER_WIDTH
+    );
+    const currentTargetWidth = Math.max(
+      activeDesktopWidth,
+      domRefinedDesktopWidth || BASE_DESKTOP_LETTER_WIDTH
+    );
+    if (
+      paperEl.scrollHeight > paperEl.clientHeight + 2 &&
+      currentTargetWidth < maxAllowedWidth
+    ) {
+      const nextWidth = Math.min(maxAllowedWidth, currentTargetWidth + 20);
+      if (nextWidth > currentTargetWidth) {
+        setDomRefinedDesktopWidth(nextWidth);
+      }
+    }
+  }, [
+    isDesktop,
+    showDetailsModal,
+    opened,
+    activeContextLetter,
+    activeDesktopWidth,
+    domRefinedDesktopWidth,
+    viewportSize.width,
+    viewportSize.height,
+    showAttachments,
+    completedLetterKey,
+    showTranslation,
+    translatedMessage,
+  ]);
+
+  const effectiveActiveDesktopWidth = isDesktop
+    ? Math.max(activeDesktopWidth, domRefinedDesktopWidth || BASE_DESKTOP_LETTER_WIDTH)
+    : BASE_DESKTOP_LETTER_WIDTH;
+  const stageDesktopWidth = isDesktop
+    ? Math.max(effectiveActiveDesktopWidth, outgoingDesktopWidth)
+    : BASE_DESKTOP_LETTER_WIDTH;
+
   return (
     showDetailsModal &&
     selectedLetter && (
@@ -3636,13 +3819,32 @@ function DetailsModal({
         onPointerCancel={cancelPointerDrag}
       >
         {isYoutubePlaying && <MusicVisualizer />}
-        <div className={`read-mode-stage${!readMode ? " letter-stage--modal" : ""}`}>
+        <div
+          className={`read-mode-stage${!readMode ? " letter-stage--modal" : ""}`}
+          style={
+            isDesktop && stageDesktopWidth > BASE_DESKTOP_LETTER_WIDTH
+              ? { "--letter-stage-max-width": `${stageDesktopWidth}px` }
+              : undefined
+          }
+        >
           {outgoingLetter && (
             <div
               className={`read-mode-card-wrapper is-exiting-${slideDirection}`}
               aria-hidden="true"
+              style={
+                isDesktop && outgoingDesktopWidth > BASE_DESKTOP_LETTER_WIDTH
+                  ? { "--letter-desktop-max-width": `${outgoingDesktopWidth}px` }
+                  : undefined
+              }
             >
-              <div className="letter-modal" onClick={(e) => e.stopPropagation()}>
+              <div
+                className={`letter-modal${
+                  isDesktop && outgoingDesktopWidth > BASE_DESKTOP_LETTER_WIDTH
+                    ? " letter-modal--wide-desktop"
+                    : ""
+                }`}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {(() => {
                   const outStampProps = getLetterStampProps(outgoingLetter);
                   return (
@@ -3667,8 +3869,19 @@ function DetailsModal({
           <div
             className={`read-mode-card-wrapper${slideDirection ? ` is-entering-${slideDirection}` : ""}`}
             onClick={(e) => e.stopPropagation()}
+            style={
+              isDesktop && effectiveActiveDesktopWidth > BASE_DESKTOP_LETTER_WIDTH
+                ? { "--letter-desktop-max-width": `${effectiveActiveDesktopWidth}px` }
+                : undefined
+            }
           >
-            <div className={`letter-modal${isYoutubePlaying ? " is-youtube-playing" : ""}`}>
+            <div
+              className={`letter-modal${isYoutubePlaying ? " is-youtube-playing" : ""}${
+                isDesktop && effectiveActiveDesktopWidth > BASE_DESKTOP_LETTER_WIDTH
+                  ? " letter-modal--wide-desktop"
+                  : ""
+              }`}
+            >
               {opened && (
                 <div className={`letter-paper-wrapper ${activeStampProps.paperClass || ""} ${activeStampProps.deckleClass || ""}`}>
                   <button
@@ -3715,6 +3928,11 @@ function DetailsModal({
               className="read-mode-prerender-wrapper"
               aria-hidden="true"
               tabIndex={-1}
+              style={
+                isDesktop && prerenderDesktopWidth > BASE_DESKTOP_LETTER_WIDTH
+                  ? { "--letter-desktop-max-width": `${prerenderDesktopWidth}px` }
+                  : undefined
+              }
             >
               {renderPrerenderPaper(prerenderLetter)}
             </div>
@@ -4095,7 +4313,7 @@ function DetailsModal({
             onPointerUp={(event) => event.stopPropagation()}
           >
             <section
-              className="letter-location-ad-dialog"
+              className="letter-location-ad-dialog letter-location-ad-dialog--origin"
               role="alertdialog"
               aria-modal="true"
               aria-labelledby="letter-location-ad-title"
@@ -4107,13 +4325,27 @@ function DetailsModal({
               onPointerMove={(event) => event.stopPropagation()}
               onPointerUp={(event) => event.stopPropagation()}
             >
+              <div className="letter-location-ad-stamp-showcase" aria-hidden="true">
+                <LetterStamp
+                  className="letter-location-ad-stamp"
+                  city={activeStampProps.city}
+                  region={activeStampProps.region}
+                  country={activeStampProps.country}
+                  variant={activeStampProps.variant}
+                  isFeatured={false}
+                />
+              </div>
               <div className="letter-location-ad-title-row">
-                <IoLocationOutline aria-hidden="true" />
                 <h2 id="letter-location-ad-title">
                   Watch an ad to see letter origin?
                 </h2>
               </div>
-              <p>The origin will be available when you return to this letter.</p>
+              <p>
+                This stamp hints at where the letter was sent from. The map origin will unlock when you return to this letter.
+              </p>
+              <small className="letter-location-ad-disclaimer">
+                Letter locations are only approximate and do not guarantee 100% accuracy. Only the city or general area is shown, never the exact pinned location of the author.
+              </small>
               <div className="letter-location-ad-actions">
                 <button
                   type="button"

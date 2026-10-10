@@ -237,7 +237,7 @@
   background: rgba(18, 22, 30, 0.42);
   backdrop-filter: blur(2.5px);
   -webkit-backdrop-filter: blur(2.5px);
-  border-radius: 12px;
+  border-radius: 0;
   z-index: 15;
   pointer-events: none;
 }
@@ -400,7 +400,7 @@
   z-index: 50;
   pointer-events: none;
   overflow: visible;
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 /* The WebGL canvas that renders the crawling fire eating the letter */
@@ -412,7 +412,7 @@
   height: 100%;
   display: block;
   pointer-events: none;
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 /* Atmospheric sparks and smoke floating upward and sideways */
