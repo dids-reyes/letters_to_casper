@@ -266,6 +266,7 @@ describe("Letter glowing outerline border loop reactions", () => {
     expect(card).not.toHaveClass("letter-card--mood-love");
     expect(card).not.toHaveClass("letter-card--mood-sad");
     expect(card).not.toHaveClass("letter-card--mood-amber");
+    expect(card.querySelector(".letter-card__glow")).not.toBeInTheDocument();
   });
 
   test("shows amber glow by default when reads reach 50+ and reactions are under 10", () => {
@@ -290,6 +291,7 @@ describe("Letter glowing outerline border loop reactions", () => {
     expect(card).toHaveClass("letter-card--mood-amber");
     expect(card).not.toHaveClass("letter-card--mood-love");
     expect(card).not.toHaveClass("letter-card--mood-sad");
+    expect(card.querySelector(".letter-card__glow")).toBeInTheDocument();
   });
 
   test("shows red love glow when love reactions reach 10+", () => {

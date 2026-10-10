@@ -1598,13 +1598,16 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
 
 @property --letter-glow-angle {
   syntax: "<angle>";
-  inherits: true;
+  inherits: false;
   initial-value: 0deg;
 }
 
 @keyframes letter-warmth-border-loop {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
   to {
-    --letter-glow-angle: 360deg;
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 
@@ -1665,30 +1668,60 @@ html.night-shift .about-purpose__columns p { color:#aaa99f; }
 
 /* Traveling animated border line along card perimeter ONLY when threshold is reached */
 .letter-card.letter-card--has-glow {
-  background:
-    linear-gradient(var(--letter-card-bg, #faf7ec), var(--letter-card-bg, #faf7ec)) padding-box,
-    conic-gradient(
-      from var(--letter-glow-angle),
-      var(--letter-border-track) 0deg,
-      var(--letter-border-track) 276deg,
-      rgb(var(--letter-warmth-rgb) / calc(0.35 + var(--letter-warmth) * 0.35)) 294deg,
-      rgb(var(--letter-warmth-rgb) / 1) 325deg,
-      rgb(var(--letter-warmth-rgb) / calc(0.35 + var(--letter-warmth) * 0.35)) 350deg,
-      var(--letter-border-track) 360deg
-    ) border-box;
-  animation: letter-warmth-border-loop 9.6s linear infinite;
+  filter: none;
+  box-shadow: 0 2px 4px rgba(35, 25, 12, 0.18);
 }
 
-.letters-container .letter-card.letter-card--has-glow:nth-child(3n + 2) {
+.letter-card__glow {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 8px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  contain: strict;
+}
+
+.letter-card__glow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 185%;
+  aspect-ratio: 1 / 1;
+  background: conic-gradient(
+    from 0deg,
+    var(--letter-border-track) 0deg,
+    var(--letter-border-track) 276deg,
+    rgb(var(--letter-warmth-rgb) / calc(0.35 + var(--letter-warmth) * 0.35)) 294deg,
+    rgb(var(--letter-warmth-rgb) / 1) 325deg,
+    rgb(var(--letter-warmth-rgb) / calc(0.35 + var(--letter-warmth) * 0.35)) 350deg,
+    var(--letter-border-track) 360deg
+  );
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: letter-warmth-border-loop 9.6s linear infinite;
+  will-change: transform;
+}
+
+.letter-card__glow::after {
+  content: "";
+  position: absolute;
+  inset: 1.5px;
+  border-radius: 6.5px;
+  background: var(--letter-card-bg, #faf7ec);
+}
+
+.letters-container .letter-card.letter-card--has-glow:nth-child(3n + 2) .letter-card__glow::before {
   animation-delay: -3.2s;
 }
 
-.letters-container .letter-card.letter-card--has-glow:nth-child(3n) {
+.letters-container .letter-card.letter-card--has-glow:nth-child(3n) .letter-card__glow::before {
   animation-delay: -6.4s;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .letter-card.letter-card--has-glow {
+  .letter-card.letter-card--has-glow,
+  .letter-card__glow::before {
     animation: none;
   }
 }
@@ -9460,6 +9493,12 @@ html.night-shift .letter-card {
 
 html.night-shift .letter-card:hover {
   box-shadow: none;
+}
+
+html.night-shift .letter-card.letter-card--has-glow,
+html.night-shift .letter-card.letter-card--has-glow:hover {
+  filter: none;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
 }
 
 html.night-shift .letter-card--mood-love {

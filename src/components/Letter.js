@@ -305,6 +305,9 @@ function Letter({
       title={`To: ${displayTo} • From: ${displayFrom}`}
       onClick={handleClick}
     >
+      {/* GPU-composited traveling border glow for high-engagement letters */}
+      {reactionMood && <div className="letter-card__glow" aria-hidden="true" />}
+
       {/* Main authentic crinkled deckle paper sheet */}
       <div className="letter-card__paper" aria-hidden="true" />
 
