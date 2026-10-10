@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { IoFlameOutline, IoEyeOutline, IoLocationOutline } from "react-icons/io5";
 import { BsMailboxFlag } from "react-icons/bs";
 import { toast } from "react-toastify";
-import html2canvas from "html2canvas";
 import { render_url, api_key } from "../data/keys";
 import { displayDirectLinkAds } from "../data/direct_link";
 import { extractMediaLinks, getLetterStampProps } from "./DetailsModal";
@@ -217,8 +216,8 @@ const FS_SOURCE = `
 `;
 
 /**
- * Creates a crystal-clear 2D canvas fallback representing the letter.
- * Guarantees zero blank/invisible texture issues even if html2canvas is slow or unavailable.
+ * Creates a crystal-clear 2D canvas fallback matching the authentic .letter-paper design.
+ * Uses the exact same Courier New typography, ruled lines, vignette, and dog-ear corner.
  */
 const createLetterCanvasFallback = (letter, width, height, dpr, isNightShift = false) => {
   if (!letter) return null;
@@ -232,54 +231,138 @@ const createLetterCanvasFallback = (letter, width, height, dpr, isNightShift = f
 
   ctx.scale(dpr, dpr);
 
-  // Background
-  ctx.fillStyle = isNightShift ? "#23221c" : "#faf7ec";
-  ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(0, 0, width, height, 12);
-  } else {
-    ctx.rect(0, 0, width, height);
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 480;
+  const padX = isMobile ? 22 : 46;
+  const padTop = isMobile ? 30 : 44;
+  const foldSize = isMobile ? 20 : 24;
+
+  // 1. Authentic paper background
+  ctx.fillStyle = isNightShift ? "#23201a" : "#faf7ec";
+  ctx.fillRect(0, 0, width, height);
+
+  // Subtle aged paper vignette matching .letter-paper
+  if (!isNightShift) {
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.scale(1, height / width);
+    const maxR = width * 0.7;
+    const vig = ctx.createRadialGradient(0, 0, maxR * 0.74, 0, 0, maxR);
+    vig.addColorStop(0, "rgba(135, 78, 28, 0)");
+    vig.addColorStop(0.54, "rgba(135, 78, 28, 0.05)");
+    vig.addColorStop(0.85, "rgba(98, 52, 18, 0.14)");
+    vig.addColorStop(1, "rgba(68, 34, 10, 0.22)");
+    ctx.fillStyle = vig;
+    ctx.fillRect(-width / 2, -width / 2, width, width);
+    ctx.restore();
   }
-  ctx.fill();
 
-  // Header: From & To
-  ctx.fillStyle = isNightShift ? "#f4eee5" : "#080704";
-  ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillText(`From: ${letter.from || "Anonymous"}`, 24, 34);
-  ctx.fillText(`To: ${letter.to || "You"}`, 24, 56);
+  // Warm inset border matching .letter-paper box-shadow
+  ctx.strokeStyle = isNightShift ? "rgba(255, 240, 200, 0.14)" : "rgba(65, 32, 10, 0.28)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
 
-  // Date
+  // 2. Header: From & To in Courier New matching .letter-paper .letter-info
+  const infoFontSize = isMobile ? 14 : 16;
+  const fromY = padTop + infoFontSize;
+  const toY = fromY + Math.round(infoFontSize * 1.6) + 4;
+
+  ctx.font = `800 ${infoFontSize}px "Courier New", Courier, monospace`;
+  ctx.fillStyle = isNightShift ? "#f3efe2" : "#080704";
+  ctx.fillText("From: ", padX, fromY);
+  const fromLabelW = ctx.measureText("From: ").width;
+  ctx.font = `400 ${infoFontSize}px "Courier New", Courier, monospace`;
+  ctx.fillStyle = isNightShift ? "#e4decb" : "#332f24";
+  ctx.fillText(letter.from || "Anonymous", padX + fromLabelW, fromY);
+
+  ctx.font = `800 ${infoFontSize}px "Courier New", Courier, monospace`;
+  ctx.fillStyle = isNightShift ? "#f3efe2" : "#080704";
+  ctx.fillText("To: ", padX, toY);
+  const toLabelW = ctx.measureText("To: ").width;
+  ctx.font = `400 ${infoFontSize}px "Courier New", Courier, monospace`;
+  ctx.fillStyle = isNightShift ? "#e4decb" : "#332f24";
+  ctx.fillText(letter.to || "You", padX + toLabelW, toY);
+
+  // 3. Centered Date in Courier New matching .letter-paper__date .timestamp-text
+  let bodyStartY = toY + 26;
   if (letter.timestamp) {
-    ctx.fillStyle = isNightShift ? "#a89d91" : "#8a8264";
-    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText(formatTimestamp(letter.timestamp), 24, 82);
+    const dateY = toY + 28;
+    const dateStr = formatTimestamp(letter.timestamp);
+    ctx.font = '400 12px "Courier New", Courier, monospace';
+    ctx.fillStyle = isNightShift ? "#b8b09a" : "#393428";
+    const dateW = ctx.measureText(dateStr).width;
+    ctx.fillText(dateStr, Math.max(padX, (width - dateW) / 2), dateY);
+    bodyStartY = dateY + 26;
   }
 
-  // Message body text in typewriter font
-  ctx.fillStyle = isNightShift ? "#e5ded4" : "#2c2820";
-  ctx.font = '16px "Courier New", Courier, monospace';
-  const text = letter.message || "";
-  const maxWidth = width - 48;
-  const lineHeight = 24;
-  let y = 120;
+  // 4. Message body in Courier New with ruled stationery lines matching .letter-paper__body
+  const bodyFontSize = isMobile ? 13 : 14;
+  const lineHeight = isMobile ? 25 : 28;
+  ctx.font = `400 ${bodyFontSize}px "Courier New", Courier, monospace`;
+  const rawMessage = extractMediaLinks(letter.message)?.newMessage || letter.message || "";
+  const maxWidth = width - padX * 2 - 4;
+  const maxBodyY = height - 44;
 
-  const words = text.split(" ");
-  let line = "";
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + " ";
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && n > 0) {
-      ctx.fillText(line.trim(), 24, y);
-      line = words[n] + " ";
-      y += lineHeight;
-      if (y > height - 36) break;
-    } else {
-      line = testLine;
+  const paragraphs = String(rawMessage).split("\n");
+  const lines = [];
+  for (let p = 0; p < paragraphs.length; p++) {
+    const words = paragraphs[p].split(" ");
+    let line = "";
+    for (let n = 0; n < words.length; n++) {
+      const candidate = line ? `${line} ${words[n]}` : words[n];
+      if (ctx.measureText(candidate).width > maxWidth && line) {
+        lines.push(line);
+        line = words[n];
+      } else {
+        line = candidate;
+      }
     }
+    lines.push(line);
   }
-  if (line.trim() && y <= height - 36) {
-    ctx.fillText(line.trim(), 24, y);
+
+  let y = bodyStartY + lineHeight * 0.72;
+  const ruleColor = isNightShift
+    ? "rgba(255, 244, 214, 0.08)"
+    : "rgba(120, 100, 60, 0.12)";
+  const textColor = isNightShift ? "#e4decb" : "#332f24";
+
+  for (let i = 0; i < lines.length; i++) {
+    if (y > maxBodyY) break;
+    // Draw ruled line underneath text line
+    ctx.fillStyle = ruleColor;
+    ctx.fillRect(padX, Math.round(y + 5), width - padX * 2, 1);
+    // Draw text
+    ctx.fillStyle = textColor;
+    ctx.fillText(lines[i], padX + 2, y);
+    y += lineHeight;
   }
+
+  // 5. Cut out top-right dog-ear corner and draw folded paper flap
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath();
+  ctx.moveTo(width - foldSize, 0);
+  ctx.lineTo(width, 0);
+  ctx.lineTo(width, foldSize);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(width - foldSize, 0);
+  const s = foldSize / 48;
+  ctx.scale(s, s);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(48, 48);
+  ctx.quadraticCurveTo(24, 42, 3, 47);
+  ctx.quadraticCurveTo(7, 24, 0, 0);
+  ctx.closePath();
+  ctx.fillStyle = isNightShift ? "#505143" : "#e4d7b6";
+  ctx.fill();
+  ctx.strokeStyle = isNightShift ? "#77765d" : "#baa982";
+  ctx.lineWidth = 0.6;
+  ctx.stroke();
+  ctx.restore();
 
   return canvas;
 };
@@ -369,6 +452,8 @@ const capturePaperTexture = async (element) => {
       2,
       (typeof window !== "undefined" && window.devicePixelRatio) || 1
     );
+    const html2canvasModule = await import("html2canvas");
+    const html2canvas = html2canvasModule.default || html2canvasModule;
     const canvas = await html2canvas(element, {
       scale,
       backgroundColor: paperBgColor,
@@ -377,12 +462,29 @@ const capturePaperTexture = async (element) => {
       allowTaint: true,
       scrollX: 0,
       scrollY: 0,
-      ignoreElements: (el) =>
-        el.tagName === "IFRAME" ||
-        el.tagName === "BUTTON" ||
-        el.classList?.contains("burn-confirm-backdrop") ||
-        el.classList?.contains("burn-confirm-dialog-wrapper") ||
-        el.classList?.contains("burn-readable-controls"),
+      ignoreElements: (el) => {
+        if (
+          el.tagName === "IFRAME" ||
+          el.tagName === "BUTTON" ||
+          el.classList?.contains("burn-confirm-backdrop") ||
+          el.classList?.contains("burn-confirm-dialog-wrapper") ||
+          el.classList?.contains("burn-readable-controls")
+        ) {
+          return true;
+        }
+        // Skip cloning the entire background page outside the letter paper subtree
+        if (
+          typeof document !== "undefined" &&
+          document.body &&
+          document.body.contains(el) &&
+          el !== element &&
+          !el.contains?.(element) &&
+          !element.contains?.(el)
+        ) {
+          return true;
+        }
+        return false;
+      },
       onclone: (_clonedDoc, clonedEl) => {
         if (!clonedEl) return;
         clonedEl.style.backgroundColor = paperBgColor;
@@ -392,6 +494,15 @@ const capturePaperTexture = async (element) => {
         clonedEl.style.clipPath = "none";
         clonedEl.style.animation = "none";
         clonedEl.style.transform = "none";
+        clonedEl.style.fontFamily = '"Courier New", Courier, monospace';
+
+        // Lock exact Courier New typography on all text nodes inside the cloned letter paper
+        const typoNodes = clonedEl.querySelectorAll?.(
+          ".letter-info, .letter-info span, .letter-info strong, .letter-paper__date, .timestamp-text, .timestamp-text span, .letter-paper__body, .letter-paper__body span, .letter-paper__meta, .letter-paper__meta span"
+        ) || [];
+        typoNodes.forEach((node) => {
+          node.style.fontFamily = '"Courier New", Courier, monospace';
+        });
 
         const clonedBody = clonedEl.querySelector?.(".letter-paper__body");
         if (clonedBody && ruleTileDataUrl) {
@@ -442,6 +553,15 @@ const capturePaperTexture = async (element) => {
           ctx.fillRect(-w / 2, -w / 2, w, w);
           ctx.restore();
         }
+
+        // Subtle warm paper inset border matching .letter-paper box-shadow
+        ctx.save();
+        ctx.strokeStyle = isNightShift
+          ? "rgba(255, 240, 200, 0.14)"
+          : "rgba(65, 32, 10, 0.28)";
+        ctx.lineWidth = 1.5 * scale;
+        ctx.strokeRect(0, 0, w, h);
+        ctx.restore();
 
         // Cut out top-right dog-ear corner silhouette
         ctx.save();
@@ -505,6 +625,7 @@ function BurnLetterDialog({
   const webglCanvasRef = useRef(null);
   const sparksCanvasRef = useRef(null);
   const letterTextureCanvasRef = useRef(null);
+  const capturePromiseRef = useRef(null);
   const animationFrameRef = useRef(null);
   const burnStartTimeoutRef = useRef(null);
   const burnTimeoutRef = useRef(null);
@@ -524,12 +645,14 @@ function BurnLetterDialog({
       burnStartTimeoutRef.current = null;
     }
     letterTextureCanvasRef.current = null;
+    capturePromiseRef.current = null;
   }, []);
 
   // Reset state when modal is opened or closed
   useEffect(() => {
     if (isOpen) {
       loadNoiseTextureImage();
+      import("html2canvas").catch(() => {});
       setStage(STAGES.KEY_INPUT);
       setBurnKey("");
       setErrorMessage("");
@@ -570,29 +693,31 @@ function BurnLetterDialog({
   const cleanedMessage = media?.newMessage || targetLetter?.message || "";
   const hasLocation = Boolean(targetLetter?.loc?.city || targetLetter?.loc?.region);
 
-  // Pre-capture letter texture in the background as soon as targetLetter is rendered
+  // Pre-capture letter texture once when targetLetter is mounted; do NOT cancel on stage transitions
   useEffect(() => {
-    if (
-      (stage === STAGES.CONFIRM || stage === STAGES.PRE_BURN) &&
-      targetLetter &&
-      paperRef.current &&
-      !letterTextureCanvasRef.current
-    ) {
-      let isCancelled = false;
-      const doCapture = async () => {
-        if (!paperRef.current) return;
-        const canvas = await capturePaperTexture(paperRef.current);
-        if (!isCancelled && canvas) {
-          letterTextureCanvasRef.current = canvas;
-        }
-      };
-      const t = setTimeout(doCapture, 50);
-      return () => {
-        isCancelled = true;
-        clearTimeout(t);
-      };
+    if (!targetLetter || letterTextureCanvasRef.current || capturePromiseRef.current) {
+      return undefined;
     }
-  }, [targetLetter, stage]);
+    let isCancelled = false;
+    const t = setTimeout(() => {
+      if (isCancelled || !paperRef.current) return;
+      const promise = capturePaperTexture(paperRef.current)
+        .then((canvas) => {
+          if (!isCancelled && canvas) {
+            letterTextureCanvasRef.current = canvas;
+          }
+          return canvas;
+        })
+        .finally(() => {
+          capturePromiseRef.current = null;
+        });
+      capturePromiseRef.current = promise;
+    }, 30);
+    return () => {
+      isCancelled = true;
+      clearTimeout(t);
+    };
+  }, [targetLetter]);
 
   // WebGL ykob-Style Organic Crawling Fire Engine + Atmospheric Sparks
   useEffect(() => {
@@ -691,6 +816,26 @@ function BurnLetterDialog({
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureSource);
           gl.uniform1i(uLetterTexLoc, 0);
+
+          if (capturePromiseRef.current) {
+            capturePromiseRef.current.then((capturedCanvas) => {
+              if (!capturedCanvas || !gl || gl.isContextLost()) return;
+              try {
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, letterTex);
+                gl.texImage2D(
+                  gl.TEXTURE_2D,
+                  0,
+                  gl.RGBA,
+                  gl.RGBA,
+                  gl.UNSIGNED_BYTE,
+                  capturedCanvas
+                );
+              } catch {
+                // Ignore
+              }
+            });
+          }
 
           // Texture Unit 1: ykob Noise Map (with procedural fallback)
           const noiseSource =
@@ -955,6 +1100,19 @@ function BurnLetterDialog({
       stage === STAGES.PRE_BURN ||
       stage === STAGES.BURNING
     ) return;
+
+    if (!letterTextureCanvasRef.current && !capturePromiseRef.current && paperRef.current) {
+      capturePromiseRef.current = capturePaperTexture(paperRef.current)
+        .then((canvas) => {
+          if (canvas) {
+            letterTextureCanvasRef.current = canvas;
+          }
+          return canvas;
+        })
+        .finally(() => {
+          capturePromiseRef.current = null;
+        });
+    }
 
     const normalizedKey = burnKey.trim().toUpperCase();
     // Hold on the intact letter for one second before starting the existing animation.

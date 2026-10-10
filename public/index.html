@@ -8,17 +8,23 @@
         function gtag(){window.dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-R63X4TZX45');
-        [
-          ['https://www.googletagmanager.com/gtag/js?id=G-R63X4TZX45'],
-          ['https://js.hcaptcha.com/1/api.js'],
-          ['https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8952526995046987', 'anonymous']
-        ].forEach(function (integration) {
-          var script = document.createElement('script');
-          script.src = integration[0];
-          script.async = true;
-          if (integration[1]) script.crossOrigin = integration[1];
-          document.head.appendChild(script);
-        });
+        var loadThirdPartyScripts = function () {
+          [
+            ['https://www.googletagmanager.com/gtag/js?id=G-R63X4TZX45'],
+            ['https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8952526995046987', 'anonymous']
+          ].forEach(function (integration) {
+            var script = document.createElement('script');
+            script.src = integration[0];
+            script.async = true;
+            if (integration[1]) script.crossOrigin = integration[1];
+            document.head.appendChild(script);
+          });
+        };
+        if (document.readyState === 'complete') {
+          loadThirdPartyScripts();
+        } else {
+          window.addEventListener('load', loadThirdPartyScripts, { once: true });
+        }
       }
     </script>
     <meta charset="utf-8" />

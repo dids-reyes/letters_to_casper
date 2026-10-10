@@ -1,13 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import OriginsView from "./OriginsView";
+import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import FeedUpdates from "./FeedUpdates";
 import Header from "./Header";
 import Footer from "./Footer";
-import AddModal from "./AddModal";
 import BugReportModal from "./BugReportModal";
-import BurnLetterDialog from "./BurnLetterDialog";
 import NetworkNoticeDialog from "./NetworkNoticeDialog";
-import PinPaymentReturn from "./PinPaymentReturn";
 import { adminId } from "../data/target_letters";
 import Letter from "./Letter";
 import AdComponent from "./AdComponent";
@@ -17,12 +13,10 @@ import ErrorBoundary from "./ErrorBoundary";
 import { AiFillMessage } from "react-icons/ai";
 import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
-import under_construction from "../lotties/under_construction.json";
 import empty from "../lotties/empty2.json";
 import lettersToCasperLogo from "../lotties/ltc_logo_1.webp";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { io } from "socket.io-client";
 import { PiStarFour } from "react-icons/pi";
 import { resolveSkySocketEndpoint } from "./sky/socketEndpoint";
 import MailboxLoading from "./MailboxLoading";
@@ -56,13 +50,18 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import "../styles/App.css";
 import daysUntilChristmasPH from "./daysUntilChristmasPh";
 import {useDetectAdBlock} from "adblock-detect-react";
-import AdBlockSupportDialog from "./AdBlockSupportDialog";
 import {
   clearLeaveLetterIntent,
   getSessionStorage,
   hasFreshLeaveLetterIntent,
   saveLeaveLetterIntent,
 } from "../data/adBlockGate";
+
+const OriginsView = lazy(() => import("./OriginsView"));
+const AddModal = lazy(() => import("./AddModal"));
+const BurnLetterDialog = lazy(() => import("./BurnLetterDialog"));
+const PinPaymentReturn = lazy(() => import("./PinPaymentReturn"));
+const AdBlockSupportDialog = lazy(() => import("./AdBlockSupportDialog"));
 
 // Temporary redesign aid: set this back to false when the thank-you modal is finished.
 const SHOW_THANK_YOU_ON_REFRESH = false;
@@ -268,6 +267,29 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const selectedLetterRef = useRef(selectedLetter);
   selectedLetterRef.current = selectedLetter;
   const [loading, setLoading] = useState(1);
+  const [underConstructionAnim, setUnderConstructionAnim] = useState(null);
+  const [hasOpenedAddModal, setHasOpenedAddModal] = useState(SHOW_THANK_YOU_ON_REFRESH);
+  const [hasPinPaymentReturn] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      (window.location.search.includes("pin_payment") ||
+        window.location.search.includes("pin_cancelled"))
+  );
+  useEffect(() => {
+    if (showAddModal) setHasOpenedAddModal(true);
+  }, [showAddModal]);
+  useEffect(() => {
+    if (loading !== 2 || underConstructionAnim) return undefined;
+    let active = true;
+    import("../lotties/under_construction.json")
+      .then(mod => {
+        if (active) setUnderConstructionAnim(mod.default || mod);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [loading, underConstructionAnim]);
   const [isHeaderCompact, setIsHeaderCompact] = useState(false);
   const isHeaderCompactRef = useRef(false);
   const isAtTopRef = useRef(true);
@@ -358,40 +380,50 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     const endpoint = resolveSkySocketEndpoint();
     if (!endpoint) return undefined;
 
-    const presenceSocket = io(endpoint, {
-      autoConnect: false,
-      transports: ["polling", "websocket"],
-      auth: { observer: true },
-    });
-    const updateCount = value => {
-      const nextCount = Math.max(0, Number(value) || 0);
-      if (nextCount !== skySoulCountRef.current) {
-        skySoulCountRef.current = nextCount;
-        setSkySoulCount(nextCount);
-        if (skyPresenceTimerRef.current) clearTimeout(skyPresenceTimerRef.current);
-        setShowSkyPresence(nextCount > 0);
-        if (nextCount > 0) {
-          skyPresenceTimerRef.current = setTimeout(() => {
-            setShowSkyPresence(false);
-            skyPresenceTimerRef.current = null;
-          }, 3000);
-        }
-      }
-    };
-    presenceSocket.on("sky_state", state => {
-      const activeParticipants = Array.isArray(state?.participants)
-        ? state.participants.filter(person => person.active !== false).length
-        : 0;
-      updateCount(state?.activeCount ?? activeParticipants);
-    });
-    presenceSocket.on("user_count", updateCount);
-    presenceSocket.on("disconnect", () => updateCount(0));
-    presenceSocket.on("connect_error", () => updateCount(0));
-    presenceSocket.connect();
+    let cancelled = false;
+    let presenceSocket = null;
+    import("socket.io-client")
+      .then(({ io }) => {
+        if (cancelled) return;
+        presenceSocket = io(endpoint, {
+          autoConnect: false,
+          transports: ["polling", "websocket"],
+          auth: { observer: true },
+        });
+        const updateCount = value => {
+          const nextCount = Math.max(0, Number(value) || 0);
+          if (nextCount !== skySoulCountRef.current) {
+            skySoulCountRef.current = nextCount;
+            setSkySoulCount(nextCount);
+            if (skyPresenceTimerRef.current) clearTimeout(skyPresenceTimerRef.current);
+            setShowSkyPresence(nextCount > 0);
+            if (nextCount > 0) {
+              skyPresenceTimerRef.current = setTimeout(() => {
+                setShowSkyPresence(false);
+                skyPresenceTimerRef.current = null;
+              }, 3000);
+            }
+          }
+        };
+        presenceSocket.on("sky_state", state => {
+          const activeParticipants = Array.isArray(state?.participants)
+            ? state.participants.filter(person => person.active !== false).length
+            : 0;
+          updateCount(state?.activeCount ?? activeParticipants);
+        });
+        presenceSocket.on("user_count", updateCount);
+        presenceSocket.on("disconnect", () => updateCount(0));
+        presenceSocket.on("connect_error", () => updateCount(0));
+        presenceSocket.connect();
+      })
+      .catch(() => {});
     return () => {
+      cancelled = true;
       if (skyPresenceTimerRef.current) clearTimeout(skyPresenceTimerRef.current);
-      presenceSocket.removeAllListeners();
-      presenceSocket.disconnect();
+      if (presenceSocket) {
+        presenceSocket.removeAllListeners();
+        presenceSocket.disconnect();
+      }
     };
   }, []);
 
@@ -1655,41 +1687,43 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
             </aside>
           )}
           {showOrigins && (
-            <OriginsView onClose={closeOrigins}>
-              <h2>Top Letter Origins</h2>
-              <p className="origins-caption">
-                Ranked from the most letters to the least
-              </p>
-              {locations.length > 0 ? (
-                <ol className="origins-list">
-                  {locations.map((location, index) => (
-                    <li key={`${location}-${index}`}>
-                      <span className="origin-rank">#{index + 1}</span>
-                      <span>{location}</span>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="announcements-empty">Origins are loading...</p>
-              )}
-              {internationalOrigins.length > 0 && (
-                <div className="international-origins">
-                  <strong>Letters from around the world</strong>
-                  <ul>
-                    {internationalOrigins.map((origin, index) => (
-                      <li key={`${origin.country}-${origin.city}-${index}`}>
-                        <span>
-                          {origin.city
-                            ? `${origin.city}, ${formatCountry(origin.country)}`
-                            : formatCountry(origin.country)}
-                        </span>
-                        <span>{origin.count}</span>
+            <Suspense fallback={null}>
+              <OriginsView onClose={closeOrigins}>
+                <h2>Top Letter Origins</h2>
+                <p className="origins-caption">
+                  Ranked from the most letters to the least
+                </p>
+                {locations.length > 0 ? (
+                  <ol className="origins-list">
+                    {locations.map((location, index) => (
+                      <li key={`${location}-${index}`}>
+                        <span className="origin-rank">#{index + 1}</span>
+                        <span>{location}</span>
                       </li>
                     ))}
-                  </ul>
-                </div>
-              )}
-            </OriginsView>
+                  </ol>
+                ) : (
+                  <p className="announcements-empty">Origins are loading...</p>
+                )}
+                {internationalOrigins.length > 0 && (
+                  <div className="international-origins">
+                    <strong>Letters from around the world</strong>
+                    <ul>
+                      {internationalOrigins.map((origin, index) => (
+                        <li key={`${origin.country}-${origin.city}-${index}`}>
+                          <span>
+                            {origin.city
+                              ? `${origin.city}, ${formatCountry(origin.country)}`
+                              : formatCountry(origin.country)}
+                          </span>
+                          <span>{origin.count}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </OriginsView>
+            </Suspense>
           )}
           {showAnnouncements && (
             <div
@@ -1861,22 +1895,26 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         </div>
       </div>
       </div>
-      <BurnLetterDialog
-        isOpen={showBurnLetter}
-        onClose={() => setShowBurnLetter(false)}
-        onBurnSuccess={burnedId => {
-          setLetters(previous => ({
-            ...previous,
-            messages: previous.messages.filter(letter => letter._id !== burnedId),
-            counts: {
-              ...previous.counts,
-              approved: Math.max(0, previous.counts.approved - 1),
-              unapproved: previous.counts.unapproved + 1,
-            },
-          }));
-        }}
-        cachedMessages={letters.messages}
-      />
+      {showBurnLetter && (
+        <Suspense fallback={null}>
+          <BurnLetterDialog
+            isOpen={showBurnLetter}
+            onClose={() => setShowBurnLetter(false)}
+            onBurnSuccess={burnedId => {
+              setLetters(previous => ({
+                ...previous,
+                messages: previous.messages.filter(letter => letter._id !== burnedId),
+                counts: {
+                  ...previous.counts,
+                  approved: Math.max(0, previous.counts.approved - 1),
+                  unapproved: previous.counts.unapproved + 1,
+                },
+              }));
+            }}
+            cachedMessages={letters.messages}
+          />
+        </Suspense>
+      )}
       <ToastContainer
         containerId="notify"
         position="top-right"
@@ -1891,30 +1929,40 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         theme="light"
       />
       <ToastContainer />
-      <AdBlockSupportDialog
-        open={showAdBlockSupport}
-        onClose={closeAdBlockSupport}
-        onRetry={retryAfterDisablingAdBlock}
-      />
-      <AddModal
-        showAddModal={showAddModal}
-        toggleAddModal={toggleAddModal}
-        newLetter={newLetter}
-        handleAddLetter={handleAddLetter}
-        setNewLetter={setNewLetter}
-        showShareCelebrationOnMount={SHOW_THANK_YOU_ON_REFRESH}
-      />
+      {showAdBlockSupport && (
+        <Suspense fallback={null}>
+          <AdBlockSupportDialog
+            open={showAdBlockSupport}
+            onClose={closeAdBlockSupport}
+            onRetry={retryAfterDisablingAdBlock}
+          />
+        </Suspense>
+      )}
+      {(showAddModal || hasOpenedAddModal) && (
+        <Suspense fallback={null}>
+          <AddModal
+            showAddModal={showAddModal}
+            toggleAddModal={toggleAddModal}
+            newLetter={newLetter}
+            handleAddLetter={handleAddLetter}
+            setNewLetter={setNewLetter}
+            showShareCelebrationOnMount={SHOW_THANK_YOU_ON_REFRESH}
+          />
+        </Suspense>
+      )}
       {loading === 1 ? (
         <MailboxLoading />
       ) : loading === 2 ? (
         <>
           <center>
-            <Lottie
-              loop
-              animationData={under_construction}
-              play
-              style={{ width: 300, height: 300 }}
-            />
+            {underConstructionAnim && (
+              <Lottie
+                loop
+                animationData={underConstructionAnim}
+                play
+                style={{ width: 300, height: 300 }}
+              />
+            )}
           </center>
           <p>
             Our service is temporarily unavailable as we're making improvements
@@ -2148,7 +2196,11 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           onDismiss={dismissPldtNotice}
         />
       )}
-      <PinPaymentReturn onConfirmed={fetchLetters} />
+      {hasPinPaymentReturn && (
+        <Suspense fallback={null}>
+          <PinPaymentReturn onConfirmed={fetchLetters} />
+        </Suspense>
+      )}
       {showBugReport && <BugReportModal onClose={() => setShowBugReport(false)} />}
 
       <div
