@@ -876,6 +876,7 @@ function BurnLetterDialog({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
 
   if (!isOpen) return null;
