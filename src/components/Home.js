@@ -1510,8 +1510,35 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       ]
     : null;
 
+  const isFeedEmpty = loading === 0 && (isSearching || feedItems.length === 0);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    document.documentElement.classList.toggle("is-empty-feed-lock", isFeedEmpty);
+    document.body.classList.toggle("is-empty-feed-lock", isFeedEmpty);
+
+    if (isFeedEmpty) {
+      if (typeof window !== "undefined" && window.scrollY !== 0) {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
+      if (isHeaderCompactRef.current) {
+        isHeaderCompactRef.current = false;
+        setIsHeaderCompact(false);
+      }
+      if (!isAtTopRef.current) {
+        isAtTopRef.current = true;
+        setIsAtTop(true);
+      }
+    }
+
+    return () => {
+      document.documentElement.classList.remove("is-empty-feed-lock");
+      document.body.classList.remove("is-empty-feed-lock");
+    };
+  }, [isFeedEmpty]);
+
   return (
-    <div className={`app${isReadModeActive ? " is-read-mode-active" : ""}${isModalClosing ? " is-modal-closing" : ""}`}>
+    <div className={`app${isReadModeActive ? " is-read-mode-active" : ""}${isModalClosing ? " is-modal-closing" : ""}${isFeedEmpty ? " is-empty-feed" : ""}`}>
       <div
         className={`home-toolbar${isHeaderCompact ? " is-compact" : ""}`}
       >
@@ -1997,35 +2024,32 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                 <p>Waiting for the closest matches.</p>
               </div>
             ) : isSearchActive && feedItems.length === 0 ? (
-              <div>
-                <p>
-                  <br />
-                  <br />
-                  <br />
-                  <br />
-                  <br />
+              <div className="letter-search-empty" role="status" aria-live="polite">
+                <p className="letter-search-empty__title">
                   <strong>No results found</strong>
                 </p>
-                <center>
+                <div className="letter-search-empty__lottie" aria-hidden="true">
                   <Lottie
                     loop
                     animationData={empty}
                     play
-                    style={{ width: 300, height: 300 }}
+                    className="letter-search-empty__player"
                   />
-                </center>
+                </div>
               </div>
             ) : !isSearchActive && feedItems.length === 0 ? (
-              <div>
-                <p>No Letters Found</p>
-                <center>
+              <div className="letter-search-empty" role="status" aria-live="polite">
+                <p className="letter-search-empty__title">
+                  <strong>No Letters Found</strong>
+                </p>
+                <div className="letter-search-empty__lottie" aria-hidden="true">
                   <Lottie
                     loop
                     animationData={empty}
                     play
-                    style={{ width: 300, height: 300 }}
+                    className="letter-search-empty__player"
                   />
-                </center>
+                </div>
               </div>
             ) : (
               <>
@@ -2128,7 +2152,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
               </>
             )}
           </div>
-          <h4>‎ </h4>
+          {!isSearching && feedItems.length > 0 && <h4>‎ </h4>}
         </div>
       ) : null}
       <ErrorBoundary
