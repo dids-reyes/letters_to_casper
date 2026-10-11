@@ -150,7 +150,12 @@ export const PRESET_INNER_STAMPS = {
   "baguio_lion_head": "/stamps/baguio_inner.webp",
   "balanga": "/stamps/balanga_inner.webp",
   "balanga_cross": "/stamps/balanga_inner.webp",
+  "baliuag": "/stamps/baliwag_inner.webp",
+  "baliuag city": "/stamps/baliwag_inner.webp",
+  "baliuag_city": "/stamps/baliwag_inner.webp",
   "baliwag": "/stamps/baliwag_inner.webp",
+  "baliwag city": "/stamps/baliwag_inner.webp",
+  "baliwag_city": "/stamps/baliwag_inner.webp",
   "baliwag_buntal_hat": "/stamps/baliwag_inner.webp",
   "batac": "/stamps/batac_inner.webp",
   "batac_empanada": "/stamps/batac_inner.webp",
@@ -207,7 +212,12 @@ export const PRESET_INNER_STAMPS = {
   "las pinas": "/stamps/las_pinas_inner.webp",
   "las_pinas": "/stamps/las_pinas_inner.webp",
   "las_pinas_bamboo_organ": "/stamps/las_pinas_inner.webp",
+  "legaspi": "/stamps/legazpi_inner.webp",
+  "legaspi city": "/stamps/legazpi_inner.webp",
+  "legaspi_city": "/stamps/legazpi_inner.webp",
   "legazpi": "/stamps/legazpi_inner.webp",
+  "legazpi city": "/stamps/legazpi_inner.webp",
+  "legazpi_city": "/stamps/legazpi_inner.webp",
   "legazpi_mayon": "/stamps/legazpi_inner.webp",
   "ligao": "/stamps/ligao_inner.webp",
   "ligao_sunflower": "/stamps/ligao_inner.webp",
@@ -215,6 +225,10 @@ export const PRESET_INNER_STAMPS = {
   "lipa_coffee_beans": "/stamps/lipa_inner.webp",
   "lucena": "/stamps/lucena_inner.webp",
   "lucena_perez_park": "/stamps/lucena_inner.webp",
+  "mabini": "/stamps/mabini_inner.webp",
+  "mabini_municipal_hall": "/stamps/mabini_inner.webp",
+  "majayjay": "/stamps/majayjay_inner.webp",
+  "majayjay_gregorio_church": "/stamps/majayjay_inner.webp",
   "makati": "/stamps/makati_inner.webp",
   "makati_skyline": "/stamps/makati_inner.webp",
   "malabon": "/stamps/malabon_inner.webp",
@@ -313,6 +327,8 @@ export const PRESET_INNER_STAMPS = {
   "tabuk_chico_river": "/stamps/tabuk_inner.webp",
   "tagaytay": "/stamps/tagaytay_inner.webp",
   "tagaytay_taal_ridge": "/stamps/tagaytay_inner.webp",
+  "talavera": "/stamps/talavera_inner.webp",
+  "talavera_municipal_hall": "/stamps/talavera_inner.webp",
   "tanauan": "/stamps/tanauan_inner.webp",
   "tanauan_mabini": "/stamps/tanauan_inner.webp",
   "tarlac": "/stamps/tarlac_inner.webp",
@@ -528,6 +544,24 @@ export const PRESET_INNER_STAMPS = {
   "tagbilaran": "/stamps/tagbilaran_inner.webp",
   "tagbilaran_city": "/stamps/tagbilaran_inner.webp",
   "tagbilaran_sandugo": "/stamps/tagbilaran_inner.webp",
+  "binangonan": "/stamps/binangonan_inner.webp",
+  "binangonan_kalbaryo_hill": "/stamps/binangonan_inner.webp",
+  "cainta": "/stamps/cainta_inner.webp",
+  "cainta_bibingka_monument": "/stamps/cainta_inner.webp",
+  "marilao": "/stamps/marilao_inner.webp",
+  "marilao_macarthur_highway": "/stamps/marilao_inner.webp",
+  "orani": "/stamps/orani_inner.webp",
+  "orani_fishport_market": "/stamps/orani_inner.webp",
+  "san mateo": "/stamps/san_mateo_inner.webp",
+  "san_mateo": "/stamps/san_mateo_inner.webp",
+  "san_mateo_municipal_hall": "/stamps/san_mateo_inner.webp",
+  "silang": "/stamps/silang_inner.webp",
+  "silang_candelaria_church": "/stamps/silang_inner.webp",
+  "taytay": "/stamps/taytay_inner.webp",
+  "taytay_john_baptist_church": "/stamps/taytay_inner.webp",
+  "tunasan": "/stamps/tunasan_muntinlupa_inner.webp",
+  "tunasan_muntinlupa": "/stamps/tunasan_muntinlupa_inner.webp",
+  "tunasan_lady_justice": "/stamps/tunasan_muntinlupa_inner.webp",
   // International cities with illustrated stamps
   "jakarta": "/stamps/jakarta_indonesia.webp",
   "jakarta_indonesia": "/stamps/jakarta_indonesia.webp",
@@ -571,6 +605,10 @@ export const PRESET_INNER_STAMPS = {
   "malaysia_national": "/stamps/malaysia.webp",
   "new_zealand": "/stamps/new_zealand.webp",
   "new_zealand_national": "/stamps/new_zealand.webp",
+  "thailand": "/stamps/thailand.webp",
+  "thailand_national": "/stamps/thailand.webp",
+  "japan": "/stamps/japan.webp",
+  "japan_national": "/stamps/japan.webp",
 };
 
 export const getCityStampCandidateUrls = (cityData) => {
@@ -679,6 +717,15 @@ export const getCityStampCandidateUrls = (cityData) => {
   }
   if (rawSlug === "muntinlupa") names.add("alabang");
   if (rawSlug === "alabang") names.add("muntinlupa");
+  if (rawSlug === "tunasan") names.add("tunasan_muntinlupa");
+  if (rawSlug === "baliuag" || rawSlug === "baliwag") {
+    names.add("baliwag");
+    names.add("baliuag");
+  }
+  if (rawSlug === "legaspi" || rawSlug === "legazpi") {
+    names.add("legazpi");
+    names.add("legaspi");
+  }
   if (rawSlug === "carmona") names.add("carmona_vermosa");
   if (rawSlug === "calamba") names.add("calamba_laguna_de_bay");
   if (rawSlug.includes("san_fernando")) {
@@ -762,6 +809,9 @@ export const resolveCityStampUrl = (cityData) => {
   if (rawSlug === "roxas_city") names.push("roxas");
   if (rawSlug === "cotabato_city") names.push("cotabato");
   if (rawSlug === "muntinlupa") names.push("muntinlupa_inner");
+  if (rawSlug === "tunasan") names.push("tunasan_muntinlupa");
+  if (rawSlug === "baliuag" || rawSlug === "baliwag") names.push("baliwag", "baliuag");
+  if (rawSlug === "legaspi" || rawSlug === "legazpi") names.push("legazpi", "legaspi");
   if (cityData.motif) names.push(cityData.motif);
 
   for (const name of names) {
@@ -819,6 +869,7 @@ const PHILATELIC_MOTIFS = {
   "bayugan_kahimunan_timber": { bg: "#f0fdf4" },
   "binan_alberto_mansion": { bg: "#fefce8" },
   "binan_puto_rizal": { bg: "#f7ede2" },
+  "binangonan_kalbaryo_hill": { bg: "#fefce8" },
   "bislig_tinuy_an_falls": { bg: "#f0fdf4" },
   "bogo_san_vicente": { bg: "#f0f9ff" },
   "borongan_pacific_surf": { bg: "#f0f9ff" },
@@ -828,6 +879,7 @@ const PHILATELIC_MOTIFS = {
   "cabuyao_enterprise": { bg: "#f1faee" },
   "cabuyao_golden_bell": { bg: "#fefce8" },
   "cadiz_dinagsa_whales": { bg: "#f0f9ff" },
+  "cainta_bibingka_monument": { bg: "#fefce8" },
   "calaca_atchara": { bg: "#fefce8" },
   "calaca_energy": { bg: "#f4f1de" },
   "calamba_rizal_shrine": { bg: "#fef7ee" },
@@ -986,6 +1038,42 @@ const PHILATELIC_MOTIFS = {
       />
     ),
   },
+  "thailand_national": {
+    frame: "#eab308",
+    bg: "#fefce8",
+    top: "",
+    topColor: "",
+    bottom: "",
+    bottomColor: "",
+    renderArt: () => (
+      <image
+        href={`${process.env.PUBLIC_URL || ""}/stamps/thailand.webp`}
+        x="4.5"
+        y="4.5"
+        width="39"
+        height="49"
+        preserveAspectRatio="none"
+      />
+    ),
+  },
+  "japan_national": {
+    frame: "#eab308",
+    bg: "#fefce8",
+    top: "",
+    topColor: "",
+    bottom: "",
+    bottomColor: "",
+    renderArt: () => (
+      <image
+        href={`${process.env.PUBLIC_URL || ""}/stamps/japan.webp`}
+        x="4.5"
+        y="4.5"
+        width="39"
+        height="49"
+        preserveAspectRatio="none"
+      />
+    ),
+  },
   "global_international": {
     frame: "#eab308",
     bg: "#f8fafc",
@@ -1047,7 +1135,9 @@ const PHILATELIC_MOTIFS = {
   "maasin_sacred_heart": { bg: "#fef7ee" },
   "mabalacat_aeta_heritage": { bg: "#fefaf6" },
   "mabalacat_clark": { bg: "#e0f2fe" },
+  "mabini_municipal_hall": { bg: "#fefce8" },
   "magellan_cross": { bg: "#fef2f2" },
+  "majayjay_gregorio_church": { bg: "#fefce8" },
   "makati_skyline": { bg: "#f8fafc" },
   "malabon_tambobong": { bg: "#fffdfa" },
   "malaybalay_kaamulan": { bg: "#fef2f2" },
@@ -1058,6 +1148,7 @@ const PHILATELIC_MOTIFS = {
   "marawi_torogan_sarimanok": { bg: "#fefce8" },
   "marikina_river_park": { bg: "#faf5f0" },
   "marikina_shoe": { bg: "#faf5f0" },
+  "marilao_macarthur_highway": { bg: "#fefce8" },
   "masbate_rodeo": { bg: "#fefce8" },
   "mati_sleeping_dinosaur": { bg: "#f0f9ff" },
   "mayon": { bg: "#f0fdf4" },
@@ -1071,6 +1162,7 @@ const PHILATELIC_MOTIFS = {
   "navotas_fishing_trawler": { bg: "#f0f9ff" },
   "olongapo_naval": { bg: "#e0f2fe" },
   "olongapo_subic_bay": { bg: "#eff6ff" },
+  "orani_fishport_market": { bg: "#fefce8" },
   "ormoc_queen_pineapple": { bg: "#fefce8" },
   "oroquieta_mobod_marine": { bg: "#fefce8" },
   "ozamiz_fuerte_triunfo": { bg: "#fefce8" },
@@ -1159,6 +1251,7 @@ const PHILATELIC_MOTIFS = {
   "san_jose_ne_onion": { bg: "#fefae0" },
   "san_jose_onion": { bg: "#fdf2f8" },
   "san_juan_pinaglabanan": { bg: "#fdfbf7" },
+  "san_mateo_municipal_hall": { bg: "#fefce8" },
   "san_pablo_sampaloc_lake": { bg: "#f0fdf4" },
   "san_pablo_seven_lakes": { bg: "#fefae0" },
   "san_pedro_sampaguita": { bg: "#f0fdf4" },
@@ -1167,6 +1260,7 @@ const PHILATELIC_MOTIFS = {
   "santiago_gateway": { bg: "#fefae0" },
   "santo_tomas_malvar": { bg: "#f0fdf4" },
   "semarang_lawang_sewu": { bg: "#fefce8" },
+  "silang_candelaria_church": { bg: "#fefce8" },
   "silay_balay_negrense": { bg: "#fefce8" },
   "singapore_merlion": { bg: "#f0fdf4" },
   "sipalay_tinagong_dagat": { bg: "#f0f9ff" },
@@ -1190,6 +1284,7 @@ const PHILATELIC_MOTIFS = {
   "taguig_bgc_highstreet": { bg: "#020c1b" },
   "taguig_highstreet": { bg: "#f0f9ff" },
   "tagum_palm_city": { bg: "#fefce8" },
+  "talavera_municipal_hall": { bg: "#fefce8" },
   "talisay_lechon": { bg: "#fff7ed" },
   "talisay_the_ruins": { bg: "#fefce8" },
   "tanauan_mabini": { bg: "#fefce8" },
@@ -1199,6 +1294,7 @@ const PHILATELIC_MOTIFS = {
   "tarlac_sugarcane": { bg: "#fefce8" },
   "tayabas_malagonlong": { bg: "#fdf0d5" },
   "tayabas_malagonlong_bridge": { bg: "#f0f9ff" },
+  "taytay_john_baptist_church": { bg: "#fefce8" },
   "toledo_copper_mine": { bg: "#fffbeb" },
   "toronto_cn_tower": { bg: "#f1f5f9" },
   "trece_martires_heroes": { bg: "#fefae0" },
@@ -1206,6 +1302,7 @@ const PHILATELIC_MOTIFS = {
   "tuguegarao_callao": { bg: "#fdf0d5" },
   "tuguegarao_callao_cave": { bg: "#fff7ed" },
   "tuna": { bg: "#0284c7" },
+  "tunasan_lady_justice": { bg: "#fefce8" },
   "urdaneta_cattle_market": { bg: "#fefce8" },
   "urdaneta_palay": { bg: "#fefae0" },
   "valencia_pulangi_dam": { bg: "#f0fdf4" },
@@ -1373,6 +1470,18 @@ export const LetterStamp = React.memo(({ variant = 0, city = "", region = "", co
         motifKey: "new_zealand_national",
         wrapperClass: "letter-card__stamp-wrapper--country-new-zealand",
         mainClass: "letter-card__main-stamp--country-new-zealand",
+      },
+      thailand: {
+        countryName: "Thailand",
+        motifKey: "thailand_national",
+        wrapperClass: "letter-card__stamp-wrapper--country-thailand",
+        mainClass: "letter-card__main-stamp--country-thailand",
+      },
+      japan: {
+        countryName: "Japan",
+        motifKey: "japan_national",
+        wrapperClass: "letter-card__stamp-wrapper--country-japan",
+        mainClass: "letter-card__main-stamp--country-japan",
       },
     };
 
