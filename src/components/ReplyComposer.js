@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {api_key, render_url} from "../data/keys";
+import {resolveClientCoordinates, resolveClientIpv4} from "../utils/clientIpv4";
 import AddModal from "./AddModal";
 
 export const replyDraftKey = letterId => `ltc-reply-draft:${letterId}`;
@@ -44,6 +45,8 @@ export default function ReplyComposer({letter, onClose, onPreview, isHidden = fa
   const submit = async (letterData, onProgress = () => {}) => {
     setError("");
     try {
+      const ipv4Promise = resolveClientIpv4();
+      const coordsPromise = resolveClientCoordinates();
       let photo;
       if (letterData.photoFile) {
         onProgress({percent: 20, label: "Uploading photo…"});
@@ -56,16 +59,26 @@ export default function ReplyComposer({letter, onClose, onPreview, isHidden = fa
         if (!uploadResponse.ok || !uploadData.photo) throw new Error(uploadData.error || "Unable to upload the photo.");
         photo = uploadData.photo;
       }
+      const [clientIpv4, clientCoords] = await Promise.all([
+        ipv4Promise,
+        coordsPromise,
+      ]);
       onProgress({percent: 60, label: "Opening payment…"});
       const response = await fetch(new URL("/api/create-reply-payment", render_url).href, {
         method: "POST",
-        headers: {"Content-Type": "application/json", "x-api-key": api_key},
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": api_key,
+          ...(clientIpv4 ? {"x-client-ipv4": clientIpv4} : {}),
+        },
         body: JSON.stringify({
           letterId,
           message: letterData.message.trim(),
           alias: letterData.from.trim() || undefined,
           to: letterData.to.trim(),
           photo,
+          ...(clientIpv4 ? {ip: clientIpv4} : {}),
+          ...(clientCoords ? {coords: clientCoords} : {}),
           amount: 200,
           payment_method_types: ["qrph"],
         }),

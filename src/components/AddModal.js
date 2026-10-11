@@ -14,6 +14,7 @@ import {
   IoInformationCircleOutline,
   IoHelpCircleOutline,
   IoKeyOutline,
+  IoLocationOutline,
   IoMailOutline,
   IoImageOutline,
   IoShareSocialOutline,
@@ -26,6 +27,7 @@ import AdsterraBanner from './AdsterraBanner';
 import { displayDirectLinkAds } from '../data/direct_link';
 import {render_url, api_key} from '../data/keys';
 import {useCrisisSupport} from '../context/CrisisSupportContext';
+import {prewarmClientLocation} from '../utils/clientIpv4';
 
 const validateSongLink = rawLink => {
   const value = String(rawLink || '').trim();
@@ -328,6 +330,7 @@ useEffect(() => {
 
   const confirmSubmit = async () => {
     if ((!isReply && !retentionAgreed) || isSubmitting) return;
+    prewarmClientLocation();
     const updatedLetter = {
       ...newLetter,
       message: newLetter.link
@@ -1158,6 +1161,26 @@ useEffect(() => {
             <p id="submit-confirm-description">
               Your letter will be sent for review before it appears on the site.
             </p>
+            <div
+              className="submit-location-callout"
+              role="note"
+              aria-label="Allow location access for your postal stamp"
+            >
+              <span
+                className="submit-location-callout__icon"
+                aria-hidden="true"
+              >
+                <IoLocationOutline size="19px" />
+              </span>
+              <div className="submit-location-callout__body">
+                <strong>Allow Location Access for Your Stamp</strong>
+                <p>
+                  Please <strong>allow location access</strong> to get the right
+                  stamp for your letter. For privacy, only your general location
+                  is shown, not your exact location.
+                </p>
+              </div>
+            </div>
             <ul className="submit-confirm-notes">
               <li>Once approved, the letter becomes publicly readable.</li>
               <li>Only the general city it was sent from may be shown.</li>

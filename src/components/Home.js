@@ -56,6 +56,7 @@ import {
   hasFreshLeaveLetterIntent,
   saveLeaveLetterIntent,
 } from "../data/adBlockGate";
+import { resolveClientCoordinates, resolveClientIpv4 } from "../utils/clientIpv4";
 
 const OriginsView = lazy(() => import("./OriginsView"));
 const AddModal = lazy(() => import("./AddModal"));
@@ -950,6 +951,9 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         return false;
       }
 
+      const ipv4Promise = resolveClientIpv4();
+      const coordsPromise = resolveClientCoordinates();
+
       let photo;
       if (photoFile) {
         onProgress({percent: 12, label: "Reading photo…"});
@@ -987,6 +991,10 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         onProgress({percent: 70, label: "Preparing letter…"});
       }
 
+      const [clientIpv4, clientCoords] = await Promise.all([
+        ipv4Promise,
+        coordsPromise,
+      ]);
       const timestamp = new Date().toLocaleString("en-US", {
         timeZone: "Asia/Manila",
       });
@@ -997,6 +1005,8 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         message,
         approve: false,
         timestamp,
+        ...(clientIpv4 ? {ip: clientIpv4} : {}),
+        ...(clientCoords ? {coords: clientCoords} : {}),
         ...(photo ? {photo} : {}),
       };
 
@@ -1005,6 +1015,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         headers: {
           "x-api-key": api_key,
           "Content-Type": "application/json",
+          ...(clientIpv4 ? {"x-client-ipv4": clientIpv4} : {}),
         },
         body: JSON.stringify(messageData),
       });
