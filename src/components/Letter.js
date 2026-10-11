@@ -365,7 +365,7 @@ function Letter({
             sensitive={letter.sensitiveContent === true}
             compact
           >
-            {cleanMessage}
+            {cleanMessage || "\u00A0"}
           </SensitiveMessage>
         </div>
 

@@ -329,3 +329,27 @@ test('celebration close countdown pauses when user is redirected away and resume
 
   jest.useRealTimers();
 });
+
+test('shows emphasized Allow Location Access callout inside Submit this letter? dialog', () => {
+  const dummyLetter = { from: 'Alice', to: 'Bob', message: 'Hello this is a test letter for Casper.' };
+  const { container } = render(
+    <AddModal
+      showAddModal={true}
+      toggleAddModal={jest.fn()}
+      newLetter={dummyLetter}
+      handleAddLetter={jest.fn()}
+      setNewLetter={jest.fn()}
+    />
+  );
+
+  const submitButton = container.querySelector('.submit-button');
+  fireEvent.click(submitButton);
+  fireEvent.click(submitButton);
+
+  expect(screen.getByText(/Submit this letter\?/i)).toBeInTheDocument();
+  expect(screen.getByText(/Allow Location Access for Your Stamp/i)).toBeInTheDocument();
+  expect(
+    screen.getByText(/only your general location is shown, not your exact location/i)
+  ).toBeInTheDocument();
+});
+
