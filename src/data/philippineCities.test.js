@@ -309,6 +309,17 @@ describe("philippineCities registry and lookup", () => {
     expect(getDedicatedCountryCode("Christchurch", "Canterbury", "")).toBe("new_zealand");
     expect(getDedicatedCountryCode("Wellington", "Wellington", "")).toBe("new_zealand");
 
+    // 8. Thailand
+    expect(getDedicatedCountryCode("", "", "Thailand")).toBe("thailand");
+    expect(getDedicatedCountryCode("", "", "TH")).toBe("thailand");
+    expect(getDedicatedCountryCode("Bangkok", "Bangkok", "")).toBe("thailand");
+
+    // 9. Japan
+    expect(getDedicatedCountryCode("", "", "Japan")).toBe("japan");
+    expect(getDedicatedCountryCode("", "", "JP")).toBe("japan");
+    expect(getDedicatedCountryCode("Tokyo", "", "Japan")).toBe("japan");
+    expect(getDedicatedCountryCode("Osaka", "Osaka", "")).toBe("japan");
+
     // Domestic locations return null (never trigger international country fallback)
     expect(getDedicatedCountryCode("Manila")).toBeNull();
     expect(getDedicatedCountryCode("Cebu City", "", "PH")).toBeNull();
@@ -316,7 +327,7 @@ describe("philippineCities registry and lookup", () => {
 
     // Other unmapped foreign countries return null
     expect(getDedicatedCountryCode("Berlin", "", "Germany")).toBeNull();
-    expect(getDedicatedCountryCode("Tokyo", "", "Japan")).toBeNull();
+    expect(getDedicatedCountryCode("Rome", "", "Italy")).toBeNull();
     expect(getDedicatedCountryCode("Paris", "", "France")).toBeNull();
   });
 });

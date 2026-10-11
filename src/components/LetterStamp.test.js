@@ -110,8 +110,8 @@ describe("LetterStamp Component", () => {
     expect(londonContainer.querySelector(".letter-card__stamp-wrapper--international")).toBeInTheDocument();
     expect(londonContainer.querySelector(".letter-card__main-stamp--international")).toHaveAttribute("data-motif", "global_international");
 
-    const { container: tokyoContainer } = render(<LetterStamp city="Tokyo" />);
-    expect(tokyoContainer.querySelector(".letter-card__main-stamp--international")).toHaveAttribute("data-motif", "global_international");
+    const { container: seoulContainer } = render(<LetterStamp city="Seoul" />);
+    expect(seoulContainer.querySelector(".letter-card__main-stamp--international")).toHaveAttribute("data-motif", "global_international");
 
     const { container: parisContainer } = render(<LetterStamp city="Paris, France" />);
     expect(parisContainer.querySelector(".letter-card__main-stamp--international")).toHaveAttribute("data-motif", "global_international");
@@ -588,6 +588,87 @@ describe("LetterStamp Component", () => {
       const { container: uaeContainer } = render(<LetterStamp country="UAE" />);
       expect(uaeContainer.querySelector('rect[width="42"][height="52"]')).toHaveAttribute("fill", "#eab308");
     });
+
+    test("renders Baliuag/Baliwag, Legaspi/Legazpi, Mabini, Majayjay, and Talavera city stamps with their optimized webp inner artwork", () => {
+      const { container: baliuagContainer } = render(<LetterStamp city="Baliuag" region="Central Luzon" country="Philippines" />);
+      expect(baliuagContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Baliwag");
+      expect(baliuagContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "baliwag_buntal_hat");
+      expect(baliuagContainer.querySelector("image")).toHaveAttribute("href", "/stamps/baliwag_inner.webp");
+
+      const { container: legaspiContainer } = render(<LetterStamp city="Legaspi" region="Bicol Region" country="Philippines" />);
+      expect(legaspiContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Legazpi");
+      expect(legaspiContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "mayon");
+      expect(legaspiContainer.querySelector("image")).toHaveAttribute("href", "/stamps/legazpi_inner.webp");
+
+      const { container: mabiniContainer } = render(<LetterStamp city="Mabini" region="Davao Region" country="Philippines" />);
+      expect(mabiniContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Mabini");
+      expect(mabiniContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "mabini_municipal_hall");
+      expect(mabiniContainer.querySelector("image")).toHaveAttribute("href", "/stamps/mabini_inner.webp");
+
+      const { container: majayjayContainer } = render(<LetterStamp city="Majayjay" region="Calabarzon" country="Philippines" />);
+      expect(majayjayContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Majayjay");
+      expect(majayjayContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "majayjay_gregorio_church");
+      expect(majayjayContainer.querySelector("image")).toHaveAttribute("href", "/stamps/majayjay_inner.webp");
+
+      const { container: talaveraContainer } = render(<LetterStamp city="Talavera" region="Central Luzon" country="Philippines" />);
+      expect(talaveraContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Talavera");
+      expect(talaveraContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "talavera_municipal_hall");
+      expect(talaveraContainer.querySelector("image")).toHaveAttribute("href", "/stamps/talavera_inner.webp");
+
+      const { container: binangonanContainer } = render(<LetterStamp city="Binangonan" region="Calabarzon" country="Philippines" />);
+      expect(binangonanContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Binangonan");
+      expect(binangonanContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "binangonan_kalbaryo_hill");
+      expect(binangonanContainer.querySelector("image")).toHaveAttribute("href", "/stamps/binangonan_inner.webp");
+
+      const { container: caintaContainer } = render(<LetterStamp city="Cainta" region="Calabarzon" country="Philippines" />);
+      expect(caintaContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Cainta");
+      expect(caintaContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "cainta_bibingka_monument");
+      expect(caintaContainer.querySelector("image")).toHaveAttribute("href", "/stamps/cainta_inner.webp");
+
+      const { container: marilaoContainer } = render(<LetterStamp city="Marilao" region="Central Luzon" country="Philippines" />);
+      expect(marilaoContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Marilao");
+      expect(marilaoContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "marilao_macarthur_highway");
+      expect(marilaoContainer.querySelector("image")).toHaveAttribute("href", "/stamps/marilao_inner.webp");
+
+      const { container: oraniContainer } = render(<LetterStamp city="Orani" region="Central Luzon" country="Philippines" />);
+      expect(oraniContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Orani");
+      expect(oraniContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "orani_fishport_market");
+      expect(oraniContainer.querySelector("image")).toHaveAttribute("href", "/stamps/orani_inner.webp");
+
+      const { container: sanMateoContainer } = render(<LetterStamp city="San Mateo" region="Calabarzon" country="Philippines" />);
+      expect(sanMateoContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "San Mateo");
+      expect(sanMateoContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "san_mateo_municipal_hall");
+      expect(sanMateoContainer.querySelector("image")).toHaveAttribute("href", "/stamps/san_mateo_inner.webp");
+
+      const { container: silangContainer } = render(<LetterStamp city="Silang" region="Calabarzon" country="Philippines" />);
+      expect(silangContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Silang");
+      expect(silangContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "silang_candelaria_church");
+      expect(silangContainer.querySelector("image")).toHaveAttribute("href", "/stamps/silang_inner.webp");
+
+      const { container: taytayContainer } = render(<LetterStamp city="Taytay" region="Calabarzon" country="Philippines" />);
+      expect(taytayContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Taytay");
+      expect(taytayContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "taytay_john_baptist_church");
+      expect(taytayContainer.querySelector("image")).toHaveAttribute("href", "/stamps/taytay_inner.webp");
+
+      const { container: tunasanContainer } = render(<LetterStamp city="Tunasan" region="National Capital Region" country="Philippines" />);
+      expect(tunasanContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-city", "Tunasan");
+      expect(tunasanContainer.querySelector(".letter-card__main-stamp--city")).toHaveAttribute("data-motif", "tunasan_lady_justice");
+      expect(tunasanContainer.querySelector("image")).toHaveAttribute("href", "/stamps/tunasan_muntinlupa_inner.webp");
+
+      const { container: thailandContainer } = render(<LetterStamp city="Bangkok" region="Bangkok" country="Thailand" />);
+      expect(thailandContainer.querySelector(".letter-card__stamp-wrapper--country-thailand")).toBeInTheDocument();
+      expect(thailandContainer.querySelector(".letter-card__main-stamp--country-thailand")).toHaveAttribute("data-motif", "thailand_national");
+      expect(thailandContainer.querySelector("image")).toHaveAttribute("href", "/stamps/thailand.webp");
+
+      const { container: japanContainer } = render(<LetterStamp city="Tokyo" region="Tokyo" country="Japan" />);
+      expect(japanContainer.querySelector(".letter-card__stamp-wrapper--country-japan")).toBeInTheDocument();
+      expect(japanContainer.querySelector(".letter-card__main-stamp--country-japan")).toHaveAttribute("data-motif", "japan_national");
+      expect(japanContainer.querySelector("image")).toHaveAttribute("href", "/stamps/japan.webp");
+    });
   });
 });
+
+
+
+
 

@@ -918,6 +918,72 @@ export const PHILIPPINE_CITY_REGISTRY = {
     motif: "lamitan_yakan_tennun",
     province: "Basilan",
   },
+  "mabini": {
+    canonicalName: "Mabini",
+    displayName: "MABINI",
+    motif: "mabini_municipal_hall",
+    province: "Davao de Oro",
+  },
+  "majayjay": {
+    canonicalName: "Majayjay",
+    displayName: "MAJAYJAY",
+    motif: "majayjay_gregorio_church",
+    province: "Laguna",
+  },
+  "talavera": {
+    canonicalName: "Talavera",
+    displayName: "TALAVERA",
+    motif: "talavera_municipal_hall",
+    province: "Nueva Ecija",
+  },
+  "binangonan": {
+    canonicalName: "Binangonan",
+    displayName: "BINANGONAN",
+    motif: "binangonan_kalbaryo_hill",
+    province: "Rizal",
+  },
+  "cainta": {
+    canonicalName: "Cainta",
+    displayName: "CAINTA",
+    motif: "cainta_bibingka_monument",
+    province: "Rizal",
+  },
+  "marilao": {
+    canonicalName: "Marilao",
+    displayName: "MARILAO",
+    motif: "marilao_macarthur_highway",
+    province: "Bulacan",
+  },
+  "orani": {
+    canonicalName: "Orani",
+    displayName: "ORANI",
+    motif: "orani_fishport_market",
+    province: "Bataan",
+  },
+  "san mateo": {
+    canonicalName: "San Mateo",
+    displayName: "SAN MATEO",
+    motif: "san_mateo_municipal_hall",
+    province: "Rizal",
+  },
+  "silang": {
+    canonicalName: "Silang",
+    displayName: "SILANG",
+    motif: "silang_candelaria_church",
+    province: "Cavite",
+  },
+  "taytay": {
+    canonicalName: "Taytay",
+    displayName: "TAYTAY",
+    motif: "taytay_john_baptist_church",
+    province: "Rizal",
+  },
+  "tunasan": {
+    canonicalName: "Tunasan",
+    displayName: "TUNASAN",
+    motif: "tunasan_lady_justice",
+    province: "Metro Manila",
+  },
   // International Cities (Specific Cultural Stamps)
   "jakarta": {
     canonicalName: "Jakarta",
@@ -987,6 +1053,8 @@ export const CITY_ALIASES = {
   "city of manila": "manila",
   ortigas: "pasig",
   alabang: "alabang",
+  tunasan: "tunasan",
+  "tunasan muntinlupa": "tunasan",
   ayala: "makati",
   cubao: "quezon city",
   novaliches: "quezon city",
@@ -1022,11 +1090,17 @@ export const CITY_ALIASES = {
   "bacolod city": "bacolod",
   "bacoor city": "bacoor",
   "balanga city": "balanga",
+  baliuag: "baliwag",
+  "baliuag city": "baliwag",
   "baliwag city": "baliwag",
   "batangas city": "batangas city",
   "binan city": "binan",
+  binangonan: "binangonan",
+  "binangonan rizal": "binangonan",
   "cabanatuan city": "cabanatuan",
   "cabuyao city": "cabuyao",
+  cainta: "cainta",
+  "cainta rizal": "cainta",
   "calamba city": "calamba",
   "calapan city": "calapan",
   "calbayog city": "calbayog",
@@ -1047,22 +1121,31 @@ export const CITY_ALIASES = {
   "lapu lapu": "lapu-lapu",
   "lapu lapu city": "lapu-lapu",
   "lapu-lapu city": "lapu-lapu",
+  legaspi: "legazpi",
+  "legaspi city": "legazpi",
   "legazpi city": "legazpi",
   "lipa city": "lipa",
   "lucena city": "lucena",
   "mabalacat city": "mabalacat",
+  mabini: "mabini",
+  majayjay: "majayjay",
   "makati city": "makati",
+  talavera: "talavera",
   "malabon city": "malabon",
   "malaybalay city": "malaybalay",
   "malolos city": "malolos",
   "mandaluyong city": "mandaluyong",
   "mandaue city": "mandaue",
   "marikina city": "marikina",
+  marilao: "marilao",
+  "marilao bulacan": "marilao",
   "masbate city": "masbate city",
   "meycauayan city": "meycauayan",
   "muntinlupa city": "muntinlupa",
   "navotas city": "navotas",
   "olongapo city": "olongapo",
+  orani: "orani",
+  "orani bataan": "orani",
   "ormoc city": "ormoc",
   "ozamiz city": "ozamiz",
   "pagadian city": "pagadian",
@@ -1074,10 +1157,14 @@ export const CITY_ALIASES = {
   "san carlos city": "san carlos (pangasinan)",
   "san fernando city": "san fernando (pampanga)",
   "san juan city": "san juan",
+  "san mateo": "san mateo",
+  "san mateo rizal": "san mateo",
   "san pablo city": "san pablo",
   "san pedro city": "san pedro",
   "santa rosa city": "santa rosa",
   "santiago city": "santiago",
+  silang: "silang",
+  "silang cavite": "silang",
   "sorsogon city": "sorsogon city",
   "surigao city": "surigao city",
   "tabaco city": "tabaco",
@@ -1089,6 +1176,8 @@ export const CITY_ALIASES = {
   "tagum city": "tagum",
   "tarlac city": "tarlac city",
   "tayabas city": "tayabas",
+  taytay: "taytay",
+  "taytay rizal": "taytay",
   "trece martires city": "trece martires",
   "tuguegarao city": "tuguegarao",
   "valenzuela city": "valenzuela",
@@ -1482,13 +1571,23 @@ export const NEW_ZEALAND_IDENTIFIERS = [
   "gisborne", "northland", "west coast"
 ];
 
+export const THAILAND_IDENTIFIERS = [
+  "thailand", "th", "tha", "siam",
+  "bangkok", "krung thep", "chiang mai", "chiang rai", "phuket", "pattaya", "chonburi", "nonthaburi", "pathum thani", "samut prakan", "khon kaen", "hat yai", "ayutthaya", "krabi", "koh samui"
+];
+
+export const JAPAN_IDENTIFIERS = [
+  "japan", "jp", "jpn", "nippon", "nihon",
+  "tokyo", "osaka", "kyoto", "yokohama", "nagoya", "sapporo", "fukuoka", "kobe", "kawasaki", "hiroshima", "sendai", "chiba", "saitama", "kitakyushu", "okinawa", "naha", "hokkaido", "kanagawa", "aichi", "hyogo", "shizuoka", "ibaraki", "nara"
+];
+
 /**
  * Determines whether a location resolves to one of the dedicated country fallbacks
- * (usa, canada, united_arab_emirates, singapore, malaysia, indonesia, new_zealand)
+ * (usa, canada, united_arab_emirates, singapore, malaysia, indonesia, new_zealand, thailand, japan)
  * @param {string} rawCity
  * @param {string} rawRegion
  * @param {string} rawCountry
- * @returns {'usa'|'canada'|'united_arab_emirates'|'singapore'|'malaysia'|'indonesia'|'new_zealand'|null}
+ * @returns {'usa'|'canada'|'united_arab_emirates'|'singapore'|'malaysia'|'indonesia'|'new_zealand'|'thailand'|'japan'|null}
  */
 export const getDedicatedCountryCode = (rawCity = "", rawRegion = "", rawCountry = "") => {
   // If explicitly domestic Philippines, return null
@@ -1521,6 +1620,8 @@ export const getDedicatedCountryCode = (rawCity = "", rawRegion = "", rawCountry
     if (cleanCountry === "MALAYSIA" || cleanCountry === "MY" || cleanCountry === "MYS") return "malaysia";
     if (cleanCountry === "INDONESIA" || cleanCountry === "ID" || cleanCountry === "IDN" || cleanCountry === "INA") return "indonesia";
     if (cleanCountry === "NEW ZEALAND" || cleanCountry === "NZ" || cleanCountry === "NZL" || cleanCountry === "AOTEAROA") return "new_zealand";
+    if (cleanCountry === "THAILAND" || cleanCountry === "TH" || cleanCountry === "THA") return "thailand";
+    if (cleanCountry === "JAPAN" || cleanCountry === "JP" || cleanCountry === "JPN") return "japan";
   }
 
   // 2. Region (State / Province / Emirate) Check
@@ -1550,9 +1651,15 @@ export const getDedicatedCountryCode = (rawCity = "", rawRegion = "", rawCountry
     for (const kw of NEW_ZEALAND_IDENTIFIERS) {
       if (cleanRegion === kw || new RegExp(`(^|\\s)${kw}(\\s|$)`, "i").test(cleanRegion)) return "new_zealand";
     }
+    for (const kw of THAILAND_IDENTIFIERS) {
+      if (cleanRegion === kw || new RegExp(`(^|\\s)${kw}(\\s|$)`, "i").test(cleanRegion)) return "thailand";
+    }
+    for (const kw of JAPAN_IDENTIFIERS) {
+      if (cleanRegion === kw || new RegExp(`(^|\\s)${kw}(\\s|$)`, "i").test(cleanRegion)) return "japan";
+    }
   }
 
-  // 3. City Text Check (e.g. "Los Angeles, CA", "Miami, USA", "Vancouver, Canada", "Bali")
+  // 3. City Text Check (e.g. "Los Angeles, CA", "Miami, USA", "Vancouver, Canada", "Bali", "Bangkok, Thailand", "Tokyo, Japan")
   if (cleanCity) {
     for (const kw of USA_IDENTIFIERS) {
       if (cleanCity === kw || new RegExp(`(^|\\s)${kw}(\\s|$)`, "i").test(cleanCity)) return "usa";
@@ -1574,6 +1681,12 @@ export const getDedicatedCountryCode = (rawCity = "", rawRegion = "", rawCountry
     }
     for (const kw of NEW_ZEALAND_IDENTIFIERS) {
       if (cleanCity === kw || new RegExp(`(^|\\s)${kw}(\\s|$)`, "i").test(cleanCity)) return "new_zealand";
+    }
+    for (const kw of THAILAND_IDENTIFIERS) {
+      if (cleanCity === kw || new RegExp(`(^|\\s)${kw}(\\s|$)`, "i").test(cleanCity)) return "thailand";
+    }
+    for (const kw of JAPAN_IDENTIFIERS) {
+      if (cleanCity === kw || new RegExp(`(^|\\s)${kw}(\\s|$)`, "i").test(cleanCity)) return "japan";
     }
   }
 

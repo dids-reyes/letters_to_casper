@@ -2236,13 +2236,31 @@ function DetailsModal({
     setIsYoutubePlaying(false);
     if (!activeYoutubePlayerVisible || !youtubePlayerRef.current) return undefined;
 
+    const disableYoutubeCaptions = player => {
+      try {
+        player?.unloadModule?.("captions");
+        player?.unloadModule?.("cc");
+      } catch {
+        // Ignore if the player does not expose caption modules yet.
+      }
+    };
+
     loadYoutubeIframeApi()
       .then(YT => {
         if (cancelled || !youtubePlayerRef.current || !YT?.Player) return;
         youtubePlayerInstanceRef.current = new YT.Player(youtubePlayerRef.current, {
           events: {
+            onReady: event => {
+              if (!cancelled) disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
+            },
+            onApiChange: event => {
+              if (!cancelled) disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
+            },
             onStateChange: event => {
-              if (!cancelled) setIsYoutubePlaying(event.data === YT.PlayerState.PLAYING);
+              if (!cancelled) {
+                disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
+                setIsYoutubePlaying(event.data === YT.PlayerState.PLAYING);
+              }
             },
             onError: () => {
               if (!cancelled) setIsYoutubePlaying(false);
@@ -2945,7 +2963,7 @@ function DetailsModal({
         {!lSpotifyTrackId && lYoutubeVideoId && (
           <div className="letter-paper__media letter-paper__media--youtube">
             <iframe
-              src={`https://www.youtube-nocookie.com/embed/${lYoutubeVideoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0`}
+              src={`https://www.youtube-nocookie.com/embed/${lYoutubeVideoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0&cc_load_policy=0&iv_load_policy=3`}
               title="YouTube video player outgoing"
               frameBorder="0"
               allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -3131,7 +3149,7 @@ function DetailsModal({
         {!lSpotifyTrackId && lYoutubeVideoId && (
           <div className="letter-paper__media letter-paper__media--youtube">
             <iframe
-              src={`https://www.youtube-nocookie.com/embed/${lYoutubeVideoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0`}
+              src={`https://www.youtube-nocookie.com/embed/${lYoutubeVideoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0&cc_load_policy=0&iv_load_policy=3`}
               title="YouTube video player prerender"
               tabIndex={-1}
               frameBorder="0"
@@ -3417,7 +3435,7 @@ function DetailsModal({
           <div className="letter-paper__media letter-paper__media--youtube">
             <iframe
               ref={youtubePlayerRef}
-              src={`https://www.youtube-nocookie.com/embed/${activeYoutubeVideoId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
+              src={`https://www.youtube-nocookie.com/embed/${activeYoutubeVideoId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&cc_load_policy=0&iv_load_policy=3&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
               title="YouTube video player"
               frameBorder="0"
               allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
