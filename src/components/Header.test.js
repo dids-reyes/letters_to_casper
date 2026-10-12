@@ -108,5 +108,52 @@ describe('Header component', () => {
 
     expect(handleClearSearch).not.toHaveBeenCalled();
   });
+
+  it('keeps both full and compact logos mounted with fixed dimensions so switching is instant without reloading', () => {
+    const {container, rerender} = render(
+      <Header
+        searchTerm=""
+        handleSearchChange={jest.fn()}
+        handleClearSearch={jest.fn()}
+        isCompact={false}
+      />
+    );
+
+    const fullLogo = container.querySelector('.logo--full');
+    const compactLogo = container.querySelector('.logo--compact-mark');
+
+    expect(fullLogo).toBeInTheDocument();
+    expect(compactLogo).toBeInTheDocument();
+    expect(fullLogo).toHaveAttribute('width', '400');
+    expect(fullLogo).toHaveAttribute('height', '70');
+    expect(fullLogo).toHaveAttribute('decoding', 'sync');
+    expect(compactLogo).toHaveAttribute('width', '48');
+    expect(compactLogo).toHaveAttribute('height', '48');
+    expect(compactLogo).toHaveAttribute('decoding', 'sync');
+
+    expect(fullLogo).not.toHaveAttribute('hidden');
+    expect(compactLogo).toHaveAttribute('hidden');
+    expect(screen.getByAltText('Letters to Casper')).toBe(fullLogo);
+
+    const initialFullSrc = fullLogo.getAttribute('src');
+    const initialCompactSrc = compactLogo.getAttribute('src');
+
+    rerender(
+      <Header
+        searchTerm=""
+        handleSearchChange={jest.fn()}
+        handleClearSearch={jest.fn()}
+        isCompact={true}
+      />
+    );
+
+    expect(container.querySelector('.logo--full')).toBe(fullLogo);
+    expect(container.querySelector('.logo--compact-mark')).toBe(compactLogo);
+    expect(fullLogo.getAttribute('src')).toBe(initialFullSrc);
+    expect(compactLogo.getAttribute('src')).toBe(initialCompactSrc);
+    expect(fullLogo).toHaveAttribute('hidden');
+    expect(compactLogo).not.toHaveAttribute('hidden');
+    expect(screen.getByAltText('Letters to Casper')).toBe(compactLogo);
+  });
 });
 

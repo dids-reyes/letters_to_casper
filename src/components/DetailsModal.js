@@ -141,7 +141,9 @@ const MusicVisualizer = React.memo(function MusicVisualizer() {
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return undefined;
 
-    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = Boolean(
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    );
     let width = 0;
     let height = 0;
     let frameId;
@@ -191,6 +193,9 @@ const MusicVisualizer = React.memo(function MusicVisualizer() {
       });
     };
 
+    canvas.parentElement?.style.setProperty("--music-glow-near", "16px");
+    canvas.parentElement?.style.setProperty("--music-glow-far", "43px");
+
     const draw = now => {
       const delta = Math.min(32, now - lastTime);
       const time = now / 1000;
@@ -203,8 +208,6 @@ const MusicVisualizer = React.memo(function MusicVisualizer() {
         nextSurge = now + 180 + Math.random() * 720;
       }
       energy += (energyTarget - energy) * Math.min(1, delta * 0.0045);
-      canvas.parentElement?.style.setProperty("--music-glow-near", `${9 + energy * 13}px`);
-      canvas.parentElement?.style.setProperty("--music-glow-far", `${28 + energy * 28}px`);
 
       context.clearRect(0, 0, width, height);
       context.globalCompositeOperation = "lighter";
@@ -283,10 +286,7 @@ const MusicVisualizer = React.memo(function MusicVisualizer() {
         const edgeLength = isMobile ? height : width;
         const edgeFade = Math.min(1, edgePosition / 170, (edgeLength - edgePosition) / 170);
         const alpha = Math.max(0, edgeFade) * particle.alpha * (0.55 + energy * 0.65);
-        const gradient = context.createLinearGradient(particle.previousX, particle.previousY, particle.x, particle.y);
-        gradient.addColorStop(0, `rgba(67, 124, 222, ${alpha * 0.08})`);
-        gradient.addColorStop(1, `rgba(145, 194, 255, ${alpha})`);
-        context.strokeStyle = gradient;
+        context.strokeStyle = `rgba(145, 194, 255, ${alpha})`;
         context.lineWidth = particle.size * (0.65 + treble * 1.1);
         context.beginPath();
         context.moveTo(particle.previousX, particle.previousY);
@@ -448,6 +448,19 @@ const shortLetterAge = timestamp => {
   const label = unit[1] === "mo." && count > 1 ? "mos." : unit[1];
   const space = ["min.", "mo."].includes(unit[1]) ? " " : "";
   return `${count}${space}${label} ago`;
+};
+
+const safeLetterAgeTitle = timestamp => {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  const time = date.getTime();
+  if (!Number.isFinite(time)) return "";
+  if (time >= Date.now() - 1000) return "just now";
+  try {
+    return js_ago(date, {format: "long"});
+  } catch {
+    return "just now";
+  }
 };
 
 export const formatPinTimeRemaining = (expiresAt) => {
@@ -761,8 +774,12 @@ function DetailsModal({
   onReplyPublishedRef.current = onReplyPublished;
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === "undefined") return true;
-    return window.matchMedia
-      ? window.matchMedia("(min-width: 769px)").matches
+    const mql =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia("(min-width: 769px)")
+        : null;
+    return mql && typeof mql.matches === "boolean"
+      ? mql.matches
       : window.innerWidth > 768;
   });
   const [viewportSize, setViewportSize] = useState(() => ({
@@ -773,9 +790,14 @@ function DetailsModal({
   useEffect(() => {
     if (typeof window === "undefined") return;
     const checkDesktop = () => {
-      const matches = window.matchMedia
-        ? window.matchMedia("(min-width: 769px)").matches
-        : window.innerWidth > 768;
+      const mql =
+        typeof window.matchMedia === "function"
+          ? window.matchMedia("(min-width: 769px)")
+          : null;
+      const matches =
+        mql && typeof mql.matches === "boolean"
+          ? mql.matches
+          : window.innerWidth > 768;
       setIsDesktop(matches);
       setViewportSize({
         width: window.innerWidth || 1280,
@@ -989,6 +1011,9 @@ function DetailsModal({
   }, [showDetailsModal, opened, selectedLetter?._id]);
 
   const formatTimestamp = (timestamp) => {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    if (!Number.isFinite(date.getTime())) return String(timestamp || "");
     const options = {
       weekday: "long",
       year: "numeric",
@@ -998,7 +1023,7 @@ function DetailsModal({
       minute: "numeric",
       hour12: true,
     };
-    return new Date(timestamp).toLocaleString("en-US", options);
+    return date.toLocaleString("en-US", options);
   };
 
   const media = useMemo(() => {
@@ -1020,18 +1045,23 @@ function DetailsModal({
     spotifyTrackId || youtubeVideoId || selectedLetter?.photo?.url
   );
   const messageBodyRef = useRef(null);
+  const letterPaperRef = useRef(null);
   useEffect(() => {
     setSensitiveMessageRevealed(false);
   }, [selectedLetter?._id, showDetailsModal]);
   useEffect(() => {
+    if (letterPaperRef.current) {
+      letterPaperRef.current.scrollTop = 0;
+    }
     const body = messageBodyRef.current;
     if (!body || !showDetailsModal || !opened) return undefined;
+    body.scrollTop = 0;
+    if (readMode) return undefined;
     const mobile =
       typeof window !== "undefined" && typeof window.matchMedia === "function"
         ? window.matchMedia('(max-width: 600px)')
         : { matches: false };
     let followTyping = true;
-    body.scrollTop = 0;
     const onScroll = () => {
       followTyping = body.scrollHeight - body.clientHeight - body.scrollTop <= 32;
     };
@@ -1046,7 +1076,7 @@ function DetailsModal({
       observer.disconnect();
       body.removeEventListener('scroll', onScroll);
     };
-  }, [showDetailsModal, opened, selectedLetter?._id, showTranslation, hasLetterAttachment]);
+  }, [showDetailsModal, opened, selectedLetter?._id, showTranslation, hasLetterAttachment, readMode]);
 
   const [detectedLanguage, setDetectedLanguage] = useState(null);
 
@@ -1132,10 +1162,11 @@ function DetailsModal({
       setOpened(true);
       return;
     }
-    const prefersReducedMotion =
+    const prefersReducedMotion = Boolean(
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.matchMedia("(prefers-reduced-motion: reduce)")?.matches
+    );
     if (prefersReducedMotion) {
       setOpened(true);
       return;
@@ -1254,10 +1285,10 @@ function DetailsModal({
   const closeTouchStartRef = useRef(null);
 
   const isTouchDevice = useMemo(() => {
-    return (
+    return Boolean(
       typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(pointer: coarse)").matches
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)")?.matches
     );
   }, []);
 
@@ -1434,6 +1465,22 @@ function DetailsModal({
     };
   }, [showAdLock]);
 
+  const navTransitionTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (!showDetailsModal && navTransitionTimerRef.current) {
+      clearTimeout(navTransitionTimerRef.current);
+      navTransitionTimerRef.current = null;
+      isTransitioningRef.current = false;
+    }
+    return () => {
+      if (navTransitionTimerRef.current) {
+        clearTimeout(navTransitionTimerRef.current);
+        navTransitionTimerRef.current = null;
+      }
+    };
+  }, [showDetailsModal]);
+
   const goToNext = useCallback((fromAdLock = false) => {
     setNavDirection("next");
     if (closingRef.current || (showAdLock && !fromAdLock) || isTransitioningRef.current) return;
@@ -1482,10 +1529,14 @@ function DetailsModal({
       onFetchMore();
     }
 
-    setTimeout(() => {
+    if (navTransitionTimerRef.current) {
+      clearTimeout(navTransitionTimerRef.current);
+    }
+    navTransitionTimerRef.current = setTimeout(() => {
       setOutgoingLetter(null);
       setSlideDirection(null);
       isTransitioningRef.current = false;
+      navTransitionTimerRef.current = null;
     }, 520);
   }, [showAdLock, showReadTip, dismissReadTip, dismissFoldTip, canGoNext, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, onFetchMore, showReadBoundary, dismissReadBoundary]);
 
@@ -1533,10 +1584,14 @@ function DetailsModal({
     setIsRevealed(false);
     setHasClickedAd(false);
 
-    setTimeout(() => {
+    if (navTransitionTimerRef.current) {
+      clearTimeout(navTransitionTimerRef.current);
+    }
+    navTransitionTimerRef.current = setTimeout(() => {
       setOutgoingLetter(null);
       setSlideDirection(null);
       isTransitioningRef.current = false;
+      navTransitionTimerRef.current = null;
     }, 520);
   }, [showAdLock, showReadTip, dismissReadTip, dismissFoldTip, canGoPrev, currentIndex, letterList, selectedLetter, setSelectedLetter, navigate, showReadBoundary, dismissReadBoundary]);
 
@@ -1745,12 +1800,16 @@ function DetailsModal({
       return;
     }
 
-    if (touchInsideScrollable.current && messageBodyRef.current) {
-      const scrollEl = messageBodyRef.current;
-      const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 5;
-      const atTop = scrollEl.scrollTop <= 5;
-      if (deltaY < 0 && !atBottom) return;
-      if (deltaY > 0 && !atTop) return;
+    if (touchInsideScrollable.current) {
+      const scrollCandidates = [messageBodyRef.current, letterPaperRef.current].filter(Boolean);
+      for (const scrollEl of scrollCandidates) {
+        if (scrollEl.scrollHeight > scrollEl.clientHeight + 4) {
+          const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 5;
+          const atTop = scrollEl.scrollTop <= 5;
+          if (deltaY < 0 && !atBottom) return;
+          if (deltaY > 0 && !atTop) return;
+        }
+      }
     }
 
     if (deltaY < -45) {
@@ -1795,22 +1854,28 @@ function DetailsModal({
 
       const targetEl =
         e.target && typeof e.target.closest === "function" ? e.target : null;
-      const scrollable = targetEl
-        ? targetEl.closest(".letter-paper__body--scrollable, .letter-paper")
-        : null;
-      if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 4) {
-        const atBottom =
-          scrollable.scrollTop + scrollable.clientHeight >=
-          scrollable.scrollHeight - 6;
-        const atTop = scrollable.scrollTop <= 6;
+      const scrollCandidates = [];
+      if (targetEl) {
+        const innerBody = targetEl.closest(".letter-paper__body--scrollable");
+        const outerPaper = targetEl.closest(".letter-paper");
+        if (innerBody) scrollCandidates.push(innerBody);
+        if (outerPaper && outerPaper !== innerBody) scrollCandidates.push(outerPaper);
+      }
+      for (const scrollable of scrollCandidates) {
+        if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 4) {
+          const atBottom =
+            scrollable.scrollTop + scrollable.clientHeight >=
+            scrollable.scrollHeight - 6;
+          const atTop = scrollable.scrollTop <= 6;
 
-        if (e.deltaY > 0 && !atBottom) {
-          scrollable.scrollTop += e.deltaY;
-          return;
-        }
-        if (e.deltaY < 0 && !atTop) {
-          scrollable.scrollTop += e.deltaY;
-          return;
+          if (e.deltaY > 0 && !atBottom) {
+            scrollable.scrollTop += e.deltaY;
+            return;
+          }
+          if (e.deltaY < 0 && !atTop) {
+            scrollable.scrollTop += e.deltaY;
+            return;
+          }
         }
       }
 
@@ -1930,7 +1995,7 @@ function DetailsModal({
     return () => clearTimeout(timer);
   }, [isReplyLetter, opened, replyParentLetter, showReplyParent]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setIsRevealed(false);
     setHasClickedAd(false);
     setShowLocationAdConfirm(false);
@@ -2212,9 +2277,13 @@ function DetailsModal({
     };
   }, [isReplyPreviewing, selectedLetter?.preview]);
 
-  const activeReplyLetter = replyViewingIndex >= 0 && activeReplies[replyViewingIndex]
-    ? formatReplyAsLetter(activeReplies[replyViewingIndex], selectedLetter)
-    : null;
+  const activeReplyLetter = useMemo(
+    () =>
+      replyViewingIndex >= 0 && activeReplies[replyViewingIndex]
+        ? formatReplyAsLetter(activeReplies[replyViewingIndex], selectedLetter)
+        : null,
+    [replyViewingIndex, activeReplies, formatReplyAsLetter, selectedLetter]
+  );
   const activeThreadLetter = replyThreadIndex >= 0 ? replyThread[replyThreadIndex] : null;
   const activeContextLetter = activeThreadLetter || activeReplyLetter || (
     showReplyParent && replyParentLetter ? replyParentLetter : selectedLetter
@@ -2229,15 +2298,19 @@ function DetailsModal({
   const youtubePlayerRef = useRef(null);
   const youtubePlayerInstanceRef = useRef(null);
   const [isYoutubePlaying, setIsYoutubePlaying] = useState(false);
+  const shouldShowAttachments = Boolean(
+    readMode || showAttachments || replyViewingIndex >= 0 || isReplyPreviewing
+  );
   const activeYoutubePlayerVisible = Boolean(
-    activePlaybackYoutubeId && showDetailsModal && opened &&
-    (showAttachments || replyViewingIndex >= 0)
+    activePlaybackYoutubeId && showDetailsModal && opened && shouldShowAttachments
   );
 
   useEffect(() => {
     let cancelled = false;
     setIsYoutubePlaying(false);
-    if (!activeYoutubePlayerVisible || !youtubePlayerRef.current) return undefined;
+    const iframeEl = youtubePlayerRef.current;
+    if (!activeYoutubePlayerVisible || !iframeEl) return undefined;
+    const parentEl = iframeEl.parentNode;
 
     const disableYoutubeCaptions = player => {
       try {
@@ -2250,40 +2323,85 @@ function DetailsModal({
 
     loadYoutubeIframeApi()
       .then(YT => {
-        if (cancelled || !youtubePlayerRef.current || !YT?.Player) return;
-        youtubePlayerInstanceRef.current = new YT.Player(youtubePlayerRef.current, {
-          events: {
-            onReady: event => {
-              if (!cancelled) disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
+        if (
+          cancelled ||
+          !iframeEl ||
+          !iframeEl.isConnected ||
+          youtubePlayerRef.current !== iframeEl ||
+          !YT?.Player
+        ) {
+          return;
+        }
+        try {
+          youtubePlayerInstanceRef.current = new YT.Player(iframeEl, {
+            events: {
+              onReady: event => {
+                if (!cancelled) disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
+              },
+              onApiChange: event => {
+                if (!cancelled) disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
+              },
+              onStateChange: event => {
+                if (!cancelled) {
+                  disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
+                  setIsYoutubePlaying(event.data === YT.PlayerState.PLAYING);
+                }
+              },
+              onError: () => {
+                if (!cancelled) setIsYoutubePlaying(false);
+              },
             },
-            onApiChange: event => {
-              if (!cancelled) disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
-            },
-            onStateChange: event => {
-              if (!cancelled) {
-                disableYoutubeCaptions(event?.target || youtubePlayerInstanceRef.current);
-                setIsYoutubePlaying(event.data === YT.PlayerState.PLAYING);
-              }
-            },
-            onError: () => {
-              if (!cancelled) setIsYoutubePlaying(false);
-            },
-          },
-        });
+          });
+        } catch {
+          setIsYoutubePlaying(false);
+        }
       })
       .catch(() => setIsYoutubePlaying(false));
 
     return () => {
       cancelled = true;
       setIsYoutubePlaying(false);
-      try {
-        youtubePlayerInstanceRef.current?.destroy?.();
-      } catch {
-        // The iframe may already be gone during letter navigation.
-      }
+      const player = youtubePlayerInstanceRef.current;
       youtubePlayerInstanceRef.current = null;
+      if (player) {
+        const wasConnected = Boolean(iframeEl && parentEl && iframeEl.parentNode === parentEl);
+        try {
+          player.destroy?.();
+        } catch {
+          // The iframe may already be gone during letter navigation.
+        }
+        if (wasConnected && parentEl?.isConnected && iframeEl && !iframeEl.parentNode) {
+          try {
+            parentEl.appendChild(iframeEl);
+          } catch {
+            // Ignore DOM re-attachment errors.
+          }
+        }
+      }
     };
   }, [activeContextLetterId, activePlaybackYoutubeId, activeYoutubePlayerVisible]);
+
+  useEffect(() => {
+    if (slideDirection || !activeYoutubePlayerVisible) return undefined;
+    const iframeEl = youtubePlayerRef.current;
+    if (!iframeEl) return undefined;
+    const rafId =
+      typeof window !== "undefined" && typeof window.requestAnimationFrame === "function"
+        ? window.requestAnimationFrame(() => {
+            if (!iframeEl.isConnected) return;
+            iframeEl.getBoundingClientRect();
+          })
+        : null;
+    return () => {
+      if (
+        rafId !== null &&
+        typeof window !== "undefined" &&
+        typeof window.cancelAnimationFrame === "function"
+      ) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [slideDirection, activeYoutubePlayerVisible, activeContextLetterId]);
 
   useEffect(() => {
     setEchoes({love: activeContextLoveEchoes, sad: activeContextSadEchoes});
@@ -2308,14 +2426,15 @@ function DetailsModal({
   useEffect(() => () => {
     window.clearTimeout(replyThreadBoundaryTimerRef.current);
     window.clearTimeout(replyThreadCueTimerRef.current);
+    if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
   }, []);
 
   const slideThreadTo = useCallback((targetIndex) => {
     if (!replyThread[targetIndex] || targetIndex === replyThreadIndex) return false;
     dismissFoldTip();
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
-    setCompletedLetterKey("");
-    setShowAttachments(false);
+    setCompletedLetterKey(readMode ? getLetterId(replyThread[targetIndex]) : "");
+    setShowAttachments(Boolean(readMode && opened));
     setOutgoingLetter(replyThread[replyThreadIndex]);
     setSlideDirection(targetIndex > replyThreadIndex ? "left" : "right");
     setReplyThreadIndex(targetIndex);
@@ -2328,14 +2447,14 @@ function DetailsModal({
       slideTimerRef.current = null;
     }, 500);
     return true;
-  }, [replyThread, replyThreadIndex, dismissFoldTip]);
+  }, [replyThread, replyThreadIndex, dismissFoldTip, readMode, opened]);
   const slideToReply = useCallback((targetIndex = 0) => {
     if (!activeReplies[targetIndex]) return;
     dismissFoldTip();
 
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
     setCompletedLetterKey("");
-    setShowAttachments(false);
+    setShowAttachments(Boolean(readMode && opened));
     const currentLetter = replyViewingIndex >= 0 && activeReplies[replyViewingIndex]
       ? formatReplyAsLetter(activeReplies[replyViewingIndex], selectedLetter)
       : selectedLetter;
@@ -2349,15 +2468,15 @@ function DetailsModal({
       setSlideDirection(null);
       slideTimerRef.current = null;
     }, 500);
-  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter, dismissFoldTip]);
+  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter, dismissFoldTip, readMode, opened]);
 
   const slideToParent = useCallback(() => {
     if (replyViewingIndex < 0) return;
     dismissFoldTip();
 
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
-    setCompletedLetterKey("");
-    setShowAttachments(false);
+    setCompletedLetterKey(readMode ? getLetterId(selectedLetter) : "");
+    setShowAttachments(Boolean(readMode && opened));
     const currentReplyLetter = formatReplyAsLetter(activeReplies[replyViewingIndex], selectedLetter);
 
     setOutgoingLetter(currentReplyLetter);
@@ -2369,14 +2488,14 @@ function DetailsModal({
       setSlideDirection(null);
       slideTimerRef.current = null;
     }, 500);
-  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter, dismissFoldTip]);
+  }, [activeReplies, formatReplyAsLetter, replyViewingIndex, selectedLetter, dismissFoldTip, readMode, opened]);
 
   const slideToReplyParent = useCallback(() => {
     if (!replyParentLetter || showReplyParent) return;
     dismissFoldTip();
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
-    setCompletedLetterKey("");
-    setShowAttachments(false);
+    setCompletedLetterKey(readMode ? getLetterId(replyParentLetter) : "");
+    setShowAttachments(Boolean(readMode && opened));
     setOutgoingLetter(selectedLetter);
     setSlideDirection("right");
     setShowReplyParent(true);
@@ -2385,14 +2504,14 @@ function DetailsModal({
       setSlideDirection(null);
       slideTimerRef.current = null;
     }, 500);
-  }, [replyParentLetter, selectedLetter, showReplyParent, dismissFoldTip]);
+  }, [replyParentLetter, selectedLetter, showReplyParent, dismissFoldTip, readMode, opened]);
 
   const slideBackToFeedReply = useCallback(() => {
     if (!showReplyParent) return;
     dismissFoldTip();
     if (slideTimerRef.current) clearTimeout(slideTimerRef.current);
-    setCompletedLetterKey("");
-    setShowAttachments(false);
+    setCompletedLetterKey(readMode ? getLetterId(selectedLetter) : "");
+    setShowAttachments(Boolean(readMode && opened));
     setOutgoingLetter(replyParentLetter);
     setSlideDirection("left");
     setShowReplyParent(false);
@@ -2401,7 +2520,7 @@ function DetailsModal({
       setSlideDirection(null);
       slideTimerRef.current = null;
     }, 500);
-  }, [replyParentLetter, showReplyParent, dismissFoldTip]);
+  }, [replyParentLetter, showReplyParent, dismissFoldTip, readMode, opened, selectedLetter]);
 
   horizontalReplyNavigationRef.current = {
     forward: () => {
@@ -2452,7 +2571,6 @@ function DetailsModal({
   const shareTargetHasAttachment = Boolean(
     shareTargetSpotifyId || shareTargetYoutubeId || shareTargetLetter?.photo?.url
   );
-  const letterPaperRef = useRef(null);
   const handleDownloadImage = async (includeAttachments = false) => {
     if (isDownloadingImage || !letterPaperRef.current) return;
     setIsDownloadingImage(true);
@@ -2760,7 +2878,9 @@ function DetailsModal({
   // A bounded fallback also cleans up if the browser cancels the animation.
   useEffect(() => {
     if (!isClosing) return undefined;
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reduced = Boolean(
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    );
     const isMobileDevice = typeof window !== "undefined" && (
       window.innerWidth <= 768 ||
       (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0)
@@ -2950,29 +3070,27 @@ function DetailsModal({
         </div>
 
         {lSpotifyTrackId && (
-          <div className="letter-paper__media">
-            <iframe
-              title="spotify-preview-outgoing"
-              style={{ border: "12px" }}
-              src={`https://open.spotify.com/embed/track/${lSpotifyTrackId}?utm_source=generator&theme=1`}
-              width="100%"
-              height="152"
-              frameBorder="0"
-              allowFullScreen=""
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            ></iframe>
-          </div>
+          <div
+            className="letter-paper__media"
+            style={{
+              height: "152px",
+              borderRadius: "12px",
+              background: "rgba(24, 24, 24, 0.92)",
+            }}
+            aria-hidden="true"
+          />
         )}
         {!lSpotifyTrackId && lYoutubeVideoId && (
-          <div className="letter-paper__media letter-paper__media--youtube">
-            <iframe
-              src={`https://www.youtube-nocookie.com/embed/${lYoutubeVideoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0&cc_load_policy=0&iv_load_policy=3`}
-              title="YouTube video player outgoing"
-              frameBorder="0"
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-              allowFullScreen
-            ></iframe>
-          </div>
+          <div
+            className="letter-paper__media letter-paper__media--youtube"
+            style={{
+              backgroundImage: `url(https://i.ytimg.com/vi/${encodeURIComponent(lYoutubeVideoId)}/hqdefault.jpg)`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+            aria-hidden="true"
+          />
         )}
         {letter.photo?.url && (
           <figure className="letter-paper__photo">
@@ -3072,11 +3190,11 @@ function DetailsModal({
     if (!letter) return null;
     const lDate = new Date(letter.timestamp);
     const lTime = new Date(letter.timestamp);
-    const lId = letter._id;
+    const lId = getLetterId(letter) || letter._id;
     const isEarly = lDate < targetDate && lId !== adminId;
     let isEleven = false;
     let isTwelve = false;
-    if (lTime != null) {
+    if (lTime != null && !Number.isNaN(lTime.getTime())) {
       const hours = lTime.getHours();
       const minutes = lTime.getMinutes();
       if (hours === 23 && minutes === 11) isEleven = true;
@@ -3134,8 +3252,9 @@ function DetailsModal({
         </div>
 
         {lSpotifyTrackId && (
-          <div className="letter-paper__media">
+          <div className="letter-paper__media" key={`prerender-spotify-media-${lId}-${lSpotifyTrackId}`}>
             <iframe
+              key={`prerender-spotify-iframe-${lId}-${lSpotifyTrackId}`}
               title="spotify-preview-prerender"
               tabIndex={-1}
               style={{ border: "12px" }}
@@ -3150,8 +3269,18 @@ function DetailsModal({
           </div>
         )}
         {!lSpotifyTrackId && lYoutubeVideoId && (
-          <div className="letter-paper__media letter-paper__media--youtube">
+          <div
+            className="letter-paper__media letter-paper__media--youtube"
+            key={`prerender-youtube-media-${lId}-${lYoutubeVideoId}`}
+            style={{
+              backgroundImage: `url(https://i.ytimg.com/vi/${encodeURIComponent(lYoutubeVideoId)}/hqdefault.jpg)`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
             <iframe
+              key={`prerender-youtube-iframe-${lId}-${lYoutubeVideoId}`}
               src={`https://www.youtube-nocookie.com/embed/${lYoutubeVideoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0&cc_load_policy=0&iv_load_policy=3`}
               title="YouTube video player prerender"
               tabIndex={-1}
@@ -3420,9 +3549,13 @@ function DetailsModal({
           </SensitiveMessage>
         </div>
 
-        {((showAttachments && !isReplyActive) || isReplyActive) && activeSpotifyTrackId && (
-          <div className="letter-paper__media">
+        {shouldShowAttachments && activeSpotifyTrackId && (
+          <div
+            className="letter-paper__media"
+            key={`spotify-media-${activeContextLetterId}-${activeSpotifyTrackId}`}
+          >
             <iframe
+              key={`spotify-iframe-${activeContextLetterId}-${activeSpotifyTrackId}`}
               title="spotify-preview"
               style={{ border: "12px" }}
               src={`https://open.spotify.com/embed/track/${activeSpotifyTrackId}?utm_source=generator&theme=1`}
@@ -3431,22 +3564,41 @@ function DetailsModal({
               frameBorder="0"
               allowFullScreen=""
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="eager"
             ></iframe>
           </div>
         )}
-        {((showAttachments && !isReplyActive) || isReplyActive) && !activeSpotifyTrackId && activeYoutubeVideoId && (
-          <div className="letter-paper__media letter-paper__media--youtube">
+        {shouldShowAttachments && !activeSpotifyTrackId && activeYoutubeVideoId && (
+          <div
+            className="letter-paper__media letter-paper__media--youtube"
+            key={`youtube-media-${activeContextLetterId}-${activeYoutubeVideoId}`}
+            style={{
+              backgroundImage: `url(https://i.ytimg.com/vi/${encodeURIComponent(activeYoutubeVideoId)}/hqdefault.jpg)`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
             <iframe
+              key={`youtube-iframe-${activeContextLetterId}-${activeYoutubeVideoId}`}
               ref={youtubePlayerRef}
               src={`https://www.youtube-nocookie.com/embed/${activeYoutubeVideoId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&cc_load_policy=0&iv_load_policy=3&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
               title="YouTube video player"
               frameBorder="0"
               allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
               allowFullScreen
+              loading="eager"
+              onLoad={(event) => {
+                try {
+                  event.currentTarget?.getBoundingClientRect?.();
+                } catch (_) {
+                  // Ignore cross-origin / detached read errors
+                }
+              }}
             ></iframe>
           </div>
         )}
-        {((showAttachments && !isReplyActive) || isReplyActive) && activeLetter.photo?.url && (
+        {shouldShowAttachments && activeLetter.photo?.url && (
           <figure className="letter-paper__photo">
             <img
               src={getOptimizedPhotoUrl(activeLetter.photo.url)}
@@ -3586,7 +3738,7 @@ function DetailsModal({
             )
           )}
 
-          <span className="letter-paper__age" title={js_ago(new Date(activeLetter.timestamp), {format: "long"})}>
+          <span className="letter-paper__age" title={safeLetterAgeTitle(activeLetter?.timestamp)}>
             {shortLetterAge(activeLetter.timestamp)}
           </span>
           <span className="letter-meta-sep">·</span>
@@ -3773,7 +3925,7 @@ function DetailsModal({
 
   useLayoutEffect(() => {
     setDomRefinedDesktopWidth(null);
-  }, [activeContextLetter, showDetailsModal, showTranslation]);
+  }, [activeContextLetterId, showDetailsModal, showTranslation]);
 
   useLayoutEffect(() => {
     if (!isDesktop || !showDetailsModal || !opened || !letterPaperRef.current) {
@@ -3788,11 +3940,17 @@ function DetailsModal({
       activeDesktopWidth,
       domRefinedDesktopWidth || BASE_DESKTOP_LETTER_WIDTH
     );
-    if (
-      paperEl.scrollHeight > paperEl.clientHeight + 2 &&
-      currentTargetWidth < maxAllowedWidth
-    ) {
-      const nextWidth = Math.min(maxAllowedWidth, currentTargetWidth + 20);
+    const overflowPx = paperEl.scrollHeight - paperEl.clientHeight;
+    if (overflowPx > 2 && currentTargetWidth < maxAllowedWidth) {
+      const safeClientHeight = Math.max(paperEl.clientHeight, 240);
+      const estimatedExtraWidth = Math.max(
+        20,
+        Math.ceil((overflowPx / safeClientHeight) * currentTargetWidth * 1.15)
+      );
+      const nextWidth = Math.min(
+        maxAllowedWidth,
+        currentTargetWidth + estimatedExtraWidth
+      );
       if (nextWidth > currentTargetWidth) {
         setDomRefinedDesktopWidth(nextWidth);
       }
@@ -3801,12 +3959,12 @@ function DetailsModal({
     isDesktop,
     showDetailsModal,
     opened,
-    activeContextLetter,
+    activeContextLetterId,
     activeDesktopWidth,
     domRefinedDesktopWidth,
     viewportSize.width,
     viewportSize.height,
-    showAttachments,
+    shouldShowAttachments,
     completedLetterKey,
     showTranslation,
     translatedMessage,
@@ -3944,7 +4102,7 @@ function DetailsModal({
               {closingEnvelope}
             </div>
           </div>
-          {readMode && opened && prerenderLetter && (
+          {readMode && opened && !slideDirection && !outgoingLetter && prerenderLetter && (
             <div
               className="read-mode-prerender-wrapper"
               aria-hidden="true"

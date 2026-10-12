@@ -125,9 +125,7 @@ body.is-empty-feed-lock {
   top: 0;
   z-index: 100;
   overflow-anchor: none;
-  background: rgba(255, 255, 255, 0.96);
-  transition: padding 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.45s ease;
+  background: transparent;
 }
 
 .home-toolbar.is-compact {
@@ -143,33 +141,43 @@ body.is-empty-feed-lock {
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  animation: toolbarMorph 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes toolbarMorph {
-  from {
-    opacity: 0.88;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .header {
-  margin-bottom: 10px;
+  margin-bottom: 0;
+  background: transparent;
 }
 
-.header .logo,
-.header .alt-logo,
-.search-bar,
-.add-button .big-button,
-.messages-count {
-  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    min-height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    margin 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    padding 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    border-radius 0.45s ease;
+.header .logo {
+  display: block;
+  width: 400px;
+  max-width: 100%;
+  height: 70px;
+  min-height: 70px;
+  aspect-ratio: 400 / 70;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.header .logo[hidden],
+.header .logo.is-hidden-logo,
+.home-toolbar.is-compact .header .logo[hidden],
+.home-toolbar.is-compact .header .logo.is-hidden-logo {
+  display: none !important;
+}
+
+.header .alt-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70px;
+  height: 70px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.header .alt-logo > br {
+  display: none;
 }
 
 .home-toolbar.is-compact .header,
@@ -186,19 +194,24 @@ body.is-empty-feed-lock {
   width: 145px;
   max-width: 100%;
   height: auto;
+  min-height: 0;
   margin: 0;
-  animation: compactLogo 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .home-toolbar.is-compact .header .logo--compact-mark {
   width: 48px;
   height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  aspect-ratio: 1 / 1;
   object-fit: contain;
 }
 
 .home-toolbar.is-compact .alt-logo {
   grid-column: 1;
   width: 145px;
+  height: 48px;
+  min-height: 48px;
   margin: 0;
   overflow: hidden;
   font-size: 11px;
@@ -210,7 +223,6 @@ body.is-empty-feed-lock {
   width: 100%;
   max-width: 700px;
   margin: 0;
-  animation: compactSearch 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .home-toolbar.is-compact .search-field {
@@ -235,7 +247,6 @@ body.is-empty-feed-lock {
   padding: 0;
   border-radius: 50%;
   background: rgba(55, 114, 255, 0.9);
-  animation: compactAction 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .home-toolbar.is-compact .big-button .button-icon {
@@ -249,7 +260,6 @@ body.is-empty-feed-lock {
 .home-toolbar.is-compact .information-panel {
   grid-column: 1 / -1;
   justify-self: center;
-  animation: compactInfo 0.55s ease both;
 }
 
 .home-toolbar.is-compact .messages-count {
@@ -262,48 +272,6 @@ body.is-empty-feed-lock {
 
 .home-toolbar.is-compact .message-stat {
   padding: 5px 10px;
-}
-
-@keyframes compactLogo {
-  from {
-    opacity: 0.55;
-    transform: translate(24px, 8px) scale(1.12);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
-  }
-}
-
-@keyframes compactSearch {
-  from {
-    opacity: 0.45;
-    transform: translateY(12px) scaleX(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scaleX(1);
-  }
-}
-
-@keyframes compactAction {
-  from {
-    opacity: 0.45;
-    transform: translate(-18px, 8px) scale(1.18);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
-  }
-}
-
-@keyframes compactInfo {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 /* #3772ff color description : Light blue. */
@@ -321,7 +289,7 @@ body.is-empty-feed-lock {
 .search-bar {
   width: 80%;
   max-width: 700px;
-  margin: 4px auto 24px;
+  margin: 4px auto 14px;
 }
 
 .search-field {
@@ -3834,43 +3802,24 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     gap: 4px;
   }
 
-  .home-toolbar {
-    transition: padding 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease;
-  }
-
-  .header .logo,
-  .header .alt-logo,
-  .search-bar,
-  .add-button .big-button,
-  .messages-count {
-    transition: width 0.2s cubic-bezier(0.2, 0, 0, 1),
-      height 0.2s cubic-bezier(0.2, 0, 0, 1),
-      min-height 0.2s cubic-bezier(0.2, 0, 0, 1),
-      margin 0.2s cubic-bezier(0.2, 0, 0, 1),
-      padding 0.2s cubic-bezier(0.2, 0, 0, 1),
-      border-radius 0.2s ease;
-  }
-
   .home-toolbar.is-compact {
     grid-template-columns: 42px minmax(0, 1fr) 42px;
     gap: 7px 8px;
     margin: 0 -10px;
     padding: 8px 10px 7px;
     border-radius: 0 0 14px 14px;
-    animation-duration: 0.2s;
-  }
-
-  .home-toolbar.is-compact .header .logo {
-    animation-duration: 0.22s;
   }
 
   .home-toolbar.is-compact .header .logo--compact-mark {
     width: 40px;
     height: 40px;
+    min-width: 40px;
+    min-height: 40px;
   }
 
-  .home-toolbar.is-compact .search-bar {
-    animation-duration: 0.22s;
+  .home-toolbar.is-compact .alt-logo {
+    height: 40px;
+    min-height: 40px;
   }
 
   .home-toolbar.is-compact .search-field {
@@ -3900,13 +3849,11 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   .home-toolbar.is-compact .big-button {
     width: 40px;
     min-height: 40px;
-    animation-duration: 0.22s;
   }
 
   .home-toolbar.is-compact .information-panel {
     width: fit-content;
     max-width: 100%;
-    animation-duration: 0.22s;
   }
 
   .home-toolbar.is-compact .messages-count {
@@ -4256,10 +4203,20 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
     /* hyphens: auto; /1* Enable automatic hyphenation *1/ */
   }
 
-  .logo {
+  .logo,
+  .header .logo {
+    width: auto;
     height: 50px;
+    min-height: 50px;
     max-width: 80%;
+    aspect-ratio: 2000 / 373;
     margin: 0 auto; /* Center the logo horizontally */
+    object-fit: contain;
+  }
+
+  .header .alt-logo {
+    height: 50px;
+    min-height: 50px;
   }
 
   .footer {
@@ -4325,7 +4282,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
 
   .search-bar {
     width: 100%;
-    margin: 4px auto 18px;
+    margin: 4px auto 12px;
   }
 
   .search-field {
@@ -4624,6 +4581,7 @@ html.night-shift .burn-letter-achievement { border-color:rgba(125,163,255,.28); 
   .home-toolbar.is-compact .big-button {
     width: 36px;
     height: 36px;
+    min-width: 36px;
     min-height: 36px;
   }
 
@@ -6621,20 +6579,16 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   0% {
     transform: translateY(0);
     opacity: 1;
-    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22));
   }
   40% {
     opacity: 1;
-    filter: drop-shadow(0 32px 38px rgba(0, 0, 0, 0.42));
   }
   85% {
     opacity: 0.95;
-    filter: drop-shadow(0 42px 48px rgba(0, 0, 0, 0.3));
   }
   100% {
     transform: translateY(calc(-50vh - 50% - 40px));
     opacity: 0;
-    filter: drop-shadow(0 48px 50px rgba(0, 0, 0, 0));
   }
 }
 
@@ -6642,18 +6596,13 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   0% {
     transform: translateY(calc(50vh + 50% + 40px));
     opacity: 0.6;
-    filter: drop-shadow(0 -16px 28px rgba(0, 0, 0, 0.32));
   }
   30% {
     opacity: 1;
   }
-  65% {
-    filter: drop-shadow(0 -8px 20px rgba(0, 0, 0, 0.2));
-  }
   100% {
     transform: translateY(0);
     opacity: 1;
-    filter: drop-shadow(0 0 0 transparent);
   }
 }
 
@@ -6661,20 +6610,16 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   0% {
     transform: translateY(0);
     opacity: 1;
-    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22));
   }
   40% {
     opacity: 1;
-    filter: drop-shadow(0 -32px 38px rgba(0, 0, 0, 0.42));
   }
   85% {
     opacity: 0.95;
-    filter: drop-shadow(0 -42px 48px rgba(0, 0, 0, 0.3));
   }
   100% {
     transform: translateY(calc(50vh + 50% + 40px));
     opacity: 0;
-    filter: drop-shadow(0 -48px 50px rgba(0, 0, 0, 0));
   }
 }
 
@@ -6682,18 +6627,13 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   0% {
     transform: translateY(calc(-50vh - 50% - 40px));
     opacity: 0.6;
-    filter: drop-shadow(0 28px 36px rgba(0, 0, 0, 0.36));
   }
   30% {
     opacity: 1;
   }
-  65% {
-    filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.2));
-  }
   100% {
     transform: translateY(0);
     opacity: 1;
-    filter: drop-shadow(0 0 0 transparent);
   }
 }
 
@@ -6701,12 +6641,10 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   0% {
     transform: translateX(0);
     opacity: 1;
-    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22));
   }
   100% {
     transform: translateX(calc(-50vw - 50% - 40px));
     opacity: 0;
-    filter: drop-shadow(0 48px 50px rgba(0, 0, 0, 0));
   }
 }
 
@@ -6714,12 +6652,10 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   0% {
     transform: translateX(calc(50vw + 50% + 40px));
     opacity: 0.6;
-    filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.32));
   }
   100% {
     transform: translateX(0);
     opacity: 1;
-    filter: drop-shadow(0 0 0 transparent);
   }
 }
 
@@ -6727,12 +6663,10 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   0% {
     transform: translateX(0);
     opacity: 1;
-    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22));
   }
   100% {
     transform: translateX(calc(50vw + 50% + 40px));
     opacity: 0;
-    filter: drop-shadow(0 48px 50px rgba(0, 0, 0, 0));
   }
 }
 
@@ -6740,12 +6674,10 @@ html.night-shift .letter-modal-overlay.is-read-mode {
   0% {
     transform: translateX(calc(-50vw - 50% - 40px));
     opacity: 0.6;
-    filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.32));
   }
   100% {
     transform: translateX(0);
     opacity: 1;
-    filter: drop-shadow(0 0 0 transparent);
   }
 }
 
@@ -7661,7 +7593,9 @@ html.night-shift .letter-paper__translation-control small {
   width: 100%;
   aspect-ratio: 16 / 9;
   border-radius: 10px;
-  background: #000;
+  background-color: #000;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .letter-paper__media--youtube iframe {
@@ -7669,6 +7603,8 @@ html.night-shift .letter-paper__translation-control small {
   width: 100%;
   height: 100%;
   border: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .letter-paper__photo {
