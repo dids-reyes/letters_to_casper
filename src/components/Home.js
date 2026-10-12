@@ -10,14 +10,13 @@ import AdComponent from "./AdComponent";
 import AdsterraNativeBanner from "./AdsterraNativeBanner";
 import DetailsModal from "./DetailsModal";
 import ErrorBoundary from "./ErrorBoundary";
-import { AiFillMessage } from "react-icons/ai";
 import Lottie from "react-lottie-player";
 import ghost1 from "../lotties/ghost1.json";
 import empty from "../lotties/empty2.json";
 import lettersToCasperLogo from "../lotties/ltc_logo_1.webp";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { PiStarFour } from "react-icons/pi";
+import { PiNotePencil, PiStarFour } from "react-icons/pi";
 import { resolveSkySocketEndpoint } from "./sky/socketEndpoint";
 import MailboxLoading from "./MailboxLoading";
 import {
@@ -630,39 +629,35 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
   const feedPagesRef = useRef(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (scrollFrame.current !== null) {
-        return;
+    const syncHeaderScrollState = () => {
+      const scrollY = window.scrollY;
+      const isDesktop = typeof window !== "undefined" && window.innerWidth > 768;
+      const enterCompactThreshold = 160;
+      const exitCompactThreshold = isDesktop ? 25 : 60;
+
+      const currentCompact = isHeaderCompactRef.current;
+      const nextCompact = currentCompact
+        ? scrollY > exitCompactThreshold
+        : scrollY > enterCompactThreshold;
+
+      if (nextCompact !== currentCompact) {
+        isHeaderCompactRef.current = nextCompact;
+        setIsHeaderCompact(nextCompact);
       }
 
-      scrollFrame.current = window.requestAnimationFrame(() => {
-        const scrollY = window.scrollY;
-        const isDesktop = typeof window !== "undefined" && window.innerWidth > 768;
-        const enterCompactThreshold = 160;
-        const exitCompactThreshold = isDesktop ? 25 : 60;
-
-        const currentCompact = isHeaderCompactRef.current;
-        const nextCompact = currentCompact
-          ? scrollY > exitCompactThreshold
-          : scrollY > enterCompactThreshold;
-
-        if (nextCompact !== currentCompact) {
-          isHeaderCompactRef.current = nextCompact;
-          setIsHeaderCompact(nextCompact);
-        }
-
-        const currentAtTop = isAtTopRef.current;
-        const nextAtTop = scrollY === 0;
-        if (nextAtTop !== currentAtTop) {
-          isAtTopRef.current = nextAtTop;
-          setIsAtTop(nextAtTop);
-        }
-
-        scrollFrame.current = null;
-      });
+      const currentAtTop = isAtTopRef.current;
+      const nextAtTop = scrollY === 0;
+      if (nextAtTop !== currentAtTop) {
+        isAtTopRef.current = nextAtTop;
+        setIsAtTop(nextAtTop);
+      }
     };
 
-    handleScroll();
+    const handleScroll = () => {
+      syncHeaderScrollState();
+    };
+
+    syncHeaderScrollState();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -684,13 +679,13 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     return () => window.removeEventListener("resize", updateLetterGridColumns);
   }, []);
 
-  const handleSearchChange = (event) => {
+  const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
-  };
+  }, []);
 
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setSearchTerm("");
-  };
+  }, []);
 
   const [isFeatured, setIsFeatured] = useState(false);
   const [goBackToNotFeatured, setGoBackToNotFeatured] = useState(false);
@@ -1562,7 +1557,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         />
         <div className="add-button">
         <button ref={leaveLetterButtonRef} className="btn btn-primary big-button" onClick={handleLeaveLetterClick}>
-          <AiFillMessage className="button-icon" size="20px" />
+          <PiNotePencil className="button-icon" size="20px" />
           <span className="leave-letter-label">Leave a Letter</span>
         </button>
         <div className="information-panel">
@@ -2169,8 +2164,14 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       ) : null}
       <ErrorBoundary
         fallback={null}
+        resetKey={`${showDetailsModal}-${selectedLetter?._id || ""}`}
         onError={(error) => {
           console.error("Error in DetailsModal:", error);
+          if (typeof document !== "undefined") {
+            document.body.style.overflow = "";
+            document.documentElement.style.overflow = "";
+            document.body.style.touchAction = "";
+          }
           setShowDetailsModal(false);
           setSelectedLetter(null);
           setIsModalClosing(false);

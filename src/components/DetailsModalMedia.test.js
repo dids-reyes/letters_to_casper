@@ -1,7 +1,8 @@
 import React from 'react';
-import { act, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import DetailsModal, { extractMediaLinks } from './DetailsModal';
+import ErrorBoundary from './ErrorBoundary';
 
 jest.mock('react-lottie-player', () => () => null);
 jest.mock('./AdComponent', () => () => null);
@@ -369,4 +370,237 @@ describe('Stamp tooltip placement', () => {
     expect(stampBtnMobile.getAttribute('data-tooltip-place')).toBe('bottom');
   });
 });
+
+describe('Read Mode media stability, crash prevention, and YouTube scroll fixes', () => {
+  const youtubeLetter1 = {
+    _id: 'yt-1',
+    from: 'Sender 1',
+    to: 'Recipient 1',
+    message: 'First YouTube letter\n\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    timestamp: '2024-01-01T12:00:00.000Z',
+    approve: true,
+    reads: 1,
+    echoes: { love: 1, sad: 0 },
+  };
+
+  const youtubeLetter2 = {
+    _id: 'yt-2',
+    from: 'Sender 2',
+    to: 'Recipient 2',
+    message: 'Second YouTube letter\n\nhttps://www.youtube.com/watch?v=jNQXAC9IVRw',
+    timestamp: '2024-01-01T13:00:00.000Z',
+    approve: true,
+    reads: 2,
+    echoes: { love: 2, sad: 0 },
+  };
+
+  test('renders YouTube thumbnail background and eager loading on active YouTube container to prevent black frame', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={youtubeLetter1}
+          readMode={true}
+          initialOpened={true}
+          letters={[youtubeLetter1]}
+        />
+      </MemoryRouter>
+    );
+
+    const mediaWrapper = container.querySelector('.letter-paper__media--youtube');
+    const ytIframe = container.querySelector('iframe[title="YouTube video player"]');
+    expect(mediaWrapper).not.toBeNull();
+    expect(mediaWrapper.style.backgroundImage).toContain('https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+    expect(ytIframe).not.toBeNull();
+    expect(ytIframe.getAttribute('loading')).toBe('eager');
+  });
+
+  test('recovers cleanly without DOM removeChild crash if YT.Player.destroy() detaches the iframe node', () => {
+    window.YT = {
+      PlayerState: { PLAYING: 1 },
+      Player: jest.fn((iframe) => ({
+        destroy: jest.fn(() => {
+          if (iframe && iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        }),
+      })),
+    };
+
+    const { container, rerender } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={youtubeLetter1}
+          readMode={true}
+          initialOpened={true}
+          letters={[youtubeLetter1, youtubeLetter2]}
+        />
+      </MemoryRouter>
+    );
+
+    expect(container.querySelector('iframe[title="YouTube video player"]')).not.toBeNull();
+
+    // Switching letters unmounts the first YouTube iframe after YT.Player.destroy() ran
+    expect(() => {
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={youtubeLetter2}
+            readMode={true}
+            initialOpened={true}
+            letters={[youtubeLetter1, youtubeLetter2]}
+          />
+        </MemoryRouter>
+      );
+    }).not.toThrow();
+
+    const nextIframe = container.querySelector('iframe[title="YouTube video player"]');
+    expect(nextIframe).not.toBeNull();
+    expect(nextIframe.src).toContain('jNQXAC9IVRw');
+  });
+
+  test('does not mount duplicate outgoing iframes or background prerender iframes during the 520ms slide animation', () => {
+    jest.useFakeTimers();
+    try {
+      const setSelectedLetter = jest.fn();
+      const { container, rerender } = render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={youtubeLetter1}
+            readMode={true}
+            initialOpened={true}
+            letters={[youtubeLetter1, youtubeLetter2]}
+            setSelectedLetter={setSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+
+      fireEvent.keyDown(document, { key: 'ArrowDown' });
+      expect(setSelectedLetter).toHaveBeenCalledWith(youtubeLetter2);
+
+      rerender(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={youtubeLetter2}
+            readMode={true}
+            initialOpened={true}
+            letters={[youtubeLetter1, youtubeLetter2]}
+            setSelectedLetter={setSelectedLetter}
+          />
+        </MemoryRouter>
+      );
+
+      // While slide animation is active:
+      expect(container.querySelector('.read-mode-card-wrapper.is-exiting-next')).not.toBeNull();
+      expect(container.querySelector('iframe[title="YouTube video player outgoing"]')).toBeNull();
+      expect(container.querySelector('iframe[title="spotify-preview-outgoing"]')).toBeNull();
+      expect(container.querySelector('.read-mode-prerender-wrapper')).toBeNull();
+
+      // Active incoming YouTube iframe is the ONLY iframe mounted during slide
+      const allIframes = container.querySelectorAll('iframe');
+      expect(allIframes).toHaveLength(1);
+      expect(allIframes[0].src).toContain('jNQXAC9IVRw');
+
+      act(() => {
+        jest.advanceTimersByTime(550);
+      });
+
+      expect(container.querySelector('.read-mode-card-wrapper.is-exiting-next')).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('wheel scrolling inside a letter whose outer .letter-paper overflows due to YouTube attachment scrolls the card before jumping to next letter', () => {
+    const setSelectedLetter = jest.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <DetailsModal
+          showDetailsModal={true}
+          toggleDetailsModal={jest.fn()}
+          selectedLetter={youtubeLetter1}
+          readMode={true}
+          initialOpened={true}
+          letters={[youtubeLetter1, youtubeLetter2]}
+          setSelectedLetter={setSelectedLetter}
+        />
+      </MemoryRouter>
+    );
+
+    const paperEl = container.querySelector('.letter-paper');
+    expect(paperEl).not.toBeNull();
+
+    // Simulate outer .letter-paper overflowing because of the 16:9 YouTube player at the bottom
+    Object.defineProperty(paperEl, 'scrollHeight', { value: 780, configurable: true });
+    Object.defineProperty(paperEl, 'clientHeight', { value: 520, configurable: true });
+    Object.defineProperty(paperEl, 'scrollTop', { value: 40, writable: true, configurable: true });
+
+    // Scrolling down over the letter should allow native scroll inside .letter-paper instead of jumping to next letter
+    fireEvent.wheel(paperEl, { deltaY: 90 });
+    expect(setSelectedLetter).not.toHaveBeenCalled();
+
+    // Once scrolled to the bottom of .letter-paper, scrolling down advances to the next letter
+    paperEl.scrollTop = 260;
+    fireEvent.wheel(paperEl, { deltaY: 90 });
+    expect(setSelectedLetter).toHaveBeenCalledWith(youtubeLetter2);
+  });
+
+  test('does not crash when a letter has a future or skewed timestamp in Read Mode', () => {
+    const futureLetter = {
+      ...youtubeLetter1,
+      _id: 'future-1',
+      timestamp: new Date(Date.now() + 120000).toISOString(),
+    };
+
+    expect(() => {
+      render(
+        <MemoryRouter>
+          <DetailsModal
+            showDetailsModal={true}
+            toggleDetailsModal={jest.fn()}
+            selectedLetter={futureLetter}
+            readMode={true}
+            initialOpened={true}
+            letters={[futureLetter]}
+          />
+        </MemoryRouter>
+      );
+    }).not.toThrow();
+  });
+
+  test('ErrorBoundary respects fallback={null} and resets when resetKey changes', () => {
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const Thrower = ({ shouldThrow }) => {
+      if (shouldThrow) throw new Error('Transient modal error');
+      return <div data-testid="recovered-child">Healthy modal</div>;
+    };
+
+    const { container, rerender, getByTestId } = render(
+      <ErrorBoundary fallback={null} resetKey="key-1">
+        <Thrower shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(container.innerHTML).toBe('');
+
+    rerender(
+      <ErrorBoundary fallback={null} resetKey="key-2">
+        <Thrower shouldThrow={false} />
+      </ErrorBoundary>
+    );
+
+    expect(getByTestId('recovered-child')).toBeInTheDocument();
+    spy.mockRestore();
+  });
+});
+
 
