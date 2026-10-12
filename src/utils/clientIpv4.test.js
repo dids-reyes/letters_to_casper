@@ -59,15 +59,15 @@ describe("clientIpv4 and geolocation utility", () => {
     expect(ip).toBe("");
   });
 
-  test("normalizes and rounds browser GPS coordinates to 3 decimals for privacy", () => {
+  test("normalizes browser GPS coordinates without rounding", () => {
     expect(
       normalizeClientCoordinates({
         latitude: 14.554729,
         longitude: 121.024445,
       })
     ).toEqual({
-      latitude: 14.555,
-      longitude: 121.024,
+      latitude: 14.554729,
+      longitude: 121.024445,
     });
     expect(normalizeClientCoordinates({ latitude: 0, longitude: 0 })).toBeNull();
   });
@@ -92,8 +92,8 @@ describe("clientIpv4 and geolocation utility", () => {
     const coords = await resolveClientCoordinates();
 
     expect(coords).toEqual({
-      latitude: 14.555,
-      longitude: 121.024,
+      latitude: 14.554729,
+      longitude: 121.024445,
     });
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
   });

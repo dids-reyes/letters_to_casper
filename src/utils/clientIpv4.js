@@ -24,8 +24,8 @@ export const normalizeClientCoordinates = (rawCoords) => {
     return null;
   }
   return {
-    latitude: Math.round(latitude * 1000) / 1000,
-    longitude: Math.round(longitude * 1000) / 1000,
+    latitude,
+    longitude,
   };
 };
 

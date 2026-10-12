@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import AddModal from './AddModal';
 
 beforeAll(() => {
@@ -353,3 +354,99 @@ test('shows emphasized Allow Location Access callout inside Submit this letter? 
   ).toBeInTheDocument();
 });
 
+test('groups media attachments and optional notification email under collapsed-by-default Advanced Options accordion', async () => {
+  const handleAddLetter = jest.fn().mockResolvedValue({ burnKey: 'burn-1', letterId: 'letter-1' });
+  const Harness = () => {
+    const [letter, setLetter] = React.useState({
+      from: 'Alice',
+      to: 'Casper',
+      message: 'Testing Advanced Options and optional email notifications.',
+      link: '',
+      email: '',
+    });
+    return (
+      <AddModal
+        showAddModal
+        toggleAddModal={jest.fn()}
+        newLetter={letter}
+        setNewLetter={setLetter}
+        handleAddLetter={handleAddLetter}
+      />
+    );
+  };
+
+  const { container } = render(<Harness />);
+  const advancedToggle = screen.getByRole('button', { name: /Advanced Options/i });
+  expect(advancedToggle).toHaveAttribute('aria-expanded', 'false');
+  expect(container.querySelector('#compose-optional-extras-content')).toHaveAttribute('hidden');
+
+  // Expand Advanced Options
+  fireEvent.click(advancedToggle);
+  expect(advancedToggle).toHaveAttribute('aria-expanded', 'true');
+  expect(container.querySelector('#compose-optional-extras-content')).not.toHaveAttribute('hidden');
+  expect(container.querySelectorAll('.compose-advanced-divider').length).toBe(0);
+
+  const emailInput = screen.getByPlaceholderText('Your email (optional)');
+  expect(emailInput).toHaveAttribute('type', 'email');
+  expect(
+    screen.getByText('Get notified about replies.')
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/reaction milestones/i)).toBeNull();
+
+  // Invalid email shows error and disables submit
+  fireEvent.change(emailInput, { target: { value: 'not-an-email' } });
+  expect(screen.getByRole('alert')).toHaveTextContent(/valid email address/i);
+  const submitButton = screen.getByRole('button', { name: /Submit Letter/i });
+  expect(submitButton).toBeDisabled();
+
+  // Valid email enables submit and persists email + notificationPreferences
+  fireEvent.change(emailInput, { target: { value: 'Reader@Example.com' } });
+  expect(submitButton).not.toBeDisabled();
+
+  fireEvent.click(submitButton);
+  fireEvent.click(submitButton);
+  fireEvent.click(screen.getByRole('checkbox'));
+  fireEvent.click(container.querySelector('.submit-confirm-send'));
+
+  await waitFor(() => {
+    expect(handleAddLetter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'reader@example.com',
+        notificationEmail: 'reader@example.com',
+        notificationPreferences: {
+          replies: true,
+          reactionMilestones: [10, 50, 100],
+        },
+      }),
+      expect.any(Function)
+    );
+  });
+});
+
+test('letter preview renders the International Fallback stamp instead of the Default Domestic Fallback stamp', () => {
+  const dummyLetter = {
+    from: 'Alice',
+    to: 'Casper',
+    message: 'Hello this is a test letter preview for Casper.',
+  };
+
+  const { container } = render(
+    <MemoryRouter>
+      <AddModal
+        showAddModal={true}
+        toggleAddModal={jest.fn()}
+        newLetter={dummyLetter}
+        handleAddLetter={jest.fn()}
+        setNewLetter={jest.fn()}
+      />
+    </MemoryRouter>
+  );
+
+  const previewBtn = screen.getByRole('button', { name: /Preview/i });
+  fireEvent.click(previewBtn);
+
+  const intlStamp = container.querySelector('.letter-paper__stamp-slot .letter-card__main-stamp--international');
+  expect(intlStamp).toBeInTheDocument();
+  expect(intlStamp).toHaveAttribute('data-motif', 'global_international');
+  expect(container.querySelector('.letter-paper__stamp-slot .letter-card__stamp-wrapper--variant-1')).toBeNull();
+});

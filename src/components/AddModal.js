@@ -69,6 +69,15 @@ const validateSongLink = rawLink => {
   }
 };
 
+const validateNotificationEmail = rawEmail => {
+  const value = String(rawEmail || '').trim();
+  if (!value) return {valid: true, email: ''};
+  if (value.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
+    return {valid: false, message: 'Enter a valid email address.'};
+  }
+  return {valid: true, email: value.toLowerCase()};
+};
+
 const EMAIL_NOTIFICATIONS_ENABLED = false;
 
 function AddModal({
@@ -143,6 +152,7 @@ function AddModal({
   const focusTextareaRef = useRef(null);
   const linkGuidePagesRef = useRef(null);
   const songLinkValidation = validateSongLink(newLetter.link);
+  const emailValidation = validateNotificationEmail(newLetter.email);
   const displayedLinkIcon = songLinkValidation.valid && songLinkValidation.service
     ? songLinkValidation.service
     : activeLinkIcon;
@@ -198,9 +208,10 @@ function AddModal({
       !newLetter.to ||
       !newLetter.message ||
       newLetter.message.length < 10 ||
-      !songLinkValidation.valid;
+      !songLinkValidation.valid ||
+      !emailValidation.valid;
     setIsSubmitDisabled(shouldDisableSubmit);
-  }, [isReply, newLetter, songLinkValidation.valid]);
+  }, [isReply, newLetter, songLinkValidation.valid, emailValidation.valid]);
 
 
 useEffect(() => {
@@ -333,6 +344,13 @@ useEffect(() => {
     prewarmClientLocation();
     const updatedLetter = {
       ...newLetter,
+      ...(emailValidation.email
+        ? {
+            email: emailValidation.email,
+            notificationEmail: emailValidation.email,
+            notificationPreferences: {replies: true, reactionMilestones: [10, 50, 100]},
+          }
+        : {}),
       message: newLetter.link
         ? `${newLetter.message}\n\n${newLetter.link}`
         : newLetter.message,
@@ -724,15 +742,17 @@ useEffect(() => {
                       }
                     >
                       <span>
-                        <strong>Letter Attachments</strong>
+                        <strong>Advanced Options</strong>
                         <small>
                           {newLetter.photoFile
-                            ? "Photo attached"
+                            ? "Photo attached · Add a song or photo"
                             : newLetter.link
                               ? songLinkValidation.valid
-                                ? "Song link added"
-                                : "Song link needs attention"
-                              : "Add a song or photo"}
+                                ? "Song link added · Add a song or photo"
+                                : "Song link needs attention · Add a song or photo"
+                              : newLetter.email
+                                ? "Email added · Add a song or photo"
+                                : "Add a song or photo"}
                         </small>
                       </span>
                       <IoChevronDownOutline aria-hidden="true" />
@@ -886,6 +906,55 @@ useEffect(() => {
                         {photoError && (
                           <small className="compose-photo-error" role="alert">
                             {photoError}
+                          </small>
+                        )}
+                      </div>
+
+                      <div className="form-group compose-email-group">
+                        <div className="compose-photo-label compose-email-label">
+                          <label htmlFor="email" className="label-top-left">
+                            Email <span>Optional</span>
+                          </label>
+                          <small
+                            id="compose-email-helper"
+                            className="compose-email-helper"
+                          >
+                            Get notified about replies.
+                          </small>
+                        </div>
+                        <input
+                          autoComplete="email"
+                          type="email"
+                          id="email"
+                          name="email"
+                          placeholder="Your email (optional)"
+                          maxLength="254"
+                          className={`form-control full-width${
+                            newLetter.email && !emailValidation.valid ? " is-invalid" : ""
+                          }`}
+                          value={newLetter.email || ""}
+                          aria-invalid={Boolean(
+                            newLetter.email && !emailValidation.valid,
+                          )}
+                          aria-describedby={
+                            newLetter.email && !emailValidation.valid
+                              ? "compose-email-helper compose-email-error"
+                              : "compose-email-helper"
+                          }
+                          onChange={(event) =>
+                            setNewLetter({
+                              ...newLetter,
+                              email: event.target.value,
+                            })
+                          }
+                        />
+                        {newLetter.email && !emailValidation.valid && (
+                          <small
+                            id="compose-email-error"
+                            className="compose-link-error"
+                            role="alert"
+                          >
+                            {emailValidation.message}
                           </small>
                         )}
                       </div>

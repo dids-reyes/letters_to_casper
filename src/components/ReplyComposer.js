@@ -7,7 +7,7 @@ export const replyDraftKey = letterId => `ltc-reply-draft:${letterId}`;
 
 export default function ReplyComposer({letter, onClose, onPreview, isHidden = false}) {
   const letterId = String(letter?._id?.$oid || letter?._id || "");
-  const [newLetter, setNewLetter] = useState({from: "", to: letter?.from || "Anonymous", message: "", link: ""});
+  const [newLetter, setNewLetter] = useState({from: "", to: letter?.from || "Anonymous", message: "", link: "", email: ""});
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -18,6 +18,7 @@ export default function ReplyComposer({letter, onClose, onPreview, isHidden = fa
         to: letter?.from || "Anonymous",
         message: typeof draft.message === "string" ? draft.message : "",
         link: typeof draft.link === "string" ? draft.link : "",
+        email: typeof draft.email === "string" ? draft.email : "",
         ...(typeof draft.to === "string" && draft.to ? {to: draft.to} : {}),
       });
     } catch {
@@ -27,11 +28,11 @@ export default function ReplyComposer({letter, onClose, onPreview, isHidden = fa
 
   useEffect(() => {
     if (!letterId) return;
-    try { localStorage.setItem(replyDraftKey(letterId), JSON.stringify({message: newLetter.message, alias: newLetter.from, to: newLetter.to, link: newLetter.link})); } catch { /* storage unavailable */ }
-  }, [letterId, newLetter.from, newLetter.link, newLetter.message, newLetter.to]);
+    try { localStorage.setItem(replyDraftKey(letterId), JSON.stringify({message: newLetter.message, alias: newLetter.from, to: newLetter.to, link: newLetter.link, email: newLetter.email || ""})); } catch { /* storage unavailable */ }
+  }, [letterId, newLetter.email, newLetter.from, newLetter.link, newLetter.message, newLetter.to]);
 
   const closeAndSave = () => {
-    try { localStorage.setItem(replyDraftKey(letterId), JSON.stringify({message: newLetter.message, alias: newLetter.from, to: newLetter.to, link: newLetter.link})); } catch { /* storage unavailable */ }
+    try { localStorage.setItem(replyDraftKey(letterId), JSON.stringify({message: newLetter.message, alias: newLetter.from, to: newLetter.to, link: newLetter.link, email: newLetter.email || ""})); } catch { /* storage unavailable */ }
     onClose();
   };
 
@@ -63,6 +64,7 @@ export default function ReplyComposer({letter, onClose, onPreview, isHidden = fa
         ipv4Promise,
         coordsPromise,
       ]);
+      const normalizedEmail = typeof letterData.email === "string" ? letterData.email.trim().toLowerCase() : "";
       onProgress({percent: 60, label: "Opening payment…"});
       const response = await fetch(new URL("/api/create-reply-payment", render_url).href, {
         method: "POST",
@@ -77,6 +79,16 @@ export default function ReplyComposer({letter, onClose, onPreview, isHidden = fa
           alias: letterData.from.trim() || undefined,
           to: letterData.to.trim(),
           photo,
+          ...(normalizedEmail
+            ? {
+                email: normalizedEmail,
+                notificationEmail: normalizedEmail,
+                notificationPreferences: letterData.notificationPreferences || {
+                  replies: true,
+                  reactionMilestones: [10, 50, 100],
+                },
+              }
+            : {}),
           ...(clientIpv4 ? {ip: clientIpv4} : {}),
           ...(clientCoords ? {coords: clientCoords} : {}),
           amount: 200,

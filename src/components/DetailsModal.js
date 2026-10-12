@@ -83,11 +83,14 @@ export const getLetterStampProps = (letter) => {
     letter.location?.region ||
     letter.region ||
     "";
+  const isPreviewDraft = Boolean(
+    letter.isPreview || (letter.preview && !letter.isReplyPreview)
+  );
   const country =
     letter.loc?.country ||
     letter.location?.country ||
     letter.country ||
-    "";
+    (isPreviewDraft && !city && !region ? "Global" : "");
 
   return {
     city,
@@ -4361,9 +4364,6 @@ function DetailsModal({
               <p>
                 This stamp hints at where the letter was sent from. The map origin will unlock when you return to this letter.
               </p>
-              <small className="letter-location-ad-disclaimer">
-                Letter locations are only approximate and do not guarantee 100% accuracy. Only the city or general area is shown, never the exact pinned location of the author.
-              </small>
               <div className="letter-location-ad-actions">
                 <button
                   type="button"
