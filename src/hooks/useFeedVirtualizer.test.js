@@ -279,5 +279,33 @@ describe("useFeedVirtualizer Unit Tests", () => {
       });
       expect(window.scrollY).toBe(1800);
     });
+
+    test("populates virtualItems synchronously on the exact render when items transition from empty to loaded", () => {
+      const loadedItems = generateLetters(150);
+      const renderedCounts = [];
+
+      const { rerender } = renderHook(
+        ({ items }) => {
+          const hookResult = useFeedVirtualizer({
+            items,
+            columns: 6,
+            isSuspended: false,
+            hasMore: true,
+          });
+          renderedCounts.push({
+            itemCount: items.length,
+            virtualCount: hookResult.virtualItems.length,
+          });
+          return hookResult;
+        },
+        { initialProps: { items: [] } }
+      );
+
+      rerender({ items: loadedItems });
+
+      const firstLoadedRender = renderedCounts.find((r) => r.itemCount === 150);
+      expect(firstLoadedRender).toBeDefined();
+      expect(firstLoadedRender.virtualCount).toBe(150);
+    });
   });
 });

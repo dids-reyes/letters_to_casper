@@ -200,9 +200,24 @@ export function useFeedVirtualizer({
   const [visibleRange, setVisibleRange] = useState(() =>
     calculateRange(typeof window !== "undefined" ? window.scrollY : 0)
   );
+  const lastCalculateRangeRef = useRef(calculateRange);
 
-  // Sync visible range when grid layout/items/offsets change
+  const effectiveVisibleRange = useMemo(() => {
+    if (
+      lastCalculateRangeRef.current !== calculateRange ||
+      (rows.length > 0 && visibleRange.endRow < 0) ||
+      (rows.length === 0 && visibleRange.endRow >= 0)
+    ) {
+      const currentScrollY =
+        typeof window !== "undefined" ? window.scrollY : 0;
+      return calculateRange(currentScrollY);
+    }
+    return visibleRange;
+  }, [calculateRange, rows.length, visibleRange]);
+
+  // Sync visible range state when grid layout/items/offsets change
   useEffect(() => {
+    lastCalculateRangeRef.current = calculateRange;
     const currentScrollY =
       typeof window !== "undefined" ? window.scrollY : 0;
     const nextRange = calculateRange(currentScrollY);
@@ -220,35 +235,42 @@ export function useFeedVirtualizer({
 
   // Compute top and bottom spacer heights ensuring exact zero-CLS parity with unvirtualized grid
   const { topSpacerHeight, bottomSpacerHeight } = useMemo(() => {
-    if (rows.length === 0 || visibleRange.endRow < 0) {
+    if (rows.length === 0 || effectiveVisibleRange.endRow < 0) {
       return { topSpacerHeight: 0, bottomSpacerHeight: 0 };
     }
 
     const topSpacer =
-      visibleRange.startRow > 0
-        ? Math.max(0, offsets[visibleRange.startRow] - dimensions.gap)
+      effectiveVisibleRange.startRow > 0
+        ? Math.max(0, offsets[effectiveVisibleRange.startRow] - dimensions.gap)
         : 0;
 
     const bottomSpacer =
-      visibleRange.endRow < rows.length - 1
-        ? Math.max(0, totalHeight - offsets[visibleRange.endRow + 1])
+      effectiveVisibleRange.endRow < rows.length - 1
+        ? Math.max(0, totalHeight - offsets[effectiveVisibleRange.endRow + 1])
         : 0;
 
     return {
       topSpacerHeight: topSpacer,
       bottomSpacerHeight: bottomSpacer,
     };
-  }, [rows.length, visibleRange.startRow, visibleRange.endRow, offsets, dimensions.gap, totalHeight]);
+  }, [
+    rows.length,
+    effectiveVisibleRange.startRow,
+    effectiveVisibleRange.endRow,
+    offsets,
+    dimensions.gap,
+    totalHeight,
+  ]);
 
   // Extract items to mount in the DOM
   const virtualItems = useMemo(() => {
-    if (rows.length === 0 || visibleRange.endRow < 0) return [];
+    if (rows.length === 0 || effectiveVisibleRange.endRow < 0) return [];
     const slicedRows = rows.slice(
-      visibleRange.startRow,
-      visibleRange.endRow + 1
+      effectiveVisibleRange.startRow,
+      effectiveVisibleRange.endRow + 1
     );
     return slicedRows.flatMap((r) => r.items);
-  }, [rows, visibleRange.startRow, visibleRange.endRow]);
+  }, [rows, effectiveVisibleRange.startRow, effectiveVisibleRange.endRow]);
 
   const lastFetchedRowCount = useRef(0);
 
@@ -371,9 +393,10 @@ export function useFeedVirtualizer({
     if (isSuspended || !hasMore || !onNearEnd) return;
 
     const nearEnd =
-      visibleRange.lastVisible !== undefined && visibleRange.lastVisible >= 0
-        ? visibleRange.lastVisible >= rows.length - 3
-        : visibleRange.endRow >= rows.length - 3;
+      effectiveVisibleRange.lastVisible !== undefined &&
+      effectiveVisibleRange.lastVisible >= 0
+        ? effectiveVisibleRange.lastVisible >= rows.length - 3
+        : effectiveVisibleRange.endRow >= rows.length - 3;
 
     if (
       rows.length > 0 &&
@@ -383,7 +406,14 @@ export function useFeedVirtualizer({
       lastFetchedRowCount.current = rows.length;
       onNearEnd();
     }
-  }, [visibleRange.lastVisible, visibleRange.endRow, rows.length, isSuspended, hasMore, onNearEnd]);
+  }, [
+    effectiveVisibleRange.lastVisible,
+    effectiveVisibleRange.endRow,
+    rows.length,
+    isSuspended,
+    hasMore,
+    onNearEnd,
+  ]);
 
   return {
     virtualItems,
@@ -392,6 +422,6 @@ export function useFeedVirtualizer({
     totalHeight,
     saveScrollPosition,
     restoreScrollPosition,
-    visibleRange,
+    visibleRange: effectiveVisibleRange,
   };
 }

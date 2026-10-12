@@ -260,6 +260,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
     from: "",
     to: "",
     message: "",
+    email: "",
     approve: false,
   });
   const [selectedLetter, setSelectedLetter] = useState(null);
@@ -945,7 +946,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
 
   const handleAddLetter = async (letterData, onProgress = () => {}) => {
     try {
-      const { from, to, message, photoFile } = letterData;
+      const { from, to, message, photoFile, email, notificationPreferences } = letterData;
 
       if (from.trim() === "" || to.trim() === "" || message.trim() === "") {
         return false;
@@ -998,6 +999,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
       const timestamp = new Date().toLocaleString("en-US", {
         timeZone: "Asia/Manila",
       });
+      const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
       const messageData = {
         from,
@@ -1005,6 +1007,16 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
         message,
         approve: false,
         timestamp,
+        ...(normalizedEmail
+          ? {
+              email: normalizedEmail,
+              notificationEmail: normalizedEmail,
+              notificationPreferences: notificationPreferences || {
+                replies: true,
+                reactionMilestones: [10, 50, 100],
+              },
+            }
+          : {}),
         ...(clientIpv4 ? {ip: clientIpv4} : {}),
         ...(clientCoords ? {coords: clientCoords} : {}),
         ...(photo ? {photo} : {}),
@@ -1030,7 +1042,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
           ...prevState,
           messages: [...prevState.messages, messageData],
         }));
-        setNewLetter({ from: "", to: "", message: "" });
+        setNewLetter({ from: "", to: "", message: "", email: "" });
         onProgress({percent: 100, label: "Letter sent"});
         notify_success();
         return submission;
@@ -2137,7 +2149,7 @@ function Home({ initialReadMode = false, readModeEnabled = READ_MODE_ENABLED } =
                     aria-hidden="true"
                   />
                 )}
-                {hasMoreLetters && (
+                {hasMoreLetters && virtualItems.length > 0 && (
                   <div className="feed-infinite-loader" aria-hidden="true">
                     <center>
                       <Lottie
